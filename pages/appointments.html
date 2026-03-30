@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rendez-vous — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/appointments.css" />
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Belyo</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">◎</span> Tableau de bord</a>
+    <a class="sidebar-link active" href="appointments.html"><span class="sidebar-icon">◈</span> Rendez-vous</a>
+    <a class="sidebar-link" href="clients.html"><span class="sidebar-icon">◇</span> Clients</a>
+    <a class="sidebar-link" href="revenue.html"><span class="sidebar-icon">◉</span> Chiffre d'affaires</a>
+    <a class="sidebar-link" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user"><strong id="sidebar-salon">Chargement...</strong><span id="sidebar-email">—</span></div>
+      <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
+      <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Rendez-<em>vous</em></h1>
+      <button class="btn-action" onclick="openModal()">+ Nouveau RDV</button>
+    </div>
+    <div class="toolbar">
+      <div class="view-toggle">
+        <button class="view-btn active" id="vbtn-list" onclick="setView('list')">☰ Liste</button>
+        <button class="view-btn" id="vbtn-calendar" onclick="setView('calendar')">▦ Semaine</button>
+      </div>
+      <div class="week-nav" id="week-nav" style="display:none">
+        <button class="week-nav-btn" onclick="shiftWeek(-1)">‹</button>
+        <span class="week-label" id="week-label">—</span>
+        <button class="week-nav-btn" onclick="shiftWeek(1)">›</button>
+        <button class="tab" onclick="goToday()" style="padding:6px 14px;font-size:12px;">Aujourd'hui</button>
+      </div>
+      <div id="list-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="date" id="filter-date" class="filter-input" />
+        <button class="tab active" id="tab-all" onclick="setTab('all')">Tous</button>
+        <button class="tab" id="tab-pending" onclick="setTab('pending')">À venir</button>
+        <button class="tab" id="tab-done" onclick="setTab('done')">Terminés</button>
+        <button class="tab" id="tab-cancelled" onclick="setTab('cancelled')">Annulés</button>
+      </div>
+    </div>
+    <div id="view-list">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" id="list-title">Tous les rendez-vous</span>
+          <span id="list-count" style="font-size:13px;color:var(--ink-light);">—</span>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="table">
+            <thead><tr><th>Date</th><th>Heure</th><th>Client</th><th>Prestation</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody id="appts-list"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="view-calendar" style="display:none"><div class="cal-grid" id="cal-grid"></div></div>
+  </main>
+</div>
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">Nouveau rendez-vous</span><button class="modal-close" onclick="closeModal()">×</button></div>
+    <form id="appt-form">
+      <div class="form-group"><label class="form-label">Nom du client</label><input type="text" class="form-input" id="appt-client" placeholder="Sophie Martin" required /></div>
+      <div class="form-group"><label class="form-label">Prestation</label><input type="text" class="form-input" id="appt-service" placeholder="Ex : Coupe + couleur" required /></div>
+      <div class="form-group"><label class="form-label">Date et heure</label><input type="datetime-local" class="form-input" id="appt-datetime" required /></div>
+      <div class="form-group"><label class="form-label">Prix (€)</label><input type="number" class="form-input" id="appt-price" placeholder="50" min="0" step="0.01" /></div>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
+      <button type="submit" class="btn-submit" id="appt-submit">Enregistrer</button>
+    </form>
+  </div>
+</div>
+<div class="cal-tooltip" id="cal-tooltip"></div>
+<div class="toast" id="toast"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/appointments.js"></script>
+</body>
+</html>

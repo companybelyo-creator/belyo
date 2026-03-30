@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Créer un compte — Belyo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+
+<div class="auth-page">
+  <div class="auth-card">
+
+    <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
+    <p class="auth-subtitle">Créez votre compte · 14 jours d'essai gratuit</p>
+
+    <div class="auth-error" id="error-msg"></div>
+    <div id="success-msg" style="display:none;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:1rem;line-height:1.5;"></div>
+
+    <form id="register-form">
+      <div class="form-group">
+        <label class="form-label">Nom du salon</label>
+        <input type="text" class="form-input" id="salon-name" placeholder="Ex : Salon Éclat" required autocomplete="organization" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Votre prénom</label>
+        <input type="text" class="form-input" id="first-name" placeholder="Marie" required autocomplete="given-name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="email" placeholder="marie@salon-eclat.fr" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <input type="password" class="form-input" id="password" placeholder="8 caractères minimum" required minlength="8" autocomplete="new-password" />
+      </div>
+      <button type="submit" class="btn-submit" id="submit-btn">Créer mon compte</button>
+    </form>
+
+    <p class="auth-switch">Déjà un compte ? <a href="login.html">Se connecter</a></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script>
+  // Déjà connecté → dashboard
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) window.location.href = 'dashboard.html';
+  })();
+
+  const errorMessages = {
+    'User already registered': 'Un compte existe déjà avec cet email.',
+    'Password should be at least 6 characters': 'Le mot de passe doit faire au moins 6 caractères.',
+    'Unable to validate email address: invalid format': "L'adresse email n'est pas valide.",
+    'Signup requires a valid password': 'Veuillez saisir un mot de passe valide.',
+  };
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const err = document.getElementById('error-msg');
+    const ok  = document.getElementById('success-msg');
+
+    btn.disabled = true;
+    btn.textContent = 'Création en cours...';
+    err.classList.remove('visible');
+    ok.style.display = 'none';
+
+    const email     = document.getElementById('email').value.trim();
+    const password  = document.getElementById('password').value;
+    const salonName = document.getElementById('salon-name').value.trim();
+    const firstName = document.getElementById('first-name').value.trim();
+
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password,
+      options: { data: { salon_name: salonName, first_name: firstName } }
+    });
+
+    if (error) {
+      err.textContent = errorMessages[error.message] || error.message;
+      err.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Créer mon compte';
+      return;
+    }
+
+    if (data.session) {
+      // Connexion directe (email confirmation désactivée dans Supabase)
+      window.location.href = 'dashboard.html';
+    } else {
+      // Email de confirmation requis
+      ok.innerHTML = '✓ Compte créé avec succès !<br>Vérifiez votre boîte mail pour confirmer votre adresse, puis <a href="login.html" style="color:#065f46;font-weight:500;">connectez-vous</a>.';
+      ok.style.display = 'block';
+      document.getElementById('register-form').style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clients — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/clients.css" />
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Belyo</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">◎</span> Tableau de bord</a>
+    <a class="sidebar-link" href="appointments.html"><span class="sidebar-icon">◈</span> Rendez-vous</a>
+    <a class="sidebar-link active" href="clients.html"><span class="sidebar-icon">◇</span> Clients</a>
+    <a class="sidebar-link" href="revenue.html"><span class="sidebar-icon">◉</span> Chiffre d'affaires</a>
+    <a class="sidebar-link" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <strong id="sidebar-salon">Chargement...</strong>
+        <span id="sidebar-email">—</span>
+      </div>
+      <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
+      <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Mes <em>clients</em></h1>
+      <button class="btn-action" onclick="openAddModal()">+ Nouveau client</button>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" class="search-input" id="search" placeholder="Rechercher un client..." oninput="renderClients()" />
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Liste des clients</span>
+        <span id="clients-count" style="font-size:13px;color:var(--ink-light);">—</span>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Téléphone</th>
+              <th>Email</th>
+              <th>Dernière visite</th>
+              <th>Visites</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="clients-list">
+            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL Nouveau client -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouveau client</span>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <form id="client-form">
+      <div class="form-group">
+        <label class="form-label">Prénom et nom</label>
+        <input type="text" class="form-input" id="c-name" placeholder="Sophie Martin" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input type="tel" class="form-input" id="c-phone" placeholder="06 12 34 56 78" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="c-email" placeholder="sophie@email.fr" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="c-notes" placeholder="Ex : allergie ammoniac, préfère le jeudi..." />
+      </div>
+      <button type="submit" class="btn-submit" id="c-submit">Ajouter le client</button>
+    </form>
+  </div>
+</div>
+
+<!-- FICHE CLIENT -->
+<div class="fiche-overlay" id="fiche-overlay">
+  <div class="fiche">
+    <div class="fiche-header">
+      <span class="fiche-title">Fiche client</span>
+      <button class="modal-close" onclick="closeFiche()">×</button>
+    </div>
+    <div id="fiche-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/clients.js"></script>
+</body>
+</html>

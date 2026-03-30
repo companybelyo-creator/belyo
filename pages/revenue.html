@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chiffre d'affaires — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="../css/revenue.css" />
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Belyo</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">◎</span> Tableau de bord</a>
+    <a class="sidebar-link" href="appointments.html"><span class="sidebar-icon">◈</span> Rendez-vous</a>
+    <a class="sidebar-link" href="clients.html"><span class="sidebar-icon">◇</span> Clients</a>
+    <a class="sidebar-link active" href="revenue.html"><span class="sidebar-icon">◉</span> Chiffre d'affaires</a>
+    <a class="sidebar-link" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <strong id="sidebar-salon">Chargement...</strong>
+        <span id="sidebar-email">—</span>
+      </div>
+      <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
+      <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Chiffre d'<em>affaires</em></h1>
+    </div>
+
+    <div class="period-tabs">
+      <button class="period-tab" id="tab-3m" onclick="setPeriod(3)">3 mois</button>
+      <button class="period-tab active" id="tab-6m" onclick="setPeriod(6)">6 mois</button>
+      <button class="period-tab" id="tab-12m" onclick="setPeriod(12)">12 mois</button>
+    </div>
+
+    <div class="kpi-grid-3">
+      <div class="kpi-card">
+        <div class="kpi-label">CA ce mois</div>
+        <div class="kpi-val" id="kpi-current">—</div>
+        <div class="kpi-sub" id="kpi-vs">vs mois dernier</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">CA sur la période</div>
+        <div class="kpi-val" id="kpi-period">—</div>
+        <div class="kpi-sub" id="kpi-period-label">—</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Panier moyen</div>
+        <div class="kpi-val" id="kpi-avg">—</div>
+        <div class="kpi-sub">Par RDV terminé</div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Évolution du CA mensuel</div>
+      <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+      <div class="chart-card">
+        <div class="chart-title">Top prestations</div>
+        <div id="top-services" class="top-list"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top clients (CA)</div>
+        <div id="top-clients" class="top-list"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/revenue.js"></script>
+</body>
+</html>

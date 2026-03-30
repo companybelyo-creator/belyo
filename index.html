@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Belyo — Le dashboard pour salons de coiffure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Belyo</a>
+      <div class="nav-links">
+        <a href="#features">Fonctionnalités</a>
+        <a href="#pricing">Tarifs</a>
+        <a href="pages/login.html" class="btn-nav">Connexion</a>
+        <a href="pages/register.html" class="btn-nav btn-primary">Essai gratuit</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <span class="hero-tag">Nouveau · Conçu pour les salons français</span>
+      <h1>Votre salon,<br /><em>enfin piloté</em><br />avec clarté.</h1>
+      <p class="hero-sub">Rendez-vous, clients, chiffre d'affaires, stocks — tout au même endroit. Simple, élégant, efficace.</p>
+      <div class="hero-actions">
+        <a href="pages/register.html" class="btn-lg">Commencer gratuitement</a>
+        <span class="hero-note">14 jours d'essai · Aucune CB requise</span>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="mockup-card">
+        <div class="mockup-header">
+          <span class="mockup-dot"></span>
+          <span class="mockup-title">Aujourd'hui</span>
+          <span class="mockup-date">Lun. 28 oct.</span>
+        </div>
+        <div class="mockup-stats">
+          <div class="stat-item">
+            <span class="stat-val">8</span>
+            <span class="stat-lbl">RDV</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val">340€</span>
+            <span class="stat-lbl">CA</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-val">3</span>
+            <span class="stat-lbl">Nouveaux</span>
+          </div>
+        </div>
+        <div class="mockup-appts">
+          <div class="appt"><span class="appt-time">9h00</span><span class="appt-name">Sophie M.</span><span class="appt-type">Coupe + couleur</span></div>
+          <div class="appt"><span class="appt-time">10h30</span><span class="appt-name">Julie R.</span><span class="appt-type">Balayage</span></div>
+          <div class="appt appt-now"><span class="appt-time">14h00</span><span class="appt-name">Marie T.</span><span class="appt-type">Coupe femme</span></div>
+          <div class="appt appt-future"><span class="appt-time">15h30</span><span class="appt-name">Clara D.</span><span class="appt-type">Brushing</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="features" id="features">
+    <div class="container">
+      <h2>Tout ce dont vous avez besoin,<br /><em>rien de superflu.</em></h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">◎</div>
+          <h3>Rendez-vous</h3>
+          <p>Vue journalière et hebdomadaire. Ajoutez, modifiez, annulez en deux clics. Rappels SMS automatiques.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">◈</div>
+          <h3>Clients</h3>
+          <p>Fiche complète par client : historique des visites, prestations favorites, notes personnelles.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">◇</div>
+          <h3>Chiffre d'affaires</h3>
+          <p>Graphiques clairs du CA quotidien, mensuel, annuel. Comparez vos meilleures semaines.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">◉</div>
+          <h3>Stocks produits</h3>
+          <p>Suivez vos produits en temps réel. Alertes automatiques quand un produit arrive en rupture.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <h2>Un prix honnête,<br /><em>sans surprises.</em></h2>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <span class="plan-name">Starter</span>
+          <div class="plan-price">29<span>€/mois</span></div>
+          <ul class="plan-features">
+            <li>Jusqu'à 100 RDV/mois</li>
+            <li>Gestion clients illimitée</li>
+            <li>CA et statistiques de base</li>
+            <li>Support email</li>
+          </ul>
+          <a href="pages/register.html" class="btn-plan">Commencer</a>
+        </div>
+        <div class="pricing-card pricing-featured">
+          <span class="plan-badge">Populaire</span>
+          <span class="plan-name">Pro</span>
+          <div class="plan-price">59<span>€/mois</span></div>
+          <ul class="plan-features">
+            <li>RDV illimités</li>
+            <li>Rappels SMS automatiques</li>
+            <li>Gestion stocks</li>
+            <li>Rapports avancés</li>
+            <li>Support prioritaire</li>
+          </ul>
+          <a href="pages/register.html" class="btn-plan btn-plan-featured">Commencer</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span class="logo">Belyo</span>
+      <span class="footer-copy">© 2025 Belyo · Fait avec soin en France</span>
+    </div>
+  </footer>
+
+</body>
+</html>

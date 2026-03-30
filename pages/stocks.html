@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stocks — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/stocks.css" />
+</head>
+<body>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Belyo</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">◎</span> Tableau de bord</a>
+    <a class="sidebar-link" href="appointments.html"><span class="sidebar-icon">◈</span> Rendez-vous</a>
+    <a class="sidebar-link" href="clients.html"><span class="sidebar-icon">◇</span> Clients</a>
+    <a class="sidebar-link" href="revenue.html"><span class="sidebar-icon">◉</span> Chiffre d'affaires</a>
+    <a class="sidebar-link active" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <strong id="sidebar-salon">Chargement...</strong>
+        <span id="sidebar-email">—</span>
+      </div>
+      <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
+      <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Stocks <em>produits</em></h1>
+      <button class="btn-action" onclick="openModal()">+ Nouveau produit</button>
+    </div>
+
+    <div class="kpi-grid-3">
+      <div class="kpi-card">
+        <div class="kpi-label">Total produits</div>
+        <div class="kpi-val" id="kpi-total">—</div>
+        <div class="kpi-sub">En catalogue</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Stock faible</div>
+        <div class="kpi-val" id="kpi-low" style="color:#C4A87A">—</div>
+        <div class="kpi-sub">À recommander bientôt</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Rupture</div>
+        <div class="kpi-val" id="kpi-empty" style="color:#C0392B">—</div>
+        <div class="kpi-sub">Quantité = 0</div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" class="search-input" id="search" placeholder="Rechercher un produit ou une marque..." oninput="renderProducts()" />
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab active" id="tab-all" onclick="setTab('all')">Tous</button>
+      <button class="tab" id="tab-low" onclick="setTab('low')">Stock faible</button>
+      <button class="tab" id="tab-empty" onclick="setTab('empty')">Rupture</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title" id="list-title">Tous les produits</span>
+        <span id="list-count" style="font-size:13px;color:var(--ink-light)">—</span>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Produit</th>
+              <th>Marque</th>
+              <th>Quantité</th>
+              <th>Niveau</th>
+              <th>Statut</th>
+              <th>Prix unitaire</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="products-list">
+            <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL Nouveau produit -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title-text">Nouveau produit</span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <form id="product-form">
+      <input type="hidden" id="edit-id" />
+      <div class="form-group">
+        <label class="form-label">Nom du produit</label>
+        <input type="text" class="form-input" id="p-name" placeholder="Ex : Shampooing réparateur" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Marque</label>
+        <input type="text" class="form-input" id="p-brand" placeholder="Ex : Kérastase, L'Oréal..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Quantité en stock</label>
+        <input type="number" class="form-input" id="p-qty" placeholder="0" min="0" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Seuil d'alerte <span style="font-weight:400;color:var(--ink-light)">(alerte si quantité ≤ ce seuil)</span></label>
+        <input type="number" class="form-input" id="p-threshold" placeholder="2" min="0" value="2" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Prix unitaire (€)</label>
+        <input type="number" class="form-input" id="p-price" placeholder="12.50" min="0" step="0.01" />
+      </div>
+      <button type="submit" class="btn-submit" id="p-submit">Ajouter le produit</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL Confirmation suppression -->
+<div class="modal-overlay" id="delete-overlay">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-header">
+      <span class="modal-title">Supprimer ce produit ?</span>
+      <button class="modal-close" onclick="closeDeleteModal()">×</button>
+    </div>
+    <p style="font-size:14px;color:var(--ink-light);margin-bottom:1.5rem">Cette action est irréversible.</p>
+    <div style="display:flex;gap:10px">
+      <button onclick="closeDeleteModal()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:100px;background:transparent;font-family:var(--font-body);font-size:14px;cursor:pointer;">Annuler</button>
+      <button onclick="confirmDelete()" id="confirm-delete-btn" style="flex:1;padding:12px;border:none;border-radius:100px;background:#C0392B;color:#fff;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/stocks.js"></script>
+</body>
+</html>
