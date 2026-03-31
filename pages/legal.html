@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mentions légales & CGV — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    .legal-page { max-width: 760px; margin: 0 auto; padding: 100px 2rem 80px; }
+    .legal-nav { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 3rem; }
+    .legal-nav a { padding: 7px 16px; border-radius: 100px; font-size: 13px; font-weight: 500; border: 1px solid var(--border); color: var(--ink-light); text-decoration: none; transition: all .15s; }
+    .legal-nav a:hover, .legal-nav a.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+    .legal-section { display: none; }
+    .legal-section.active { display: block; }
+    .legal-section h1 { font-family: var(--font-display); font-size: 2.5rem; font-weight: 300; margin-bottom: .5rem; }
+    .legal-section h1 em { font-style: italic; color: var(--gold); }
+    .updated { font-size: 13px; color: var(--ink-light); margin-bottom: 3rem; }
+    .legal-section h2 { font-size: 16px; font-weight: 500; margin: 2.5rem 0 .8rem; padding-top: 2rem; border-top: 1px solid var(--border); }
+    .legal-section h2:first-of-type { border-top: none; margin-top: 1rem; }
+    .legal-section p { font-size: 14px; color: var(--ink-light); line-height: 1.8; margin-bottom: .8rem; }
+    .legal-section ul { font-size: 14px; color: var(--ink-light); line-height: 1.8; padding-left: 1.5rem; margin-bottom: .8rem; }
+    .legal-section ul li { margin-bottom: .3rem; }
+    .legal-section strong { color: var(--ink); font-weight: 500; }
+    .info-block { background: var(--cream); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; font-size: 14px; color: var(--ink-light); line-height: 1.8; }
+    .info-block strong { display: block; color: var(--ink); font-weight: 500; margin-bottom: .5rem; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="../index.html" class="logo">Belyo</a>
+    <div class="nav-links">
+      <a href="../pages/login.html" class="btn-nav">Connexion</a>
+      <a href="../pages/register.html" class="btn-nav btn-primary">Essai gratuit</a>
+    </div>
+  </div>
+</nav>
+
+<div class="legal-page">
+
+  <div class="legal-nav">
+    <a href="#" class="active" onclick="showSection('mentions', this)">Mentions légales</a>
+    <a href="#" onclick="showSection('cgv', this)">CGV</a>
+    <a href="#" onclick="showSection('confidentialite', this)">Confidentialité</a>
+    <a href="#" onclick="showSection('cookies', this)">Cookies</a>
+  </div>
+
+  <!-- ===== MENTIONS LÉGALES ===== -->
+  <div class="legal-section active" id="section-mentions">
+    <h1>Mentions <em>légales</em></h1>
+    <p class="updated">Dernière mise à jour : mars 2025</p>
+
+    <div class="info-block">
+      <strong>Éditeur du site</strong>
+      Belyo — Logiciel SaaS pour salons de coiffure<br>
+      Exploité par : [TON NOM / NOM DE TA SOCIÉTÉ]<br>
+      Adresse : [TON ADRESSE], Nantes, France<br>
+      Email : contact@belyo.fr<br>
+      SIRET : [TON SIRET si applicable]
+    </div>
+
+    <div class="info-block">
+      <strong>Hébergement</strong>
+      Vercel Inc. — 340 Pine Street, Suite 701, San Francisco, CA 94104, USA<br>
+      Base de données : Supabase Inc. — 970 Toa Payoh North, Singapour
+    </div>
+
+    <h2>Propriété intellectuelle</h2>
+    <p>L'ensemble du contenu du site Belyo (textes, graphismes, logiciels, code source) est la propriété exclusive de l'éditeur. Toute reproduction, distribution ou utilisation sans autorisation préalable est interdite.</p>
+
+    <h2>Responsabilité</h2>
+    <p>L'éditeur s'efforce d'assurer l'exactitude et la mise à jour des informations diffusées sur ce site. Il ne peut cependant être tenu responsable des erreurs, omissions ou résultats qui pourraient être obtenus par un mauvais usage de ces informations.</p>
+
+    <h2>Liens hypertextes</h2>
+    <p>Le site Belyo peut contenir des liens vers d'autres sites. L'éditeur ne peut être tenu responsable du contenu de ces sites externes.</p>
+
+    <h2>Droit applicable</h2>
+    <p>Le présent site est soumis au droit français. En cas de litige, les tribunaux français seront seuls compétents.</p>
+  </div>
+
+  <!-- ===== CGV ===== -->
+  <div class="legal-section" id="section-cgv">
+    <h1>Conditions générales<br /><em>de vente</em></h1>
+    <p class="updated">Dernière mise à jour : mars 2025</p>
+
+    <h2>1. Objet</h2>
+    <p>Les présentes Conditions Générales de Vente (CGV) régissent l'accès et l'utilisation du logiciel Belyo, solution SaaS de gestion pour salons de coiffure et instituts de beauté, accessible à l'adresse <strong>belyo.vercel.app</strong>.</p>
+
+    <h2>2. Acceptation</h2>
+    <p>Toute souscription à un abonnement Belyo implique l'acceptation pleine et entière des présentes CGV. Le client déclare avoir lu et accepté ces conditions avant toute commande.</p>
+
+    <h2>3. Description du service</h2>
+    <p>Belyo est un logiciel accessible en ligne (SaaS) permettant aux professionnels de la coiffure et de la beauté de gérer :</p>
+    <ul>
+      <li>Les rendez-vous clients</li>
+      <li>La base de données clients</li>
+      <li>Le suivi du chiffre d'affaires</li>
+      <li>La gestion des stocks produits</li>
+      <li>L'envoi automatique de rappels par email</li>
+    </ul>
+
+    <h2>4. Abonnements et tarifs</h2>
+    <p>Belyo propose les formules suivantes :</p>
+    <ul>
+      <li><strong>Starter — 29€ HT/mois</strong> : jusqu'à 100 rendez-vous/mois, gestion clients illimitée, statistiques de base.</li>
+      <li><strong>Pro — 59€ HT/mois</strong> : rendez-vous illimités, rappels SMS, rapports avancés, support prioritaire.</li>
+    </ul>
+    <p>Tous les prix sont indiqués en euros hors taxes. La TVA applicable est celle en vigueur au jour de la facturation.</p>
+
+    <h2>5. Période d'essai</h2>
+    <p>Tout nouvel utilisateur bénéficie d'une période d'essai gratuite de <strong>14 jours</strong> sans engagement et sans nécessité de renseigner de coordonnées bancaires. À l'issue de cette période, l'accès aux fonctionnalités est suspendu sauf souscription à un abonnement payant.</p>
+
+    <h2>6. Facturation et paiement</h2>
+    <p>Les abonnements sont facturés mensuellement par prélèvement automatique via <strong>Stripe</strong>, prestataire de paiement sécurisé. Le premier prélèvement intervient à la fin de la période d'essai. Les factures sont disponibles dans l'espace client.</p>
+
+    <h2>7. Résiliation</h2>
+    <p>L'abonnement peut être résilié à tout moment depuis l'espace paramètres. La résiliation prend effet à la fin de la période de facturation en cours. Aucun remboursement partiel ne sera effectué pour la période restante.</p>
+
+    <h2>8. Disponibilité du service</h2>
+    <p>Belyo s'engage à maintenir une disponibilité du service de 99% par mois. Des interruptions de service peuvent survenir pour des opérations de maintenance, qui seront annoncées 24h à l'avance dans la mesure du possible.</p>
+
+    <h2>9. Données et confidentialité</h2>
+    <p>Les données saisies par l'utilisateur dans Belyo lui appartiennent. Elles sont hébergées de manière sécurisée et ne sont jamais revendues à des tiers. Voir notre <a href="#" onclick="showSection('confidentialite', null)" style="color:var(--gold)">Politique de confidentialité</a> pour plus de détails.</p>
+
+    <h2>10. Responsabilité</h2>
+    <p>Belyo est un outil d'aide à la gestion. L'éditeur ne peut être tenu responsable des pertes financières, pertes de données ou préjudices indirects liés à l'utilisation du service. La responsabilité de l'éditeur est limitée au montant des sommes versées au cours des 3 derniers mois.</p>
+
+    <h2>11. Modification des CGV</h2>
+    <p>L'éditeur se réserve le droit de modifier les présentes CGV à tout moment. Les utilisateurs seront informés par email au moins 30 jours avant l'entrée en vigueur des nouvelles conditions.</p>
+
+    <h2>12. Droit applicable et litiges</h2>
+    <p>Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité. À défaut, le litige sera soumis aux tribunaux compétents de Nantes.</p>
+  </div>
+
+  <!-- ===== CONFIDENTIALITÉ ===== -->
+  <div class="legal-section" id="section-confidentialite">
+    <h1>Politique de<br /><em>confidentialité</em></h1>
+    <p class="updated">Dernière mise à jour : mars 2025</p>
+
+    <h2>1. Responsable du traitement</h2>
+    <p>[TON NOM / NOM DE TA SOCIÉTÉ], exploitant Belyo, est responsable du traitement de vos données personnelles.</p>
+
+    <h2>2. Données collectées</h2>
+    <p>Dans le cadre de l'utilisation de Belyo, nous collectons :</p>
+    <ul>
+      <li><strong>Données de compte</strong> : prénom, nom du salon, adresse email, mot de passe (chiffré)</li>
+      <li><strong>Données métier</strong> : rendez-vous, fiches clients, chiffre d'affaires, stocks — saisies par l'utilisateur</li>
+      <li><strong>Données techniques</strong> : adresse IP, navigateur, logs de connexion</li>
+    </ul>
+
+    <h2>3. Finalités du traitement</h2>
+    <ul>
+      <li>Fourniture et amélioration du service Belyo</li>
+      <li>Envoi de rappels email aux clients du salon (avec consentement)</li>
+      <li>Facturation et gestion des abonnements</li>
+      <li>Support client</li>
+    </ul>
+
+    <h2>4. Base légale</h2>
+    <p>Le traitement est fondé sur l'exécution du contrat (CGV) et le consentement de l'utilisateur pour les communications marketing.</p>
+
+    <h2>5. Durée de conservation</h2>
+    <p>Les données sont conservées pendant toute la durée de l'abonnement, puis archivées pendant 3 ans à des fins légales, puis supprimées.</p>
+
+    <h2>6. Sous-traitants</h2>
+    <ul>
+      <li><strong>Supabase</strong> — hébergement base de données (Singapour/UE)</li>
+      <li><strong>Vercel</strong> — hébergement application (USA/UE)</li>
+      <li><strong>Stripe</strong> — paiement sécurisé (USA/UE)</li>
+      <li><strong>Resend</strong> — envoi d'emails transactionnels (USA)</li>
+    </ul>
+
+    <h2>7. Vos droits (RGPD)</h2>
+    <p>Conformément au RGPD, vous disposez des droits suivants sur vos données :</p>
+    <ul>
+      <li>Droit d'accès, de rectification et d'effacement</li>
+      <li>Droit à la portabilité des données</li>
+      <li>Droit d'opposition et de limitation du traitement</li>
+    </ul>
+    <p>Pour exercer ces droits, contactez : <strong>contact@belyo.fr</strong></p>
+
+    <h2>8. Sécurité</h2>
+    <p>Les données sont chiffrées en transit (HTTPS) et au repos. L'accès est protégé par authentification sécurisée. Le principe du moindre privilège est appliqué à tous les accès.</p>
+  </div>
+
+  <!-- ===== COOKIES ===== -->
+  <div class="legal-section" id="section-cookies">
+    <h1>Politique<br /><em>cookies</em></h1>
+    <p class="updated">Dernière mise à jour : mars 2025</p>
+
+    <h2>Qu'est-ce qu'un cookie ?</h2>
+    <p>Un cookie est un petit fichier texte déposé sur votre appareil lors de la visite d'un site web. Il permet de mémoriser des informations pour améliorer votre expérience.</p>
+
+    <h2>Cookies utilisés par Belyo</h2>
+    <ul>
+      <li><strong>Cookies d'authentification</strong> (nécessaires) : maintiennent votre session active après connexion. Durée : session ou 7 jours selon votre choix.</li>
+      <li><strong>Cookies de préférences</strong> (nécessaires) : mémorisent vos préférences d'interface (vue calendrier/liste, etc.).</li>
+    </ul>
+
+    <h2>Ce que nous n'utilisons pas</h2>
+    <p>Belyo n'utilise <strong>aucun cookie publicitaire</strong>, aucun tracker tiers (Google Analytics, Facebook Pixel, etc.), et ne revend aucune donnée de navigation.</p>
+
+    <h2>Gestion des cookies</h2>
+    <p>Vous pouvez supprimer les cookies à tout moment depuis les paramètres de votre navigateur. La suppression des cookies d'authentification entraînera votre déconnexion de Belyo.</p>
+  </div>
+
+</div>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span class="logo">Belyo</span>
+    <span class="footer-copy">© 2025 Belyo · <a href="legal.html" style="color:var(--ink-light)">Mentions légales</a></span>
+  </div>
+</footer>
+
+<script>
+function showSection(name, btn) {
+  document.querySelectorAll('.legal-section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.legal-nav a').forEach(function(a) { a.classList.remove('active'); });
+  document.getElementById('section-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  return false;
+}
+</script>
+</body>
+</html>

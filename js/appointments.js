@@ -2,11 +2,91 @@
 // APPOINTMENTS.JS
 // ============================================================
 
-var currentUserId = null;
-var allAppts = [];
-var currentTab = 'all';
-var currentView = 'list';
-var weekOffset = 0;
+var currentUserId  = null;
+var allAppts       = [];
+var allClients     = [];
+var selectedClient = null;
+var currentTab     = 'all';
+var currentView    = 'list';
+var weekOffset     = 0;
+
+// ===== AUTOCOMPLETE CLIENT =====
+async function loadClients() {
+  var res = await sb.from('clients').select('id, name, email, phone')
+    .eq('user_id', currentUserId)
+    .order('name', { ascending: true });
+  allClients = res.data || [];
+}
+
+function onClientInput(val) {
+  selectedClient = null;
+  var block = document.getElementById('client-info-block');
+  var suggestions = document.getElementById('client-suggestions');
+
+  if (!val.trim()) {
+    suggestions.style.display = 'none';
+    block.style.display = 'none';
+    return;
+  }
+
+  var q = val.toLowerCase();
+  var matches = allClients.filter(function(c) {
+    return c.name.toLowerCase().includes(q);
+  });
+
+  if (matches.length === 0) {
+    suggestions.style.display = 'none';
+    showClientInfo(null, val.trim());
+    return;
+  }
+
+  suggestions.style.display = 'block';
+  suggestions.innerHTML = matches.map(function(c) {
+    return '<div onclick="selectClient(\'' + c.id + '\')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<strong style="color:var(--ink)">' + c.name + '</strong>'
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function selectClient(id) {
+  var client = allClients.find(function(c) { return c.id === id; });
+  if (!client) return;
+  selectedClient = client;
+  document.getElementById('appt-client').value = client.name;
+  document.getElementById('client-suggestions').style.display = 'none';
+  showClientInfo(client, null);
+}
+
+function showClientInfo(client, newName) {
+  var block = document.getElementById('client-info-block');
+  var badge = document.getElementById('client-new-badge');
+  var label = document.getElementById('client-info-label');
+  var email = document.getElementById('client-email');
+  var phone = document.getElementById('client-phone');
+  block.style.display = 'block';
+  if (client) {
+    badge.style.display = 'none';
+    label.textContent   = client.name;
+    email.value         = client.email || '';
+    phone.value         = client.phone || '';
+  } else {
+    badge.style.display = 'inline-block';
+    label.textContent   = newName || 'Nouveau client';
+    email.value         = '';
+    phone.value         = '';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var s = document.getElementById('client-suggestions');
+  if (s && !s.contains(e.target) && e.target.id !== 'appt-client') {
+    s.style.display = 'none';
+    var val = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+    if (val && !selectedClient) showClientInfo(null, val);
+  }
+});
 
 var HOUR_START = 8;
 var HOUR_END   = 20;
@@ -212,6 +292,11 @@ function openModalAt(datetimeStr) { openModal(datetimeStr); }
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.getElementById('appt-form').reset();
+  selectedClient = null;
+  var block = document.getElementById('client-info-block');
+  var suggestions = document.getElementById('client-suggestions');
+  if (block) block.style.display = 'none';
+  if (suggestions) suggestions.style.display = 'none';
 }
 
 async function updateStatus(id, status) {
@@ -242,6 +327,8 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   var clientName = document.getElementById('appt-client').value.trim();
   var datetime   = document.getElementById('appt-datetime').value;
   var priceVal   = document.getElementById('appt-price').value;
+  var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
+  var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
 
   var res = await sb.from('appointments').insert({
     user_id:     currentUserId,
@@ -257,8 +344,8 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.textContent = 'Enregistrer';
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
 
-  // Créer/mettre à jour automatiquement le client
-  await upsertClient(currentUserId, clientName, datetime);
+  // Créer/mettre à jour le client avec email et téléphone
+  await upsertClientFull(currentUserId, clientName, datetime, clientEmail, clientPhone);
 
   closeModal();
   showToast('Rendez-vous ajouté !');
@@ -269,11 +356,42 @@ document.getElementById('modal-overlay').addEventListener('click', function(e) {
   if (e.target === e.currentTarget) closeModal();
 });
 
+// upsertClientFull — crée ou met à jour avec email + téléphone
+async function upsertClientFull(userId, clientName, apptDatetime, email, phone) {
+  if (!clientName || !userId) return;
+  var today = apptDatetime ? apptDatetime.slice(0, 10) : new Date().toISOString().slice(0, 10);
+
+  var res = await sb.from('clients')
+    .select('id, visit_count, last_visit')
+    .eq('user_id', userId)
+    .ilike('name', clientName.trim())
+    .maybeSingle();
+
+  var updateData = { visit_count: 1 };
+  if (email) updateData.email = email;
+  if (phone) updateData.phone = phone;
+
+  if (res.data) {
+    var lastVisit = res.data.last_visit;
+    updateData.visit_count = (res.data.visit_count || 0) + 1;
+    if (!lastVisit || today > lastVisit) updateData.last_visit = today;
+    await sb.from('clients').update(updateData).eq('id', res.data.id);
+  } else {
+    updateData.user_id    = userId;
+    updateData.name       = clientName.trim();
+    updateData.last_visit = today;
+    await sb.from('clients').insert(updateData);
+  }
+
+  // Rafraîchir la liste locale
+  await loadClients();
+}
+
 (async function() {
   var session = await requireSession();
   if (!session) return;
   currentUserId = session.user.id;
   initSidebar(session.user);
   initLogout();
-  await loadAppts();
+  await Promise.all([loadAppts(), loadClients()]);
 })();

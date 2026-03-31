@@ -100,9 +100,42 @@
   <div class="fiche">
     <div class="fiche-header">
       <span class="fiche-title">Fiche client</span>
-      <button class="modal-close" onclick="closeFiche()">×</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="openEditClient()" style="background:none;border:1px solid var(--border);border-radius:100px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:var(--font-body);color:var(--ink-light);">Modifier</button>
+        <button class="modal-close" onclick="closeFiche()">×</button>
+      </div>
     </div>
     <div id="fiche-content"></div>
+  </div>
+</div>
+
+<!-- MODAL EDITION CLIENT -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Modifier le client</span>
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+    </div>
+    <form id="edit-form">
+      <input type="hidden" id="edit-client-id" />
+      <div class="form-group">
+        <label class="form-label">Prenom et nom</label>
+        <input type="text" class="form-input" id="edit-name" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Telephone</label>
+        <input type="tel" class="form-input" id="edit-phone" placeholder="06 12 34 56 78" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="edit-email" placeholder="sophie@email.fr" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="edit-notes" placeholder="Ex : allergie ammoniac..." />
+      </div>
+      <button type="submit" class="btn-submit" id="edit-submit">Enregistrer</button>
+    </form>
   </div>
 </div>
 

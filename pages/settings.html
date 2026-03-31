@@ -159,42 +159,39 @@
             <div class="settings-card-title">Plan actuel</div>
             <div class="plan-card">
               <div>
-                <div class="plan-badge">Essai gratuit</div>
-                <div class="plan-name">Plan Starter</div>
-                <div class="plan-desc">Jusqu'au <span id="trial-end">—</span></div>
+                <div class="plan-badge" id="current-plan-name">Essai gratuit</div>
+                <div class="plan-desc" id="current-plan-desc">—</div>
               </div>
-              <div class="plan-price">Gratuit</div>
+              <div class="plan-price" id="current-plan-price">Gratuit</div>
             </div>
           </div>
 
           <div class="settings-card">
-            <div class="settings-card-title">Passer au plan Pro</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="settings-card-title">Choisir un plan</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
               <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
                 <div class="plan-name" style="font-size:14px;margin-bottom:.5rem">Starter</div>
                 <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:1rem">29<span style="font-size:1rem;opacity:.6">€/mois</span></div>
-                <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;">
-                  <li>· 100 RDV/mois</li>
-                  <li>· Clients illimités</li>
-                  <li>· CA et statistiques</li>
+                <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem">
+                  <li>· 100 RDV/mois</li><li>· Clients illimités</li>
+                  <li>· CA et statistiques</li><li>· Rappels email</li>
                 </ul>
+                <button id="btn-starter" data-label="Choisir Starter" onclick="subscribe('starter')" style="width:100%;padding:10px;border-radius:100px;border:1px solid var(--border);background:transparent;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;">Choisir Starter</button>
               </div>
               <div style="border:2px solid var(--gold);border-radius:var(--radius);padding:1.5rem;position:relative;">
                 <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:11px;font-weight:500;padding:3px 12px;border-radius:100px;">Recommandé</div>
                 <div class="plan-name" style="font-size:14px;margin-bottom:.5rem">Pro</div>
                 <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:1rem">59<span style="font-size:1rem;opacity:.6">€/mois</span></div>
-                <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;">
-                  <li>· RDV illimités</li>
-                  <li>· Rappels SMS</li>
-                  <li>· Rapports avancés</li>
-                  <li>· Support prioritaire</li>
+                <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem">
+                  <li>· RDV illimités</li><li>· Rappels SMS</li>
+                  <li>· Rapports avancés</li><li>· Support prioritaire</li>
                 </ul>
+                <button id="btn-pro" data-label="Choisir Pro" onclick="subscribe('pro')" style="width:100%;padding:10px;border-radius:100px;border:none;background:var(--gold);color:#fff;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;">Choisir Pro</button>
               </div>
             </div>
-            <div style="margin-top:1rem;font-size:13px;color:var(--ink-light);text-align:center;">
-              💳 Paiement sécurisé par Stripe — disponible prochainement
-            </div>
+            <div style="font-size:12px;color:var(--ink-light);text-align:center;">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
           </div>
+        </div>
         </div>
 
       </div>

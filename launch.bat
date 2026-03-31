@@ -2,13 +2,15 @@
 title Belyo — Lancement
 echo.
 echo  ==========================================
-echo   Belyo - Demarrage du serveur...
+echo   Belyo - Demarrage du serveur local...
 echo  ==========================================
 echo.
 
 :: Se placer dans le dossier du .bat (peu importe d'ou il est lance)
 cd /d "%~dp0"
 echo  [OK] Dossier : %cd%
+echo.
+echo  [INFO] Version en ligne : https://belyo.vercel.app
 echo.
 
 :: Chercher Python
