@@ -37,7 +37,7 @@
 
     <div class="settings-layout">
 
-      <!-- Nav gauche -->
+      <!-- NAV GAUCHE -->
       <nav class="settings-nav">
         <button class="settings-nav-item active" onclick="showSection('salon', this)">🏪 Mon salon</button>
         <button class="settings-nav-item" onclick="showSection('compte', this)">👤 Mon compte</button>
@@ -46,14 +46,13 @@
         <button class="settings-nav-item" onclick="showSection('prestations', this)">✂️ Prestations</button>
       </nav>
 
-      <!-- Contenu -->
-      <div>
+      <!-- CONTENU DROITE -->
+      <div class="settings-content">
 
         <!-- SALON -->
         <div class="settings-section active" id="section-salon">
           <div class="section-title">Mon <em>salon</em></div>
           <p class="section-sub">Informations affichées dans votre tableau de bord.</p>
-
           <div class="settings-card">
             <div class="settings-card-title">Informations du salon</div>
             <div class="success-msg" id="salon-ok">✓ Informations mises à jour !</div>
@@ -84,7 +83,6 @@
         <div class="settings-section" id="section-compte">
           <div class="section-title">Mon <em>compte</em></div>
           <p class="section-sub">Vos informations personnelles.</p>
-
           <div class="settings-card">
             <div class="settings-card-title">Profil</div>
             <div class="avatar-section">
@@ -116,7 +114,6 @@
         <div class="settings-section" id="section-securite">
           <div class="section-title"><em>Sécurité</em></div>
           <p class="section-sub">Gérez votre mot de passe et la sécurité de votre compte.</p>
-
           <div class="settings-card">
             <div class="settings-card-title">Changer le mot de passe</div>
             <div class="success-msg" id="pwd-ok">✓ Mot de passe mis à jour !</div>
@@ -131,7 +128,6 @@
             </div>
             <button class="btn-save" onclick="savePassword()" id="pwd-save-btn">Changer le mot de passe</button>
           </div>
-
           <div class="settings-card">
             <div class="settings-card-title">Informations de connexion</div>
             <div class="info-row">
@@ -143,7 +139,6 @@
               <span class="value" id="last-signin">—</span>
             </div>
           </div>
-
           <div class="danger-zone">
             <div class="danger-title">Zone dangereuse</div>
             <div class="danger-desc">La suppression de votre compte est irréversible. Toutes vos données (RDV, clients, stocks) seront définitivement supprimées.</div>
@@ -155,7 +150,6 @@
         <div class="settings-section" id="section-abonnement">
           <div class="section-title">Mon <em>abonnement</em></div>
           <p class="section-sub">Gérez votre plan et vos informations de facturation.</p>
-
           <div class="settings-card">
             <div class="settings-card-title">Plan actuel</div>
             <div class="plan-card">
@@ -166,7 +160,6 @@
               <div class="plan-price" id="current-plan-price">Gratuit</div>
             </div>
           </div>
-
           <div class="settings-card">
             <div class="settings-card-title">Choisir un plan</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
@@ -193,21 +186,17 @@
             <div style="font-size:12px;color:var(--ink-light);text-align:center;">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
           </div>
         </div>
-        </div>
-
 
         <!-- PRESTATIONS -->
         <div class="settings-section" id="section-prestations">
           <div class="section-title">Mes <em>prestations</em></div>
           <p class="section-sub">Cochez les prestations proposées et ajustez prix et durée.</p>
 
-          <!-- Switch genre -->
           <div style="display:flex;gap:8px;margin-bottom:1.5rem">
             <button class="genre-switch active" id="switch-homme" onclick="switchGenre('homme')">Homme</button>
             <button class="genre-switch" id="switch-femme" onclick="switchGenre('femme')">Femme</button>
           </div>
 
-          <!-- Panel Homme -->
           <div id="panel-homme">
             <div id="prestations-homme"></div>
             <div style="display:flex;gap:8px;margin-top:1rem">
@@ -216,7 +205,6 @@
             </div>
           </div>
 
-          <!-- Panel Femme -->
           <div id="panel-femme" style="display:none">
             <div id="prestations-femme"></div>
             <div style="display:flex;gap:8px;margin-top:1rem">
@@ -227,12 +215,12 @@
 
           <div style="margin-top:1.5rem;display:flex;align-items:center;gap:1rem">
             <button onclick="savePrestations()" class="btn-save">Enregistrer</button>
-            <div class="success-msg" id="prestations-ok" style="margin:0">Prestations enregistrees !</div>
+            <div class="success-msg" id="prestations-ok" style="margin:0">Prestations enregistrées !</div>
           </div>
         </div>
 
-      </div>
-    </div>
+      </div><!-- fin settings-content -->
+    </div><!-- fin settings-layout -->
   </main>
 </div>
 
