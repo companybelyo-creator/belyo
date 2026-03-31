@@ -1,3 +1,127 @@
+// ===== GENRE + PRESTATION =====
+var selectedGenre  = 'homme';
+var PRESTATIONS    = { homme: [], femme: [] };
+var PRIX_DUREE     = { homme: {}, femme: {} };
+var allClients     = [];
+var selectedClient = null;
+
+async function loadPrestationsFromSettings(userId) {
+  var res = await sb.from('salon_settings')
+    .select('prestations, prix_duree')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (res.data && res.data.prestations) {
+    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
+    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
+  }
+  if (res.data && res.data.prix_duree) {
+    PRIX_DUREE = res.data.prix_duree;
+  }
+  updateServiceOptions();
+}
+
+function setGenre(genre) {
+  selectedGenre = genre;
+  var bH = document.getElementById('genre-homme');
+  var bF = document.getElementById('genre-femme');
+  if (bH) bH.classList.toggle('active', genre === 'homme');
+  if (bF) bF.classList.toggle('active', genre === 'femme');
+  updateServiceOptions();
+  var sel = document.getElementById('appt-service-select');
+  var inp = document.getElementById('appt-service');
+  if (sel) sel.value = '';
+  if (inp) { inp.style.display = 'none'; inp.value = ''; inp.required = false; }
+  var pb = document.getElementById('prix-display');
+  if (pb) pb.style.display = 'none';
+}
+
+function updateServiceOptions() {
+  var select = document.getElementById('appt-service-select');
+  if (!select) return;
+  var options = PRESTATIONS[selectedGenre] || [];
+  select.innerHTML = '<option value="">-- Prestation --</option>'
+    + options.map(function(p) { return '<option value="' + p + '">' + p + '</option>'; }).join('');
+}
+
+function onServiceSelect(val) {
+  var input      = document.getElementById('appt-service');
+  var prixBlock  = document.getElementById('prix-display');
+  var prixLabel  = document.getElementById('appt-prix-label');
+  var priceInput = document.getElementById('appt-price');
+  if (!input) return;
+  if (val === 'Autre') {
+    input.style.display = 'block'; input.required = true; input.value = ''; input.focus();
+    if (prixBlock) prixBlock.style.display = 'none';
+  } else {
+    input.style.display = 'none'; input.required = false; input.value = val || '';
+    if (val) {
+      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
+      if (pd && pd.prix !== undefined) {
+        if (prixLabel)  prixLabel.textContent = pd.prix;
+        if (priceInput) priceInput.value = pd.prix;
+        if (prixBlock)  prixBlock.style.display = 'block';
+      } else {
+        if (prixBlock) prixBlock.style.display = 'none';
+      }
+    } else {
+      if (prixBlock) prixBlock.style.display = 'none';
+    }
+  }
+}
+
+function onClientInput(val) {
+  selectedClient = null;
+  var block = document.getElementById('client-info-block');
+  var suggestions = document.getElementById('client-suggestions');
+  if (!val.trim()) { if (suggestions) suggestions.style.display='none'; if (block) block.style.display='none'; return; }
+  var q = val.toLowerCase();
+  var matches = allClients.filter(function(c) { return c.name.toLowerCase().includes(q); });
+  if (!suggestions) return;
+  if (matches.length === 0) { suggestions.style.display='none'; showClientInfo(null, val.trim()); return; }
+  suggestions.style.display = 'block';
+  suggestions.innerHTML = matches.map(function(c) {
+    var did = c.id;
+    return '<div onclick="selectClient(&quot;' + did + '&quot;)" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)">'
+      + '<strong>' + c.name + '</strong>'
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function selectClient(id) { id = String(id);
+  var client = allClients.find(function(c) { return c.id === id; });
+  if (!client) return;
+  selectedClient = client;
+  document.getElementById('appt-client').value = client.name;
+  document.getElementById('client-suggestions').style.display = 'none';
+  showClientInfo(client, null);
+}
+
+function showClientInfo(client, newName) {
+  var block = document.getElementById('client-info-block');
+  var badge = document.getElementById('client-new-badge');
+  var label = document.getElementById('client-info-label');
+  var email = document.getElementById('client-email');
+  var phone = document.getElementById('client-phone');
+  if (!block) return;
+  block.style.display = 'block';
+  if (client) {
+    if (badge) badge.style.display = 'none';
+    if (label) label.textContent   = client.name;
+    if (email) email.value         = client.email || '';
+    if (phone) phone.value         = client.phone || '';
+  } else {
+    if (badge) badge.style.display = 'inline-block';
+    if (label) label.textContent   = newName || 'Nouveau client';
+    if (email) email.value = ''; if (phone) phone.value = '';
+  }
+}
+
+document.addEventListener('click', function(e) {
+  var s = document.getElementById('client-suggestions');
+  if (s && !s.contains(e.target) && e.target.id !== 'appt-client') s.style.display = 'none';
+});
+
 console.log('[Belyo] dashboard.js charge');
 
 // ===== HELPERS =====
@@ -61,6 +185,9 @@ console.log('[Belyo] sb disponible ?', typeof sb);
     currentUserId = session.user.id;
     console.log('[Belyo] User ID:', currentUserId);
     await checkSubscription(session.user.id, session.user.created_at);
+    var clientsRes = await sb.from('clients').select('id, name, email, phone').eq('user_id', session.user.id);
+    allClients = clientsRes.data || [];
+    await loadPrestationsFromSettings(session.user.id);
 
     var meta = session.user.user_metadata || {};
     document.getElementById('greeting-name').textContent = meta.first_name || 'vous';

@@ -59,25 +59,39 @@ function updateServiceOptions() {
 }
 
 function onServiceSelect(val) {
-  var input = document.getElementById('appt-service');
+  var input      = document.getElementById('appt-service');
+  var prixBlock  = document.getElementById('prix-display');
+  var prixLabel  = document.getElementById('appt-prix-label');
+  var priceInput = document.getElementById('appt-price');
+
   if (!input) return;
+
   if (val === 'Autre') {
     input.style.display = 'block';
     input.required = true;
     input.value = '';
     input.focus();
+    if (prixBlock) prixBlock.style.display = 'none';
   } else {
     input.style.display = 'none';
     input.required = false;
     input.value = val || '';
-  }
 
-  // Auto-remplir le prix depuis les paramètres
-  var priceInput = document.getElementById('appt-price');
-  if (priceInput && val && val !== 'Autre') {
-    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
-    if (pd && pd.prix) priceInput.value = pd.prix;
-    else priceInput.value = '';
+    // Afficher le prix depuis les paramètres
+    if (val) {
+      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
+      if (pd && pd.prix !== undefined) {
+        if (prixLabel)  prixLabel.textContent = pd.prix;
+        if (priceInput) priceInput.value = pd.prix;
+        if (prixBlock)  prixBlock.style.display = 'block';
+      } else {
+        if (prixBlock) prixBlock.style.display = 'none';
+        if (priceInput) priceInput.value = '';
+      }
+    } else {
+      if (prixBlock) prixBlock.style.display = 'none';
+      if (priceInput) priceInput.value = '';
+    }
   }
 }
 
@@ -376,13 +390,15 @@ function closeModal() {
   var suggestions = document.getElementById('client-suggestions');
   if (block) block.style.display = 'none';
   if (suggestions) suggestions.style.display = 'none';
-  // Reset genre + service
+  // Reset genre + service + prix
   selectedGenre = 'homme';
   setGenre('homme');
   var input = document.getElementById('appt-service');
   if (input) { input.style.display = 'none'; input.value = ''; }
   var select = document.getElementById('appt-service-select');
   if (select) select.value = '';
+  var prixBlock = document.getElementById('prix-display');
+  if (prixBlock) prixBlock.style.display = 'none';
 }
 
 async function updateStatus(id, status) {
