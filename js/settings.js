@@ -284,65 +284,61 @@ function renderPrestations(genre) {
 
   var active = activePrestations[genre] || [];
   var all    = getAllForGenre(genre);
+  container._all = all;
 
-  container.innerHTML = all.map(function(p, idx) {
+  container.innerHTML = '<div class="prest-grid">' + all.map(function(p, idx) {
     var isActive = active.indexOf(p.name) !== -1;
     var isCustom = (customPrestations[genre] || []).some(function(c) { return c.name === p.name; });
+    var pd       = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
+    var g        = genre;
 
-    var style = 'display:inline-flex;align-items:center;gap:6px;padding:7px 14px;'
-      + 'border-radius:100px;cursor:pointer;font-size:13px;'
-      + 'border:1px solid ' + (isActive ? 'var(--ink)' : 'var(--border)') + ';'
-      + 'background:' + (isActive ? 'var(--ink)' : 'var(--white)') + ';'
-      + 'color:' + (isActive ? 'var(--white)' : 'var(--ink-light)') + ';'
-      + 'transition:all .15s;user-select:none';
-
-    var html = '<div onclick="togglePrestation(\'' + genre + '\',' + idx + ')" style="' + style + '">';
-    html += (isActive ? '\u2713 ' : '') + p.name;
+    var card = '<div class="prest-card' + (isActive ? ' active' : '') + '">';
+    card += '<div class="prest-card-head">';
+    card += '<div class="prest-check" onclick="togglePrestation(' + "'" + g + "'," + idx + ')">';
+    card += '<span class="prest-checkbox' + (isActive ? ' checked' : '') + '">' + (isActive ? '\u2713' : '') + '</span>';
+    card += '<span class="prest-name">' + p.name + '</span>';
+    card += '</div>';
     if (isCustom) {
-      html += '<span onclick="event.stopPropagation();removeCustom(\'' + genre + '\',' + idx + ')"'
-        + ' style="margin-left:4px;opacity:.6;font-size:14px;line-height:1">\u00d7</span>';
+      card += '<button onclick="removeCustom(' + "'" + g + "'," + idx + ')" class="prest-del">\u00d7</button>';
     }
-    html += '</div>';
-    return html;
-  }).join('');
-
-  container._all = all;
-  // Mettre à jour le tableau prix en même temps
-  renderPrix(genre);
+    card += '</div>';
+    card += '<div class="prest-fields">';
+    card += '<div class="prest-field">';
+    card += '<label class="prest-field-label">Prix</label>';
+    card += '<div class="prest-field-wrap">';
+    card += '<input type="number" min="0" step="1" value="' + (pd.prix !== undefined && pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
+    card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'prix\',this.value)" />';
+    card += '<span>€</span></div></div>';
+    card += '<div class="prest-field">';
+    card += '<label class="prest-field-label">Durée</label>';
+    card += '<div class="prest-field-wrap">';
+    card += '<input type="number" min="5" step="5" value="' + (pd.duree !== undefined && pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
+    card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'duree\',this.value)" />';
+    card += '<span>min</span></div></div>';
+    card += '</div>';
+    card += '</div>';
+    return card;
+  }).join('') + '</div>';
 }
 
-function renderPrix(genre) {
-  var container = document.getElementById('prix-' + genre);
-  if (!container) return;
-
-  var active = activePrestations[genre] || [];
-  var all    = getAllForGenre(genre);
-  var active_items = all.filter(function(p) { return active.indexOf(p.name) !== -1; });
-
-  if (active_items.length === 0) {
-    container.innerHTML = '<p style="font-size:13px;color:var(--ink-light)">Aucune prestation active.</p>';
-    return;
-  }
-
-  var header = '<div class="prix-row" style="font-size:11px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em">'
-    + '<span>Prestation</span><span style="text-align:right">Prix (€)</span><span style="text-align:right">Durée (min)</span></div>';
-
-  var rows = active_items.map(function(p) {
-    var pd    = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
-    var sname = p.name.replace(/'/g, '&#39;');
-    return '<div class="prix-row">'
-      + '<span class="prix-label">' + p.name + '</span>'
-      + '<input type="number" class="prix-input" min="0" step="1" value="' + (pd.prix || '') + '"'
-      + ' placeholder="0" onchange="updatePrixDuree(\'' + genre + '\',\'' + sname + '\',\'prix\',this.value)" />'
-      + '<input type="number" class="prix-input" min="5" step="5" value="' + (pd.duree || '') + '"'
-      + ' placeholder="30" onchange="updatePrixDuree(\'' + genre + '\',\'' + sname + '\',\'duree\',this.value)" />'
-      + '</div>';
-  }).join('');
-
-  container.innerHTML = header + rows;
+function updatePrixDuree(genre, idx, field, value) {
+  var container = document.getElementById('prestations-' + genre);
+  var all  = container ? container._all : [];
+  var item = all[idx];
+  if (!item) return;
+  var name = item.name;
+  if (!prixDuree[genre]) prixDuree[genre] = {};
+  if (!prixDuree[genre][name]) prixDuree[genre][name] = {};
+  prixDuree[genre][name][field] = parseFloat(value) || 0;
 }
 
-function updatePrixDuree(genre, name, field, value) {
+
+function updatePrixDuree(genre, idx, field, value) {
+  var container = document.getElementById('prestations-' + genre);
+  var all  = container ? container._all : [];
+  var item = all[idx];
+  if (!item) return;
+  var name = item.name;
   if (!prixDuree[genre]) prixDuree[genre] = {};
   if (!prixDuree[genre][name]) prixDuree[genre][name] = {};
   prixDuree[genre][name][field] = parseFloat(value) || 0;

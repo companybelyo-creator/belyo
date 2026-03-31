@@ -199,7 +199,7 @@
         <!-- PRESTATIONS -->
         <div class="settings-section" id="section-prestations">
           <div class="section-title">Mes <em>prestations</em></div>
-          <p class="section-sub">Gérez les prestations, prix et durées pour chaque genre.</p>
+          <p class="section-sub">Cochez les prestations proposées et ajustez prix et durée.</p>
 
           <!-- Switch genre -->
           <div style="display:flex;gap:8px;margin-bottom:1.5rem">
@@ -209,42 +209,26 @@
 
           <!-- Panel Homme -->
           <div id="panel-homme">
-            <div class="settings-card">
-              <div class="settings-card-title">Prestations actives</div>
-              <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem">Cliquez pour activer ou désactiver une prestation.</p>
-              <div id="prestations-homme" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.2rem"></div>
-              <div style="display:flex;gap:8px">
-                <input type="text" class="form-input" id="new-prestation-homme" placeholder="Nouvelle prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('homme')}" />
-                <button onclick="addPrestation('homme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap">+ Ajouter</button>
-              </div>
-            </div>
-            <div class="settings-card">
-              <div class="settings-card-title">Prix et durées</div>
-              <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem">Renseignez le prix et la durée de chaque prestation active.</p>
-              <div id="prix-homme"></div>
+            <div id="prestations-homme"></div>
+            <div style="display:flex;gap:8px;margin-top:1rem">
+              <input type="text" class="form-input" id="new-prestation-homme" placeholder="Nouvelle prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('homme')}" />
+              <button onclick="addPrestation('homme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap">+ Ajouter</button>
             </div>
           </div>
 
           <!-- Panel Femme -->
           <div id="panel-femme" style="display:none">
-            <div class="settings-card">
-              <div class="settings-card-title">Prestations actives</div>
-              <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem">Cliquez pour activer ou désactiver une prestation.</p>
-              <div id="prestations-femme" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.2rem"></div>
-              <div style="display:flex;gap:8px">
-                <input type="text" class="form-input" id="new-prestation-femme" placeholder="Nouvelle prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('femme')}" />
-                <button onclick="addPrestation('femme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap">+ Ajouter</button>
-              </div>
-            </div>
-            <div class="settings-card">
-              <div class="settings-card-title">Prix et durées</div>
-              <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem">Renseignez le prix et la durée de chaque prestation active.</p>
-              <div id="prix-femme"></div>
+            <div id="prestations-femme"></div>
+            <div style="display:flex;gap:8px;margin-top:1rem">
+              <input type="text" class="form-input" id="new-prestation-femme" placeholder="Nouvelle prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('femme')}" />
+              <button onclick="addPrestation('femme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap">+ Ajouter</button>
             </div>
           </div>
 
-          <button onclick="savePrestations()" class="btn-submit" style="max-width:200px">Enregistrer</button>
-          <div class="success-msg" id="prestations-ok">Prestations enregistrées !</div>
+          <div style="margin-top:1.5rem;display:flex;align-items:center;gap:1rem">
+            <button onclick="savePrestations()" class="btn-save">Enregistrer</button>
+            <div class="success-msg" id="prestations-ok" style="margin:0">Prestations enregistrees !</div>
+          </div>
         </div>
 
       </div>
