@@ -19,6 +19,15 @@
         <a href="pages/login.html" class="btn-nav">Connexion</a>
         <a href="pages/register.html" class="btn-nav btn-primary">Essai gratuit</a>
       </div>
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="nav-mobile-menu" id="nav-mobile-menu">
+      <a href="#features" onclick="closeNavMenu()">Fonctionnalités</a>
+      <a href="#pricing" onclick="closeNavMenu()">Tarifs</a>
+      <a href="pages/login.html" class="btn-nav">Connexion</a>
+      <a href="pages/register.html" class="btn-nav btn-primary">Essai gratuit →</a>
     </div>
   </nav>
 
@@ -131,5 +140,35 @@
     </div>
   </footer>
 
+  <style>
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
+      .hero { padding-top: 80px; }
+      .hero h1 { font-size: clamp(2.2rem, 8vw, 3.5rem); }
+      .features-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 360px; }
+    }
+    @media (max-width: 480px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .nav-inner { padding: 0 1.2rem; }
+      .hero { padding: 80px 1.2rem 40px; }
+      .container { padding: 0 1.2rem; }
+    }
+  </style>
+  <script>
+    function toggleNavMenu() {
+      var btn  = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('nav-mobile-menu');
+      btn.classList.toggle('open');
+      menu.classList.toggle('open');
+    }
+    function closeNavMenu() {
+      document.getElementById('nav-hamburger').classList.remove('open');
+      document.getElementById('nav-mobile-menu').classList.remove('open');
+    }
+    // Fermer le menu en scrollant
+    window.addEventListener('scroll', closeNavMenu);
+  </script>
 </body>
 </html>
