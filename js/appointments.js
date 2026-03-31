@@ -20,7 +20,7 @@ var PRESTATIONS = {
 
 async function loadPrestationsFromSettings(userId) {
   var res = await sb.from('salon_settings')
-    .select('prestations')
+    .select('prestations, custom_prestations')
     .eq('user_id', userId)
     .maybeSingle();
   if (res.data && res.data.prestations) {

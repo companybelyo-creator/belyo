@@ -1,3 +1,111 @@
+// ===== PRESTATIONS =====
+// Toutes les prestations disponibles (base)
+var ALL_PRESTATIONS = {
+  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Estompage', 'Soin', 'Coloration homme'],
+  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Mèches', 'Soin', 'Lissage', 'Permanente'],
+};
+
+// Prestations activées pour ce salon
+var activePrestations = { homme: [], femme: [] };
+// Prestations custom créées par le salon
+var customPrestations = { homme: [], femme: [] };
+
+async function loadPrestations() {
+  var res = await sb.from('salon_settings')
+    .select('prestations, custom_prestations')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (res.data && res.data.prestations) {
+    activePrestations  = res.data.prestations;
+    customPrestations  = res.data.custom_prestations || { homme: [], femme: [] };
+  } else {
+    // Par défaut : tout coché
+    activePrestations  = JSON.parse(JSON.stringify(ALL_PRESTATIONS));
+    customPrestations  = { homme: [], femme: [] };
+  }
+  renderPrestations('homme');
+  renderPrestations('femme');
+}
+
+function renderPrestations(genre) {
+  var container = document.getElementById('prestations-' + genre);
+  if (!container) return;
+
+  var active  = activePrestations[genre]  || [];
+  var custom  = customPrestations[genre]  || [];
+  var base    = ALL_PRESTATIONS[genre]    || [];
+
+  // Toutes les prestations à afficher = base + custom
+  var all = base.concat(custom.filter(function(p) { return !base.includes(p); }));
+
+  container.innerHTML = all.map(function(p) {
+    var isActive  = active.includes(p);
+    var isCustom  = custom.includes(p);
+    return '<div onclick="togglePrestation("' + genre + '','' + p.replace(/'/g, "\'") + '")" style="'
+      + 'display:inline-flex;align-items:center;gap:6px;'
+      + 'padding:7px 14px;border-radius:100px;cursor:pointer;font-size:13px;'
+      + 'border:1px solid ' + (isActive ? 'var(--ink)' : 'var(--border)') + ';'
+      + 'background:' + (isActive ? 'var(--ink)' : 'var(--white)') + ';'
+      + 'color:' + (isActive ? 'var(--white)' : 'var(--ink-light)') + ';'
+      + 'transition:all .15s;user-select:none">'
+      + (isActive ? '✓ ' : '') + p
+      + (isCustom ? '<span onclick="event.stopPropagation();removeCustom("' + genre + '","' + p.replace(/'/g, "\'") + '")" style="margin-left:4px;opacity:.6;font-size:14px">×</span>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function togglePrestation(genre, name) {
+  var active = activePrestations[genre] || [];
+  if (active.includes(name)) {
+    activePrestations[genre] = active.filter(function(p) { return p !== name; });
+  } else {
+    activePrestations[genre] = active.concat([name]);
+  }
+  renderPrestations(genre);
+}
+
+function addPrestation(genre) {
+  var input = document.getElementById('new-prestation-' + genre);
+  var val   = input.value.trim();
+  if (!val) return;
+  if (!customPrestations[genre]) customPrestations[genre] = [];
+  if (!activePrestations[genre]) activePrestations[genre] = [];
+  var base = ALL_PRESTATIONS[genre] || [];
+  if (base.includes(val) || customPrestations[genre].includes(val)) {
+    // Si elle existe déjà, juste l'activer
+    if (!activePrestations[genre].includes(val)) activePrestations[genre].push(val);
+  } else {
+    customPrestations[genre].push(val);
+    activePrestations[genre].push(val);
+  }
+  renderPrestations(genre);
+  input.value = '';
+}
+
+function removeCustom(genre, name) {
+  customPrestations[genre]  = (customPrestations[genre]  || []).filter(function(p) { return p !== name; });
+  activePrestations[genre]  = (activePrestations[genre]  || []).filter(function(p) { return p !== name; });
+  renderPrestations(genre);
+}
+
+async function savePrestations() {
+  var btn = document.querySelector('#section-prestations .btn-submit');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  showMsg('prestations-ok', false);
+
+  var res = await sb.from('salon_settings').upsert({
+    user_id:          currentUser.id,
+    prestations:      activePrestations,
+    custom_prestations: customPrestations,
+  }, { onConflict: 'user_id' });
+
+  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  showMsg('prestations-ok', true);
+  setTimeout(function() { showMsg('prestations-ok', false); }, 3000);
+}
+
 // ============================================================
 // SETTINGS.JS
 // ============================================================
@@ -192,6 +300,7 @@ async function loadSubscription() {
   initLogout();
   populateFields(currentUser);
   await loadSubscription();
+  await loadPrestations();
 
   // Si redirection depuis Stripe après paiement
   if (window.location.search.includes('subscribed=1')) {

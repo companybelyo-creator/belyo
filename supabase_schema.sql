@@ -97,3 +97,7 @@ ALTER TABLE salon_settings ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "salon_settings_all" ON salon_settings
   FOR ALL USING (auth.uid() = user_id);
+
+-- Ajouter custom_prestations à salon_settings
+ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS
+  custom_prestations JSONB DEFAULT '{"homme":[],"femme":[]}';
