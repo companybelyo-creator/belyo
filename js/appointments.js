@@ -10,6 +10,61 @@ var currentTab     = 'all';
 var currentView    = 'list';
 var weekOffset     = 0;
 
+// ===== GENRE + PRESTATION =====
+var selectedGenre = 'Homme';
+
+function setGenre(genre) {
+  selectedGenre = genre;
+  ['homme','femme','mixte'].forEach(function(g) {
+    var btn = document.getElementById('genre-' + g);
+    if (btn) btn.classList.remove('active');
+  });
+  var activeId = genre === 'Homme' ? 'homme' : genre === 'Femme' ? 'femme' : 'mixte';
+  var activeBtn = document.getElementById('genre-' + activeId);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Mettre à jour les options du select selon le genre
+  updateServiceOptions(genre);
+}
+
+function updateServiceOptions(genre) {
+  var select = document.getElementById('appt-service-select');
+  if (!select) return;
+  var optgroups = select.querySelectorAll('optgroup');
+  optgroups.forEach(function(og) {
+    // Cacher "Barbe" pour les femmes
+    if (og.label === 'Barbe') {
+      og.style.display = genre === 'Femme' ? 'none' : '';
+    }
+    // Cacher "Coupe femme" pour les hommes
+    og.querySelectorAll('option').forEach(function(opt) {
+      if (opt.value === 'Coupe femme' && genre === 'Homme') opt.style.display = 'none';
+      else if (opt.value === 'Coupe homme' && genre === 'Femme') opt.style.display = 'none';
+      else opt.style.display = '';
+    });
+  });
+}
+
+function onServiceSelect(val) {
+  var input  = document.getElementById('appt-service');
+  var select = document.getElementById('appt-service-select');
+  if (val === 'autre') {
+    // Afficher le champ texte libre
+    input.style.display = 'block';
+    input.required = true;
+    input.focus();
+  } else if (val) {
+    // Remplir le champ caché avec la valeur du select
+    input.style.display = 'none';
+    input.required = false;
+    input.value = val + (selectedGenre ? ' — ' + selectedGenre : '');
+  } else {
+    input.style.display = 'none';
+    input.required = false;
+    input.value = '';
+  }
+}
+
 // ===== AUTOCOMPLETE CLIENT =====
 async function loadClients() {
   var res = await sb.from('clients').select('id, name, email, phone')
@@ -297,6 +352,13 @@ function closeModal() {
   var suggestions = document.getElementById('client-suggestions');
   if (block) block.style.display = 'none';
   if (suggestions) suggestions.style.display = 'none';
+  // Reset genre + service
+  selectedGenre = 'Homme';
+  setGenre('Homme');
+  var input = document.getElementById('appt-service');
+  if (input) { input.style.display = 'none'; input.value = ''; }
+  var select = document.getElementById('appt-service-select');
+  if (select) select.value = '';
 }
 
 async function updateStatus(id, status) {
@@ -333,7 +395,14 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   var res = await sb.from('appointments').insert({
     user_id:     currentUserId,
     client_name: clientName,
-    service:     document.getElementById('appt-service').value.trim(),
+    service:     (function() {
+      var sel = document.getElementById('appt-service-select');
+      var inp = document.getElementById('appt-service');
+      if (sel && sel.value && sel.value !== 'autre') {
+        return sel.value + (selectedGenre ? ' — ' + selectedGenre : '');
+      }
+      return inp ? inp.value.trim() : '';
+    })(),
     datetime:    datetime,
     price:       priceVal ? parseFloat(priceVal) : null,
     notes:       document.getElementById('appt-notes').value.trim() || null,

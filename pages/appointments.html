@@ -96,7 +96,45 @@
         </div>
       </div>
 
-      <div class="form-group"><label class="form-label">Prestation</label><input type="text" class="form-input" id="appt-service" placeholder="Ex : Coupe + couleur" required /></div>
+      <!-- Genre -->
+      <div class="form-group">
+        <label class="form-label">Genre</label>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="genre-btn active" id="genre-homme" onclick="setGenre('Homme')">Homme</button>
+          <button type="button" class="genre-btn" id="genre-femme" onclick="setGenre('Femme')">Femme</button>
+          <button type="button" class="genre-btn" id="genre-mixte" onclick="setGenre('')">Mixte</button>
+        </div>
+      </div>
+
+      <!-- Prestation -->
+      <div class="form-group">
+        <label class="form-label">Prestation</label>
+        <select class="form-input" id="appt-service-select" onchange="onServiceSelect(this.value)" style="cursor:pointer">
+          <option value="">-- Choisir une prestation --</option>
+          <optgroup label="Coupe">
+            <option value="Coupe homme">Coupe homme</option>
+            <option value="Coupe femme">Coupe femme</option>
+            <option value="Dégradé">Dégradé</option>
+          </optgroup>
+          <optgroup label="Barbe">
+            <option value="Barbe">Barbe</option>
+            <option value="Coupe + Barbe">Coupe + Barbe</option>
+            <option value="Taille barbe">Taille barbe</option>
+          </optgroup>
+          <optgroup label="Couleur">
+            <option value="Coloration">Coloration</option>
+            <option value="Balayage">Balayage</option>
+            <option value="Mèches">Mèches</option>
+          </optgroup>
+          <optgroup label="Soins & Coiffage">
+            <option value="Brushing">Brushing</option>
+            <option value="Soin">Soin</option>
+            <option value="Lissage">Lissage</option>
+          </optgroup>
+          <option value="autre">Autre (saisir manuellement)</option>
+        </select>
+        <input type="text" class="form-input" id="appt-service" placeholder="Ex : Coupe + couleur" required style="display:none;margin-top:8px" />
+      </div>
       <div class="form-group"><label class="form-label">Date et heure</label><input type="datetime-local" class="form-input" id="appt-datetime" required /></div>
       <div class="form-group"><label class="form-label">Prix (€)</label><input type="number" class="form-input" id="appt-price" placeholder="50" min="0" step="0.01" /></div>
       <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>

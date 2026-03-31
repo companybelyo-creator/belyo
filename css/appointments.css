@@ -1,3 +1,18 @@
+/* ===== GENRE BUTTONS ===== */
+.genre-btn {
+  padding: 8px 20px;
+  border-radius: 100px;
+  border: 1px solid var(--border);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-light);
+  cursor: pointer;
+  transition: all .15s;
+}
+.genre-btn:hover { background: var(--cream-dark); color: var(--ink); }
+.genre-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
 /* ===== TOOLBAR ===== */
 .toolbar {
   display: flex;
