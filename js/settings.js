@@ -1,111 +1,3 @@
-// ===== PRESTATIONS =====
-// Toutes les prestations disponibles (base)
-var ALL_PRESTATIONS = {
-  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Estompage', 'Soin', 'Coloration homme'],
-  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Mèches', 'Soin', 'Lissage', 'Permanente'],
-};
-
-// Prestations activées pour ce salon
-var activePrestations = { homme: [], femme: [] };
-// Prestations custom créées par le salon
-var customPrestations = { homme: [], femme: [] };
-
-async function loadPrestations() {
-  var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations')
-    .eq('user_id', currentUser.id)
-    .maybeSingle();
-
-  if (res.data && res.data.prestations) {
-    activePrestations  = res.data.prestations;
-    customPrestations  = res.data.custom_prestations || { homme: [], femme: [] };
-  } else {
-    // Par défaut : tout coché
-    activePrestations  = JSON.parse(JSON.stringify(ALL_PRESTATIONS));
-    customPrestations  = { homme: [], femme: [] };
-  }
-  renderPrestations('homme');
-  renderPrestations('femme');
-}
-
-function renderPrestations(genre) {
-  var container = document.getElementById('prestations-' + genre);
-  if (!container) return;
-
-  var active  = activePrestations[genre]  || [];
-  var custom  = customPrestations[genre]  || [];
-  var base    = ALL_PRESTATIONS[genre]    || [];
-
-  // Toutes les prestations à afficher = base + custom
-  var all = base.concat(custom.filter(function(p) { return !base.includes(p); }));
-
-  container.innerHTML = all.map(function(p) {
-    var isActive  = active.includes(p);
-    var isCustom  = custom.includes(p);
-    return '<div onclick="togglePrestation("' + genre + '','' + p.replace(/'/g, "\'") + '")" style="'
-      + 'display:inline-flex;align-items:center;gap:6px;'
-      + 'padding:7px 14px;border-radius:100px;cursor:pointer;font-size:13px;'
-      + 'border:1px solid ' + (isActive ? 'var(--ink)' : 'var(--border)') + ';'
-      + 'background:' + (isActive ? 'var(--ink)' : 'var(--white)') + ';'
-      + 'color:' + (isActive ? 'var(--white)' : 'var(--ink-light)') + ';'
-      + 'transition:all .15s;user-select:none">'
-      + (isActive ? '✓ ' : '') + p
-      + (isCustom ? '<span onclick="event.stopPropagation();removeCustom("' + genre + '","' + p.replace(/'/g, "\'") + '")" style="margin-left:4px;opacity:.6;font-size:14px">×</span>' : '')
-      + '</div>';
-  }).join('');
-}
-
-function togglePrestation(genre, name) {
-  var active = activePrestations[genre] || [];
-  if (active.includes(name)) {
-    activePrestations[genre] = active.filter(function(p) { return p !== name; });
-  } else {
-    activePrestations[genre] = active.concat([name]);
-  }
-  renderPrestations(genre);
-}
-
-function addPrestation(genre) {
-  var input = document.getElementById('new-prestation-' + genre);
-  var val   = input.value.trim();
-  if (!val) return;
-  if (!customPrestations[genre]) customPrestations[genre] = [];
-  if (!activePrestations[genre]) activePrestations[genre] = [];
-  var base = ALL_PRESTATIONS[genre] || [];
-  if (base.includes(val) || customPrestations[genre].includes(val)) {
-    // Si elle existe déjà, juste l'activer
-    if (!activePrestations[genre].includes(val)) activePrestations[genre].push(val);
-  } else {
-    customPrestations[genre].push(val);
-    activePrestations[genre].push(val);
-  }
-  renderPrestations(genre);
-  input.value = '';
-}
-
-function removeCustom(genre, name) {
-  customPrestations[genre]  = (customPrestations[genre]  || []).filter(function(p) { return p !== name; });
-  activePrestations[genre]  = (activePrestations[genre]  || []).filter(function(p) { return p !== name; });
-  renderPrestations(genre);
-}
-
-async function savePrestations() {
-  var btn = document.querySelector('#section-prestations .btn-submit');
-  btn.disabled = true; btn.textContent = 'Enregistrement...';
-  showMsg('prestations-ok', false);
-
-  var res = await sb.from('salon_settings').upsert({
-    user_id:          currentUser.id,
-    prestations:      activePrestations,
-    custom_prestations: customPrestations,
-  }, { onConflict: 'user_id' });
-
-  btn.disabled = false; btn.textContent = 'Enregistrer';
-  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
-  showMsg('prestations-ok', true);
-  setTimeout(function() { showMsg('prestations-ok', false); }, 3000);
-}
-
 // ============================================================
 // SETTINGS.JS
 // ============================================================
@@ -141,19 +33,20 @@ function populateFields(user) {
   document.getElementById('last-name').value     = meta.last_name     || '';
 
   var fullname = [meta.first_name, meta.last_name].filter(Boolean).join(' ') || user.email;
-  document.getElementById('profile-fullname').textContent  = fullname;
+  document.getElementById('profile-fullname').textContent      = fullname;
   document.getElementById('profile-email-display').textContent = user.email;
-  document.getElementById('profile-since').textContent     = formatDate(user.created_at);
-  document.getElementById('avatar-initials').textContent   = initials(fullname);
-  document.getElementById('security-email').textContent    = user.email;
-  document.getElementById('last-signin').textContent       = formatDate(user.last_sign_in_at);
+  document.getElementById('profile-since').textContent         = formatDate(user.created_at);
+  document.getElementById('avatar-initials').textContent       = initials(fullname);
+  document.getElementById('security-email').textContent        = user.email;
+  document.getElementById('last-signin').textContent           = formatDate(user.last_sign_in_at);
 
   var created  = new Date(user.created_at);
   var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
-  var trialEl = document.getElementById('trial-end');
+  var trialEl  = document.getElementById('trial-end');
   if (trialEl) trialEl.textContent = formatDate(trialEnd.toISOString());
 }
 
+// ===== SALON =====
 async function saveSalon() {
   var btn = document.getElementById('salon-save-btn');
   btn.disabled = true; btn.textContent = 'Enregistrement...';
@@ -173,6 +66,7 @@ async function saveSalon() {
   setTimeout(function() { showMsg('salon-ok', false); }, 3000);
 }
 
+// ===== COMPTE =====
 async function saveCompte() {
   var btn = document.getElementById('compte-save-btn');
   btn.disabled = true; btn.textContent = 'Enregistrement...';
@@ -185,35 +79,36 @@ async function saveCompte() {
   btn.disabled = false; btn.textContent = 'Enregistrer';
   if (res.error) { document.getElementById('compte-err').textContent = res.error.message; showMsg('compte-err', true); return; }
   var fullname = [firstName, lastName].filter(Boolean).join(' ');
-  document.getElementById('profile-fullname').textContent  = fullname || res.data.user.email;
-  document.getElementById('avatar-initials').textContent   = initials(fullname || res.data.user.email);
+  document.getElementById('profile-fullname').textContent = fullname || res.data.user.email;
+  document.getElementById('avatar-initials').textContent  = initials(fullname || res.data.user.email);
   showMsg('compte-ok', true);
   setTimeout(function() { showMsg('compte-ok', false); }, 3000);
 }
 
+// ===== SECURITE =====
 async function savePassword() {
-  var btn = document.getElementById('pwd-save-btn');
-  var pwd = document.getElementById('new-pwd').value;
-  var confirm = document.getElementById('confirm-pwd').value;
+  var btn     = document.getElementById('pwd-save-btn');
+  var pwd     = document.getElementById('new-pwd').value;
+  var conf    = document.getElementById('confirm-pwd').value;
   showMsg('pwd-ok', false); showMsg('pwd-err', false);
 
-  if (pwd.length < 8) { document.getElementById('pwd-err').textContent = 'Au moins 8 caractères.'; showMsg('pwd-err', true); return; }
-  if (pwd !== confirm) { document.getElementById('pwd-err').textContent = 'Les mots de passe ne correspondent pas.'; showMsg('pwd-err', true); return; }
+  if (pwd.length < 8) { document.getElementById('pwd-err').textContent = 'Au moins 8 caracteres.'; showMsg('pwd-err', true); return; }
+  if (pwd !== conf)   { document.getElementById('pwd-err').textContent = 'Les mots de passe ne correspondent pas.'; showMsg('pwd-err', true); return; }
 
-  btn.disabled = true; btn.textContent = 'Mise à jour...';
+  btn.disabled = true; btn.textContent = 'Mise a jour...';
   var res = await sb.auth.updateUser({ password: pwd });
   btn.disabled = false; btn.textContent = 'Changer le mot de passe';
 
   if (res.error) { document.getElementById('pwd-err').textContent = res.error.message; showMsg('pwd-err', true); return; }
-  document.getElementById('new-pwd').value = '';
+  document.getElementById('new-pwd').value     = '';
   document.getElementById('confirm-pwd').value = '';
   showMsg('pwd-ok', true);
   setTimeout(function() { showMsg('pwd-ok', false); }, 3000);
 }
 
 function confirmDeleteAccount() {
-  if (confirm('Êtes-vous sûr ? Cette action est irréversible.')) {
-    showToast('Fonctionnalité disponible prochainement.', 'error');
+  if (confirm('Etes-vous sur ? Cette action est irreversible.')) {
+    showToast('Fonctionnalite disponible prochainement.', 'error');
   }
 }
 
@@ -223,8 +118,8 @@ async function subscribe(plan) {
   if (btn) { btn.disabled = true; btn.textContent = 'Redirection...'; }
 
   try {
-    var session = await sb.auth.getSession();
-    var token   = session.data.session?.access_token;
+    var sessionRes = await sb.auth.getSession();
+    var token = sessionRes.data.session ? sessionRes.data.session.access_token : null;
     if (!token) { showToast('Veuillez vous reconnecter.', 'error'); return; }
 
     var res = await fetch(
@@ -234,8 +129,8 @@ async function subscribe(plan) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           plan:       plan,
-          user_id:    session.data.session.user.id,
-          user_email: session.data.session.user.email,
+          user_id:    sessionRes.data.session.user.id,
+          user_email: sessionRes.data.session.user.email,
         }),
       }
     );
@@ -257,42 +152,162 @@ async function loadSubscription() {
   var res = await sb.from('subscriptions').select('*').eq('user_id', currentUser.id).maybeSingle();
   var sub = res.data;
 
-  var planName   = document.getElementById('current-plan-name');
-  var planDesc   = document.getElementById('current-plan-desc');
-  var planPrice  = document.getElementById('current-plan-price');
-  var trialEl    = document.getElementById('trial-end');
+  var planName  = document.getElementById('current-plan-name');
+  var planDesc  = document.getElementById('current-plan-desc');
+  var planPrice = document.getElementById('current-plan-price');
+  var trialEl   = document.getElementById('trial-end');
 
   if (!sub || sub.status === 'trialing') {
-    // Essai gratuit
-    var created  = new Date(currentUser.created_at);
-    var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
+    var created   = new Date(currentUser.created_at);
+    var trialEnd  = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
     var isExpired = new Date() > trialEnd;
-    if (planName)  planName.textContent  = isExpired ? 'Essai expiré' : 'Essai gratuit';
-    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expiré' : "Jusqu'au " + formatDate(trialEnd.toISOString());
+    if (planName)  planName.textContent  = isExpired ? 'Essai expire' : 'Essai gratuit';
+    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expire' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
     if (planPrice) planPrice.textContent = 'Gratuit';
     if (trialEl)   trialEl.textContent   = formatDate(trialEnd.toISOString());
   } else if (sub.status === 'active') {
     var labels = { starter: 'Plan Starter', pro: 'Plan Pro' };
-    var prices = { starter: '29€/mois', pro: '59€/mois' };
+    var prices = { starter: '29\u20ac/mois', pro: '59\u20ac/mois' };
     if (planName)  planName.textContent  = labels[sub.plan] || sub.plan;
     if (planDesc)  planDesc.textContent  = 'Renouvellement le ' + formatDate(sub.current_period_end);
-    if (planPrice) planPrice.textContent = prices[sub.plan] || '—';
-    // Masquer les boutons du plan actif
-    var btnStarter = document.getElementById('btn-starter');
-    var btnPro     = document.getElementById('btn-pro');
-    if (sub.plan === 'starter' && btnStarter) { btnStarter.textContent = 'Plan actuel'; btnStarter.disabled = true; }
-    if (sub.plan === 'pro' && btnPro)         { btnPro.textContent = 'Plan actuel'; btnPro.disabled = true; }
+    if (planPrice) planPrice.textContent = prices[sub.plan] || '\u2014';
+    var btnS = document.getElementById('btn-starter');
+    var btnP = document.getElementById('btn-pro');
+    if (sub.plan === 'starter' && btnS) { btnS.textContent = 'Plan actuel'; btnS.disabled = true; }
+    if (sub.plan === 'pro'     && btnP) { btnP.textContent = 'Plan actuel'; btnP.disabled = true; }
   } else if (sub.status === 'cancelled') {
-    if (planName)  planName.textContent  = 'Abonnement annulé';
-    if (planDesc)  planDesc.textContent  = "Accès jusqu'au " + formatDate(sub.current_period_end);
-    if (planPrice) planPrice.textContent = '—';
+    if (planName)  planName.textContent  = 'Abonnement annule';
+    if (planDesc)  planDesc.textContent  = 'Acces jusqu\u2019au ' + formatDate(sub.current_period_end);
+    if (planPrice) planPrice.textContent = '\u2014';
   } else if (sub.status === 'past_due') {
-    if (planName)  planName.textContent  = 'Paiement en échec';
-    if (planDesc)  planDesc.textContent  = 'Veuillez mettre à jour votre moyen de paiement';
-    if (planPrice) planPrice.textContent = '—';
+    if (planName)  planName.textContent  = 'Paiement en echec';
+    if (planDesc)  planDesc.textContent  = 'Veuillez mettre a jour votre moyen de paiement';
+    if (planPrice) planPrice.textContent = '\u2014';
   }
 }
 
+// ===== PRESTATIONS =====
+var ALL_PRESTATIONS = {
+  homme: ['Coupe', 'Degrade', 'Barbe', 'Coupe + Barbe', 'Estompage', 'Soin', 'Coloration'],
+  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Meches', 'Soin', 'Lissage', 'Permanente'],
+};
+
+var activePrestations = { homme: [], femme: [] };
+var customPrestations = { homme: [], femme: [] };
+
+async function loadPrestations() {
+  var res = await sb.from('salon_settings')
+    .select('prestations, custom_prestations')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (res.data && res.data.prestations) {
+    activePrestations = res.data.prestations;
+    customPrestations = res.data.custom_prestations || { homme: [], femme: [] };
+  } else {
+    activePrestations = JSON.parse(JSON.stringify(ALL_PRESTATIONS));
+    customPrestations = { homme: [], femme: [] };
+  }
+  renderPrestations('homme');
+  renderPrestations('femme');
+}
+
+function renderPrestations(genre) {
+  var container = document.getElementById('prestations-' + genre);
+  if (!container) return;
+
+  var active = activePrestations[genre] || [];
+  var custom = customPrestations[genre] || [];
+  var base   = ALL_PRESTATIONS[genre]   || [];
+  var all    = base.concat(custom.filter(function(p) { return base.indexOf(p) === -1; }));
+
+  container.innerHTML = all.map(function(p) {
+    var isActive = active.indexOf(p) !== -1;
+    var isCustom = custom.indexOf(p) !== -1;
+    var idx      = all.indexOf(p);
+
+    var style = 'display:inline-flex;align-items:center;gap:6px;padding:7px 14px;'
+      + 'border-radius:100px;cursor:pointer;font-size:13px;margin:0;'
+      + 'border:1px solid ' + (isActive ? 'var(--ink)' : 'var(--border)') + ';'
+      + 'background:' + (isActive ? 'var(--ink)' : 'var(--white)') + ';'
+      + 'color:' + (isActive ? 'var(--white)' : 'var(--ink-light)') + ';'
+      + 'transition:all .15s;user-select:none';
+
+    var html = '<div onclick="togglePrestation(\'' + genre + '\',' + idx + ')" style="' + style + '">';
+    html += (isActive ? '\u2713 ' : '') + p;
+    if (isCustom) {
+      html += '<span onclick="event.stopPropagation();removeCustom(\'' + genre + '\',' + idx + ')"'
+        + ' style="margin-left:4px;opacity:.6;font-size:14px;line-height:1">\u00d7</span>';
+    }
+    html += '</div>';
+    return html;
+  }).join('');
+
+  // Stocker all pour pouvoir retrouver le nom par index
+  container._all = all;
+}
+
+function togglePrestation(genre, idx) {
+  var container = document.getElementById('prestations-' + genre);
+  var all  = container ? container._all : [];
+  var name = all[idx];
+  if (!name) return;
+  var active = activePrestations[genre] || [];
+  if (active.indexOf(name) !== -1) {
+    activePrestations[genre] = active.filter(function(p) { return p !== name; });
+  } else {
+    activePrestations[genre] = active.concat([name]);
+  }
+  renderPrestations(genre);
+}
+
+function removeCustom(genre, idx) {
+  var container = document.getElementById('prestations-' + genre);
+  var all  = container ? container._all : [];
+  var name = all[idx];
+  if (!name) return;
+  customPrestations[genre] = (customPrestations[genre] || []).filter(function(p) { return p !== name; });
+  activePrestations[genre] = (activePrestations[genre] || []).filter(function(p) { return p !== name; });
+  renderPrestations(genre);
+}
+
+function addPrestation(genre) {
+  var input = document.getElementById('new-prestation-' + genre);
+  var val   = (input.value || '').trim();
+  if (!val) return;
+  if (!customPrestations[genre])  customPrestations[genre]  = [];
+  if (!activePrestations[genre])  activePrestations[genre]  = [];
+  var base        = ALL_PRESTATIONS[genre] || [];
+  var alreadyBase = base.indexOf(val) !== -1;
+  var alreadyCust = customPrestations[genre].indexOf(val) !== -1;
+  if (alreadyBase || alreadyCust) {
+    if (activePrestations[genre].indexOf(val) === -1) activePrestations[genre].push(val);
+  } else {
+    customPrestations[genre].push(val);
+    activePrestations[genre].push(val);
+  }
+  renderPrestations(genre);
+  input.value = '';
+}
+
+async function savePrestations() {
+  var btn = document.querySelector('#section-prestations .btn-submit');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  showMsg('prestations-ok', false);
+
+  var res = await sb.from('salon_settings').upsert({
+    user_id:            currentUser.id,
+    prestations:        activePrestations,
+    custom_prestations: customPrestations,
+  }, { onConflict: 'user_id' });
+
+  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  showMsg('prestations-ok', true);
+  setTimeout(function() { showMsg('prestations-ok', false); }, 3000);
+}
+
+// ===== INIT =====
 (async function() {
   var session = await requireSession();
   if (!session) return;
@@ -302,9 +317,8 @@ async function loadSubscription() {
   await loadSubscription();
   await loadPrestations();
 
-  // Si redirection depuis Stripe après paiement
   if (window.location.search.includes('subscribed=1')) {
-    showToast('Abonnement activé ! Bienvenue sur Belyo Pro.');
+    showToast('Abonnement active ! Bienvenue sur Belyo.');
     history.replaceState(null, '', window.location.pathname);
   }
 })();
