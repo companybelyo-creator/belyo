@@ -98,3 +98,71 @@ async function requireSession() {
   }
   return res.data.session;
 }
+
+// ===== MENU BURGER MOBILE =====
+function initBurgerMenu() {
+  // Créer la barre burger
+  var burgerBar = document.createElement('div');
+  burgerBar.className = 'burger-bar';
+  burgerBar.innerHTML = ''
+    + '<span class="burger-logo">Belyo</span>'
+    + '<button class="burger-btn" id="burger-btn" onclick="toggleBurger()" aria-label="Menu">'
+    + '<span></span><span></span><span></span>'
+    + '</button>';
+  document.body.prepend(burgerBar);
+
+  // Créer l'overlay
+  var overlay = document.createElement('div');
+  overlay.className = 'sidebar-overlay';
+  overlay.id = 'sidebar-overlay';
+  overlay.onclick = closeBurger;
+  document.body.appendChild(overlay);
+
+  // Cloner la sidebar en version mobile
+  var sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  var mobileSidebar = sidebar.cloneNode(true);
+  mobileSidebar.className = 'sidebar-mobile';
+  mobileSidebar.id = 'sidebar-mobile';
+  // Fermer le menu en cliquant un lien
+  mobileSidebar.querySelectorAll('a').forEach(function(a) {
+    a.addEventListener('click', closeBurger);
+  });
+  document.body.appendChild(mobileSidebar);
+}
+
+function toggleBurger() {
+  var btn      = document.getElementById('burger-btn');
+  var overlay  = document.getElementById('sidebar-overlay');
+  var mobile   = document.getElementById('sidebar-mobile');
+  if (!btn || !overlay || !mobile) return;
+  var isOpen = mobile.classList.contains('open');
+  if (isOpen) {
+    closeBurger();
+  } else {
+    btn.classList.add('open');
+    overlay.style.display = 'block';
+    setTimeout(function() { overlay.classList.add('show'); }, 10);
+    mobile.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeBurger() {
+  var btn     = document.getElementById('burger-btn');
+  var overlay = document.getElementById('sidebar-overlay');
+  var mobile  = document.getElementById('sidebar-mobile');
+  if (!btn || !overlay || !mobile) return;
+  btn.classList.remove('open');
+  overlay.classList.remove('show');
+  mobile.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(function() { overlay.style.display = 'none'; }, 250);
+}
+
+// Initialiser le burger au chargement si on est sur une page avec sidebar
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.querySelector('.sidebar')) {
+    initBurgerMenu();
+  }
+});
