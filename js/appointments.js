@@ -18,6 +18,18 @@ var PRESTATIONS = {
   femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
 };
 
+async function loadPrestationsFromSettings(userId) {
+  var res = await sb.from('salon_settings')
+    .select('prestations')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (res.data && res.data.prestations) {
+    PRESTATIONS.homme = [...(res.data.prestations.homme || []), 'Autre'];
+    PRESTATIONS.femme = [...(res.data.prestations.femme || []), 'Autre'];
+  }
+  updateServiceOptions();
+}
+
 function setGenre(genre) {
   selectedGenre = genre;
   document.getElementById('genre-homme').classList.toggle('active', genre === 'homme');
@@ -451,6 +463,5 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
   initSidebar(session.user);
   initLogout();
   await checkSubscription(session.user.id, session.user.created_at);
-  updateServiceOptions();
-  await Promise.all([loadAppts(), loadClients()]);
+  await Promise.all([loadAppts(), loadClients(), loadPrestationsFromSettings(currentUserId)]);
 })();

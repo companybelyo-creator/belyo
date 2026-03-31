@@ -43,6 +43,7 @@
         <button class="settings-nav-item" onclick="showSection('compte')">👤 Mon compte</button>
         <button class="settings-nav-item" onclick="showSection('securite')">🔒 Sécurité</button>
         <button class="settings-nav-item" onclick="showSection('abonnement')">💳 Abonnement</button>
+        <button class="settings-nav-item" onclick="showSection('prestations')">✂️ Prestations</button>
       </nav>
 
       <!-- Contenu -->
@@ -192,6 +193,34 @@
             <div style="font-size:12px;color:var(--ink-light);text-align:center;">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
           </div>
         </div>
+        </div>
+
+
+        <!-- PRESTATIONS -->
+        <div class="settings-section" id="section-prestations">
+          <div class="section-title">Mes <em>prestations</em></div>
+          <p class="section-sub">Personnalisez les prestations proposées dans le formulaire de rendez-vous.</p>
+
+          <div class="settings-card">
+            <div class="settings-card-title">Homme</div>
+            <div id="prestations-homme" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem"></div>
+            <div style="display:flex;gap:8px;margin-top:.5rem">
+              <input type="text" class="form-input" id="new-prestation-homme" placeholder="Ajouter une prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('homme')}" />
+              <button onclick="addPrestation('homme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer">+ Ajouter</button>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-card-title">Femme</div>
+            <div id="prestations-femme" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem"></div>
+            <div style="display:flex;gap:8px;margin-top:.5rem">
+              <input type="text" class="form-input" id="new-prestation-femme" placeholder="Ajouter une prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('femme')}" />
+              <button onclick="addPrestation('femme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer">+ Ajouter</button>
+            </div>
+          </div>
+
+          <button onclick="savePrestations()" class="btn-submit" style="max-width:200px">Enregistrer</button>
+          <div class="success-msg" id="prestations-ok">✓ Prestations enregistrées !</div>
         </div>
 
       </div>

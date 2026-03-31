@@ -81,3 +81,19 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER subscriptions_updated_at
   BEFORE UPDATE ON subscriptions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ============================================================
+-- SALON SETTINGS — Paramètres personnalisés du salon
+-- ============================================================
+CREATE TABLE IF NOT EXISTS salon_settings (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id     UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  prestations JSONB DEFAULT '{"homme":["Coupe","Dégradé","Barbe","Coupe + Barbe","Soin"],"femme":["Coupe","Brushing","Coloration","Balayage","Soin"]}',
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE salon_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "salon_settings_all" ON salon_settings
+  FOR ALL USING (auth.uid() = user_id);
