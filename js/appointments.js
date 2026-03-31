@@ -11,57 +11,47 @@ var currentView    = 'list';
 var weekOffset     = 0;
 
 // ===== GENRE + PRESTATION =====
-var selectedGenre = 'Homme';
+var selectedGenre = 'homme';
+
+var PRESTATIONS = {
+  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin', 'Autre'],
+  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
+};
 
 function setGenre(genre) {
   selectedGenre = genre;
-  ['homme','femme','mixte'].forEach(function(g) {
-    var btn = document.getElementById('genre-' + g);
-    if (btn) btn.classList.remove('active');
-  });
-  var activeId = genre === 'Homme' ? 'homme' : genre === 'Femme' ? 'femme' : 'mixte';
-  var activeBtn = document.getElementById('genre-' + activeId);
-  if (activeBtn) activeBtn.classList.add('active');
-
-  // Mettre à jour les options du select selon le genre
-  updateServiceOptions(genre);
+  document.getElementById('genre-homme').classList.toggle('active', genre === 'homme');
+  document.getElementById('genre-femme').classList.toggle('active', genre === 'femme');
+  updateServiceOptions();
+  // Reset prestation
+  var sel = document.getElementById('appt-service-select');
+  var inp = document.getElementById('appt-service');
+  if (sel) sel.value = '';
+  if (inp) { inp.style.display = 'none'; inp.value = ''; inp.required = false; }
 }
 
-function updateServiceOptions(genre) {
+function updateServiceOptions() {
   var select = document.getElementById('appt-service-select');
   if (!select) return;
-  var optgroups = select.querySelectorAll('optgroup');
-  optgroups.forEach(function(og) {
-    // Cacher "Barbe" pour les femmes
-    if (og.label === 'Barbe') {
-      og.style.display = genre === 'Femme' ? 'none' : '';
-    }
-    // Cacher "Coupe femme" pour les hommes
-    og.querySelectorAll('option').forEach(function(opt) {
-      if (opt.value === 'Coupe femme' && genre === 'Homme') opt.style.display = 'none';
-      else if (opt.value === 'Coupe homme' && genre === 'Femme') opt.style.display = 'none';
-      else opt.style.display = '';
-    });
-  });
+  var options = PRESTATIONS[selectedGenre] || [];
+  select.innerHTML = '<option value="">-- Prestation --</option>'
+    + options.map(function(p) {
+        return '<option value="' + p + '">' + p + '</option>';
+      }).join('');
 }
 
 function onServiceSelect(val) {
-  var input  = document.getElementById('appt-service');
-  var select = document.getElementById('appt-service-select');
-  if (val === 'autre') {
-    // Afficher le champ texte libre
+  var input = document.getElementById('appt-service');
+  if (!input) return;
+  if (val === 'Autre') {
     input.style.display = 'block';
     input.required = true;
+    input.value = '';
     input.focus();
-  } else if (val) {
-    // Remplir le champ caché avec la valeur du select
-    input.style.display = 'none';
-    input.required = false;
-    input.value = val + (selectedGenre ? ' — ' + selectedGenre : '');
   } else {
     input.style.display = 'none';
     input.required = false;
-    input.value = '';
+    input.value = val || '';
   }
 }
 
@@ -398,9 +388,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     service:     (function() {
       var sel = document.getElementById('appt-service-select');
       var inp = document.getElementById('appt-service');
-      if (sel && sel.value && sel.value !== 'autre') {
-        return sel.value + (selectedGenre ? ' — ' + selectedGenre : '');
-      }
+      if (sel && sel.value && sel.value !== 'Autre') return sel.value;
       return inp ? inp.value.trim() : '';
     })(),
     datetime:    datetime,
@@ -462,5 +450,6 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
   currentUserId = session.user.id;
   initSidebar(session.user);
   initLogout();
+  updateServiceOptions();
   await Promise.all([loadAppts(), loadClients()]);
 })();
