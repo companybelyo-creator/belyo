@@ -104,10 +104,9 @@
   padding: 14px;
   transition: border-color .15s, box-shadow .15s;
   opacity: .5;
-  aspect-ratio: 1 / 1.1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 10px;
 }
 .prest-card.active {
   border-color: var(--gold);
@@ -117,8 +116,8 @@
 .prest-card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
+  justify-content: center;
+  gap: 8px;
 }
 .prest-check {
   display: flex;
@@ -146,9 +145,10 @@
   color: var(--white);
 }
 .prest-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--ink);
+  text-align: center;
 }
 .prest-del {
   background: none;
@@ -165,7 +165,7 @@
 .prest-fields {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 .prest-field { display: flex; flex-direction: column; gap: 4px; }
 .prest-field-label {
@@ -177,11 +177,11 @@
 .prest-field-wrap {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   background: var(--cream);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 0 10px;
+  padding: 0 8px;
 }
 .prest-field-wrap input {
   flex: 1;
@@ -190,7 +190,7 @@
   font-family: var(--font-body);
   font-size: 13px;
   color: var(--ink);
-  padding: 6px 0;
+  padding: 5px 0;
   outline: none;
   min-width: 0;
   -webkit-appearance: none;

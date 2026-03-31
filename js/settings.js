@@ -303,15 +303,13 @@ function renderPrestations(genre) {
     var pd       = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
     var g        = genre;
 
-    var card = '<div class="prest-card' + (isActive ? ' active' : '') + '">';
-    card += '<div class="prest-card-head">';
-    card += '<div class="prest-check" onclick="togglePrestation(' + "'" + g + "'," + idx + ')">';
+    var card = '<div class="prest-card' + (isActive ? ' active' : '') + '" style="position:relative">';
+    if (isCustom) {
+      card += '<button onclick="removeCustom(' + "'" + g + "'," + idx + ')" class="prest-del" style="position:absolute;top:8px;right:8px">\u00d7</button>';
+    }
+    card += '<div class="prest-card-head" onclick="togglePrestation(' + "'" + g + "'," + idx + ')" style="cursor:pointer">';
     card += '<span class="prest-checkbox' + (isActive ? ' checked' : '') + '">' + (isActive ? '\u2713' : '') + '</span>';
     card += '<span class="prest-name">' + p.name + '</span>';
-    card += '</div>';
-    if (isCustom) {
-      card += '<button onclick="removeCustom(' + "'" + g + "'," + idx + ')" class="prest-del">\u00d7</button>';
-    }
     card += '</div>';
     card += '<div class="prest-fields">';
     card += '<div class="prest-field">';
