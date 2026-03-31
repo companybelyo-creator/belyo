@@ -427,4 +427,4 @@ async function savePrestations() {
     showToast('Abonnement active ! Bienvenue sur Belyo.');
     history.replaceState(null, '', window.location.pathname);
   }
-})();
+})(); 
