@@ -305,7 +305,15 @@ function renderCalendar() {
       var ev = document.createElement('div');
       ev.className = 'cal-event status-' + (a.status || 'pending');
       ev.style.top = ((aM / 60) * SLOT_H) + 'px';
-      ev.style.height = Math.max(22, SLOT_H * 0.8) + 'px';
+      // Hauteur selon duration_minutes du RDV, sinon prix_duree, sinon 30min par défaut
+      var dureeMin = a.duration_minutes || 30;
+      if (!a.duration_minutes && PRIX_DUREE && a.service) {
+        var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+        var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+        var pd  = pdH || pdF;
+        if (pd && pd.duree) dureeMin = pd.duree;
+      }
+      ev.style.height = Math.max(24, (dureeMin / 60) * SLOT_H) + 'px';
       ev.innerHTML = '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
         + '<div class="cal-event-name">' + a.client_name + '</div>'
         + '<div class="cal-event-service">' + a.service + '</div>';
@@ -369,8 +377,8 @@ function closeModal() {
   if (block) block.style.display = 'none';
   if (suggestions) suggestions.style.display = 'none';
   // Reset genre + service
-  selectedGenre = 'Homme';
-  setGenre('Homme');
+  selectedGenre = 'homme';
+  setGenre('homme');
   var input = document.getElementById('appt-service');
   if (input) { input.style.display = 'none'; input.value = ''; }
   var select = document.getElementById('appt-service-select');
@@ -416,6 +424,12 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       var inp = document.getElementById('appt-service');
       if (sel && sel.value && sel.value !== 'Autre') return sel.value;
       return inp ? inp.value.trim() : '';
+    })(),
+    duration_minutes: (function() {
+      var sel = document.getElementById('appt-service-select');
+      if (!sel || !sel.value || sel.value === 'Autre') return null;
+      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][sel.value];
+      return pd && pd.duree ? pd.duree : null;
     })(),
     datetime:    datetime,
     price:       priceVal ? parseFloat(priceVal) : null,

@@ -105,3 +105,6 @@ ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS
 -- Ajouter prix_duree à salon_settings
 ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS
   prix_duree JSONB DEFAULT '{"homme":{},"femme":{}}';
+
+-- Ajouter duration_minutes aux appointments
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS duration_minutes INTEGER DEFAULT 30;
