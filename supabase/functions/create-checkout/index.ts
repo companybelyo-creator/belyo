@@ -36,13 +36,19 @@ Deno.serve(async (req) => {
 
   try {
     // Récupérer l'utilisateur connecté
+    // Valider le JWT directement avec le service role
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Token manquant' }), { status: 401 })
+    }
+
     const sb = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { data: { user }, error: authError } = await sb.auth.getUser()
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await sb.auth.getUser(token)
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Non authentifié' }), { status: 401 })
     }
