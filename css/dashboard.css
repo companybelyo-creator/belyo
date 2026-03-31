@@ -1,32 +1,13 @@
 /* ===== DASHBOARD MOBILE ===== */
 @media (max-width: 900px) {
-  .kpi-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: .75rem;
-    margin-bottom: 1.5rem;
-  }
-  .kpi-val {
-    font-size: 1.5rem;
-  }
-  .kpi-card {
-    padding: 1rem;
-  }
+  .kpi-grid { grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.5rem; }
+  .kpi-val { font-size: 1.5rem; }
+  .kpi-card { padding: 1rem; }
 }
-
 @media (max-width: 600px) {
   .kpi-grid { grid-template-columns: 1fr 1fr; }
-
-  /* Tableau RDV du jour — cacher colonnes peu importantes */
-  #today-appts tr td:nth-child(4),
-  .table thead tr th:nth-child(4) { display: none; }
-
-  /* Tableau derniers clients — cacher colonnes */
-  #recent-clients tr td:nth-child(3),
-  #recent-clients tr td:nth-child(4),
-  .table thead tr th:nth-child(3),
-  .table thead tr th:nth-child(4) { display: none; }
-
-  .card-header { padding: .8rem 1rem; }
-  .card-title { font-size: 14px; }
   .page-title { font-size: 1.6rem; }
+  .card-header { padding: .8rem 1rem; }
+  .card-body { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table { min-width: 500px; }
 }
