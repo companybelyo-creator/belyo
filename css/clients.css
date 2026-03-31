@@ -23,3 +23,19 @@
     .fiche-section-title { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-light); margin-bottom:.5rem; }
     .fiche-rdv-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
     .fiche-rdv-item:last-child { border-bottom:none; }
+
+/* ===== MOBILE ===== */
+@media (max-width: 600px) {
+  /* Cacher email et dernière visite sur mobile */
+  #clients-list tr td:nth-child(3),
+  .table thead tr th:nth-child(3) { display: none; }
+  #clients-list tr td:nth-child(4),
+  .table thead tr th:nth-child(4) { display: none; }
+  #clients-list tr td:nth-child(5),
+  .table thead tr th:nth-child(5) { display: none; }
+
+  .fiche { padding: 1.2rem; }
+  .fiche-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .fiche-stat .val { font-size: 1.1rem; }
+  .search-bar { margin-bottom: 1rem; }
+}

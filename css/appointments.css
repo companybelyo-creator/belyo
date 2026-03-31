@@ -41,3 +41,31 @@
     .cal-tooltip.show { opacity:1; }
     .cal-tooltip-name { font-weight:500; margin-bottom:4px; }
     .cal-tooltip-row { font-size:12px; opacity:.75; margin-top:2px; }
+
+/* ===== MOBILE ===== */
+@media (max-width: 900px) {
+  .toolbar { gap: 8px; }
+  .week-label { font-size: 12px; min-width: 140px; }
+}
+
+@media (max-width: 600px) {
+  /* Tableau liste RDV — garder seulement heure, client, statut, actions */
+  #appts-list tr td:nth-child(1),
+  .table thead tr th:nth-child(1) { display: none; } /* date */
+  #appts-list tr td:nth-child(4),
+  .table thead tr th:nth-child(4) { display: none; } /* prestation */
+  #appts-list tr td:nth-child(5),
+  .table thead tr th:nth-child(5) { display: none; } /* prix */
+
+  .toolbar { flex-wrap: wrap; gap: 6px; }
+  #list-filters { flex-wrap: wrap; gap: 6px; }
+  .tab { padding: 6px 12px; font-size: 12px; }
+  .filter-input { font-size: 12px; padding: 6px 10px; }
+  .view-btn { padding: 6px 12px; font-size: 12px; }
+
+  /* Calendrier mobile — réduire la hauteur des slots */
+  .cal-grid { font-size: 11px; }
+  .cal-head-num { font-size: 13px; }
+  .cal-event { font-size: 10px; padding: 2px 4px; }
+  .cal-event-service { display: none; }
+}

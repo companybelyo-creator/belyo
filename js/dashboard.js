@@ -102,7 +102,7 @@ async function loadKPIs(userId) {
   var r2 = await sb.from('appointments').select('price')
     .eq('user_id', userId).eq('status', 'done').gte('datetime', startOfMonth);
   var ca = r2.data ? r2.data.reduce(function(sum, a) { return sum + (parseFloat(a.price) || 0); }, 0) : 0;
-  document.getElementById('kpi-month').textContent = ca.toFixed(0) + 'EUR';
+  document.getElementById('kpi-month').textContent = ca.toFixed(0) + '€';
 
   var r3 = await sb.from('clients').select('id', { count: 'exact', head: true }).eq('user_id', userId);
   console.log('[Belyo] Clients:', r3.error || r3.count);
@@ -135,7 +135,7 @@ async function loadTodayAppointments(userId) {
       + '<td><strong>' + formatTime(a.datetime) + '</strong></td>'
       + '<td>' + a.client_name + '</td>'
       + '<td>' + a.service + '</td>'
-      + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + 'EUR' : '-') + '</td>'
+      + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '-') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
       + '</tr>';
   }).join('');
