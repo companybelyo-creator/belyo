@@ -37,8 +37,13 @@ Deno.serve(async (req) => {
   try {
     // Récupérer l'utilisateur connecté
     // Valider le JWT directement avec le service role
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
+    // Lire le token depuis le header Authorization ou le body
+    const authHeader = req.headers.get('Authorization') || ''
+    const body = await req.json()
+    const { plan, token: bodyToken } = body
+    const token = bodyToken || authHeader.replace('Bearer ', '')
+
+    if (!token) {
       return new Response(JSON.stringify({ error: 'Token manquant' }), { status: 401 })
     }
 
@@ -47,13 +52,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await sb.auth.getUser(token)
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Non authentifié' }), { status: 401 })
     }
 
-    const { plan } = await req.json()
     if (!plan || !PRICES[plan]) {
       return new Response(JSON.stringify({ error: 'Plan invalide' }), { status: 400 })
     }
