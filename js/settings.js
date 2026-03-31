@@ -123,11 +123,12 @@ async function subscribe(plan) {
       'https://vshhswrzyntpkjoggamw.supabase.co/functions/v1/create-checkout',
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + token,
-        },
-        body: JSON.stringify({ plan, token }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan:       plan,
+          user_id:    session.data.session.user.id,
+          user_email: session.data.session.user.email,
+        }),
       }
     );
 
