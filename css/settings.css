@@ -1,4 +1,32 @@
-.settings-layout { display:grid; grid-template-columns:220px 1fr; gap:2rem; }
+/* ===== SETTINGS TABS ===== */
+.settings-tabs-bar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+.settings-tab {
+  padding: 10px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-light);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+  border-radius: 0;
+}
+.settings-tab:hover { color: var(--ink); }
+.settings-tab.active { color: var(--ink); border-bottom-color: var(--ink); font-weight: 500; }
+
+/* Enlever le grid layout puisqu'on a des tabs maintenant */
+.settings-layout { display: block; }
+.settings-layout { display:grid; grid-template-columns:180px 1fr; gap:2rem; align-items:start; }
     .settings-nav { display:flex; flex-direction:column; gap:2px; }
     .settings-nav-item { padding:10px 14px; border-radius:var(--radius-sm); font-size:14px; color:var(--ink-light); cursor:pointer; transition:background .15s, color .15s; border:none; background:none; text-align:left; font-family:var(--font-body); display:flex; align-items:center; gap:10px; }
     .settings-nav-item:hover { background:var(--cream-dark); color:var(--ink); }
@@ -92,7 +120,7 @@
 /* ===== PRESTATION CARDS ===== */
 .prest-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   margin-bottom: 8px;
 }
@@ -193,6 +221,9 @@
   font-size: 12px;
   color: var(--ink-light);
   flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .prest-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
   .prest-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
