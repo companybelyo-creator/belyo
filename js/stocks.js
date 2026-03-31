@@ -176,5 +176,6 @@ async function loadProducts() {
   currentUserId = session.user.id;
   initSidebar(session.user);
   initLogout();
+  await checkSubscription(session.user.id, session.user.created_at);
   await loadProducts();
 })();

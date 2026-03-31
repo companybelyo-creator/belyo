@@ -60,6 +60,7 @@ console.log('[Belyo] sb disponible ?', typeof sb);
 
     currentUserId = session.user.id;
     console.log('[Belyo] User ID:', currentUserId);
+    await checkSubscription(session.user.id, session.user.created_at);
 
     var meta = session.user.user_metadata || {};
     document.getElementById('greeting-name').textContent = meta.first_name || 'vous';

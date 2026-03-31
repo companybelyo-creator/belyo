@@ -166,3 +166,89 @@ document.addEventListener('DOMContentLoaded', function() {
     initBurgerMenu();
   }
 });
+
+// ===== SUBSCRIPTION GATE =====
+async function checkSubscription(userId, createdAt) {
+  // Récupérer l'abonnement
+  var res = await sb.from('subscriptions').select('*').eq('user_id', userId).maybeSingle();
+  var sub = res.data;
+
+  // Calculer la fin de l'essai (14 jours)
+  var created  = new Date(createdAt);
+  var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
+  var now      = new Date();
+  var daysLeft = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+
+  // Abonnement actif → accès complet, bannière si essai en cours
+  if (sub && sub.status === 'active') return { status: 'active', plan: sub.plan };
+
+  // Essai en cours
+  if (!sub || sub.status === 'trialing') {
+    if (now < trialEnd) {
+      showTrialBanner(daysLeft);
+      return { status: 'trial', daysLeft: daysLeft };
+    } else {
+      // Essai expiré → redirection
+      showExpiredWall();
+      return { status: 'expired' };
+    }
+  }
+
+  // Annulé ou paiement échoué
+  if (sub.status === 'cancelled' || sub.status === 'past_due') {
+    showExpiredWall();
+    return { status: sub.status };
+  }
+
+  return { status: 'unknown' };
+}
+
+function showTrialBanner(daysLeft) {
+  if (document.getElementById('trial-banner')) return;
+  var banner = document.createElement('div');
+  banner.id = 'trial-banner';
+  banner.style.cssText = [
+    'position:fixed', 'bottom:0', 'left:0', 'right:0', 'z-index:200',
+    'background:var(--ink)', 'color:var(--white)',
+    'display:flex', 'align-items:center', 'justify-content:space-between',
+    'padding:12px 24px', 'font-size:13px', 'gap:16px',
+  ].join(';');
+
+  var msg = daysLeft <= 0
+    ? "Votre essai gratuit se termine aujourd'hui."
+    : 'Essai gratuit — ' + daysLeft + ' jour' + (daysLeft > 1 ? 's' : '') + ' restant' + (daysLeft > 1 ? 's' : '') + '.';
+
+  banner.innerHTML = '<span>' + msg + '</span>'
+    + '<a href="settings.html" style="background:var(--gold);color:white;padding:6px 16px;border-radius:100px;font-size:12px;font-weight:500;white-space:nowrap;text-decoration:none">Choisir un plan →</a>';
+
+  // Ajuster le padding du main pour ne pas être caché par la bannière
+  document.body.appendChild(banner);
+  var main = document.querySelector('.main-content');
+  if (main) main.style.paddingBottom = '60px';
+}
+
+function showExpiredWall() {
+  if (document.getElementById('expired-wall')) return;
+
+  // Bloquer l'interface
+  var wall = document.createElement('div');
+  wall.id = 'expired-wall';
+  wall.style.cssText = [
+    'position:fixed', 'inset:0', 'z-index:500',
+    'background:rgba(247,243,238,0.97)',
+    'display:flex', 'align-items:center', 'justify-content:center',
+    'flex-direction:column', 'padding:2rem', 'text-align:center',
+  ].join(';');
+
+  wall.innerHTML = ''
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:2rem;font-weight:300;margin-bottom:.5rem">Belyo</div>'
+    + '<div style="font-size:28px;margin-bottom:1rem">⏱</div>'
+    + '<h2 style="font-size:1.3rem;font-weight:500;margin-bottom:.5rem">Votre essai gratuit est terminé</h2>'
+    + '<p style="font-size:14px;color:#5C5550;margin-bottom:2rem;max-width:340px">Choisissez un plan pour continuer à utiliser Belyo et gérer votre salon.</p>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">'
+    + '<a href="settings.html" style="background:#1A1714;color:white;padding:12px 28px;border-radius:100px;font-size:14px;font-weight:500;text-decoration:none">Voir les plans →</a>'
+    + '<a href="../index.html" style="background:transparent;color:#5C5550;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:400;text-decoration:none;border:1px solid rgba(26,23,20,0.15)">Retour à l&#39;accueil</a>'
+    + '</div>';
+
+  document.body.appendChild(wall);
+}
