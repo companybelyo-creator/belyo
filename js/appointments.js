@@ -18,14 +18,20 @@ var PRESTATIONS = {
   femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
 };
 
+var PRIX_DUREE = { homme: {}, femme: {} };
+
 async function loadPrestationsFromSettings(userId) {
   var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations')
+    .select('prestations, custom_prestations, prix_duree')
     .eq('user_id', userId)
     .maybeSingle();
+
   if (res.data && res.data.prestations) {
-    PRESTATIONS.homme = [...(res.data.prestations.homme || []), 'Autre'];
-    PRESTATIONS.femme = [...(res.data.prestations.femme || []), 'Autre'];
+    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
+    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
+  }
+  if (res.data && res.data.prix_duree) {
+    PRIX_DUREE = res.data.prix_duree;
   }
   updateServiceOptions();
 }
@@ -64,6 +70,14 @@ function onServiceSelect(val) {
     input.style.display = 'none';
     input.required = false;
     input.value = val || '';
+  }
+
+  // Auto-remplir le prix depuis les paramètres
+  var priceInput = document.getElementById('appt-price');
+  if (priceInput && val && val !== 'Autre') {
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
+    if (pd && pd.prix) priceInput.value = pd.prix;
+    else priceInput.value = '';
   }
 }
 

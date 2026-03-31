@@ -5,7 +5,8 @@
 var currentUser = null;
 
 function showMsg(id, show) {
-  document.getElementById(id).classList.toggle('show', show);
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('show', show);
 }
 
 function showSection(name, btn) {
@@ -19,6 +20,11 @@ function initials(str) {
   if (!str) return '?';
   var parts = str.trim().split(' ');
   return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 function populateFields(user) {
@@ -87,9 +93,9 @@ async function saveCompte() {
 
 // ===== SECURITE =====
 async function savePassword() {
-  var btn     = document.getElementById('pwd-save-btn');
-  var pwd     = document.getElementById('new-pwd').value;
-  var conf    = document.getElementById('confirm-pwd').value;
+  var btn  = document.getElementById('pwd-save-btn');
+  var pwd  = document.getElementById('new-pwd').value;
+  var conf = document.getElementById('confirm-pwd').value;
   showMsg('pwd-ok', false); showMsg('pwd-err', false);
 
   if (pwd.length < 8) { document.getElementById('pwd-err').textContent = 'Au moins 8 caracteres.'; showMsg('pwd-err', true); return; }
@@ -155,7 +161,6 @@ async function loadSubscription() {
   var planName  = document.getElementById('current-plan-name');
   var planDesc  = document.getElementById('current-plan-desc');
   var planPrice = document.getElementById('current-plan-price');
-  var trialEl   = document.getElementById('trial-end');
 
   if (!sub || sub.status === 'trialing') {
     var created   = new Date(currentUser.created_at);
@@ -164,7 +169,6 @@ async function loadSubscription() {
     if (planName)  planName.textContent  = isExpired ? 'Essai expire' : 'Essai gratuit';
     if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expire' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
     if (planPrice) planPrice.textContent = 'Gratuit';
-    if (trialEl)   trialEl.textContent   = formatDate(trialEnd.toISOString());
   } else if (sub.status === 'active') {
     var labels = { starter: 'Plan Starter', pro: 'Plan Pro' };
     var prices = { starter: '29\u20ac/mois', pro: '59\u20ac/mois' };
@@ -186,30 +190,92 @@ async function loadSubscription() {
   }
 }
 
-// ===== PRESTATIONS =====
+// ============================================================
+// PRESTATIONS
+// ============================================================
+
+// Catalogue de base avec prix et durée par défaut
 var ALL_PRESTATIONS = {
-  homme: ['Coupe', 'Degrade', 'Barbe', 'Coupe + Barbe', 'Estompage', 'Soin', 'Coloration'],
-  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Meches', 'Soin', 'Lissage', 'Permanente'],
+  homme: [
+    { name: 'Coupe',         prix: 20, duree: 30 },
+    { name: 'Degrade',       prix: 20, duree: 30 },
+    { name: 'Barbe',         prix: 10, duree: 15 },
+    { name: 'Coupe + Barbe', prix: 28, duree: 45 },
+    { name: 'Estompage',     prix: 20, duree: 30 },
+    { name: 'Soin',          prix: 15, duree: 20 },
+    { name: 'Coloration',    prix: 35, duree: 60 },
+  ],
+  femme: [
+    { name: 'Coupe',         prix: 30, duree: 45 },
+    { name: 'Brushing',      prix: 25, duree: 40 },
+    { name: 'Coloration',    prix: 60, duree: 90 },
+    { name: 'Balayage',      prix: 80, duree: 120 },
+    { name: 'Meches',        prix: 70, duree: 90 },
+    { name: 'Soin',          prix: 20, duree: 30 },
+    { name: 'Lissage',       prix: 80, duree: 90 },
+    { name: 'Permanente',    prix: 70, duree: 90 },
+  ],
 };
 
-var activePrestations = { homme: [], femme: [] };
-var customPrestations = { homme: [], femme: [] };
+// État courant
+var activePrestations = { homme: [], femme: [] }; // noms actifs
+var customPrestations = { homme: [], femme: [] };  // objets custom {name, prix, duree}
+var prixDuree         = { homme: {}, femme: {} };  // {name: {prix, duree}}
+var currentGenre      = 'homme';
+
+function switchGenre(genre) {
+  currentGenre = genre;
+  document.getElementById('switch-homme').classList.toggle('active', genre === 'homme');
+  document.getElementById('switch-femme').classList.toggle('active', genre === 'femme');
+  document.getElementById('panel-homme').style.display = genre === 'homme' ? 'block' : 'none';
+  document.getElementById('panel-femme').style.display = genre === 'femme' ? 'block' : 'none';
+}
 
 async function loadPrestations() {
   var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations')
+    .select('prestations, custom_prestations, prix_duree')
     .eq('user_id', currentUser.id)
     .maybeSingle();
 
-  if (res.data && res.data.prestations) {
-    activePrestations = res.data.prestations;
+  if (res.data) {
+    activePrestations = res.data.prestations      || buildDefaultActive();
     customPrestations = res.data.custom_prestations || { homme: [], femme: [] };
+    prixDuree         = res.data.prix_duree        || buildDefaultPrixDuree();
   } else {
-    activePrestations = JSON.parse(JSON.stringify(ALL_PRESTATIONS));
+    activePrestations = buildDefaultActive();
     customPrestations = { homme: [], femme: [] };
+    prixDuree         = buildDefaultPrixDuree();
   }
+
   renderPrestations('homme');
   renderPrestations('femme');
+  renderPrix('homme');
+  renderPrix('femme');
+}
+
+function buildDefaultActive() {
+  return {
+    homme: ALL_PRESTATIONS.homme.map(function(p) { return p.name; }),
+    femme: ALL_PRESTATIONS.femme.map(function(p) { return p.name; }),
+  };
+}
+
+function buildDefaultPrixDuree() {
+  var result = { homme: {}, femme: {} };
+  ['homme', 'femme'].forEach(function(g) {
+    ALL_PRESTATIONS[g].forEach(function(p) {
+      result[g][p.name] = { prix: p.prix, duree: p.duree };
+    });
+  });
+  return result;
+}
+
+function getAllForGenre(genre) {
+  var base   = ALL_PRESTATIONS[genre] || [];
+  var custom = customPrestations[genre] || [];
+  var baseNames = base.map(function(p) { return p.name; });
+  var customOnly = custom.filter(function(p) { return baseNames.indexOf(p.name) === -1; });
+  return base.concat(customOnly);
 }
 
 function renderPrestations(genre) {
@@ -217,24 +283,21 @@ function renderPrestations(genre) {
   if (!container) return;
 
   var active = activePrestations[genre] || [];
-  var custom = customPrestations[genre] || [];
-  var base   = ALL_PRESTATIONS[genre]   || [];
-  var all    = base.concat(custom.filter(function(p) { return base.indexOf(p) === -1; }));
+  var all    = getAllForGenre(genre);
 
-  container.innerHTML = all.map(function(p) {
-    var isActive = active.indexOf(p) !== -1;
-    var isCustom = custom.indexOf(p) !== -1;
-    var idx      = all.indexOf(p);
+  container.innerHTML = all.map(function(p, idx) {
+    var isActive = active.indexOf(p.name) !== -1;
+    var isCustom = (customPrestations[genre] || []).some(function(c) { return c.name === p.name; });
 
     var style = 'display:inline-flex;align-items:center;gap:6px;padding:7px 14px;'
-      + 'border-radius:100px;cursor:pointer;font-size:13px;margin:0;'
+      + 'border-radius:100px;cursor:pointer;font-size:13px;'
       + 'border:1px solid ' + (isActive ? 'var(--ink)' : 'var(--border)') + ';'
       + 'background:' + (isActive ? 'var(--ink)' : 'var(--white)') + ';'
       + 'color:' + (isActive ? 'var(--white)' : 'var(--ink-light)') + ';'
       + 'transition:all .15s;user-select:none';
 
     var html = '<div onclick="togglePrestation(\'' + genre + '\',' + idx + ')" style="' + style + '">';
-    html += (isActive ? '\u2713 ' : '') + p;
+    html += (isActive ? '\u2713 ' : '') + p.name;
     if (isCustom) {
       html += '<span onclick="event.stopPropagation();removeCustom(\'' + genre + '\',' + idx + ')"'
         + ' style="margin-left:4px;opacity:.6;font-size:14px;line-height:1">\u00d7</span>';
@@ -243,18 +306,57 @@ function renderPrestations(genre) {
     return html;
   }).join('');
 
-  // Stocker all pour pouvoir retrouver le nom par index
   container._all = all;
+  // Mettre à jour le tableau prix en même temps
+  renderPrix(genre);
+}
+
+function renderPrix(genre) {
+  var container = document.getElementById('prix-' + genre);
+  if (!container) return;
+
+  var active = activePrestations[genre] || [];
+  var all    = getAllForGenre(genre);
+  var active_items = all.filter(function(p) { return active.indexOf(p.name) !== -1; });
+
+  if (active_items.length === 0) {
+    container.innerHTML = '<p style="font-size:13px;color:var(--ink-light)">Aucune prestation active.</p>';
+    return;
+  }
+
+  var header = '<div class="prix-row" style="font-size:11px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em">'
+    + '<span>Prestation</span><span style="text-align:right">Prix (€)</span><span style="text-align:right">Durée (min)</span></div>';
+
+  var rows = active_items.map(function(p) {
+    var pd    = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
+    var sname = p.name.replace(/'/g, '&#39;');
+    return '<div class="prix-row">'
+      + '<span class="prix-label">' + p.name + '</span>'
+      + '<input type="number" class="prix-input" min="0" step="1" value="' + (pd.prix || '') + '"'
+      + ' placeholder="0" onchange="updatePrixDuree(\'' + genre + '\',\'' + sname + '\',\'prix\',this.value)" />'
+      + '<input type="number" class="prix-input" min="5" step="5" value="' + (pd.duree || '') + '"'
+      + ' placeholder="30" onchange="updatePrixDuree(\'' + genre + '\',\'' + sname + '\',\'duree\',this.value)" />'
+      + '</div>';
+  }).join('');
+
+  container.innerHTML = header + rows;
+}
+
+function updatePrixDuree(genre, name, field, value) {
+  if (!prixDuree[genre]) prixDuree[genre] = {};
+  if (!prixDuree[genre][name]) prixDuree[genre][name] = {};
+  prixDuree[genre][name][field] = parseFloat(value) || 0;
 }
 
 function togglePrestation(genre, idx) {
   var container = document.getElementById('prestations-' + genre);
   var all  = container ? container._all : [];
-  var name = all[idx];
-  if (!name) return;
+  var item = all[idx];
+  if (!item) return;
+  var name   = item.name;
   var active = activePrestations[genre] || [];
   if (active.indexOf(name) !== -1) {
-    activePrestations[genre] = active.filter(function(p) { return p !== name; });
+    activePrestations[genre] = active.filter(function(n) { return n !== name; });
   } else {
     activePrestations[genre] = active.concat([name]);
   }
@@ -264,26 +366,33 @@ function togglePrestation(genre, idx) {
 function removeCustom(genre, idx) {
   var container = document.getElementById('prestations-' + genre);
   var all  = container ? container._all : [];
-  var name = all[idx];
-  if (!name) return;
-  customPrestations[genre] = (customPrestations[genre] || []).filter(function(p) { return p !== name; });
-  activePrestations[genre] = (activePrestations[genre] || []).filter(function(p) { return p !== name; });
+  var item = all[idx];
+  if (!item) return;
+  var name = item.name;
+  customPrestations[genre] = (customPrestations[genre] || []).filter(function(p) { return p.name !== name; });
+  activePrestations[genre] = (activePrestations[genre] || []).filter(function(n) { return n !== name; });
+  if (prixDuree[genre]) delete prixDuree[genre][name];
   renderPrestations(genre);
 }
 
 function addPrestation(genre) {
   var input = document.getElementById('new-prestation-' + genre);
-  var val   = (input.value || '').trim();
-  if (!val) return;
-  if (!customPrestations[genre])  customPrestations[genre]  = [];
-  if (!activePrestations[genre])  activePrestations[genre]  = [];
-  var base        = ALL_PRESTATIONS[genre] || [];
-  var alreadyBase = base.indexOf(val) !== -1;
-  var alreadyCust = customPrestations[genre].indexOf(val) !== -1;
-  if (alreadyBase || alreadyCust) {
-    if (activePrestations[genre].indexOf(val) === -1) activePrestations[genre].push(val);
-  } else {
-    customPrestations[genre].push(val);
+  var raw   = (input.value || '').trim();
+  if (!raw) return;
+  var val  = capitalize(raw);
+  var base = getAllForGenre(genre);
+  var exists = base.some(function(p) { return p.name.toLowerCase() === val.toLowerCase(); });
+
+  if (!customPrestations[genre]) customPrestations[genre] = [];
+  if (!activePrestations[genre]) activePrestations[genre] = [];
+
+  if (!exists) {
+    var defaultPd = { prix: 0, duree: 30 };
+    customPrestations[genre].push({ name: val, prix: defaultPd.prix, duree: defaultPd.duree });
+    if (!prixDuree[genre]) prixDuree[genre] = {};
+    prixDuree[genre][val] = defaultPd;
+  }
+  if (activePrestations[genre].indexOf(val) === -1) {
     activePrestations[genre].push(val);
   }
   renderPrestations(genre);
@@ -299,6 +408,7 @@ async function savePrestations() {
     user_id:            currentUser.id,
     prestations:        activePrestations,
     custom_prestations: customPrestations,
+    prix_duree:         prixDuree,
   }, { onConflict: 'user_id' });
 
   btn.disabled = false; btn.textContent = 'Enregistrer';

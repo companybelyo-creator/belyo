@@ -101,3 +101,7 @@ CREATE POLICY "salon_settings_all" ON salon_settings
 -- Ajouter custom_prestations à salon_settings
 ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS
   custom_prestations JSONB DEFAULT '{"homme":[],"femme":[]}';
+
+-- Ajouter prix_duree à salon_settings
+ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS
+  prix_duree JSONB DEFAULT '{"homme":{},"femme":{}}';
