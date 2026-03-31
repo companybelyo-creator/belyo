@@ -35,15 +35,18 @@
       <h1 class="page-title">Para<em>mètres</em></h1>
     </div>
 
-    <div class="settings-tabs-bar">
-      <button class="settings-tab active" onclick="showSection('salon', this)">🏪 Salon</button>
-      <button class="settings-tab" onclick="showSection('compte', this)">👤 Compte</button>
-      <button class="settings-tab" onclick="showSection('securite', this)">🔒 Sécurité</button>
-      <button class="settings-tab" onclick="showSection('abonnement', this)">💳 Abonnement</button>
-      <button class="settings-tab" onclick="showSection('prestations', this)">✂️ Prestations</button>
-    </div>
-
     <div class="settings-layout">
+
+      <!-- Nav gauche -->
+      <nav class="settings-nav">
+        <button class="settings-nav-item active" onclick="showSection('salon', this)">🏪 Mon salon</button>
+        <button class="settings-nav-item" onclick="showSection('compte', this)">👤 Mon compte</button>
+        <button class="settings-nav-item" onclick="showSection('securite', this)">🔒 Sécurité</button>
+        <button class="settings-nav-item" onclick="showSection('abonnement', this)">💳 Abonnement</button>
+        <button class="settings-nav-item" onclick="showSection('prestations', this)">✂️ Prestations</button>
+      </nav>
+
+      <!-- Contenu -->
       <div>
 
         <!-- SALON -->

@@ -11,7 +11,7 @@ function showMsg(id, show) {
 
 function showSection(name, btn) {
   document.querySelectorAll('.settings-section').forEach(function(s) { s.classList.remove('active'); });
-  document.querySelectorAll('.settings-tab, .settings-nav-item').forEach(function(b) { b.classList.remove('active'); });
+  document.querySelectorAll('.settings-nav-item').forEach(function(b) { b.classList.remove('active'); });
   document.getElementById('section-' + name).classList.add('active');
   if (btn) btn.classList.add('active');
 }
