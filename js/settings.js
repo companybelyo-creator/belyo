@@ -197,23 +197,34 @@ async function loadSubscription() {
 // Catalogue de base avec prix et durée par défaut
 var ALL_PRESTATIONS = {
   homme: [
-    { name: 'Coupe',         prix: 20, duree: 30 },
-    { name: 'Degrade',       prix: 20, duree: 30 },
-    { name: 'Barbe',         prix: 10, duree: 15 },
-    { name: 'Coupe + Barbe', prix: 28, duree: 45 },
-    { name: 'Estompage',     prix: 20, duree: 30 },
-    { name: 'Soin',          prix: 15, duree: 20 },
-    { name: 'Coloration',    prix: 35, duree: 60 },
+    { name: 'Coupe',            prix: 20, duree: 30,  active: true  },
+    { name: 'Degrade',          prix: 20, duree: 30,  active: true  },
+    { name: 'Barbe',            prix: 10, duree: 15,  active: true  },
+    { name: 'Coupe + Barbe',    prix: 28, duree: 45,  active: true  },
+    { name: 'Estompage',        prix: 18, duree: 25,  active: true  },
+    { name: 'Soin',             prix: 15, duree: 20,  active: true  },
+    { name: 'Coloration',       prix: 35, duree: 60,  active: true  },
+    { name: 'Meches homme',     prix: 40, duree: 60,  active: false },
+    { name: 'Permanente homme', prix: 50, duree: 75,  active: false },
+    { name: 'Keratine',         prix: 80, duree: 120, active: false },
+    { name: 'Rasage',           prix: 15, duree: 20,  active: false },
+    { name: 'Taille moustache', prix: 8,  duree: 10,  active: false },
   ],
   femme: [
-    { name: 'Coupe',         prix: 30, duree: 45 },
-    { name: 'Brushing',      prix: 25, duree: 40 },
-    { name: 'Coloration',    prix: 60, duree: 90 },
-    { name: 'Balayage',      prix: 80, duree: 120 },
-    { name: 'Meches',        prix: 70, duree: 90 },
-    { name: 'Soin',          prix: 20, duree: 30 },
-    { name: 'Lissage',       prix: 80, duree: 90 },
-    { name: 'Permanente',    prix: 70, duree: 90 },
+    { name: 'Coupe',            prix: 30, duree: 45,  active: true  },
+    { name: 'Brushing',         prix: 25, duree: 40,  active: true  },
+    { name: 'Coloration',       prix: 60, duree: 90,  active: true  },
+    { name: 'Balayage',         prix: 80, duree: 120, active: true  },
+    { name: 'Meches',           prix: 70, duree: 90,  active: true  },
+    { name: 'Soin',             prix: 20, duree: 30,  active: true  },
+    { name: 'Lissage',          prix: 80, duree: 90,  active: true  },
+    { name: 'Permanente',       prix: 70, duree: 90,  active: true  },
+    { name: 'Chignon',          prix: 45, duree: 60,  active: false },
+    { name: 'Extension',        prix: 150,duree: 180, active: false },
+    { name: 'Defrisage',        prix: 60, duree: 90,  active: false },
+    { name: 'Keratine',         prix: 90, duree: 120, active: false },
+    { name: 'Tresse',           prix: 40, duree: 60,  active: false },
+    { name: 'Coupe enfant',     prix: 20, duree: 30,  active: false },
   ],
 };
 
@@ -255,8 +266,8 @@ async function loadPrestations() {
 
 function buildDefaultActive() {
   return {
-    homme: ALL_PRESTATIONS.homme.map(function(p) { return p.name; }),
-    femme: ALL_PRESTATIONS.femme.map(function(p) { return p.name; }),
+    homme: ALL_PRESTATIONS.homme.filter(function(p) { return p.active; }).map(function(p) { return p.name; }),
+    femme: ALL_PRESTATIONS.femme.filter(function(p) { return p.active; }).map(function(p) { return p.name; }),
   };
 }
 

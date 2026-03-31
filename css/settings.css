@@ -93,17 +93,21 @@
 /* ===== PRESTATION CARDS ===== */
 .prest-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
   margin-bottom: 8px;
 }
 .prest-card {
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 14px;
   transition: border-color .15s, box-shadow .15s;
   opacity: .5;
+  aspect-ratio: 1 / 1.1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .prest-card.active {
   border-color: var(--gold);
@@ -119,7 +123,7 @@
 .prest-check {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   flex: 1;
 }
@@ -184,11 +188,18 @@
   border: none;
   background: transparent;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 13px;
   color: var(--ink);
-  padding: 8px 0;
+  padding: 6px 0;
   outline: none;
   min-width: 0;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+.prest-field-wrap input::-webkit-outer-spin-button,
+.prest-field-wrap input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .prest-field-wrap span {
   font-size: 12px;
