@@ -80,7 +80,7 @@
 }
 .week-nav-btn:hover { background: var(--cream-dark); }
 .week-label { font-size: 14px; font-weight: 500; min-width: 200px; text-align: center; }
-.action-btn { background: none; border: 1px solid var(--border); font-size: 12px; cursor: pointer; padding: 4px 12px; border-radius: 100px; transition: all .15s; font-family: var(--font-body); color: var(--ink-light); }
+.action-btn { background: none; border: 1px solid var(--border); font-size: 12px; cursor: pointer; padding: 4px 10px; border-radius: 100px; transition: all .15s; font-family: var(--font-body); color: var(--ink-light); display: inline-block; white-space: nowrap; margin-right: 4px; vertical-align: middle; }
 .action-btn:hover { background: var(--cream-dark); color: var(--ink); }
 .action-done { border-color: var(--gold); color: var(--gold); }
 .action-done:hover { background: var(--gold-light); color: var(--ink); }

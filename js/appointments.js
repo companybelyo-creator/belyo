@@ -277,7 +277,7 @@ function renderList() {
       + '<td>' + (a.service || '<span style="color:var(--ink-light)">—</span>') + '</td>'
       + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '—') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
-      + '<td style="display:flex;gap:6px">'
+      + '<td>'
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
       + '</td></tr>';
@@ -431,6 +431,8 @@ function openModal(presetDatetime) {
   }
   document.getElementById('appt-datetime').value = dt;
   document.getElementById('modal-overlay').classList.add('open');
+  // Appliquer la prestation par défaut (Coupe) maintenant que le modal est ouvert
+  updateServiceOptions();
 }
 function openModalAt(datetimeStr) { openModal(datetimeStr); }
 function closeModal() {
