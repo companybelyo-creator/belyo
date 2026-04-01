@@ -351,7 +351,7 @@ function calPickerSelectDay(year, month, day) {
   }
 
   calPickerRender();
-  calPickerUpdateTime();
+  // NE PAS appeler updateTime ici — laisser l'utilisateur choisir l'heure
 }
 
 function calPickerUpdateTime(closeAfter) {
