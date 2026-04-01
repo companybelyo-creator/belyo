@@ -85,8 +85,8 @@ function selectServiceByIndex(idx) {
     prix = pd.prix;
   } else {
     var defaults = {
-      homme: { 'Coupe': 20, 'Degrade': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
-      femme: { 'Coupe': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Meches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
+      homme: { 'Coupe': 20, 'Dégradé': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
+      femme: { 'Coupe': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Mèches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
     };
     prix = (defaults[selectedGenre] && defaults[selectedGenre][name]) || 0;
   }
@@ -111,7 +111,7 @@ function selectService(name, prix) {
   var hidden = document.getElementById('appt-service-select');
   if (label) {
     label.style.color = 'var(--ink)';
-    label.textContent = name;
+    label.textContent = prix ? name + '  —  ' + prix + '€' : name;
   }
   if (hidden) hidden.value = name;
 

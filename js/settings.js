@@ -65,7 +65,7 @@ async function saveSalon() {
     salon_address: document.getElementById('salon-address').value.trim(),
   }});
 
-  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { document.getElementById('salon-err').textContent = res.error.message; showMsg('salon-err', true); return; }
   document.getElementById('sidebar-salon').textContent = res.data.user.user_metadata.salon_name || 'Mon salon';
   showMsg('salon-ok', true);
@@ -82,7 +82,7 @@ async function saveCompte() {
   var lastName  = document.getElementById('last-name').value.trim();
   var res = await sb.auth.updateUser({ data: { first_name: firstName, last_name: lastName } });
 
-  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { document.getElementById('compte-err').textContent = res.error.message; showMsg('compte-err', true); return; }
   var fullname = [firstName, lastName].filter(Boolean).join(' ');
   document.getElementById('profile-fullname').textContent = fullname || res.data.user.email;
@@ -198,7 +198,7 @@ async function loadSubscription() {
 var ALL_PRESTATIONS = {
   homme: [
     { name: 'Coupe',            prix: 20, duree: 30,  active: true  },
-    { name: 'Degrade',          prix: 20, duree: 30,  active: true  },
+    { name: 'Dégradé',         prix: 20, duree: 30,  active: true  },
     { name: 'Barbe',            prix: 10, duree: 15,  active: true  },
     { name: 'Coupe + Barbe',    prix: 28, duree: 45,  active: true  },
     { name: 'Estompage',        prix: 18, duree: 25,  active: true  },
@@ -215,13 +215,13 @@ var ALL_PRESTATIONS = {
     { name: 'Brushing',         prix: 25, duree: 40,  active: true  },
     { name: 'Coloration',       prix: 60, duree: 90,  active: true  },
     { name: 'Balayage',         prix: 80, duree: 120, active: true  },
-    { name: 'Meches',           prix: 70, duree: 90,  active: true  },
+    { name: 'Mèches',          prix: 70, duree: 90,  active: true  },
     { name: 'Soin',             prix: 20, duree: 30,  active: true  },
     { name: 'Lissage',          prix: 80, duree: 90,  active: true  },
     { name: 'Permanente',       prix: 70, duree: 90,  active: true  },
     { name: 'Chignon',          prix: 45, duree: 60,  active: false },
     { name: 'Extension',        prix: 150,duree: 180, active: false },
-    { name: 'Defrisage',        prix: 60, duree: 90,  active: false },
+    { name: 'Défrisage',       prix: 60, duree: 90,  active: false },
     { name: 'Keratine',         prix: 90, duree: 120, active: false },
     { name: 'Tresse',           prix: 40, duree: 60,  active: false },
     { name: 'Coupe enfant',     prix: 20, duree: 30,  active: false },
@@ -260,8 +260,6 @@ async function loadPrestations() {
 
   renderPrestations('homme');
   renderPrestations('femme');
-  renderPrix('homme');
-  renderPrix('femme');
 }
 
 function buildDefaultActive() {
@@ -405,7 +403,8 @@ function addPrestation(genre) {
 }
 
 async function savePrestations() {
-  var btn = document.querySelector('#section-prestations .btn-submit');
+  var btn = document.getElementById('btn-save-prestations');
+  if (!btn) { showToast('Erreur bouton', 'error'); return; }
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
@@ -416,7 +415,7 @@ async function savePrestations() {
     prix_duree:         prixDuree,
   }, { onConflict: 'user_id' });
 
-  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
   showMsg('prestations-ok', true);
   setTimeout(function() { showMsg('prestations-ok', false); }, 3000);
