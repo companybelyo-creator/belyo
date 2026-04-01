@@ -100,22 +100,32 @@ function renderStatsAvancees(data) {
     });
   }
 
-  // --- Stats genre ---
-  var genreCount = { Homme: 0, Femme: 0, Autre: 0 };
+  // --- Stats genre --- (basé sur les prestations configurées)
+  var femmeKeywords = ['brushing', 'coloration', 'balayage', 'meche', 'lissage', 'permanente', 'chignon', 'extension', 'defrisage', 'tresse', 'soin femme'];
+  var hommeKeywords = ['barbe', 'degrade', 'estompage', 'coupe homme', 'coupe + barbe'];
+
+  var genreCount = { Homme: 0, Femme: 0 };
   data.forEach(function(a) {
-    var svc = (a.service || '').toLowerCase();
-    if (svc.includes('barbe') || svc.includes('degrade') || svc.includes('estompage')) genreCount.Homme++;
-    else if (svc.includes('balayage') || svc.includes('brushing') || svc.includes('meches') || svc.includes('lissage')) genreCount.Femme++;
-    else genreCount.Autre++;
+    var svc = (a.service || '').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, ''); // enlever accents pour comparaison
+
+    var isFemme = femmeKeywords.some(function(k) { return svc.includes(k); });
+    var isHomme = hommeKeywords.some(function(k) { return svc.includes(k); });
+
+    if (isFemme && !isHomme) genreCount.Femme++;
+    else genreCount.Homme++; // par défaut Homme si pas de signe Femme
   });
+
+  // N'afficher que les genres présents
   var totalG = data.length || 1;
   var genreEl = document.getElementById('genre-stats');
   if (genreEl) {
-    genreEl.innerHTML = Object.entries(genreCount).map(function(g) {
+    var entries = Object.entries(genreCount).filter(function(g) { return g[1] > 0; });
+    genreEl.innerHTML = entries.map(function(g) {
       var pct = Math.round(g[1] / totalG * 100);
       return '<div class="top-item"><span class="top-name">' + g[0] + '</span>'
         + '<div class="top-bar-wrap"><div class="top-bar" style="width:' + pct + '%"></div></div>'
-        + '<span class="top-val">' + pct + '%</span></div>';
+        + '<span class="top-val">' + pct + '% <span style="color:var(--ink-light);font-weight:400">(' + g[1] + ' RDV)</span></span></div>';
     }).join('');
   }
 
