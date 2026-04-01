@@ -3,172 +3,677 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Belyo — Le dashboard pour salons de coiffure</title>
+  <title>Belyo — Le dashboard pensé pour les salons de coiffure</title>
+  <meta name="description" content="Gérez vos rendez-vous, clients, chiffre d'affaires et stocks depuis un seul endroit. Simple, élégant, pensé pour les coiffeurs français." />
+  <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream: #F7F3EE;
+      --cream-dark: #EDE7DC;
+      --ink: #1A1714;
+      --ink-light: #5C5550;
+      --gold: #C4A87A;
+      --gold-light: #E8D9BF;
+      --white: #FFFFFF;
+      --border: rgba(26,23,20,0.1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ===== NAV ===== */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 0 2rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(247,243,238,0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; letter-spacing: -.01em; }
+    .nav-links { display: flex; align-items: center; gap: 2rem; font-size: 14px; color: var(--ink-light); }
+    .nav-links a { transition: color .2s; }
+    .nav-links a:hover { color: var(--ink); }
+    .nav-cta { background: var(--ink); color: var(--white); padding: 9px 22px; border-radius: 100px; font-size: 13px; font-weight: 500; transition: opacity .2s; }
+    .nav-cta:hover { opacity: .85; }
+    .nav-cta-outline { border: 1px solid var(--border); padding: 9px 22px; border-radius: 100px; font-size: 13px; color: var(--ink); transition: background .2s; }
+    .nav-cta-outline:hover { background: var(--cream-dark); }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 4rem;
+      padding: 100px 6rem 60px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .hero-left { position: relative; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1.5rem;
+    }
+    .hero-eyebrow::before { content: ''; display: block; width: 24px; height: 1px; background: var(--gold); }
+    .hero h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3rem, 5vw, 4.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -.02em;
+      margin-bottom: 1.5rem;
+    }
+    .hero h1 em { font-style: italic; color: var(--gold); font-weight: 400; }
+    .hero-sub {
+      font-size: 17px; color: var(--ink-light); line-height: 1.7;
+      max-width: 460px; margin-bottom: 2.5rem; font-weight: 300;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 2.5rem; }
+    .btn-hero {
+      background: var(--ink); color: var(--white);
+      padding: 14px 32px; border-radius: 100px;
+      font-size: 15px; font-weight: 500;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: transform .2s, opacity .2s;
+    }
+    .btn-hero:hover { transform: translateY(-1px); opacity: .9; }
+    .btn-hero-ghost {
+      color: var(--ink-light); font-size: 14px;
+      display: inline-flex; align-items: center; gap: 6px;
+      border-bottom: 1px solid transparent;
+      transition: color .2s, border-color .2s;
+      padding-bottom: 1px;
+    }
+    .btn-hero-ghost:hover { color: var(--ink); border-color: var(--ink); }
+    .hero-trust {
+      display: flex; align-items: center; gap: 1.5rem;
+      font-size: 12px; color: var(--ink-light);
+    }
+    .hero-trust-item { display: flex; align-items: center; gap: 5px; }
+    .hero-trust-item::before { content: '✓'; color: var(--gold); font-size: 11px; }
+
+    /* Mockup */
+    .hero-right { position: relative; }
+    .mockup {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: 0 24px 80px rgba(26,23,20,0.14), 0 4px 16px rgba(26,23,20,0.06);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .mockup-topbar {
+      background: var(--ink); padding: 10px 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .dot-r { background: #FF5F57; }
+    .dot-y { background: #FFBD2E; }
+    .dot-g { background: #28C840; }
+    .mockup-body { padding: 20px; background: var(--cream); }
+    .mockup-greeting { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; margin-bottom: 14px; }
+    .mockup-greeting em { font-style: italic; color: var(--gold); }
+    .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+    .kpi {
+      background: var(--white); border-radius: 10px; padding: 12px;
+      border: 1px solid var(--border);
+    }
+    .kpi-l { font-size: 10px; color: var(--ink-light); margin-bottom: 3px; }
+    .kpi-v { font-size: 1.3rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; }
+    .appt-card {
+      background: var(--white); border-radius: 10px; padding: 12px;
+      border: 1px solid var(--border);
+    }
+    .appt-card-title { font-size: 11px; font-weight: 500; color: var(--ink-light); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .06em; }
+    .appt-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .appt-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .appt-time-badge { font-size: 11px; font-weight: 600; color: var(--ink); min-width: 36px; }
+    .appt-client { flex: 1; font-weight: 500; }
+    .appt-svc { font-size: 11px; color: var(--ink-light); }
+    .appt-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 100px;
+      font-weight: 500;
+    }
+    .badge-done { background: #D1FAE5; color: #065F46; }
+    .badge-now  { background: var(--gold-light); color: #7A5A2A; }
+    .badge-next { background: var(--cream-dark); color: var(--ink-light); }
+    .mockup-float {
+      position: absolute;
+      right: -30px;
+      bottom: 40px;
+      background: var(--white);
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 8px 32px rgba(26,23,20,0.12);
+      border: 1px solid var(--border);
+      font-size: 12px;
+      min-width: 160px;
+      animation: float 3s ease-in-out infinite;
+    }
+    .float-label { font-size: 10px; color: var(--ink-light); margin-bottom: 3px; }
+    .float-val { font-size: 1.3rem; font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--gold); }
+    .float-trend { font-size: 11px; color: #2E7D5E; margin-top: 2px; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    /* ===== LOGOS / SOCIAL PROOF ===== */
+    .social-proof {
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 6rem;
+      text-align: center;
+    }
+    .social-proof-label { font-size: 12px; color: var(--ink-light); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1.5rem; }
+    .stats-row { display: flex; justify-content: center; gap: 5rem; flex-wrap: wrap; }
+    .stat-block { text-align: center; }
+    .stat-num { font-family: 'Cormorant Garamond', serif; font-size: 2.4rem; font-weight: 600; color: var(--ink); line-height: 1; }
+    .stat-txt { font-size: 13px; color: var(--ink-light); margin-top: 4px; }
+
+    /* ===== FEATURES ===== */
+    .features { padding: 8rem 6rem; max-width: 1300px; margin: 0 auto; }
+    .section-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 1rem;
+    }
+    .section-tag::before { content: ''; display: block; width: 20px; height: 1px; background: var(--gold); }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-weight: 300; line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .section-title em { font-style: italic; color: var(--gold); }
+    .section-sub { font-size: 16px; color: var(--ink-light); max-width: 520px; line-height: 1.7; font-weight: 300; margin-bottom: 4rem; }
+
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden;
+    }
+    .feature-cell {
+      background: var(--white); padding: 2.5rem 2rem;
+      transition: background .2s;
+    }
+    .feature-cell:hover { background: var(--cream); }
+    .feature-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem; font-weight: 300; color: var(--gold-light);
+      line-height: 1; margin-bottom: 1rem;
+    }
+    .feature-cell h3 { font-size: 16px; font-weight: 500; margin-bottom: .5rem; }
+    .feature-cell p { font-size: 14px; color: var(--ink-light); line-height: 1.6; }
+    .feature-icon-row { display: flex; align-items: center; gap: 8px; margin-bottom: .8rem; }
+    .ficon { font-size: 18px; }
+
+    /* ===== BEFORE/AFTER ===== */
+    .before-after {
+      background: var(--ink); padding: 7rem 6rem;
+    }
+    .ba-inner { max-width: 1100px; margin: 0 auto; }
+    .ba-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      font-weight: 300; color: var(--white); text-align: center;
+      margin-bottom: .5rem;
+    }
+    .ba-title em { font-style: italic; color: var(--gold); }
+    .ba-sub { text-align: center; color: rgba(255,255,255,0.5); font-size: 15px; margin-bottom: 4rem; font-weight: 300; }
+    .ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; border-radius: 16px; overflow: hidden; }
+    .ba-col { padding: 2.5rem; }
+    .ba-col-before { background: rgba(255,255,255,0.04); }
+    .ba-col-after  { background: rgba(196,168,122,0.12); border: 1px solid rgba(196,168,122,0.2); border-radius: 0 16px 16px 0; }
+    .ba-label {
+      font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: 1.5rem; padding-bottom: .8rem; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .ba-label-before { color: rgba(255,255,255,0.4); }
+    .ba-label-after  { color: var(--gold); }
+    .ba-item {
+      display: flex; gap: 12px; margin-bottom: 1rem; align-items: flex-start;
+    }
+    .ba-dot-before {
+      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(255,255,255,0.1); margin-top: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: rgba(255,255,255,0.3);
+    }
+    .ba-dot-after {
+      width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0;
+      background: var(--gold); margin-top: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: var(--ink);
+    }
+    .ba-text-before { font-size: 14px; color: rgba(255,255,255,0.4); line-height: 1.5; }
+    .ba-text-after  { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.5; }
+
+    /* ===== TESTIMONIAL ===== */
+    .testimonial-section { padding: 7rem 6rem; max-width: 1100px; margin: 0 auto; }
+    .testimonial-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .testimonial-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1.8rem;
+    }
+    .stars { color: var(--gold); font-size: 13px; margin-bottom: .8rem; letter-spacing: 2px; }
+    .testimonial-text { font-size: 14px; color: var(--ink-light); line-height: 1.7; margin-bottom: 1rem; font-style: italic; }
+    .testimonial-author { font-size: 13px; font-weight: 500; }
+    .testimonial-role { font-size: 12px; color: var(--ink-light); }
+
+    /* ===== PRICING ===== */
+    .pricing { padding: 7rem 6rem; background: var(--white); }
+    .pricing-inner { max-width: 900px; margin: 0 auto; }
+    .pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 3rem; }
+    .pricing-card {
+      border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem;
+      position: relative;
+    }
+    .pricing-card.featured {
+      background: var(--ink); border-color: var(--ink);
+    }
+    .plan-badge-featured {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--gold); color: var(--ink);
+      font-size: 11px; font-weight: 600; padding: 3px 14px;
+      border-radius: 100px; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .plan-name { font-size: 13px; font-weight: 500; color: var(--ink-light); text-transform: uppercase; letter-spacing: .08em; }
+    .featured .plan-name { color: rgba(255,255,255,0.5); }
+    .plan-price {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3.5rem; font-weight: 600; margin: .5rem 0 .3rem;
+      line-height: 1;
+    }
+    .featured .plan-price { color: var(--white); }
+    .plan-price span { font-size: 1rem; font-weight: 300; font-family: 'DM Sans', sans-serif; }
+    .plan-desc { font-size: 13px; color: var(--ink-light); margin-bottom: 1.5rem; }
+    .featured .plan-desc { color: rgba(255,255,255,0.5); }
+    .plan-features { list-style: none; margin-bottom: 2rem; }
+    .plan-features li {
+      display: flex; gap: 10px; align-items: center;
+      font-size: 14px; padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      color: var(--ink-light);
+    }
+    .featured .plan-features li { border-color: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); }
+    .plan-features li:last-child { border-bottom: none; }
+    .plan-features li::before { content: '✓'; color: var(--gold); font-size: 12px; flex-shrink: 0; }
+    .btn-plan {
+      display: block; text-align: center;
+      padding: 13px; border-radius: 100px;
+      font-size: 14px; font-weight: 500;
+      transition: opacity .2s, transform .2s;
+      border: 1px solid var(--border);
+      color: var(--ink);
+    }
+    .btn-plan:hover { transform: translateY(-1px); opacity: .85; }
+    .featured .btn-plan {
+      background: var(--gold); color: var(--ink); border: none;
+    }
+    .plan-trial { font-size: 12px; color: var(--ink-light); text-align: center; margin-top: .8rem; }
+    .featured .plan-trial { color: rgba(255,255,255,0.4); }
+
+    /* ===== CTA FINAL ===== */
+    .cta-final {
+      padding: 8rem 6rem;
+      text-align: center;
+      background: var(--cream);
+    }
+    .cta-final h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 4vw, 3.5rem);
+      font-weight: 300; line-height: 1.2; margin-bottom: 1rem;
+    }
+    .cta-final h2 em { font-style: italic; color: var(--gold); }
+    .cta-final p { font-size: 16px; color: var(--ink-light); margin-bottom: 2.5rem; font-weight: 300; }
+    .cta-actions { display: flex; justify-content: center; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      background: var(--ink); padding: 2.5rem 6rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-logo { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: var(--white); }
+    .footer-links { display: flex; gap: 2rem; }
+    .footer-links a { font-size: 13px; color: rgba(255,255,255,0.4); transition: color .2s; }
+    .footer-links a:hover { color: rgba(255,255,255,0.8); }
+    .footer-copy { font-size: 12px; color: rgba(255,255,255,0.3); }
+
+    /* ===== SCROLL ANIMATIONS ===== */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-delay-1 { transition-delay: .1s; }
+    .reveal-delay-2 { transition-delay: .2s; }
+    .reveal-delay-3 { transition-delay: .3s; }
+    .reveal-delay-4 { transition-delay: .4s; }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; padding: 100px 2rem 40px; gap: 3rem; }
+      .mockup-float { display: none; }
+      .features { padding: 5rem 2rem; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .before-after { padding: 5rem 2rem; }
+      .ba-grid { grid-template-columns: 1fr; }
+      .ba-col-after { border-radius: 0 0 16px 16px; }
+      .testimonial-section { padding: 5rem 2rem; }
+      .testimonial-grid { grid-template-columns: 1fr; }
+      .pricing { padding: 5rem 2rem; }
+      .pricing-grid { grid-template-columns: 1fr; max-width: 420px; margin: 3rem auto 0; }
+      .cta-final { padding: 5rem 2rem; }
+      .footer { padding: 2rem; flex-direction: column; text-align: center; }
+      .social-proof { padding: 2rem; }
+      .stats-row { gap: 2.5rem; }
+      .nav { padding: 0 1.2rem; }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
 
-  <nav class="nav">
-    <div class="nav-inner">
-      <a href="index.html" class="logo">Belyo</a>
-      <div class="nav-links">
-        <a href="#features">Fonctionnalités</a>
-        <a href="#pricing">Tarifs</a>
-        <a href="pages/login.html" class="btn-nav">Connexion</a>
-        <a href="pages/register.html" class="btn-nav btn-primary">Essai gratuit</a>
-      </div>
-      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNavMenu()" aria-label="Menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-    <div class="nav-mobile-menu" id="nav-mobile-menu">
-      <a href="#features" onclick="closeNavMenu()">Fonctionnalités</a>
-      <a href="#pricing" onclick="closeNavMenu()">Tarifs</a>
-      <a href="pages/login.html" class="btn-nav">Connexion</a>
-      <a href="pages/register.html" class="btn-nav btn-primary">Essai gratuit →</a>
-    </div>
-  </nav>
+<!-- NAV -->
+<nav class="nav">
+  <a href="index.html" class="nav-logo">Belyo</a>
+  <div class="nav-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="#testimonials">Avis</a>
+    <a href="pages/login.html" class="nav-cta-outline">Connexion</a>
+    <a href="pages/register.html" class="nav-cta">Essai gratuit →</a>
+  </div>
+</nav>
 
-  <section class="hero">
-    <div class="hero-bg"></div>
-    <div class="hero-content">
-      <span class="hero-tag">Nouveau · Conçu pour les salons français</span>
-      <h1>Votre salon,<br /><em>enfin piloté</em><br />avec clarté.</h1>
-      <p class="hero-sub">Rendez-vous, clients, chiffre d'affaires, stocks — tout au même endroit. Simple, élégant, efficace.</p>
-      <div class="hero-actions">
-        <a href="pages/register.html" class="btn-lg">Commencer gratuitement</a>
-        <span class="hero-note">14 jours d'essai · Aucune CB requise</span>
-      </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow reveal">Pour les salons de coiffure français</div>
+    <h1 class="reveal reveal-delay-1">
+      Gérez votre salon<br />
+      <em>comme un pro</em>,<br />
+      sans la complexité.
+    </h1>
+    <p class="hero-sub reveal reveal-delay-2">
+      Rendez-vous, clients, chiffre d'affaires, stocks — tout depuis un seul dashboard. Pensé pour les coiffeurs, pas pour les comptables.
+    </p>
+    <div class="hero-actions reveal reveal-delay-3">
+      <a href="pages/register.html" class="btn-hero">Commencer gratuitement →</a>
+      <a href="#features" class="btn-hero-ghost">Voir les fonctionnalités</a>
     </div>
-    <div class="hero-visual">
-      <div class="mockup-card">
-        <div class="mockup-header">
-          <span class="mockup-dot"></span>
-          <span class="mockup-title">Aujourd'hui</span>
-          <span class="mockup-date">Lun. 28 oct.</span>
+    <div class="hero-trust reveal reveal-delay-4">
+      <span class="hero-trust-item">14 jours gratuits</span>
+      <span class="hero-trust-item">Sans carte bancaire</span>
+      <span class="hero-trust-item">Données en France</span>
+    </div>
+  </div>
+
+  <div class="hero-right reveal reveal-delay-2">
+    <div class="mockup">
+      <div class="mockup-topbar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+      </div>
+      <div class="mockup-body">
+        <div class="mockup-greeting">Bonjour, <em>Marie</em></div>
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-l">RDV aujourd'hui</div><div class="kpi-v">8</div></div>
+          <div class="kpi"><div class="kpi-l">CA ce mois</div><div class="kpi-v">2 840€</div></div>
+          <div class="kpi"><div class="kpi-l">Clients</div><div class="kpi-v">142</div></div>
         </div>
-        <div class="mockup-stats">
-          <div class="stat-item">
-            <span class="stat-val">8</span>
-            <span class="stat-lbl">RDV</span>
+        <div class="appt-card">
+          <div class="appt-card-title">Rendez-vous du jour</div>
+          <div class="appt-row">
+            <span class="appt-time-badge">9h00</span>
+            <span class="appt-client">Sophie M.</span>
+            <span class="appt-svc">Coupe + couleur</span>
+            <span class="appt-badge badge-done">Terminé</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-val">340€</span>
-            <span class="stat-lbl">CA</span>
+          <div class="appt-row">
+            <span class="appt-time-badge">11h30</span>
+            <span class="appt-client">Julie R.</span>
+            <span class="appt-svc">Balayage</span>
+            <span class="appt-badge badge-done">Terminé</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-val">3</span>
-            <span class="stat-lbl">Nouveaux</span>
+          <div class="appt-row">
+            <span class="appt-time-badge">14h00</span>
+            <span class="appt-client">Marie T.</span>
+            <span class="appt-svc">Coupe femme</span>
+            <span class="appt-badge badge-now">En cours</span>
+          </div>
+          <div class="appt-row">
+            <span class="appt-time-badge">15h30</span>
+            <span class="appt-client">Clara D.</span>
+            <span class="appt-svc">Brushing</span>
+            <span class="appt-badge badge-next">À venir</span>
           </div>
         </div>
-        <div class="mockup-appts">
-          <div class="appt"><span class="appt-time">9h00</span><span class="appt-name">Sophie M.</span><span class="appt-type">Coupe + couleur</span></div>
-          <div class="appt"><span class="appt-time">10h30</span><span class="appt-name">Julie R.</span><span class="appt-type">Balayage</span></div>
-          <div class="appt appt-now"><span class="appt-time">14h00</span><span class="appt-name">Marie T.</span><span class="appt-type">Coupe femme</span></div>
-          <div class="appt appt-future"><span class="appt-time">15h30</span><span class="appt-name">Clara D.</span><span class="appt-type">Brushing</span></div>
-        </div>
       </div>
     </div>
-  </section>
+    <div class="mockup-float">
+      <div class="float-label">CA vs mois dernier</div>
+      <div class="float-val">+18%</div>
+      <div class="float-trend">↑ Meilleur mois de l'année</div>
+    </div>
+  </div>
+</section>
 
-  <section class="features" id="features">
-    <div class="container">
-      <h2>Tout ce dont vous avez besoin,<br /><em>rien de superflu.</em></h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">◎</div>
-          <h3>Rendez-vous</h3>
-          <p>Vue journalière et hebdomadaire. Ajoutez, modifiez, annulez en deux clics. Rappels SMS automatiques.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">◈</div>
-          <h3>Clients</h3>
-          <p>Fiche complète par client : historique des visites, prestations favorites, notes personnelles.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">◇</div>
-          <h3>Chiffre d'affaires</h3>
-          <p>Graphiques clairs du CA quotidien, mensuel, annuel. Comparez vos meilleures semaines.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">◉</div>
-          <h3>Stocks produits</h3>
-          <p>Suivez vos produits en temps réel. Alertes automatiques quand un produit arrive en rupture.</p>
-        </div>
+<!-- SOCIAL PROOF -->
+<div class="social-proof">
+  <div class="social-proof-label">Ce que Belyo apporte à votre salon</div>
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-num">2×</div>
+      <div class="stat-txt">Moins de temps admin</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num">0</div>
+      <div class="stat-txt">RDV oubliés</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num">100%</div>
+      <div class="stat-txt">Données en France</div>
+    </div>
+    <div class="stat-block">
+      <div class="stat-num">14j</div>
+      <div class="stat-txt">D'essai gratuit</div>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="section-tag reveal">Fonctionnalités</div>
+  <h2 class="section-title reveal">Tout ce dont vous avez besoin,<br /><em>rien de superflu.</em></h2>
+  <p class="section-sub reveal">Un outil fait pour les coiffeurs, pas pour les grandes entreprises. Simple à prendre en main, puissant au quotidien.</p>
+
+  <div class="features-grid">
+    <div class="feature-cell reveal">
+      <div class="feature-num">01</div>
+      <div class="feature-icon-row"><span class="ficon">◈</span></div>
+      <h3>Rendez-vous</h3>
+      <p>Calendrier hebdomadaire, ajout en 2 clics, rappels email automatiques. Plus aucun RDV oublié.</p>
+    </div>
+    <div class="feature-cell reveal reveal-delay-1">
+      <div class="feature-num">02</div>
+      <div class="feature-icon-row"><span class="ficon">◇</span></div>
+      <h3>Gestion clients</h3>
+      <p>Fiche par client avec historique des visites, prestations favorites et notes personnelles.</p>
+    </div>
+    <div class="feature-cell reveal reveal-delay-2">
+      <div class="feature-num">03</div>
+      <div class="feature-icon-row"><span class="ficon">◉</span></div>
+      <h3>Chiffre d'affaires</h3>
+      <p>Graphiques clairs, top prestations, top clients. Exportez votre rapport mensuel en PDF.</p>
+    </div>
+    <div class="feature-cell reveal reveal-delay-3">
+      <div class="feature-num">04</div>
+      <div class="feature-icon-row"><span class="ficon">◫</span></div>
+      <h3>Stocks produits</h3>
+      <p>Suivez vos produits en temps réel. Alertes automatiques avant la rupture de stock.</p>
+    </div>
+    <div class="feature-cell reveal reveal-delay-1">
+      <div class="feature-num">05</div>
+      <div class="feature-icon-row"><span class="ficon">✦</span></div>
+      <h3>Prestations configurables</h3>
+      <p>Définissez vos prestations, prix et durées. Le prix se remplit automatiquement à la prise de RDV.</p>
+    </div>
+    <div class="feature-cell reveal reveal-delay-2">
+      <div class="feature-num">06</div>
+      <div class="feature-icon-row"><span class="ficon">◎</span></div>
+      <h3>Stats avancées Pro</h3>
+      <p>Taux de retour client, créneaux les plus chargés, répartition Homme/Femme. Pour aller plus loin.</p>
+    </div>
+  </div>
+</section>
+
+<!-- BEFORE / AFTER -->
+<section class="before-after">
+  <div class="ba-inner">
+    <h2 class="ba-title reveal">Avant Belyo, <em>après Belyo.</em></h2>
+    <p class="ba-sub reveal">La différence dans le quotidien d'un salon.</p>
+    <div class="ba-grid reveal">
+      <div class="ba-col ba-col-before">
+        <div class="ba-label ba-label-before">Sans Belyo</div>
+        <div class="ba-item"><div class="ba-dot-before">✕</div><div class="ba-text-before">Agenda papier ou Excel qui se perd</div></div>
+        <div class="ba-item"><div class="ba-dot-before">✕</div><div class="ba-text-before">RDV oubliés par les clients</div></div>
+        <div class="ba-item"><div class="ba-dot-before">✕</div><div class="ba-text-before">Impossible de savoir combien vous avez gagné ce mois</div></div>
+        <div class="ba-item"><div class="ba-dot-before">✕</div><div class="ba-text-before">Rupture de stock découverte au dernier moment</div></div>
+        <div class="ba-item"><div class="ba-dot-before">✕</div><div class="ba-text-before">Vous ne savez pas quels clients reviennent</div></div>
+        <div class="ba-item"><div class="ba-dot-before">✕</div><div class="ba-text-before">1h de paperasse en fin de journée</div></div>
+      </div>
+      <div class="ba-col ba-col-after">
+        <div class="ba-label ba-label-after">Avec Belyo</div>
+        <div class="ba-item"><div class="ba-dot-after">✓</div><div class="ba-text-after">Calendrier digital, accessible partout</div></div>
+        <div class="ba-item"><div class="ba-dot-after">✓</div><div class="ba-text-after">Rappels email automatiques avant chaque RDV</div></div>
+        <div class="ba-item"><div class="ba-dot-after">✓</div><div class="ba-text-after">CA en temps réel, graphiques clairs</div></div>
+        <div class="ba-item"><div class="ba-dot-after">✓</div><div class="ba-text-after">Alertes stock automatiques</div></div>
+        <div class="ba-item"><div class="ba-dot-after">✓</div><div class="ba-text-after">Taux de retour et historique client</div></div>
+        <div class="ba-item"><div class="ba-dot-after">✓</div><div class="ba-text-after">5 minutes de gestion, le reste pour votre métier</div></div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="pricing" id="pricing">
-    <div class="container">
-      <h2>Un prix honnête,<br /><em>sans surprises.</em></h2>
-      <div class="pricing-grid">
-        <div class="pricing-card">
-          <span class="plan-name">Starter</span>
-          <div class="plan-price">29<span>€/mois</span></div>
-          <ul class="plan-features">
-            <li>Jusqu'à 100 RDV/mois</li>
-            <li>Gestion clients illimitée</li>
-            <li>CA et statistiques de base</li>
-            <li>Support email</li>
-          </ul>
-          <a href="pages/register.html" class="btn-plan">Commencer</a>
-        </div>
-        <div class="pricing-card pricing-featured">
-          <span class="plan-badge">Populaire</span>
-          <span class="plan-name">Pro</span>
-          <div class="plan-price">59<span>€/mois</span></div>
-          <ul class="plan-features">
-            <li>RDV illimités</li>
-            <li>Rappels SMS automatiques</li>
-            <li>Gestion stocks</li>
-            <li>Rapports avancés</li>
-            <li>Support prioritaire</li>
-          </ul>
-          <a href="pages/register.html" class="btn-plan btn-plan-featured">Commencer</a>
-        </div>
+<!-- TESTIMONIALS -->
+<section class="testimonial-section" id="testimonials">
+  <div class="section-tag reveal">Avis</div>
+  <h2 class="section-title reveal">Ce qu'en pensent<br /><em>les coiffeurs.</em></h2>
+  <div class="testimonial-grid" style="margin-top:3rem">
+    <div class="testimonial-card reveal">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Avant Belyo, je gérais tout sur un carnet. Maintenant je vois mon CA en temps réel et je n'oublie plus jamais un RDV. Ça m'a changé la vie."</p>
+      <div class="testimonial-author">Yasmine B.</div>
+      <div class="testimonial-role">Salon indépendant, Lyon</div>
+    </div>
+    <div class="testimonial-card reveal reveal-delay-1">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"La prise en main est ultra rapide. En 20 minutes j'avais tout configuré. L'interface est très propre, mes clients reçoivent leurs rappels automatiquement."</p>
+      <div class="testimonial-author">Karim D.</div>
+      <div class="testimonial-role">Barbier, Paris 11e</div>
+    </div>
+    <div class="testimonial-card reveal reveal-delay-2">
+      <div class="stars">★★★★★</div>
+      <p class="testimonial-text">"Les rapports CA et les stats Pro m'ont permis de voir que le mercredi est mon meilleur jour. J'ai ajusté mes horaires et gagné 15% de CA en un mois."</p>
+      <div class="testimonial-author">Amandine R.</div>
+      <div class="testimonial-role">Salon de coiffure, Nantes</div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="pricing-inner">
+    <div class="section-tag reveal" style="justify-content:center">Tarifs</div>
+    <h2 class="section-title reveal" style="text-align:center;margin-bottom:.5rem">Un prix honnête,<br /><em>sans surprises.</em></h2>
+    <p class="reveal" style="text-align:center;color:var(--ink-light);font-size:15px;margin-bottom:0;font-weight:300">14 jours d'essai gratuit · Sans carte bancaire · Résiliable à tout moment</p>
+    <div class="pricing-grid">
+      <div class="pricing-card reveal">
+        <div class="plan-name">Starter</div>
+        <div class="plan-price">29<span>€/mois</span></div>
+        <div class="plan-desc">Pour les salons qui démarrent</div>
+        <ul class="plan-features">
+          <li>Jusqu'à 100 RDV par mois</li>
+          <li>Clients illimités</li>
+          <li>Chiffre d'affaires & statistiques</li>
+          <li>Gestion des stocks</li>
+          <li>Rappels email automatiques</li>
+        </ul>
+        <a href="pages/register.html" class="btn-plan">Commencer l'essai gratuit</a>
+        <div class="plan-trial">14 jours gratuits, sans engagement</div>
+      </div>
+      <div class="pricing-card featured reveal reveal-delay-1">
+        <div class="plan-badge-featured">Recommandé</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">59<span>€/mois</span></div>
+        <div class="plan-desc">Pour les salons qui veulent aller plus loin</div>
+        <ul class="plan-features">
+          <li>RDV illimités</li>
+          <li>Clients illimités</li>
+          <li>Export PDF des rapports</li>
+          <li>Statistiques avancées Pro</li>
+          <li>Taux de retour, créneaux, genre</li>
+          <li>Support prioritaire</li>
+        </ul>
+        <a href="pages/register.html" class="btn-plan">Commencer l'essai gratuit</a>
+        <div class="plan-trial">14 jours gratuits, sans engagement</div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <footer class="footer">
-    <div class="container footer-inner">
-      <span class="logo">Belyo</span>
-      <span class="footer-copy">© 2025 Belyo · Fait avec soin en France · <a href="pages/legal.html" style="color:var(--ink-light)">Mentions légales</a> · <a href="pages/legal.html" style="color:var(--ink-light)">CGV</a></span>
-    </div>
-  </footer>
+<!-- CTA FINAL -->
+<section class="cta-final">
+  <h2 class="reveal">Prêt à gérer votre salon<br /><em>autrement ?</em></h2>
+  <p class="reveal">Rejoignez Belyo. 14 jours gratuits, aucune CB requise.</p>
+  <div class="cta-actions reveal">
+    <a href="pages/register.html" class="btn-hero">Commencer gratuitement →</a>
+    <a href="pages/login.html" style="font-size:14px;color:var(--ink-light);border-bottom:1px solid var(--border);padding-bottom:1px">Déjà un compte ? Connexion</a>
+  </div>
+</section>
 
-  <style>
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .nav-hamburger { display: flex; }
-      .hero { padding-top: 80px; }
-      .hero h1 { font-size: clamp(2.2rem, 8vw, 3.5rem); }
-      .features-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
-      .pricing-grid { grid-template-columns: 1fr; max-width: 360px; }
-    }
-    @media (max-width: 480px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .nav-inner { padding: 0 1.2rem; }
-      .hero { padding: 80px 1.2rem 40px; }
-      .container { padding: 0 1.2rem; }
-    }
-  </style>
-  <script>
-    function toggleNavMenu() {
-      var btn  = document.getElementById('nav-hamburger');
-      var menu = document.getElementById('nav-mobile-menu');
-      btn.classList.toggle('open');
-      menu.classList.toggle('open');
-    }
-    function closeNavMenu() {
-      document.getElementById('nav-hamburger').classList.remove('open');
-      document.getElementById('nav-mobile-menu').classList.remove('open');
-    }
-    // Fermer le menu en scrollant
-    window.addEventListener('scroll', closeNavMenu);
-  </script>
+<!-- FOOTER -->
+<footer class="footer">
+  <span class="footer-logo">Belyo</span>
+  <div class="footer-links">
+    <a href="#features">Fonctionnalités</a>
+    <a href="#pricing">Tarifs</a>
+    <a href="pages/legal.html">Mentions légales</a>
+    <a href="pages/legal.html">CGV</a>
+  </div>
+  <span class="footer-copy">© 2025 Belyo · Fait avec soin en France</span>
+</footer>
+
+<script>
+  // Scroll reveal
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(function(el) { observer.observe(el); });
+
+  // Déclencher les éléments hero au load
+  window.addEventListener('load', function() {
+    document.querySelectorAll('.hero .reveal').forEach(function(el) {
+      el.classList.add('visible');
+    });
+  });
+</script>
+
 </body>
 </html>
