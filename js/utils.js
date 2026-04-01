@@ -252,3 +252,149 @@ function showExpiredWall() {
 
   document.body.appendChild(wall);
 }
+
+// ===== CALENDRIER PICKER CUSTOM =====
+var calPickerDate    = null; // Date sélectionnée
+var calPickerMonth   = new Date(); // Mois affiché
+var calPickerOpen    = false;
+
+function toggleCalPicker() {
+  var popup = document.getElementById('cal-picker-popup');
+  if (!popup) return;
+  calPickerOpen = !calPickerOpen;
+  popup.style.display = calPickerOpen ? 'block' : 'none';
+  if (calPickerOpen) {
+    if (!calPickerDate) calPickerMonth = new Date();
+    calPickerRender();
+  }
+}
+
+function calPickerPrevMonth() {
+  calPickerMonth = new Date(calPickerMonth.getFullYear(), calPickerMonth.getMonth() - 1, 1);
+  calPickerRender();
+}
+
+function calPickerNextMonth() {
+  calPickerMonth = new Date(calPickerMonth.getFullYear(), calPickerMonth.getMonth() + 1, 1);
+  calPickerRender();
+}
+
+function calPickerRender() {
+  var monthEl = document.getElementById('cal-picker-month');
+  var grid    = document.getElementById('cal-picker-grid');
+  if (!monthEl || !grid) return;
+
+  var year  = calPickerMonth.getFullYear();
+  var month = calPickerMonth.getMonth();
+  var now   = new Date();
+  now.setHours(0,0,0,0);
+
+  monthEl.textContent = new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  // Premier jour du mois (lundi = 0)
+  var firstDay = new Date(year, month, 1).getDay();
+  var offset   = firstDay === 0 ? 6 : firstDay - 1;
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  var html = '';
+  // Cases vides avant le 1er
+  for (var i = 0; i < offset; i++) {
+    html += '<button type="button" class="cal-picker-day empty"></button>';
+  }
+  // Jours du mois
+  for (var d = 1; d <= daysInMonth; d++) {
+    var dayDate = new Date(year, month, d);
+    var isPast  = dayDate < now;
+    var isToday = dayDate.getTime() === now.getTime();
+    var isSel   = calPickerDate && calPickerDate.getFullYear() === year
+                  && calPickerDate.getMonth() === month
+                  && calPickerDate.getDate() === d;
+
+    var cls = 'cal-picker-day';
+    if (isPast)   cls += ' disabled';
+    if (isToday)  cls += ' today';
+    if (isSel)    cls += ' selected';
+
+    var handler = isPast ? '' : ' onclick="calPickerSelectDay(' + year + ',' + month + ',' + d + ')"';
+    html += '<button type="button" class="' + cls + '"' + handler + '>' + d + '</button>';
+  }
+  grid.innerHTML = html;
+}
+
+function calPickerSelectDay(year, month, day) {
+  calPickerDate = new Date(year, month, day);
+
+  // Afficher la sélection heure
+  var timeEl = document.getElementById('cal-picker-time');
+  if (timeEl) timeEl.style.display = 'flex';
+
+  // Peupler les heures disponibles (8h-19h, bloquer heures passées si aujourd'hui)
+  var hourEl = document.getElementById('cal-picker-hour');
+  if (hourEl) {
+    hourEl.innerHTML = '';
+    var now     = new Date();
+    var isToday = calPickerDate.toDateString() === now.toDateString();
+    for (var h = 8; h <= 19; h++) {
+      var isPast = isToday && h <= now.getHours();
+      if (!isPast) {
+        var opt = document.createElement('option');
+        opt.value = String(h).padStart(2, '0');
+        opt.textContent = String(h).padStart(2, '0') + 'h';
+        hourEl.appendChild(opt);
+      }
+    }
+    // Sélectionner heure suivante par défaut
+    if (isToday) {
+      var next = now.getHours() + 1;
+      hourEl.value = String(Math.min(next, 19)).padStart(2, '0');
+    }
+  }
+
+  calPickerRender();
+  calPickerUpdateTime();
+}
+
+function calPickerUpdateTime() {
+  if (!calPickerDate) return;
+  var hourEl = document.getElementById('cal-picker-hour');
+  var minEl  = document.getElementById('cal-picker-min');
+  if (!hourEl || !minEl) return;
+
+  var h = hourEl.value || '09';
+  var m = minEl.value  || '00';
+
+  // Mettre à jour le champ hidden
+  var dt = new Date(calPickerDate);
+  dt.setHours(parseInt(h), parseInt(m), 0, 0);
+  var iso = dt.getFullYear() + '-'
+    + String(dt.getMonth() + 1).padStart(2, '0') + '-'
+    + String(dt.getDate()).padStart(2, '0') + 'T'
+    + h + ':' + m;
+
+  var hidden = document.getElementById('appt-datetime');
+  if (hidden) hidden.value = iso;
+
+  // Mettre à jour le trigger
+  var label = document.getElementById('cal-picker-label');
+  if (label) {
+    label.style.color = 'var(--ink)';
+    label.textContent = dt.toLocaleDateString('fr-FR', {
+      weekday: 'short', day: 'numeric', month: 'long'
+    }) + ' à ' + h + 'h' + (m !== '00' ? m : '');
+  }
+
+  // Fermer le popup
+  var popup = document.getElementById('cal-picker-popup');
+  if (popup) popup.style.display = 'none';
+  calPickerOpen = false;
+}
+
+// Fermer si clic ailleurs
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('cal-picker-wrap');
+  if (wrap && !wrap.contains(e.target) && calPickerOpen) {
+    var popup = document.getElementById('cal-picker-popup');
+    if (popup) popup.style.display = 'none';
+    calPickerOpen = false;
+  }
+});
