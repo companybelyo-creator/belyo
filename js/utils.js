@@ -552,7 +552,7 @@ function filterPickerSelectDay(iso) {
   filterPickerOpen = false;
 
   // Appeler renderAppts si disponible
-  if (typeof renderAppts === 'function') renderAppts();
+  if (typeof renderList === 'function') renderList();
 }
 
 function clearFilterDate() {
@@ -563,7 +563,7 @@ function clearFilterDate() {
   var popup = document.getElementById('cal-filter-popup');
   if (popup) popup.style.display = 'none';
   filterPickerOpen = false;
-  if (typeof renderAppts === 'function') renderAppts();
+  if (typeof renderList === 'function') renderList();
 }
 
 // Fermer le filter picker si clic ailleurs
