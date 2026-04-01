@@ -404,3 +404,83 @@ document.addEventListener('click', function(e) {
     calPickerOpen = false;
   }
 });
+// ===== PLAN GATE =====
+var currentPlan = null; // 'trial' | 'starter' | 'pro' | 'expired'
+
+// Appeler après checkSubscription pour stocker le plan
+async function initPlan(userId, createdAt) {
+  var res = await sb.from('subscriptions').select('plan, status').eq('user_id', userId).maybeSingle();
+  var sub = res.data;
+
+  if (sub && sub.status === 'active') {
+    currentPlan = sub.plan; // 'starter' ou 'pro'
+    return currentPlan;
+  }
+
+  // Essai
+  var created  = new Date(createdAt);
+  var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
+  currentPlan  = new Date() < trialEnd ? 'trial' : 'expired';
+  return currentPlan;
+}
+
+// Vérifie si une feature est accessible
+function canAccess(feature) {
+  if (currentPlan === 'trial' || currentPlan === 'pro') return true;
+  if (currentPlan === 'starter') {
+    var starterFeatures = ['rdv', 'clients', 'stocks', 'ca', 'rappels'];
+    return starterFeatures.indexOf(feature) !== -1;
+  }
+  return false; // expiré
+}
+
+// Bloquer une action avec un tooltip upgrade
+function requirePlan(feature, minPlan, callback) {
+  if (canAccess(feature)) {
+    callback();
+    return;
+  }
+  showPlanWall(minPlan);
+}
+
+function closePlanWall() { var w = document.getElementById('plan-wall'); if (w) w.remove(); }
+
+function showPlanWall(minPlan) {
+  // Supprimer un éventuel wall existant
+  var existing = document.getElementById('plan-wall');
+  if (existing) existing.remove();
+
+  var wall = document.createElement('div');
+  wall.id = 'plan-wall';
+  wall.style.cssText = [
+    'position:fixed', 'inset:0', 'z-index:600',
+    'background:rgba(247,243,238,0.97)',
+    'display:flex', 'align-items:center', 'justify-content:center',
+    'flex-direction:column', 'padding:2rem', 'text-align:center',
+  ].join(';');
+
+  var planLabel = minPlan === 'pro' ? 'Plan Pro' : 'Plan Starter';
+  var planPrice = minPlan === 'pro' ? '59€/mois' : '29€/mois';
+
+  wall.innerHTML = ''
+    + '<div style="font-family:Cormorant Garamond,serif;font-size:2rem;font-weight:300;margin-bottom:.5rem">Belyo</div>'
+    + '<div style="font-size:28px;margin-bottom:1rem">✦</div>'
+    + '<h2 style="font-size:1.2rem;font-weight:500;margin-bottom:.5rem">Fonctionnalité réservée au ' + planLabel + '</h2>'
+    + '<p style="font-size:14px;color:#5C5550;margin-bottom:2rem;max-width:340px">Passez au ' + planLabel + ' (' + planPrice + ') pour accéder à cette fonctionnalité.</p>'
+    + '<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">'
+    + '<a href="settings.html" style="background:#1A1714;color:white;padding:12px 28px;border-radius:100px;font-size:14px;font-weight:500;text-decoration:none">Voir les plans →</a>'
+    + '<button onclick="closePlanWall()" style="background:transparent;color:#5C5550;padding:12px 20px;border-radius:100px;font-size:14px;border:1px solid rgba(26,23,20,0.15);cursor:pointer;font-family:var(--font-body)">Retour</button>'
+    + '</div>';
+
+  document.body.appendChild(wall);
+}
+
+// Afficher un badge Pro sur un élément
+function addProBadge(el) {
+  if (!el) return;
+  var badge = document.createElement('span');
+  badge.style.cssText = 'display:inline-block;font-size:10px;font-weight:500;padding:1px 7px;border-radius:100px;background:var(--gold-light);color:var(--gold);margin-left:6px;vertical-align:middle';
+  badge.textContent = 'Pro';
+  el.appendChild(badge);
+  el.style.opacity = '0.6';
+}

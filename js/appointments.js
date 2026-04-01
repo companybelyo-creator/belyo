@@ -639,6 +639,23 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   var notesVal = document.getElementById('appt-notes').value.trim() || null;
 
   var res;
+  // Vérifier la limite Starter (100 RDV/mois)
+  if (!editApptId && currentPlan === 'starter') {
+    var now = new Date();
+    var startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    var endOfMonth   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+    var countRes = await sb.from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', currentUserId)
+      .gte('datetime', startOfMonth)
+      .lte('datetime', endOfMonth);
+    if (countRes.count >= 100) {
+      btn.disabled = false; btn.textContent = 'Enregistrer';
+      showPlanWall('pro');
+      return;
+    }
+  }
+
   if (editApptId) {
     // Mode édition
     res = await sb.from('appointments').update({
@@ -717,5 +734,6 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
   initSidebar(session.user);
   initLogout();
   await checkSubscription(session.user.id, session.user.created_at);
+  await initPlan(session.user.id, session.user.created_at);
   await Promise.all([loadAppts(), loadClients(), loadPrestationsFromSettings(currentUserId)]);
 })();

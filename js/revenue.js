@@ -116,11 +116,21 @@ async function loadData() {
   initSidebar(session.user);
   initLogout();
   await checkSubscription(session.user.id, session.user.created_at);
+  await initPlan(session.user.id, session.user.created_at);
   await loadData();
+  // Ajouter badge Pro sur le bouton export si plan Starter
+  if (currentPlan === 'starter') {
+    var btnExport = document.getElementById('btn-export');
+    addProBadge(btnExport);
+  }
 })();
 
 // ===== EXPORT PDF =====
 async function exportPDF() {
+  if (!canAccess('export')) {
+    showPlanWall('pro');
+    return;
+  }
   var btn = document.getElementById('btn-export');
   if (btn) { btn.disabled = true; btn.textContent = 'Generation...'; }
 
