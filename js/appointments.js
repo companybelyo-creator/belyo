@@ -429,9 +429,19 @@ function openModal(presetDatetime) {
     now.setHours(now.getHours() + 1);
     dt = now.toISOString().slice(0,16);
   }
-  document.getElementById('appt-datetime').value = dt;
+  // Bloquer les dates/heures passées
+  var minDt = new Date();
+  minDt.setMinutes(0,0,0);
+  var minStr = minDt.getFullYear() + '-'
+    + String(minDt.getMonth()+1).padStart(2,'0') + '-'
+    + String(minDt.getDate()).padStart(2,'0') + 'T'
+    + String(minDt.getHours()).padStart(2,'0') + ':00';
+  var input = document.getElementById('appt-datetime');
+  if (input) {
+    input.min = minStr;
+    input.value = dt;
+  }
   document.getElementById('modal-overlay').classList.add('open');
-  // Appliquer la prestation par défaut (Coupe) maintenant que le modal est ouvert
   updateServiceOptions();
 }
 function openModalAt(datetimeStr) { openModal(datetimeStr); }
