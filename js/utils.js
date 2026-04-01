@@ -324,7 +324,7 @@ function calPickerRender() {
 function calPickerSelectDay(year, month, day) {
   calPickerDate = new Date(year, month, day);
 
-  // Afficher la sélection heure
+  // Afficher la sélection heure sans fermer
   var timeEl = document.getElementById('cal-picker-time');
   if (timeEl) timeEl.style.display = 'flex';
 
@@ -347,11 +347,15 @@ function calPickerSelectDay(year, month, day) {
     if (isToday) {
       var next = now.getHours() + 1;
       hourEl.value = String(Math.min(next, 19)).padStart(2, '0');
+    } else {
+      hourEl.value = '09';
     }
   }
 
+  // Re-rendre le calendrier pour mettre à jour la sélection sans fermer
   calPickerRender();
-  calPickerUpdateTime();
+  // Mettre à jour la valeur hidden sans fermer
+  calPickerUpdateTime(false);
 }
 
 function calPickerUpdateTime(closeAfter) {
@@ -395,10 +399,12 @@ function calPickerConfirm() {
   calPickerUpdateTime(true);
 }
 
-// Fermer si clic ailleurs
+// Fermer si clic strictement en dehors du wrap
 document.addEventListener('click', function(e) {
   var wrap = document.getElementById('cal-picker-wrap');
-  if (wrap && !wrap.contains(e.target) && calPickerOpen) {
+  if (!wrap) return;
+  // Ne fermer que si le clic est vraiment en dehors du popup ET du trigger
+  if (!wrap.contains(e.target) && calPickerOpen) {
     var popup = document.getElementById('cal-picker-popup');
     if (popup) popup.style.display = 'none';
     calPickerOpen = false;

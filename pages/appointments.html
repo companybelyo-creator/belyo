@@ -135,19 +135,15 @@
             <span style="font-size:11px;color:var(--ink-light)">&#9656;</span>
           </div>
           <div class="cal-picker-popup" id="cal-picker-popup" style="display:none">
-            <!-- Navigation mois -->
             <div class="cal-picker-nav">
               <button type="button" onclick="calPickerPrevMonth()">&#8249;</button>
-              <span id="cal-picker-month">—</span>
+              <span id="cal-picker-month">&#8212;</span>
               <button type="button" onclick="calPickerNextMonth()">&#8250;</button>
             </div>
-            <!-- Jours de la semaine -->
             <div class="cal-picker-days-head">
               <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
             </div>
-            <!-- Grille jours -->
             <div class="cal-picker-grid" id="cal-picker-grid"></div>
-            <!-- Sélection heure -->
             <div class="cal-picker-time" id="cal-picker-time" style="display:none">
               <span class="cal-picker-time-label">Heure</span>
               <select id="cal-picker-hour" class="cal-picker-select" onchange="calPickerUpdateTime(false)"></select>
@@ -159,6 +155,8 @@
                 <option value="45">45</option>
               </select>
             </div>
+            <button type="button" onclick="calPickerConfirm()" style="margin-top:10px;width:100%;padding:9px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer">Confirmer</button>
+          </div>
           </div>
         </div>
         <input type="hidden" id="appt-datetime" required />

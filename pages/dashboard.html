@@ -150,7 +150,7 @@
           <div class="cal-picker-popup" id="cal-picker-popup" style="display:none">
             <div class="cal-picker-nav">
               <button type="button" onclick="calPickerPrevMonth()">&#8249;</button>
-              <span id="cal-picker-month">—</span>
+              <span id="cal-picker-month">&#8212;</span>
               <button type="button" onclick="calPickerNextMonth()">&#8250;</button>
             </div>
             <div class="cal-picker-days-head">
@@ -168,6 +168,8 @@
                 <option value="45">45</option>
               </select>
             </div>
+            <button type="button" onclick="calPickerConfirm()" style="margin-top:10px;width:100%;padding:9px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer">Confirmer</button>
+          </div>
           </div>
         </div>
         <input type="hidden" id="appt-datetime" required />
