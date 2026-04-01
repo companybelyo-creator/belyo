@@ -55,11 +55,13 @@ function updateServiceOptions() {
   if (!dropdown) return;
   var options = PRESTATIONS[selectedGenre] || [];
 
-  dropdown.innerHTML = options.map(function(p) {
+  // Stocker les options pour selectServiceByIndex
+  window._serviceOptions = options;
+
+  dropdown.innerHTML = options.map(function(p, idx) {
     var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][p];
-    var prix = pd && pd.prix ? pd.prix : '';
-    var idx = options.indexOf(p);
-    return '<div class="service-option" onclick="selectServiceByIndex(' + idx + ')">'  
+    var prix = pd && pd.prix ? pd.prix : 0;
+    return '<div class="service-option" onclick="selectServiceByIndex(' + idx + ')">'
       + '<span class="service-option-name">' + p + '</span>'
       + (prix ? '<span class="service-option-prix">' + prix + '€</span>' : '')
       + '</div>';
@@ -74,9 +76,8 @@ function updateServiceOptions() {
 }
 
 function selectServiceByIndex(idx) {
-  var dropdown = document.getElementById('service-select-dropdown');
-  var options  = dropdown ? dropdown._options : [];
-  var name     = options[idx];
+  var options = window._serviceOptions || [];
+  var name    = options[idx];
   if (!name) return;
   var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
   var prix = pd && pd.prix ? pd.prix : 0;
