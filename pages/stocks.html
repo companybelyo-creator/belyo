@@ -33,7 +33,7 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Stocks <em>produits</em></h1>
-      <button class="btn-action" onclick="openModal()">+ Nouveau produit</button>
+      <button class="btn-action" onclick="openStockModal()">+ Nouveau produit</button>
     </div>
 
     <div class="kpi-grid-3">
@@ -92,11 +92,11 @@
 </div>
 
 <!-- MODAL Nouveau produit -->
-<div class="modal-overlay" id="modal-overlay">
+<div class="modal-overlay" id="stock-modal-overlay">
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="modal-title-text">Nouveau produit</span>
-      <button class="modal-close" onclick="closeModal()">×</button>
+      <button class="modal-close" onclick="closeStockModal()">×</button>
     </div>
     <form id="product-form">
       <input type="hidden" id="edit-id" />

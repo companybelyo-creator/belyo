@@ -42,7 +42,25 @@
         <button class="tab" onclick="goToday()" style="padding:6px 14px;font-size:12px;">Aujourd'hui</button>
       </div>
       <div id="list-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <input type="date" id="filter-date" class="filter-input" />
+        <div class="cal-picker-wrap" id="cal-filter-wrap" style="position:relative">
+          <div class="cal-picker-trigger" id="cal-filter-trigger" onclick="toggleFilterPicker()" style="padding:7px 14px;min-width:140px">
+            <span id="cal-filter-label" style="color:var(--ink-light);font-size:13px">Filtrer par date</span>
+            <span style="font-size:10px;color:var(--ink-light)">▾</span>
+          </div>
+          <div class="cal-picker-popup" id="cal-filter-popup" style="display:none">
+            <div class="cal-picker-nav">
+              <button type="button" onclick="event.stopPropagation();filterPickerPrevMonth()">&#8249;</button>
+              <span id="cal-filter-month">&#8212;</span>
+              <button type="button" onclick="event.stopPropagation();filterPickerNextMonth()">&#8250;</button>
+            </div>
+            <div class="cal-picker-days-head">
+              <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
+            </div>
+            <div class="cal-picker-grid" id="cal-filter-grid"></div>
+            <button type="button" onclick="event.stopPropagation();clearFilterDate()" style="margin-top:8px;width:100%;padding:7px;border-radius:100px;border:1px solid var(--border);background:transparent;font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light)">Effacer le filtre</button>
+          </div>
+        </div>
+        <input type="hidden" id="filter-date" />
         <button class="tab active" id="tab-all" onclick="setTab('all')">Tous</button>
         <button class="tab" id="tab-pending" onclick="setTab('pending')">À venir</button>
         <button class="tab" id="tab-done" onclick="setTab('done')">Terminés</button>

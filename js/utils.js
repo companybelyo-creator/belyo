@@ -484,3 +484,94 @@ function addProBadge(el) {
   el.appendChild(badge);
   el.style.opacity = '0.6';
 }
+
+// ===== FILTER DATE PICKER =====
+var filterPickerMonth = new Date();
+var filterPickerOpen  = false;
+
+function toggleFilterPicker() {
+  var popup = document.getElementById('cal-filter-popup');
+  if (!popup) return;
+  filterPickerOpen = !filterPickerOpen;
+  popup.style.display = filterPickerOpen ? 'block' : 'none';
+  if (filterPickerOpen) filterPickerRender();
+}
+
+function filterPickerPrevMonth() {
+  filterPickerMonth = new Date(filterPickerMonth.getFullYear(), filterPickerMonth.getMonth() - 1, 1);
+  filterPickerRender();
+}
+
+function filterPickerNextMonth() {
+  filterPickerMonth = new Date(filterPickerMonth.getFullYear(), filterPickerMonth.getMonth() + 1, 1);
+  filterPickerRender();
+}
+
+function filterPickerRender() {
+  var monthEl = document.getElementById('cal-filter-month');
+  var grid    = document.getElementById('cal-filter-grid');
+  if (!monthEl || !grid) return;
+
+  var year  = filterPickerMonth.getFullYear();
+  var month = filterPickerMonth.getMonth();
+
+  monthEl.textContent = new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+  var firstDay    = new Date(year, month, 1).getDay();
+  var offset      = firstDay === 0 ? 6 : firstDay - 1;
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Date actuellement filtrée
+  var currentFilter = document.getElementById('filter-date') ? document.getElementById('filter-date').value : '';
+
+  var html = '';
+  for (var i = 0; i < offset; i++) html += '<button type="button" class="cal-picker-day empty"></button>';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var iso = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    var isSel = currentFilter === iso;
+    html += '<button type="button" class="cal-picker-day' + (isSel ? ' selected' : '') + '"'
+      + ' onclick="event.stopPropagation();filterPickerSelectDay(\'' + iso + '\')">' + d + '</button>';
+  }
+  grid.innerHTML = html;
+}
+
+function filterPickerSelectDay(iso) {
+  var hidden = document.getElementById('filter-date');
+  if (hidden) hidden.value = iso;
+
+  var label = document.getElementById('cal-filter-label');
+  if (label) {
+    var d = new Date(iso + 'T12:00:00');
+    label.style.color = 'var(--ink)';
+    label.textContent = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  // Fermer et déclencher le filtre
+  var popup = document.getElementById('cal-filter-popup');
+  if (popup) popup.style.display = 'none';
+  filterPickerOpen = false;
+
+  // Appeler renderAppts si disponible
+  if (typeof renderAppts === 'function') renderAppts();
+}
+
+function clearFilterDate() {
+  var hidden = document.getElementById('filter-date');
+  if (hidden) hidden.value = '';
+  var label = document.getElementById('cal-filter-label');
+  if (label) { label.textContent = 'Filtrer par date'; label.style.color = 'var(--ink-light)'; }
+  var popup = document.getElementById('cal-filter-popup');
+  if (popup) popup.style.display = 'none';
+  filterPickerOpen = false;
+  if (typeof renderAppts === 'function') renderAppts();
+}
+
+// Fermer le filter picker si clic ailleurs
+document.addEventListener('click', function(e) {
+  if (!filterPickerOpen) return;
+  var wrap = document.getElementById('cal-filter-wrap');
+  if (wrap && wrap.contains(e.target)) return;
+  var popup = document.getElementById('cal-filter-popup');
+  if (popup) popup.style.display = 'none';
+  filterPickerOpen = false;
+});

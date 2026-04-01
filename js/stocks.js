@@ -1,268 +1,182 @@
-// ===== PRESTATIONS =====
-var PRESTATIONS_DEFAULT = {
-  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin'],
-  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin'],
-};
-var currentPrestations = { homme: [], femme: [] };
+// ============================================================
+// STOCKS.JS
+// ============================================================
 
-async function loadPrestations() {
-  var res = await sb.from('salon_settings')
-    .select('prestations')
-    .eq('user_id', currentUser.id)
-    .maybeSingle();
+var currentUserId = null;
+var allProducts = [];
+var currentTab = 'all';
+var deleteTargetId = null;
 
-  if (res.data && res.data.prestations) {
-    currentPrestations = res.data.prestations;
-  } else {
-    currentPrestations = JSON.parse(JSON.stringify(PRESTATIONS_DEFAULT));
-  }
-  renderPrestations('homme');
-  renderPrestations('femme');
+function getStatus(qty, threshold) {
+  if (qty === 0) return 'empty';
+  if (qty <= threshold) return 'low';
+  return 'ok';
 }
 
-function renderPrestations(genre) {
-  var container = document.getElementById('prestations-' + genre);
-  if (!container) return;
-  var list = currentPrestations[genre] || [];
-  container.innerHTML = list.map(function(p) {
-    return '<div style="display:flex;align-items:center;gap:6px;background:var(--cream);border:1px solid var(--border);border-radius:100px;padding:6px 12px 6px 14px;font-size:13px">'
-      + '<span>' + p + '</span>'
-      + '<button onclick="removePrestation("' + genre + '','' + p.replace(/'/g, "\'") + '")" style="background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px;line-height:1;padding:0 0 0 4px" title="Supprimer">×</button>'
-      + '</div>';
+function statusBadge2(qty, threshold) {
+  var s = getStatus(qty, threshold);
+  var map = { ok:['alert-ok','OK'], low:['alert-low','Stock faible'], empty:['alert-empty','Rupture'] };
+  var e = map[s];
+  return '<span class="alert-badge ' + e[0] + '">' + e[1] + '</span>';
+}
+
+function stockBar(qty, threshold) {
+  var s = getStatus(qty, threshold);
+  var cls = { ok:'bar-ok', low:'bar-low', empty:'bar-empty' }[s];
+  var max = Math.max(qty, threshold * 2, 10);
+  var pct = Math.min(100, Math.round(qty / max * 100));
+  return '<div class="stock-bar-wrap"><div class="stock-bar ' + cls + '" style="width:' + pct + '%"></div></div>';
+}
+
+function setTab(tab) {
+  currentTab = tab;
+  ['all','low','empty'].forEach(function(t) {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+  });
+  renderProducts();
+}
+
+function renderProducts() {
+  var q = document.getElementById('search').value.toLowerCase();
+  var filtered = allProducts.filter(function(p) {
+    var mq = p.name.toLowerCase().includes(q) || (p.brand && p.brand.toLowerCase().includes(q));
+    if (!mq) return false;
+    if (currentTab === 'low')   return getStatus(p.quantity, p.alert_threshold) === 'low';
+    if (currentTab === 'empty') return p.quantity === 0;
+    return true;
+  });
+
+  var titles = { all:'Tous les produits', low:'Stock faible', empty:'En rupture' };
+  document.getElementById('list-title').textContent = titles[currentTab];
+  document.getElementById('list-count').textContent = filtered.length + ' produit' + (filtered.length > 1 ? 's' : '');
+
+  var tbody = document.getElementById('products-list');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Aucun produit trouvé</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(p) {
+    return '<tr>'
+      + '<td><strong>' + p.name + '</strong></td>'
+      + '<td>' + (p.brand || '—') + '</td>'
+      + '<td><div class="qty-control">'
+        + '<button class="qty-btn" onclick="changeQty(\'' + p.id + '\',-1)">−</button>'
+        + '<span class="qty-val">' + p.quantity + '</span>'
+        + '<button class="qty-btn" onclick="changeQty(\'' + p.id + '\',1)">+</button>'
+      + '</div></td>'
+      + '<td>' + stockBar(p.quantity, p.alert_threshold) + '</td>'
+      + '<td>' + statusBadge2(p.quantity, p.alert_threshold) + '</td>'
+      + '<td>' + (p.price ? parseFloat(p.price).toFixed(2) + '€' : '—') + '</td>'
+      + '<td style="display:flex;gap:4px">'
+        + '<button onclick="openEditModal(\'' + p.id + '\')" style="background:none;border:none;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;color:var(--ink-light);">Modifier</button>'
+        + '<button onclick="openDeleteModal(\'' + p.id + '\')" style="background:none;border:none;font-size:12px;cursor:pointer;padding:4px 8px;border-radius:6px;color:#C0392B;">Suppr.</button>'
+      + '</td></tr>';
   }).join('');
 }
 
-function addPrestation(genre) {
-  var input = document.getElementById('new-prestation-' + genre);
-  var val   = input.value.trim();
-  if (!val) return;
-  if (!currentPrestations[genre]) currentPrestations[genre] = [];
-  if (currentPrestations[genre].includes(val)) { input.value = ''; return; }
-  currentPrestations[genre].push(val);
-  renderPrestations(genre);
-  input.value = '';
+function updateKPIs() {
+  document.getElementById('kpi-total').textContent = allProducts.length;
+  document.getElementById('kpi-low').textContent   = allProducts.filter(function(p) { return getStatus(p.quantity, p.alert_threshold) === 'low'; }).length;
+  document.getElementById('kpi-empty').textContent = allProducts.filter(function(p) { return p.quantity === 0; }).length;
 }
 
-function removePrestation(genre, name) {
-  currentPrestations[genre] = currentPrestations[genre].filter(function(p) { return p !== name; });
-  renderPrestations(genre);
+async function changeQty(id, delta) {
+  var p = allProducts.find(function(x) { return x.id === id; });
+  if (!p) return;
+  var newQty = Math.max(0, p.quantity + delta);
+  await sb.from('products').update({ quantity: newQty }).eq('id', id);
+  p.quantity = newQty;
+  updateKPIs();
+  renderProducts();
 }
 
-async function savePrestations() {
-  var btn = document.querySelector('#section-prestations .btn-submit');
-  btn.disabled = true; btn.textContent = 'Enregistrement...';
-  showMsg('prestations-ok', false);
+function openStockModal() {
+  document.getElementById('edit-id').value = '';
+  document.getElementById('modal-title-text').textContent = 'Nouveau produit';
+  document.getElementById('p-submit').textContent = 'Ajouter le produit';
+  document.getElementById('product-form').reset();
+  document.getElementById('p-threshold').value = '2';
+  document.getElementById('stock-modal-overlay').classList.add('open');
+}
 
-  var res = await sb.from('salon_settings').upsert({
-    user_id:     currentUser.id,
-    prestations: currentPrestations,
-  }, { onConflict: 'user_id' });
+function openEditModal(id) {
+  var p = allProducts.find(function(x) { return x.id === id; });
+  if (!p) return;
+  document.getElementById('edit-id').value = p.id;
+  document.getElementById('modal-title-text').textContent = 'Modifier le produit';
+  document.getElementById('p-submit').textContent = 'Enregistrer';
+  document.getElementById('p-name').value      = p.name;
+  document.getElementById('p-brand').value     = p.brand || '';
+  document.getElementById('p-qty').value       = p.quantity;
+  document.getElementById('p-threshold').value = p.alert_threshold;
+  document.getElementById('p-price').value     = p.price || '';
+  document.getElementById('stock-modal-overlay').classList.add('open');
+}
 
-  btn.disabled = false; btn.textContent = 'Enregistrer';
+function closeStockModal() {
+  document.getElementById('stock-modal-overlay').classList.remove('open');
+  document.getElementById('product-form').reset();
+}
+
+function openDeleteModal(id) { deleteTargetId = id; document.getElementById('delete-overlay').classList.add('open'); }
+function closeDeleteModal()  { deleteTargetId = null; document.getElementById('delete-overlay').classList.remove('open'); }
+
+async function confirmDelete() {
+  if (!deleteTargetId) return;
+  await sb.from('products').delete().eq('id', deleteTargetId);
+  closeDeleteModal();
+  showToast('Produit supprimé');
+  await loadProducts();
+}
+
+document.getElementById('product-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('p-submit');
+  btn.disabled = true;
+  var editId = document.getElementById('edit-id').value;
+  var payload = {
+    name:            document.getElementById('p-name').value.trim(),
+    brand:           document.getElementById('p-brand').value.trim() || null,
+    quantity:        parseInt(document.getElementById('p-qty').value) || 0,
+    alert_threshold: parseInt(document.getElementById('p-threshold').value) || 2,
+    price:           document.getElementById('p-price').value ? parseFloat(document.getElementById('p-price').value) : null,
+  };
+  var res;
+  if (editId) {
+    res = await sb.from('products').update(payload).eq('id', editId);
+  } else {
+    payload.user_id = currentUserId;
+    res = await sb.from('products').insert(payload);
+  }
+  btn.disabled = false;
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
-  showMsg('prestations-ok', true);
-  setTimeout(function() { showMsg('prestations-ok', false); }, 3000);
-}
+  closeModal();
+  showToast(editId ? 'Produit mis à jour !' : 'Produit ajouté !');
+  await loadProducts();
+});
 
-// ============================================================
-// SETTINGS.JS
-// ============================================================
+['stock-modal-overlay','delete-overlay'].forEach(function(id) {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+});
 
-var currentUser = null;
+document.getElementById('search').addEventListener('input', renderProducts);
 
-function showMsg(id, show) {
-  document.getElementById(id).classList.toggle('show', show);
-}
-
-function showSection(name, btn) {
-  document.querySelectorAll('.settings-section').forEach(function(s) { s.classList.remove('active'); });
-  document.querySelectorAll('.settings-nav-item').forEach(function(b) { b.classList.remove('active'); });
-  document.getElementById('section-' + name).classList.add('active');
-  if (btn) btn.classList.add('active');
-}
-
-function initials(str) {
-  if (!str) return '?';
-  var parts = str.trim().split(' ');
-  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-}
-
-function populateFields(user) {
-  var meta = user.user_metadata || {};
-  document.getElementById('sidebar-salon').textContent = meta.salon_name || 'Mon salon';
-  document.getElementById('sidebar-email').textContent = user.email;
-  document.getElementById('salon-name').value    = meta.salon_name    || '';
-  document.getElementById('salon-phone').value   = meta.salon_phone   || '';
-  document.getElementById('salon-city').value    = meta.salon_city    || '';
-  document.getElementById('salon-address').value = meta.salon_address || '';
-  document.getElementById('first-name').value    = meta.first_name    || '';
-  document.getElementById('last-name').value     = meta.last_name     || '';
-
-  var fullname = [meta.first_name, meta.last_name].filter(Boolean).join(' ') || user.email;
-  document.getElementById('profile-fullname').textContent  = fullname;
-  document.getElementById('profile-email-display').textContent = user.email;
-  document.getElementById('profile-since').textContent     = formatDate(user.created_at);
-  document.getElementById('avatar-initials').textContent   = initials(fullname);
-  document.getElementById('security-email').textContent    = user.email;
-  document.getElementById('last-signin').textContent       = formatDate(user.last_sign_in_at);
-
-  var created  = new Date(user.created_at);
-  var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
-  var trialEl = document.getElementById('trial-end');
-  if (trialEl) trialEl.textContent = formatDate(trialEnd.toISOString());
-}
-
-async function saveSalon() {
-  var btn = document.getElementById('salon-save-btn');
-  btn.disabled = true; btn.textContent = 'Enregistrement...';
-  showMsg('salon-ok', false); showMsg('salon-err', false);
-
-  var res = await sb.auth.updateUser({ data: {
-    salon_name:    document.getElementById('salon-name').value.trim(),
-    salon_phone:   document.getElementById('salon-phone').value.trim(),
-    salon_city:    document.getElementById('salon-city').value.trim(),
-    salon_address: document.getElementById('salon-address').value.trim(),
-  }});
-
-  btn.disabled = false; btn.textContent = 'Enregistrer';
-  if (res.error) { document.getElementById('salon-err').textContent = res.error.message; showMsg('salon-err', true); return; }
-  document.getElementById('sidebar-salon').textContent = res.data.user.user_metadata.salon_name || 'Mon salon';
-  showMsg('salon-ok', true);
-  setTimeout(function() { showMsg('salon-ok', false); }, 3000);
-}
-
-async function saveCompte() {
-  var btn = document.getElementById('compte-save-btn');
-  btn.disabled = true; btn.textContent = 'Enregistrement...';
-  showMsg('compte-ok', false); showMsg('compte-err', false);
-
-  var firstName = document.getElementById('first-name').value.trim();
-  var lastName  = document.getElementById('last-name').value.trim();
-  var res = await sb.auth.updateUser({ data: { first_name: firstName, last_name: lastName } });
-
-  btn.disabled = false; btn.textContent = 'Enregistrer';
-  if (res.error) { document.getElementById('compte-err').textContent = res.error.message; showMsg('compte-err', true); return; }
-  var fullname = [firstName, lastName].filter(Boolean).join(' ');
-  document.getElementById('profile-fullname').textContent  = fullname || res.data.user.email;
-  document.getElementById('avatar-initials').textContent   = initials(fullname || res.data.user.email);
-  showMsg('compte-ok', true);
-  setTimeout(function() { showMsg('compte-ok', false); }, 3000);
-}
-
-async function savePassword() {
-  var btn = document.getElementById('pwd-save-btn');
-  var pwd = document.getElementById('new-pwd').value;
-  var confirm = document.getElementById('confirm-pwd').value;
-  showMsg('pwd-ok', false); showMsg('pwd-err', false);
-
-  if (pwd.length < 8) { document.getElementById('pwd-err').textContent = 'Au moins 8 caractères.'; showMsg('pwd-err', true); return; }
-  if (pwd !== confirm) { document.getElementById('pwd-err').textContent = 'Les mots de passe ne correspondent pas.'; showMsg('pwd-err', true); return; }
-
-  btn.disabled = true; btn.textContent = 'Mise à jour...';
-  var res = await sb.auth.updateUser({ password: pwd });
-  btn.disabled = false; btn.textContent = 'Changer le mot de passe';
-
-  if (res.error) { document.getElementById('pwd-err').textContent = res.error.message; showMsg('pwd-err', true); return; }
-  document.getElementById('new-pwd').value = '';
-  document.getElementById('confirm-pwd').value = '';
-  showMsg('pwd-ok', true);
-  setTimeout(function() { showMsg('pwd-ok', false); }, 3000);
-}
-
-function confirmDeleteAccount() {
-  if (confirm('Êtes-vous sûr ? Cette action est irréversible.')) {
-    showToast('Fonctionnalité disponible prochainement.', 'error');
-  }
-}
-
-// ===== STRIPE =====
-async function subscribe(plan) {
-  var btn = document.getElementById('btn-' + plan);
-  if (btn) { btn.disabled = true; btn.textContent = 'Redirection...'; }
-
-  try {
-    var session = await sb.auth.getSession();
-    var token   = session.data.session?.access_token;
-    if (!token) { showToast('Veuillez vous reconnecter.', 'error'); return; }
-
-    var res = await fetch(
-      'https://vshhswrzyntpkjoggamw.supabase.co/functions/v1/create-checkout',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plan:       plan,
-          user_id:    session.data.session.user.id,
-          user_email: session.data.session.user.email,
-        }),
-      }
-    );
-
-    var data = await res.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      showToast(data.error || 'Erreur Stripe', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label; }
-    }
-  } catch (err) {
-    showToast('Erreur : ' + err.message, 'error');
-    if (btn) { btn.disabled = false; btn.textContent = btn.dataset.label; }
-  }
-}
-
-async function loadSubscription() {
-  var res = await sb.from('subscriptions').select('*').eq('user_id', currentUser.id).maybeSingle();
-  var sub = res.data;
-
-  var planName   = document.getElementById('current-plan-name');
-  var planDesc   = document.getElementById('current-plan-desc');
-  var planPrice  = document.getElementById('current-plan-price');
-  var trialEl    = document.getElementById('trial-end');
-
-  if (!sub || sub.status === 'trialing') {
-    // Essai gratuit
-    var created  = new Date(currentUser.created_at);
-    var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
-    var isExpired = new Date() > trialEnd;
-    if (planName)  planName.textContent  = isExpired ? 'Essai expiré' : 'Essai gratuit';
-    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expiré' : "Jusqu'au " + formatDate(trialEnd.toISOString());
-    if (planPrice) planPrice.textContent = 'Gratuit';
-    if (trialEl)   trialEl.textContent   = formatDate(trialEnd.toISOString());
-  } else if (sub.status === 'active') {
-    var labels = { starter: 'Plan Starter', pro: 'Plan Pro' };
-    var prices = { starter: '29€/mois', pro: '59€/mois' };
-    if (planName)  planName.textContent  = labels[sub.plan] || sub.plan;
-    if (planDesc)  planDesc.textContent  = 'Renouvellement le ' + formatDate(sub.current_period_end);
-    if (planPrice) planPrice.textContent = prices[sub.plan] || '—';
-    // Masquer les boutons du plan actif
-    var btnStarter = document.getElementById('btn-starter');
-    var btnPro     = document.getElementById('btn-pro');
-    if (sub.plan === 'starter' && btnStarter) { btnStarter.textContent = 'Plan actuel'; btnStarter.disabled = true; }
-    if (sub.plan === 'pro' && btnPro)         { btnPro.textContent = 'Plan actuel'; btnPro.disabled = true; }
-  } else if (sub.status === 'cancelled') {
-    if (planName)  planName.textContent  = 'Abonnement annulé';
-    if (planDesc)  planDesc.textContent  = "Accès jusqu'au " + formatDate(sub.current_period_end);
-    if (planPrice) planPrice.textContent = '—';
-  } else if (sub.status === 'past_due') {
-    if (planName)  planName.textContent  = 'Paiement en échec';
-    if (planDesc)  planDesc.textContent  = 'Veuillez mettre à jour votre moyen de paiement';
-    if (planPrice) planPrice.textContent = '—';
-  }
+async function loadProducts() {
+  var res = await sb.from('products').select('*').eq('user_id', currentUserId).order('name', { ascending: true });
+  allProducts = res.data || [];
+  updateKPIs();
+  renderProducts();
 }
 
 (async function() {
   var session = await requireSession();
   if (!session) return;
-  currentUser = session.user;
+  currentUserId = session.user.id;
+  initSidebar(session.user);
   initLogout();
-  populateFields(currentUser);
-  await loadSubscription();
-  await loadPrestations();
-
-  // Si redirection depuis Stripe après paiement
-  if (window.location.search.includes('subscribed=1')) {
-    showToast('Abonnement activé ! Bienvenue sur Belyo Pro.');
-    history.replaceState(null, '', window.location.pathname);
-  }
+  await checkSubscription(session.user.id, session.user.created_at);
+  await initPlan(session.user.id, session.user.created_at);
+  await loadProducts();
 })();
