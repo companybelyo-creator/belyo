@@ -111,7 +111,7 @@ function selectService(name, prix) {
   var hidden = document.getElementById('appt-service-select');
   if (label) {
     label.style.color = 'var(--ink)';
-    label.textContent = prix ? name + ' — ' + prix + '€' : name;
+    label.textContent = name;
   }
   if (hidden) hidden.value = name;
 
