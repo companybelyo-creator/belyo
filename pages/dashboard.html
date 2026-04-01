@@ -159,9 +159,9 @@
             <div class="cal-picker-grid" id="cal-picker-grid"></div>
             <div class="cal-picker-time" id="cal-picker-time" style="display:none">
               <span class="cal-picker-time-label">Heure</span>
-              <select id="cal-picker-hour" class="cal-picker-select" onchange="calPickerUpdateTime()"></select>
+              <select id="cal-picker-hour" class="cal-picker-select" onchange="calPickerUpdateTime(false)"></select>
               <span style="font-weight:500;color:var(--ink)">:</span>
-              <select id="cal-picker-min" class="cal-picker-select" onchange="calPickerUpdateTime()">
+              <select id="cal-picker-min" class="cal-picker-select" onchange="calPickerUpdateTime(false)">
                 <option value="00">00</option>
                 <option value="15">15</option>
                 <option value="30">30</option>

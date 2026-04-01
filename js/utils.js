@@ -354,7 +354,7 @@ function calPickerSelectDay(year, month, day) {
   calPickerUpdateTime();
 }
 
-function calPickerUpdateTime() {
+function calPickerUpdateTime(closeAfter) {
   if (!calPickerDate) return;
   var hourEl = document.getElementById('cal-picker-hour');
   var minEl  = document.getElementById('cal-picker-min');
@@ -374,7 +374,7 @@ function calPickerUpdateTime() {
   var hidden = document.getElementById('appt-datetime');
   if (hidden) hidden.value = iso;
 
-  // Mettre à jour le trigger
+  // Mettre à jour le label du trigger
   var label = document.getElementById('cal-picker-label');
   if (label) {
     label.style.color = 'var(--ink)';
@@ -383,10 +383,16 @@ function calPickerUpdateTime() {
     }) + ' à ' + h + 'h' + (m !== '00' ? m : '');
   }
 
-  // Fermer le popup
-  var popup = document.getElementById('cal-picker-popup');
-  if (popup) popup.style.display = 'none';
-  calPickerOpen = false;
+  // Fermer uniquement si demandé explicitement (bouton Confirmer)
+  if (closeAfter) {
+    var popup = document.getElementById('cal-picker-popup');
+    if (popup) popup.style.display = 'none';
+    calPickerOpen = false;
+  }
+}
+
+function calPickerConfirm() {
+  calPickerUpdateTime(true);
 }
 
 // Fermer si clic ailleurs
