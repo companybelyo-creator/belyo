@@ -93,12 +93,10 @@
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Nouveau rendez-vous</span>
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><span class="modal-title">Nouveau rendez-vous</span><button class="modal-close" onclick="closeModal()">×</button></div>
     <form id="appt-form">
+
       <!-- Autocomplete client -->
       <div class="form-group" style="position:relative">
         <label class="form-label">Client</label>
@@ -106,7 +104,7 @@
         <div id="client-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:50;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.08)"></div>
       </div>
 
-      <!-- Infos client -->
+      <!-- Infos client (masqué par défaut, visible si client sélectionné ou nouveau) -->
       <div id="client-info-block" style="display:none;background:var(--cream);border-radius:var(--radius-sm);padding:14px;margin-bottom:1.2rem;border:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <span style="font-size:13px;font-weight:500;color:var(--ink)" id="client-info-label">Infos client</span>
@@ -131,24 +129,23 @@
           <button type="button" class="genre-btn active" id="genre-homme" onclick="setGenre('homme')">Homme</button>
           <button type="button" class="genre-btn" id="genre-femme" onclick="setGenre('femme')">Femme</button>
         </div>
-        <select class="form-input" id="appt-service-select" onchange="onServiceSelect(this.value)" style="cursor:pointer">
-          <option value="">-- Prestation --</option>
-        </select>
+        <!-- Select custom avec prix à droite -->
+        <div class="service-select-wrap" id="service-select-wrap">
+          <div class="service-select-trigger" id="service-select-trigger" onclick="toggleServiceDropdown()">
+            <span id="service-select-label" style="color:var(--ink-light)">-- Prestation --</span>
+            <span style="font-size:10px;color:var(--ink-light)">▾</span>
+          </div>
+          <div class="service-select-dropdown" id="service-select-dropdown" style="display:none"></div>
+        </div>
+        <input type="hidden" id="appt-service-select" />
         <input type="text" class="form-input" id="appt-service" placeholder="Préciser..." required style="display:none;margin-top:8px" />
       </div>
-
       <div class="form-group"><label class="form-label">Date et heure</label><input type="datetime-local" class="form-input" id="appt-datetime" required /></div>
-
-      <!-- Prix auto -->
-      <div class="form-group" id="prix-display" style="display:none">
-        <label class="form-label">Prix</label>
-        <div style="display:flex;align-items:center;gap:10px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px">
-          <span id="appt-prix-label" style="font-size:15px;font-weight:500;color:var(--ink)">—</span>
-          <span style="font-size:13px;color:var(--ink-light)">€</span>
-          <input type="hidden" id="appt-price" />
-        </div>
+      <!-- Prix éditable avec valeur auto depuis les paramètres -->
+      <div class="form-group">
+        <label class="form-label">Prix (€)</label>
+        <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" readonly style="cursor:default;background:var(--cream-dark);color:var(--ink);pointer-events:none" />
       </div>
-
       <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
       <button type="submit" class="btn-submit" id="appt-submit">Enregistrer le RDV</button>
     </form>

@@ -1,15 +1,19 @@
 // ===== GENRE + PRESTATION =====
-var selectedGenre  = 'homme';
-var PRESTATIONS    = { homme: [], femme: [] };
-var PRIX_DUREE     = { homme: {}, femme: {} };
-var allClients     = [];
-var selectedClient = null;
+var selectedGenre = 'homme';
+
+var PRESTATIONS = {
+  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin', 'Autre'],
+  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
+};
+
+var PRIX_DUREE = { homme: {}, femme: {} };
 
 async function loadPrestationsFromSettings(userId) {
   var res = await sb.from('salon_settings')
-    .select('prestations, prix_duree')
+    .select('prestations, custom_prestations, prix_duree')
     .eq('user_id', userId)
     .maybeSingle();
+
   if (res.data && res.data.prestations) {
     PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
     PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
@@ -22,73 +26,147 @@ async function loadPrestationsFromSettings(userId) {
 
 function setGenre(genre) {
   selectedGenre = genre;
-  var bH = document.getElementById('genre-homme');
-  var bF = document.getElementById('genre-femme');
-  if (bH) bH.classList.toggle('active', genre === 'homme');
-  if (bF) bF.classList.toggle('active', genre === 'femme');
+  document.getElementById('genre-homme').classList.toggle('active', genre === 'homme');
+  document.getElementById('genre-femme').classList.toggle('active', genre === 'femme');
   updateServiceOptions();
+  // Reset prestation
   var sel = document.getElementById('appt-service-select');
   var inp = document.getElementById('appt-service');
   if (sel) sel.value = '';
   if (inp) { inp.style.display = 'none'; inp.value = ''; inp.required = false; }
-  var pb = document.getElementById('prix-display');
-  if (pb) pb.style.display = 'none';
 }
+
+var serviceDropdownOpen = false;
 
 function updateServiceOptions() {
-  var select = document.getElementById('appt-service-select');
-  if (!select) return;
+  var dropdown = document.getElementById('service-select-dropdown');
+  if (!dropdown) return;
   var options = PRESTATIONS[selectedGenre] || [];
-  select.innerHTML = '<option value="">-- Prestation --</option>'
-    + options.map(function(p) { return '<option value="' + p + '">' + p + '</option>'; }).join('');
+
+  // Stocker les options pour selectServiceByIndex
+  window._serviceOptions = options;
+
+  dropdown.innerHTML = options.map(function(p, idx) {
+    var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][p];
+    var prix = pd && pd.prix ? pd.prix : 0;
+    return '<div class="service-option" onclick="selectServiceByIndex(' + idx + ')">'
+      + '<span class="service-option-name">' + p + '</span>'
+      + (prix ? '<span class="service-option-prix">' + prix + '€</span>' : '')
+      + '</div>';
+  }).join('');
+
+  // Coupe par défaut
+  var coupeOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; });
+  if (coupeOpt) {
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][coupeOpt];
+    selectService(coupeOpt, pd && pd.prix ? pd.prix : 0);
+  }
 }
 
-function onServiceSelect(val) {
-  var input      = document.getElementById('appt-service');
-  var prixBlock  = document.getElementById('prix-display');
-  var prixLabel  = document.getElementById('appt-prix-label');
-  var priceInput = document.getElementById('appt-price');
-  if (!input) return;
-  if (val === 'Autre') {
-    input.style.display = 'block'; input.required = true; input.value = ''; input.focus();
-    if (prixBlock) prixBlock.style.display = 'none';
+function selectServiceByIndex(idx) {
+  var options = window._serviceOptions || [];
+  var name    = options[idx];
+  if (!name) return;
+  var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
+  var prix = 0;
+  if (pd && pd.prix) {
+    prix = pd.prix;
   } else {
-    input.style.display = 'none'; input.required = false; input.value = val || '';
-    if (val) {
-      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
-      if (pd && pd.prix !== undefined) {
-        if (prixLabel)  prixLabel.textContent = pd.prix;
-        if (priceInput) priceInput.value = pd.prix;
-        if (prixBlock)  prixBlock.style.display = 'block';
-      } else {
-        if (prixBlock) prixBlock.style.display = 'none';
-      }
-    } else {
-      if (prixBlock) prixBlock.style.display = 'none';
-    }
+    var defaults = {
+      homme: { 'Coupe': 20, 'Dégradé': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
+      femme: { 'Coupe': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Mèches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
+    };
+    prix = (defaults[selectedGenre] && defaults[selectedGenre][name]) || 0;
   }
+  selectService(name, prix);
+}
+
+function toggleServiceDropdown() {
+  var dd = document.getElementById('service-select-dropdown');
+  if (!dd) return;
+  serviceDropdownOpen = !serviceDropdownOpen;
+  dd.style.display = serviceDropdownOpen ? 'block' : 'none';
+}
+
+function selectService(name, prix) {
+  // Fermer le dropdown
+  var dd = document.getElementById('service-select-dropdown');
+  if (dd) dd.style.display = 'none';
+  serviceDropdownOpen = false;
+
+  // Mettre à jour le trigger
+  var label = document.getElementById('service-select-label');
+  var hidden = document.getElementById('appt-service-select');
+  if (label) {
+    label.style.color = 'var(--ink)';
+    label.textContent = name;
+  }
+  if (hidden) hidden.value = name;
+
+  // Remplir le champ service caché
+  var inp = document.getElementById('appt-service');
+  if (inp) { inp.value = name; inp.style.display = 'none'; inp.required = false; }
+
+  // Remplir le prix
+  var priceInput = document.getElementById('appt-price');
+  if (priceInput) priceInput.value = prix || '';
+}
+
+// Fermer si clic ailleurs
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('service-select-wrap');
+  if (wrap && !wrap.contains(e.target) && serviceDropdownOpen) {
+    document.getElementById('service-select-dropdown').style.display = 'none';
+    serviceDropdownOpen = false;
+  }
+});
+
+function onServiceSelect(val) {
+  // Gardé pour compatibilité — le vrai select utilise selectService()
+  selectService(val, 0);
+}
+
+// ===== AUTOCOMPLETE CLIENT =====
+async function loadClients() {
+  var res = await sb.from('clients').select('id, name, email, phone')
+    .eq('user_id', currentUserId)
+    .order('name', { ascending: true });
+  allClients = res.data || [];
 }
 
 function onClientInput(val) {
   selectedClient = null;
   var block = document.getElementById('client-info-block');
   var suggestions = document.getElementById('client-suggestions');
-  if (!val.trim()) { if (suggestions) suggestions.style.display='none'; if (block) block.style.display='none'; return; }
+
+  if (!val.trim()) {
+    suggestions.style.display = 'none';
+    block.style.display = 'none';
+    return;
+  }
+
   var q = val.toLowerCase();
-  var matches = allClients.filter(function(c) { return c.name.toLowerCase().includes(q); });
-  if (!suggestions) return;
-  if (matches.length === 0) { suggestions.style.display='none'; showClientInfo(null, val.trim()); return; }
+  var matches = allClients.filter(function(c) {
+    return c.name.toLowerCase().includes(q);
+  });
+
+  if (matches.length === 0) {
+    suggestions.style.display = 'none';
+    showClientInfo(null, val.trim());
+    return;
+  }
+
   suggestions.style.display = 'block';
   suggestions.innerHTML = matches.map(function(c) {
-    var did = c.id;
-    return '<div onclick="selectClient(&quot;' + did + '&quot;)" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)">'
-      + '<strong>' + c.name + '</strong>'
+    return '<div onclick="selectClient(\'' + c.id + '\')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<strong style="color:var(--ink)">' + c.name + '</strong>'
       + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
 }
 
-function selectClient(id) { id = String(id);
+function selectClient(id) {
   var client = allClients.find(function(c) { return c.id === id; });
   if (!client) return;
   selectedClient = client;
@@ -103,24 +181,29 @@ function showClientInfo(client, newName) {
   var label = document.getElementById('client-info-label');
   var email = document.getElementById('client-email');
   var phone = document.getElementById('client-phone');
-  if (!block) return;
   block.style.display = 'block';
   if (client) {
-    if (badge) badge.style.display = 'none';
-    if (label) label.textContent   = client.name;
-    if (email) email.value         = client.email || '';
-    if (phone) phone.value         = client.phone || '';
+    badge.style.display = 'none';
+    label.textContent   = client.name;
+    email.value         = client.email || '';
+    phone.value         = client.phone || '';
   } else {
-    if (badge) badge.style.display = 'inline-block';
-    if (label) label.textContent   = newName || 'Nouveau client';
-    if (email) email.value = ''; if (phone) phone.value = '';
+    badge.style.display = 'inline-block';
+    label.textContent   = newName || 'Nouveau client';
+    email.value         = '';
+    phone.value         = '';
   }
 }
 
 document.addEventListener('click', function(e) {
   var s = document.getElementById('client-suggestions');
-  if (s && !s.contains(e.target) && e.target.id !== 'appt-client') s.style.display = 'none';
+  if (s && !s.contains(e.target) && e.target.id !== 'appt-client') {
+    s.style.display = 'none';
+    var val = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+    if (val && !selectedClient) showClientInfo(null, val);
+  }
 });
+
 
 console.log('[Belyo] dashboard.js charge');
 
