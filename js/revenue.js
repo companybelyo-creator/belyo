@@ -1,3 +1,158 @@
+// ===== STATS AVANCEES PRO =====
+var weekdayChart = null;
+var hourChart    = null;
+var clientsChart = null;
+
+function renderStatsAvancees(data) {
+  // Afficher/cacher selon le plan
+  var section = document.getElementById('stats-pro-section');
+  var wall    = document.getElementById('stats-pro-wall');
+
+  if (currentPlan !== 'pro' && currentPlan !== 'trial') {
+    if (section) section.style.display = 'none';
+    if (wall)    wall.style.display    = 'block';
+    return;
+  }
+
+  if (section) section.style.display = 'block';
+  if (wall)    wall.style.display    = 'none';
+
+  if (!data || data.length === 0) return;
+
+  var now = new Date();
+
+  // --- KPI : Meilleur mois ---
+  var caByMonth = {};
+  data.forEach(function(a) {
+    var mk = a.datetime.slice(0, 7);
+    caByMonth[mk] = (caByMonth[mk] || 0) + (parseFloat(a.price) || 0);
+  });
+  var bestEntry = Object.entries(caByMonth).sort(function(a,b) { return b[1]-a[1]; })[0];
+  if (bestEntry) {
+    var parts = bestEntry[0].split('-');
+    var bestLabel = new Date(parseInt(parts[0]), parseInt(parts[1])-1, 1)
+      .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    document.getElementById('kpi-best-month').textContent = bestEntry[1].toFixed(0) + '€';
+    document.getElementById('kpi-best-month-label').textContent = bestLabel;
+  }
+
+  // --- KPI : Taux de retour ---
+  var clientVisits = {};
+  data.forEach(function(a) {
+    clientVisits[a.client_name] = (clientVisits[a.client_name] || 0) + 1;
+  });
+  var total    = Object.keys(clientVisits).length;
+  var returned = Object.values(clientVisits).filter(function(v) { return v >= 2; }).length;
+  var retention = total > 0 ? Math.round(returned / total * 100) : 0;
+  document.getElementById('kpi-retention').textContent = retention + '%';
+
+  // --- KPI : RDV par semaine ---
+  if (data.length > 0) {
+    var firstDate = new Date(data[0].datetime);
+    var weeks = Math.max(1, Math.ceil((now - firstDate) / (7 * 24 * 60 * 60 * 1000)));
+    document.getElementById('kpi-weekly-avg').textContent = (data.length / weeks).toFixed(1);
+  }
+
+  // --- Graphique : RDV par jour de la semaine ---
+  var weekdays = [0,0,0,0,0,0,0];
+  var dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  data.forEach(function(a) {
+    weekdays[new Date(a.datetime).getDay()]++;
+  });
+  if (weekdayChart) weekdayChart.destroy();
+  var ctx1 = document.getElementById('weekday-chart');
+  if (ctx1) {
+    weekdayChart = new Chart(ctx1.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: dayNames,
+        datasets: [{ data: weekdays, backgroundColor: '#C4A87A', borderRadius: 4, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  // --- Graphique : RDV par heure ---
+  var hours = {};
+  for (var h = 8; h <= 19; h++) hours[h] = 0;
+  data.forEach(function(a) {
+    var hr = new Date(a.datetime).getHours();
+    if (hours[hr] !== undefined) hours[hr]++;
+  });
+  if (hourChart) hourChart.destroy();
+  var ctx2 = document.getElementById('hour-chart');
+  if (ctx2) {
+    hourChart = new Chart(ctx2.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: Object.keys(hours).map(function(h) { return h + 'h'; }),
+        datasets: [{ data: Object.values(hours), backgroundColor: '#1A1714', borderRadius: 4, borderSkipped: false }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+
+  // --- Stats genre ---
+  var genreCount = { Homme: 0, Femme: 0, Autre: 0 };
+  data.forEach(function(a) {
+    var svc = (a.service || '').toLowerCase();
+    if (svc.includes('barbe') || svc.includes('degrade') || svc.includes('estompage')) genreCount.Homme++;
+    else if (svc.includes('balayage') || svc.includes('brushing') || svc.includes('meches') || svc.includes('lissage')) genreCount.Femme++;
+    else genreCount.Autre++;
+  });
+  var totalG = data.length || 1;
+  var genreEl = document.getElementById('genre-stats');
+  if (genreEl) {
+    genreEl.innerHTML = Object.entries(genreCount).map(function(g) {
+      var pct = Math.round(g[1] / totalG * 100);
+      return '<div class="top-item"><span class="top-name">' + g[0] + '</span>'
+        + '<div class="top-bar-wrap"><div class="top-bar" style="width:' + pct + '%"></div></div>'
+        + '<span class="top-val">' + pct + '%</span></div>';
+    }).join('');
+  }
+
+  // --- Graphique : Clients uniques par mois ---
+  var now2 = new Date();
+  var months = [];
+  for (var i = currentPeriod - 1; i >= 0; i--) {
+    months.push(getMonthKey(new Date(now2.getFullYear(), now2.getMonth() - i, 1)));
+  }
+  var clientsByMonth = {};
+  months.forEach(function(m) { clientsByMonth[m] = new Set(); });
+  data.forEach(function(a) {
+    var mk = a.datetime.slice(0, 7);
+    if (clientsByMonth[mk]) clientsByMonth[mk].add(a.client_name);
+  });
+  if (clientsChart) clientsChart.destroy();
+  var ctx3 = document.getElementById('clients-chart');
+  if (ctx3) {
+    clientsChart = new Chart(ctx3.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: months.map(monthLabel),
+        datasets: [{
+          data: months.map(function(m) { return clientsByMonth[m] ? clientsByMonth[m].size : 0; }),
+          borderColor: '#C4A87A', backgroundColor: 'rgba(196,168,122,0.1)',
+          tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#C4A87A'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }, x: { grid: { display: false } } }
+      }
+    });
+  }
+}
+
 // ============================================================
 // REVENUE.JS
 // ============================================================
@@ -107,6 +262,9 @@ async function loadData() {
           + '<div class="top-bar-wrap"><div class="top-bar" style="width:' + (c[1]/maxC*100).toFixed(0) + '%"></div></div>'
           + '<span class="top-val">' + c[1].toFixed(0) + '€</span></div>';
       }).join('');
+
+  // Stats avancées Pro
+  renderStatsAvancees(data);
 }
 
 (async function() {

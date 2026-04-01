@@ -79,6 +79,65 @@
         <div id="top-clients" class="top-list"></div>
       </div>
     </div>
+
+    <!-- STATS AVANCEES PRO -->
+    <div id="stats-pro-section" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin:2rem 0 1rem">
+        <h2 style="font-family:var(--font-display);font-size:1.4rem;font-weight:300">Statistiques <em style="font-style:italic;color:var(--gold)">avancées</em></h2>
+        <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:100px;background:var(--gold-light);color:var(--gold)">Pro</span>
+      </div>
+
+      <!-- KPIs supplémentaires -->
+      <div class="kpi-grid-3" style="margin-bottom:1.5rem">
+        <div class="kpi-card">
+          <div class="kpi-label">Meilleur mois</div>
+          <div class="kpi-val" id="kpi-best-month">—</div>
+          <div class="kpi-sub" id="kpi-best-month-label">—</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Taux de retour</div>
+          <div class="kpi-val" id="kpi-retention">—</div>
+          <div class="kpi-sub">Clients revenus 2x+</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">RDV par semaine</div>
+          <div class="kpi-val" id="kpi-weekly-avg">—</div>
+          <div class="kpi-sub">Moyenne sur la periode</div>
+        </div>
+      </div>
+
+      <!-- Graphiques avancés -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-title">RDV par jour de la semaine</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="weekday-chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">RDV par heure</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="hour-chart"></canvas></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div class="chart-card">
+          <div class="chart-title">Repartition par genre</div>
+          <div id="genre-stats" class="top-list"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Evolution clients uniques</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="clients-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloc upgrade si pas Pro -->
+    <div id="stats-pro-wall" style="display:none;margin-top:2rem;border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center">
+      <div style="font-size:24px;margin-bottom:.5rem">✦</div>
+      <h3 style="font-size:1rem;font-weight:500;margin-bottom:.5rem">Statistiques avancees — Plan Pro</h3>
+      <p style="font-size:13px;color:var(--ink-light);margin-bottom:1.5rem">Debloquez les graphiques avances, le taux de retention et les analyses horaires.</p>
+      <a href="settings.html" style="display:inline-block;background:var(--ink);color:var(--white);padding:10px 24px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none">Passer au Pro — 59€/mois</a>
+    </div>
+
   </main>
 </div>
 
