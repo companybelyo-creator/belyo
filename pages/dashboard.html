@@ -149,9 +149,9 @@
           </div>
           <div class="cal-picker-popup" id="cal-picker-popup" style="display:none">
             <div class="cal-picker-nav">
-              <button type="button" onclick="calPickerPrevMonth()">&#8249;</button>
+              <button type="button" onclick="event.stopPropagation();calPickerPrevMonth()">&#8249;</button>
               <span id="cal-picker-month">&#8212;</span>
-              <button type="button" onclick="calPickerNextMonth()">&#8250;</button>
+              <button type="button" onclick="event.stopPropagation();calPickerNextMonth()">&#8250;</button>
             </div>
             <div class="cal-picker-days-head">
               <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
@@ -159,15 +159,15 @@
             <div class="cal-picker-grid" id="cal-picker-grid"></div>
             <div class="cal-picker-time" id="cal-picker-time" style="display:none">
               <span class="cal-picker-time-label">Heure</span>
-              <select id="cal-picker-hour" class="cal-picker-select" onchange="calPickerUpdateTime(false)"></select>
+              <select id="cal-picker-hour" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)"></select>
               <span style="font-weight:500;color:var(--ink)">:</span>
-              <select id="cal-picker-min" class="cal-picker-select" onchange="calPickerUpdateTime(false)">
+              <select id="cal-picker-min" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)">
                 <option value="00">00</option>
                 <option value="15">15</option>
                 <option value="30">30</option>
                 <option value="45">45</option>
               </select>
-              <button type="button" onclick="calPickerConfirm()" style="padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">OK</button>
+              <button type="button" onclick="event.stopPropagation();calPickerConfirm()" style="padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">OK</button>
             </div>
           </div>
         </div>

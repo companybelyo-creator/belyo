@@ -315,7 +315,7 @@ function calPickerRender() {
     if (isToday)  cls += ' today';
     if (isSel)    cls += ' selected';
 
-    var handler = isPast ? '' : ' onclick="calPickerSelectDay(' + year + ',' + month + ',' + d + ')"';
+    var handler = isPast ? '' : ' onclick="event.stopPropagation();calPickerSelectDay(' + year + ',' + month + ',' + d + ')"';
     html += '<button type="button" class="' + cls + '"' + handler + '>' + d + '</button>';
   }
   grid.innerHTML = html;
