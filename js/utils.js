@@ -575,3 +575,161 @@ document.addEventListener('click', function(e) {
   if (popup) popup.style.display = 'none';
   filterPickerOpen = false;
 });
+
+// ===== NOTIFICATIONS IN-APP =====
+var notifOpen = false;
+
+function initNotifications(userId) {
+  // Injecter la cloche dans la sidebar
+  var sidebarBottom = document.querySelector('.sidebar-bottom');
+  if (!sidebarBottom) return;
+
+  var btn = document.createElement('button');
+  btn.className = 'notif-btn';
+  btn.id = 'notif-btn';
+  btn.onclick = toggleNotifPanel;
+  btn.innerHTML = '<span class="sidebar-icon">&#9956;</span> Notifications<span class="notif-badge" id="notif-badge" style="display:none">0</span>';
+  sidebarBottom.insertBefore(btn, sidebarBottom.firstChild);
+
+  // Injecter le panel
+  var panel = document.createElement('div');
+  panel.className = 'notif-panel';
+  panel.id = 'notif-panel';
+  panel.innerHTML = ''
+    + '<div class="notif-panel-header">'
+    +   '<span class="notif-panel-title">Notifications</span>'
+    +   '<button class="notif-close" onclick="closeNotifPanel()">&#215;</button>'
+    + '</div>'
+    + '<div class="notif-list" id="notif-list"><div class="notif-empty">Chargement...</div></div>';
+  document.body.appendChild(panel);
+
+  // Overlay pour fermer en cliquant dehors
+  var overlay = document.createElement('div');
+  overlay.className = 'notif-overlay';
+  overlay.id = 'notif-overlay';
+  overlay.onclick = closeNotifPanel;
+  document.body.appendChild(overlay);
+
+  // Charger les notifications
+  loadNotifications(userId);
+}
+
+function toggleNotifPanel() {
+  if (notifOpen) closeNotifPanel();
+  else openNotifPanel();
+}
+
+function openNotifPanel() {
+  var panel   = document.getElementById('notif-panel');
+  var overlay = document.getElementById('notif-overlay');
+  if (panel)   panel.classList.add('open');
+  if (overlay) overlay.style.display = 'block';
+  notifOpen = true;
+}
+
+function closeNotifPanel() {
+  var panel   = document.getElementById('notif-panel');
+  var overlay = document.getElementById('notif-overlay');
+  if (panel)   panel.classList.remove('open');
+  if (overlay) overlay.style.display = 'none';
+  notifOpen = false;
+}
+
+async function loadNotifications(userId) {
+  var list  = document.getElementById('notif-list');
+  var badge = document.getElementById('notif-badge');
+  if (!list) return;
+
+  var notifications = [];
+  var now   = new Date();
+  var today = now.toISOString().slice(0, 10);
+
+  // 1. RDV du jour
+  var rdvRes = await sb.from('appointments')
+    .select('id, client_name, service, datetime')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .gte('datetime', today + 'T00:00:00')
+    .lte('datetime', today + 'T23:59:59')
+    .order('datetime', { ascending: true });
+
+  var rdvAujourdhui = rdvRes.data || [];
+
+  if (rdvAujourdhui.length > 0) {
+    rdvAujourdhui.forEach(function(a) {
+      var dt  = new Date(a.datetime);
+      var hm  = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+      var isPast = dt < now;
+      notifications.push({
+        icon: '&#9201;',
+        title: a.client_name,
+        desc: (a.service || 'RDV') + ' — ' + hm,
+        time: isPast ? 'Passe' : "Aujourd'hui a " + hm,
+        unread: !isPast,
+        type: 'rdv',
+      });
+    });
+  }
+
+  // 2. Stocks en rupture/alerte
+  var stockRes = await sb.from('products')
+    .select('id, name, quantity, alert_threshold')
+    .eq('user_id', userId);
+
+  var stocksAlerte = (stockRes.data || []).filter(function(p) {
+    return p.quantity <= (p.alert_threshold || 2);
+  });
+
+  stocksAlerte.forEach(function(p) {
+    var isRupture = p.quantity === 0;
+    notifications.push({
+      icon: isRupture ? '&#9888;' : '&#9661;',
+      title: p.name,
+      desc: isRupture ? 'Rupture de stock' : 'Stock faible — ' + p.quantity + ' restant' + (p.quantity > 1 ? 's' : ''),
+      time: 'Stock',
+      unread: isRupture,
+      type: 'stock',
+    });
+  });
+
+  // Mettre à jour le badge
+  var unreadCount = notifications.filter(function(n) { return n.unread; }).length;
+  if (badge) {
+    badge.textContent = unreadCount;
+    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+  }
+
+  // Rendre les notifications
+  if (notifications.length === 0) {
+    list.innerHTML = '<div class="notif-empty">&#10003; Tout est en ordre !</div>';
+    return;
+  }
+
+  var rdvItems   = notifications.filter(function(n) { return n.type === 'rdv'; });
+  var stockItems = notifications.filter(function(n) { return n.type === 'stock'; });
+
+  var html = '';
+
+  if (rdvItems.length > 0) {
+    html += '<div class="notif-section-label">RDV aujourd"hui (' + rdvItems.length + ')</div>';
+    html += rdvItems.map(renderNotifItem).join('');
+  }
+
+  if (stockItems.length > 0) {
+    html += '<div class="notif-section-label" style="margin-top:8px">Alertes stock</div>';
+    html += stockItems.map(renderNotifItem).join('');
+  }
+
+  list.innerHTML = html;
+}
+
+function renderNotifItem(n) {
+  return '<div class="notif-item' + (n.unread ? ' unread' : '') + '">'
+    + '<div class="notif-icon">' + n.icon + '</div>'
+    + '<div class="notif-content">'
+    +   '<div class="notif-title">' + n.title + '</div>'
+    +   '<div class="notif-desc">' + n.desc + '</div>'
+    +   '<div class="notif-time">' + n.time + '</div>'
+    + '</div>'
+    + '</div>';
+}
