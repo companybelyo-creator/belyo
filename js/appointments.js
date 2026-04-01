@@ -274,9 +274,10 @@ function renderList() {
       + '<td>' + a.service + '</td>'
       + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '—') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
-      + '<td>'
+      + '<td style="display:flex;gap:6px;flex-wrap:wrap">'
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">✓ Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">✕ Annuler</button>' : '')
+        + '<button class="action-btn action-delete" onclick="deleteAppt(\'' + a.id + '\')">🗑</button>'
       + '</td></tr>';
   }).join('');
 }
@@ -446,6 +447,14 @@ function closeModal() {
   var select = document.getElementById('appt-service-select');
   if (select) select.value = '';
 
+}
+
+async function deleteAppt(id) {
+  if (!confirm('Supprimer ce rendez-vous ? Cette action est irréversible.')) return;
+  var res = await sb.from('appointments').delete().eq('id', id);
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  showToast('Rendez-vous supprimé.');
+  await loadAppts();
 }
 
 async function updateStatus(id, status) {

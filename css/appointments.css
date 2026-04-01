@@ -84,6 +84,8 @@
 .action-btn:hover { background: var(--cream-dark); }
 .action-done { color: var(--success); }
 .action-cancel { color: var(--danger); }
+.action-delete { color: var(--ink-light); opacity: .5; }
+.action-delete:hover { color: var(--danger); opacity: 1; }
 .empty-state { text-align: center; padding: 3rem; color: var(--ink-light); }
 
 /* ===== CALENDRIER ===== */
