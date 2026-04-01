@@ -48,48 +48,84 @@ function setGenre(genre) {
   if (inp) { inp.style.display = 'none'; inp.value = ''; inp.required = false; }
 }
 
+var serviceDropdownOpen = false;
+
 function updateServiceOptions() {
-  var select = document.getElementById('appt-service-select');
-  if (!select) return;
+  var dropdown = document.getElementById('service-select-dropdown');
+  if (!dropdown) return;
   var options = PRESTATIONS[selectedGenre] || [];
-  select.innerHTML = '<option value="">-- Prestation --</option>'
-    + options.map(function(p) {
-        var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][p];
-        var label = p + (pd && pd.prix ? ' — ' + pd.prix + '€' : '');
-        return '<option value="' + p + '">' + label + '</option>';
-      }).join('');
+
+  dropdown.innerHTML = options.map(function(p) {
+    var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][p];
+    var prix = pd && pd.prix ? pd.prix : '';
+    var idx = options.indexOf(p);
+    return '<div class="service-option" onclick="selectServiceByIndex(' + idx + ')">'  
+      + '<span class="service-option-name">' + p + '</span>'
+      + (prix ? '<span class="service-option-prix">' + prix + '€</span>' : '')
+      + '</div>';
+  }).join('');
 
   // Coupe par défaut
   var coupeOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; });
   if (coupeOpt) {
-    select.value = coupeOpt;
-    onServiceSelect(coupeOpt);
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][coupeOpt];
+    selectService(coupeOpt, pd && pd.prix ? pd.prix : 0);
   }
 }
 
-function onServiceSelect(val) {
-  var input      = document.getElementById('appt-service');
-  var priceInput = document.getElementById('appt-price');
+function selectServiceByIndex(idx) {
+  var dropdown = document.getElementById('service-select-dropdown');
+  var options  = dropdown ? dropdown._options : [];
+  var name     = options[idx];
+  if (!name) return;
+  var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
+  var prix = pd && pd.prix ? pd.prix : 0;
+  selectService(name, prix);
+}
 
-  if (!input) return;
+function toggleServiceDropdown() {
+  var dd = document.getElementById('service-select-dropdown');
+  if (!dd) return;
+  serviceDropdownOpen = !serviceDropdownOpen;
+  dd.style.display = serviceDropdownOpen ? 'block' : 'none';
+}
 
-  if (val === 'Autre') {
-    input.style.display = 'block';
-    input.required = true;
-    input.value = '';
-    input.focus();
-    if (priceInput) priceInput.value = '';
-  } else {
-    input.style.display = 'none';
-    input.required = false;
-    input.value = val || '';
+function selectService(name, prix) {
+  // Fermer le dropdown
+  var dd = document.getElementById('service-select-dropdown');
+  if (dd) dd.style.display = 'none';
+  serviceDropdownOpen = false;
 
-    // Auto-remplir le prix
-    if (val && priceInput) {
-      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
-      priceInput.value = (pd && pd.prix) ? pd.prix : '';
-    }
+  // Mettre à jour le trigger
+  var label = document.getElementById('service-select-label');
+  var hidden = document.getElementById('appt-service-select');
+  if (label) {
+    label.style.color = 'var(--ink)';
+    label.textContent = prix ? name + ' — ' + prix + '€' : name;
   }
+  if (hidden) hidden.value = name;
+
+  // Remplir le champ service caché
+  var inp = document.getElementById('appt-service');
+  if (inp) { inp.value = name; inp.style.display = 'none'; inp.required = false; }
+
+  // Remplir le prix
+  var priceInput = document.getElementById('appt-price');
+  if (priceInput) priceInput.value = prix || '';
+}
+
+// Fermer si clic ailleurs
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('service-select-wrap');
+  if (wrap && !wrap.contains(e.target) && serviceDropdownOpen) {
+    document.getElementById('service-select-dropdown').style.display = 'none';
+    serviceDropdownOpen = false;
+  }
+});
+
+function onServiceSelect(val) {
+  // Gardé pour compatibilité — le vrai select utilise selectService()
+  selectService(val, 0);
 }
 
 // ===== AUTOCOMPLETE CLIENT =====

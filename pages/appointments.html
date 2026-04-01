@@ -103,9 +103,15 @@
           <button type="button" class="genre-btn active" id="genre-homme" onclick="setGenre('homme')">Homme</button>
           <button type="button" class="genre-btn" id="genre-femme" onclick="setGenre('femme')">Femme</button>
         </div>
-        <select class="form-input" id="appt-service-select" onchange="onServiceSelect(this.value)" style="cursor:pointer">
-          <option value="">-- Prestation --</option>
-        </select>
+        <!-- Select custom avec prix à droite -->
+        <div class="service-select-wrap" id="service-select-wrap">
+          <div class="service-select-trigger" id="service-select-trigger" onclick="toggleServiceDropdown()">
+            <span id="service-select-label" style="color:var(--ink-light)">-- Prestation --</span>
+            <span style="font-size:10px;color:var(--ink-light)">▾</span>
+          </div>
+          <div class="service-select-dropdown" id="service-select-dropdown" style="display:none"></div>
+        </div>
+        <input type="hidden" id="appt-service-select" />
         <input type="text" class="form-input" id="appt-service" placeholder="Préciser..." required style="display:none;margin-top:8px" />
       </div>
       <div class="form-group"><label class="form-label">Date et heure</label><input type="datetime-local" class="form-input" id="appt-datetime" required /></div>
