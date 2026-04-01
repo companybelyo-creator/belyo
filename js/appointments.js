@@ -54,14 +54,21 @@ function updateServiceOptions() {
   var options = PRESTATIONS[selectedGenre] || [];
   select.innerHTML = '<option value="">-- Prestation --</option>'
     + options.map(function(p) {
-        return '<option value="' + p + '">' + p + '</option>';
+        var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][p];
+        var label = p + (pd && pd.prix ? ' — ' + pd.prix + '€' : '');
+        return '<option value="' + p + '">' + label + '</option>';
       }).join('');
+
+  // Coupe par défaut
+  var coupeOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; });
+  if (coupeOpt) {
+    select.value = coupeOpt;
+    onServiceSelect(coupeOpt);
+  }
 }
 
 function onServiceSelect(val) {
   var input      = document.getElementById('appt-service');
-  var prixBlock  = document.getElementById('prix-display');
-  var prixLabel  = document.getElementById('appt-prix-label');
   var priceInput = document.getElementById('appt-price');
 
   if (!input) return;
@@ -71,26 +78,16 @@ function onServiceSelect(val) {
     input.required = true;
     input.value = '';
     input.focus();
-    if (prixBlock) prixBlock.style.display = 'none';
+    if (priceInput) priceInput.value = '';
   } else {
     input.style.display = 'none';
     input.required = false;
     input.value = val || '';
 
-    // Afficher le prix depuis les paramètres
-    if (val) {
+    // Auto-remplir le prix
+    if (val && priceInput) {
       var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][val];
-      if (pd && pd.prix !== undefined) {
-        if (prixLabel)  prixLabel.textContent = pd.prix;
-        if (priceInput) priceInput.value = pd.prix;
-        if (prixBlock)  prixBlock.style.display = 'block';
-      } else {
-        if (prixBlock) prixBlock.style.display = 'none';
-        if (priceInput) priceInput.value = '';
-      }
-    } else {
-      if (prixBlock) prixBlock.style.display = 'none';
-      if (priceInput) priceInput.value = '';
+      priceInput.value = (pd && pd.prix) ? pd.prix : '';
     }
   }
 }
@@ -316,10 +313,6 @@ function renderCalendar() {
       var cell = cells[rowIndex * 7 + di];
       if (!cell) return;
 
-      var ev = document.createElement('div');
-      ev.className = 'cal-event status-' + (a.status || 'pending');
-      ev.style.top = ((aM / 60) * SLOT_H) + 'px';
-      // Hauteur selon duration_minutes du RDV, sinon prix_duree, sinon 30min par défaut
       var dureeMin = a.duration_minutes || 30;
       if (!a.duration_minutes && PRIX_DUREE && a.service) {
         var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
@@ -327,10 +320,19 @@ function renderCalendar() {
         var pd  = pdH || pdF;
         if (pd && pd.duree) dureeMin = pd.duree;
       }
-      ev.style.height = Math.max(24, (dureeMin / 60) * SLOT_H) + 'px';
-      ev.innerHTML = '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
-        + '<div class="cal-event-name">' + a.client_name + '</div>'
-        + '<div class="cal-event-service">' + a.service + '</div>';
+      var evH = Math.max(36, (dureeMin / 60) * SLOT_H);
+
+      var ev = document.createElement('div');
+      ev.className = 'cal-event status-' + (a.status || 'pending');
+      ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + evH + 'px;';
+
+      // Contenu selon la hauteur disponible
+      var html = '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>';
+      html += '<div class="cal-event-name">' + a.client_name + '</div>';
+      if (evH >= 44) {
+        html += '<div class="cal-event-service">' + a.service + '</div>';
+      }
+      ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showTooltip(e, a); });
       ev.addEventListener('mouseleave', hideTooltip);
       cell.appendChild(ev);
@@ -397,8 +399,7 @@ function closeModal() {
   if (input) { input.style.display = 'none'; input.value = ''; }
   var select = document.getElementById('appt-service-select');
   if (select) select.value = '';
-  var prixBlock = document.getElementById('prix-display');
-  if (prixBlock) prixBlock.style.display = 'none';
+
 }
 
 async function updateStatus(id, status) {

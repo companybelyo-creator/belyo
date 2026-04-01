@@ -109,14 +109,10 @@
         <input type="text" class="form-input" id="appt-service" placeholder="Préciser..." required style="display:none;margin-top:8px" />
       </div>
       <div class="form-group"><label class="form-label">Date et heure</label><input type="datetime-local" class="form-input" id="appt-datetime" required /></div>
-      <!-- Prix auto depuis les paramètres -->
-      <div class="form-group" id="prix-display" style="display:none">
-        <label class="form-label">Prix</label>
-        <div style="display:flex;align-items:center;gap:10px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px">
-          <span id="appt-prix-label" style="font-size:15px;font-weight:500;color:var(--ink)">—</span>
-          <span style="font-size:13px;color:var(--ink-light)">€</span>
-          <input type="hidden" id="appt-price" />
-        </div>
+      <!-- Prix éditable avec valeur auto depuis les paramètres -->
+      <div class="form-group">
+        <label class="form-label">Prix (€)</label>
+        <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" />
       </div>
       <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
       <button type="submit" class="btn-submit" id="appt-submit">Enregistrer</button>
