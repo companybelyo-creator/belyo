@@ -80,7 +80,16 @@ function selectServiceByIndex(idx) {
   var name    = options[idx];
   if (!name) return;
   var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
-  var prix = pd && pd.prix ? pd.prix : 0;
+  var prix = 0;
+  if (pd && pd.prix) {
+    prix = pd.prix;
+  } else {
+    var defaults = {
+      homme: { 'Coupe': 20, 'Degrade': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
+      femme: { 'Coupe': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Meches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
+    };
+    prix = (defaults[selectedGenre] && defaults[selectedGenre][name]) || 0;
+  }
   selectService(name, prix);
 }
 
