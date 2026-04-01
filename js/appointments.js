@@ -4,6 +4,7 @@
 
 var currentUserId  = null;
 var selectedIds    = new Set();
+var editApptId     = null;
 var allAppts       = [];
 var allClients     = [];
 var selectedClient = null;
@@ -278,6 +279,7 @@ function renderList() {
       + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '—') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
       + '<td>'
+        + '<button class="action-btn" onclick="openEditModal(\'' + a.id + '\')">Modifier</button>'
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
       + '</td></tr>';
@@ -453,6 +455,12 @@ function closeModal() {
   var suggestions = document.getElementById('client-suggestions');
   if (block) block.style.display = 'none';
   if (suggestions) suggestions.style.display = 'none';
+  // Reset mode édition
+  editApptId = null;
+  var title = document.querySelector('.modal-title');
+  if (title) title.textContent = 'Nouveau rendez-vous';
+  var submit = document.getElementById('appt-submit');
+  if (submit) submit.textContent = 'Enregistrer';
   // Reset genre + service + prix
   selectedGenre = 'homme';
   setGenre('homme');
@@ -513,6 +521,69 @@ async function deleteSelected() {
   await loadAppts();
 }
 
+function openEditModal(id) {
+  var a = allAppts.find(function(x) { return x.id === id; });
+  if (!a) return;
+  editApptId = id;
+
+  // Pré-remplir le client
+  var clientInput = document.getElementById('appt-client');
+  if (clientInput) clientInput.value = a.client_name || '';
+
+  // Pré-remplir le genre (détecter depuis le service)
+  var genre = 'homme';
+  if (a.service) {
+    var femmeServices = ['coupe femme', 'brushing', 'coloration', 'balayage', 'meches', 'lissage', 'permanente', 'chignon', 'extension', 'defrisage', 'tresse'];
+    var svc = a.service.toLowerCase();
+    if (femmeServices.some(function(s) { return svc.includes(s); })) genre = 'femme';
+  }
+  selectedGenre = genre;
+  var bH = document.getElementById('genre-homme');
+  var bF = document.getElementById('genre-femme');
+  if (bH) bH.classList.toggle('active', genre === 'homme');
+  if (bF) bF.classList.toggle('active', genre === 'femme');
+
+  // Pré-remplir la prestation dans le trigger
+  var label  = document.getElementById('service-select-label');
+  var hidden = document.getElementById('appt-service-select');
+  var inp    = document.getElementById('appt-service');
+  if (label)  { label.textContent = a.service || ''; label.style.color = 'var(--ink)'; }
+  if (hidden) hidden.value = a.service || '';
+  if (inp)    inp.value = a.service || '';
+
+  // Pré-remplir la date dans le picker
+  if (a.datetime) {
+    calPickerDate = new Date(a.datetime);
+    calPickerMonth = new Date(calPickerDate);
+    var dt = new Date(a.datetime);
+    var h  = String(dt.getHours()).padStart(2, '0');
+    var m  = String(dt.getMinutes()).padStart(2, '0');
+    var pickerLabel = document.getElementById('cal-picker-label');
+    var apptDt = document.getElementById('appt-datetime');
+    if (pickerLabel) {
+      pickerLabel.style.color = 'var(--ink)';
+      pickerLabel.textContent = dt.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' }) + ' à ' + h + 'h' + (m !== '00' ? m : '');
+    }
+    if (apptDt) apptDt.value = a.datetime.slice(0, 16);
+  }
+
+  // Pré-remplir le prix
+  var priceInput = document.getElementById('appt-price');
+  if (priceInput) priceInput.value = a.price || '';
+
+  // Pré-remplir les notes
+  var notesInput = document.getElementById('appt-notes');
+  if (notesInput) notesInput.value = a.notes || '';
+
+  // Changer le titre et le bouton
+  var title = document.querySelector('.modal-title');
+  if (title) title.textContent = 'Modifier le rendez-vous';
+  var submit = document.getElementById('appt-submit');
+  if (submit) submit.textContent = 'Enregistrer les modifications';
+
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
 async function deleteAppt(id) {
   if (!confirm('Supprimer ce rendez-vous ? Cette action est irréversible.')) return;
   var res = await sb.from('appointments').delete().eq('id', id);
@@ -552,29 +623,45 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
 
-  var res = await sb.from('appointments').insert({
-    user_id:     currentUserId,
-    client_name: clientName,
-    service:     (function() {
-      // appt-service-select = input hidden rempli par selectService()
-      var hidden = document.getElementById('appt-service-select');
-      var inp    = document.getElementById('appt-service');
-      // Priorité : hidden (dropdown custom), sinon input texte (Autre)
-      if (hidden && hidden.value) return hidden.value;
-      return inp ? inp.value.trim() : '';
-    })(),
-    duration_minutes: (function() {
-      var hidden = document.getElementById('appt-service-select');
-      var name   = hidden ? hidden.value : '';
-      if (!name) return null;
-      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
-      return pd && pd.duree ? pd.duree : null;
-    })(),
-    datetime:    datetime,
-    price:       priceVal ? parseFloat(priceVal) : null,
-    notes:       document.getElementById('appt-notes').value.trim() || null,
-    status:      'pending',
-  });
+  var serviceVal = (function() {
+    var hidden = document.getElementById('appt-service-select');
+    var inp    = document.getElementById('appt-service');
+    if (hidden && hidden.value) return hidden.value;
+    return inp ? inp.value.trim() : '';
+  })();
+  var durationVal = (function() {
+    var hidden = document.getElementById('appt-service-select');
+    var name   = hidden ? hidden.value : '';
+    if (!name) return null;
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
+    return pd && pd.duree ? pd.duree : null;
+  })();
+  var notesVal = document.getElementById('appt-notes').value.trim() || null;
+
+  var res;
+  if (editApptId) {
+    // Mode édition
+    res = await sb.from('appointments').update({
+      client_name:      clientName,
+      service:          serviceVal,
+      duration_minutes: durationVal,
+      datetime:         datetime,
+      price:            priceVal ? parseFloat(priceVal) : null,
+      notes:            notesVal,
+    }).eq('id', editApptId);
+  } else {
+    // Mode création
+    res = await sb.from('appointments').insert({
+      user_id:          currentUserId,
+      client_name:      clientName,
+      service:          serviceVal,
+      duration_minutes: durationVal,
+      datetime:         datetime,
+      price:            priceVal ? parseFloat(priceVal) : null,
+      notes:            notesVal,
+      status:           'pending',
+    });
+  }
 
   btn.disabled = false;
   btn.textContent = 'Enregistrer';
