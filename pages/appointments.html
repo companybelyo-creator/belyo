@@ -126,7 +126,39 @@
         <input type="hidden" id="appt-service-select" />
         <input type="text" class="form-input" id="appt-service" placeholder="Préciser..." required style="display:none;margin-top:8px" />
       </div>
-      <div class="form-group"><label class="form-label">Date et heure</label><input type="datetime-local" class="form-input" id="appt-datetime" required /></div>
+      <div class="form-group">
+        <label class="form-label">Date et heure</label>
+        <div class="cal-picker-wrap" id="cal-picker-wrap">
+          <div class="cal-picker-trigger" id="cal-picker-trigger" onclick="toggleCalPicker()">
+            <span id="cal-picker-label" style="color:var(--ink-light)">Choisir une date...</span>
+            <span style="font-size:11px;color:var(--ink-light)">&#9656;</span>
+          </div>
+          <div class="cal-picker-popup" id="cal-picker-popup" style="display:none">
+            <div class="cal-picker-nav">
+              <button type="button" onclick="calPickerPrevMonth()">&#8249;</button>
+              <span id="cal-picker-month">&#8212;</span>
+              <button type="button" onclick="calPickerNextMonth()">&#8250;</button>
+            </div>
+            <div class="cal-picker-days-head">
+              <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
+            </div>
+            <div class="cal-picker-grid" id="cal-picker-grid"></div>
+            <div class="cal-picker-time" id="cal-picker-time" style="display:none">
+              <span class="cal-picker-time-label">Heure</span>
+              <select id="cal-picker-hour" class="cal-picker-select" onchange="calPickerUpdateTime(false)"></select>
+              <span style="font-weight:500;color:var(--ink)">:</span>
+              <select id="cal-picker-min" class="cal-picker-select" onchange="calPickerUpdateTime(false)">
+                <option value="00">00</option>
+                <option value="15">15</option>
+                <option value="30">30</option>
+                <option value="45">45</option>
+              </select>
+              <button type="button" onclick="calPickerConfirm()" style="padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">OK</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="appt-datetime" />
+      </div>
       </div>
       <!-- Prix éditable avec valeur auto depuis les paramètres -->
       <div class="form-group">

@@ -324,38 +324,32 @@ function calPickerRender() {
 function calPickerSelectDay(year, month, day) {
   calPickerDate = new Date(year, month, day);
 
-  // Afficher la sélection heure sans fermer
+  // Afficher les selects heure/min
   var timeEl = document.getElementById('cal-picker-time');
   if (timeEl) timeEl.style.display = 'flex';
 
-  // Peupler les heures disponibles (8h-19h, bloquer heures passées si aujourd'hui)
+  // Peupler les heures
   var hourEl = document.getElementById('cal-picker-hour');
   if (hourEl) {
     hourEl.innerHTML = '';
     var now     = new Date();
     var isToday = calPickerDate.toDateString() === now.toDateString();
     for (var h = 8; h <= 19; h++) {
-      var isPast = isToday && h <= now.getHours();
-      if (!isPast) {
-        var opt = document.createElement('option');
-        opt.value = String(h).padStart(2, '0');
-        opt.textContent = String(h).padStart(2, '0') + 'h';
-        hourEl.appendChild(opt);
-      }
+      if (isToday && h <= now.getHours()) continue;
+      var opt = document.createElement('option');
+      opt.value = String(h).padStart(2, '0');
+      opt.textContent = String(h).padStart(2, '0') + 'h';
+      hourEl.appendChild(opt);
     }
-    // Sélectionner heure suivante par défaut
     if (isToday) {
-      var next = now.getHours() + 1;
-      hourEl.value = String(Math.min(next, 19)).padStart(2, '0');
+      hourEl.value = String(Math.min(now.getHours() + 1, 19)).padStart(2, '0');
     } else {
       hourEl.value = '09';
     }
   }
 
-  // Re-rendre le calendrier pour mettre à jour la sélection sans fermer
+  // Re-rendre sans fermer (stopPropagation géré dans le bouton)
   calPickerRender();
-  // Mettre à jour la valeur hidden sans fermer
-  calPickerUpdateTime(false);
 }
 
 function calPickerUpdateTime(closeAfter) {
@@ -399,14 +393,12 @@ function calPickerConfirm() {
   calPickerUpdateTime(true);
 }
 
-// Fermer si clic strictement en dehors du wrap
+// Fermer seulement si clic en dehors du wrap
 document.addEventListener('click', function(e) {
+  if (!calPickerOpen) return;
   var wrap = document.getElementById('cal-picker-wrap');
-  if (!wrap) return;
-  // Ne fermer que si le clic est vraiment en dehors du popup ET du trigger
-  if (!wrap.contains(e.target) && calPickerOpen) {
-    var popup = document.getElementById('cal-picker-popup');
-    if (popup) popup.style.display = 'none';
-    calPickerOpen = false;
-  }
+  if (wrap && wrap.contains(e.target)) return; // clic dans le picker → ne pas fermer
+  var popup = document.getElementById('cal-picker-popup');
+  if (popup) popup.style.display = 'none';
+  calPickerOpen = false;
 });
