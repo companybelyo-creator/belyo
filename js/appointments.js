@@ -3,6 +3,7 @@
 // ============================================================
 
 var currentUserId  = null;
+var selectedIds    = new Set();
 var allAppts       = [];
 var allClients     = [];
 var selectedClient = null;
@@ -267,17 +268,18 @@ function renderList() {
     return;
   }
   tbody.innerHTML = filtered.map(function(a) {
-    return '<tr>'
+    var checked = selectedIds.has(a.id) ? 'checked' : '';
+    return '<tr id="row-' + a.id + '" class="' + (selectedIds.has(a.id) ? 'row-selected' : '') + '">'
+      + '<td><input type="checkbox" ' + checked + ' onchange="toggleRow(\'' + a.id + '\',this.checked)" style="cursor:pointer;width:15px;height:15px" /></td>'
       + '<td>' + formatDateShort(a.datetime) + '</td>'
       + '<td><strong>' + formatTime(a.datetime) + '</strong></td>'
       + '<td>' + a.client_name + '</td>'
       + '<td>' + a.service + '</td>'
       + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '—') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
-      + '<td style="display:flex;gap:6px;flex-wrap:wrap">'
-        + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">✓ Terminé</button>' : '')
-        + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">✕ Annuler</button>' : '')
-        + '<button class="action-btn action-delete" onclick="deleteAppt(\'' + a.id + '\')">🗑</button>'
+      + '<td>'
+        + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">✓</button>' : '')
+        + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">✕</button>' : '')
       + '</td></tr>';
   }).join('');
 }
@@ -447,6 +449,56 @@ function closeModal() {
   var select = document.getElementById('appt-service-select');
   if (select) select.value = '';
 
+}
+
+function toggleRow(id, checked) {
+  if (checked) selectedIds.add(id);
+  else selectedIds.delete(id);
+  updateSelectionBar();
+  var row = document.getElementById('row-' + id);
+  if (row) row.classList.toggle('row-selected', checked);
+}
+
+function toggleAll(checked) {
+  var checkboxes = document.querySelectorAll('#appts-list input[type="checkbox"]');
+  checkboxes.forEach(function(cb) {
+    cb.checked = checked;
+    var id = cb.closest('tr') ? cb.closest('tr').id.replace('row-', '') : null;
+    if (id) {
+      if (checked) selectedIds.add(id);
+      else selectedIds.delete(id);
+      var row = document.getElementById('row-' + id);
+      if (row) row.classList.toggle('row-selected', checked);
+    }
+  });
+  updateSelectionBar();
+}
+
+function updateSelectionBar() {
+  var bar   = document.getElementById('selection-bar');
+  var count = document.getElementById('selection-count');
+  var n     = selectedIds.size;
+  if (n > 0) {
+    bar.style.display   = 'flex';
+    count.textContent   = n + ' sélectionné' + (n > 1 ? 's' : '');
+  } else {
+    bar.style.display   = 'none';
+    var ca = document.getElementById('check-all');
+    if (ca) ca.checked = false;
+  }
+}
+
+async function deleteSelected() {
+  var n = selectedIds.size;
+  if (n === 0) return;
+  if (!confirm('Supprimer ' + n + ' rendez-vous ? Cette action est irréversible.')) return;
+  var ids = Array.from(selectedIds);
+  var res = await sb.from('appointments').delete().in('id', ids);
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  selectedIds.clear();
+  updateSelectionBar();
+  showToast(n + ' rendez-vous supprimé' + (n > 1 ? 's' : '') + '.');
+  await loadAppts();
 }
 
 async function deleteAppt(id) {

@@ -53,12 +53,24 @@
       <div class="card">
         <div class="card-header">
           <span class="card-title" id="list-title">Tous les rendez-vous</span>
-          <span id="list-count" style="font-size:13px;color:var(--ink-light);">—</span>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span id="list-count" style="font-size:13px;color:var(--ink-light);">—</span>
+            <!-- Barre actions sélection (cachée par défaut) -->
+            <div id="selection-bar" style="display:none;align-items:center;gap:8px">
+              <span id="selection-count" style="font-size:13px;color:var(--ink-light)"></span>
+              <button onclick="deleteSelected()" class="action-btn action-delete" style="padding:5px 12px;border-radius:100px;border:1px solid #fecaca;font-size:12px;background:#fef2f2;color:#C0392B">🗑 Supprimer</button>
+            </div>
+          </div>
         </div>
         <div class="card-body" style="padding:0">
           <table class="table">
-            <thead><tr><th>Date</th><th>Heure</th><th>Client</th><th>Prestation</th><th>Prix</th><th>Statut</th><th>Actions</th></tr></thead>
-            <tbody id="appts-list"><tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr></tbody>
+            <thead>
+              <tr>
+                <th style="width:36px"><input type="checkbox" id="check-all" onchange="toggleAll(this.checked)" style="cursor:pointer;width:15px;height:15px" /></th>
+                <th>Date</th><th>Heure</th><th>Client</th><th>Prestation</th><th>Prix</th><th>Statut</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="appts-list"><tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr></tbody>
           </table>
         </div>
       </div>

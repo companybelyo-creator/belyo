@@ -220,3 +220,8 @@
   flex-shrink: 0;
   margin-left: 12px;
 }
+
+/* ===== SELECTION LIGNES ===== */
+.row-selected { background: var(--gold-light) !important; }
+.table thead th:first-child { width: 36px; padding: 10px 12px; }
+.table tbody td:first-child { padding: 10px 12px; }
