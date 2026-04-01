@@ -80,12 +80,13 @@
 }
 .week-nav-btn:hover { background: var(--cream-dark); }
 .week-label { font-size: 14px; font-weight: 500; min-width: 200px; text-align: center; }
-.action-btn { background: none; border: none; font-size: 13px; cursor: pointer; padding: 4px 10px; border-radius: 6px; transition: background .15s; }
-.action-btn:hover { background: var(--cream-dark); }
-.action-done { color: var(--success); }
-.action-cancel { color: var(--danger); }
-.action-delete { color: var(--ink-light); opacity: .5; }
-.action-delete:hover { color: var(--danger); opacity: 1; }
+.action-btn { background: none; border: 1px solid var(--border); font-size: 12px; cursor: pointer; padding: 4px 12px; border-radius: 100px; transition: all .15s; font-family: var(--font-body); color: var(--ink-light); }
+.action-btn:hover { background: var(--cream-dark); color: var(--ink); }
+.action-done { border-color: var(--gold); color: var(--gold); }
+.action-done:hover { background: var(--gold-light); color: var(--ink); }
+.action-cancel { border-color: var(--border); color: var(--ink-light); }
+.action-cancel:hover { background: var(--cream-dark); }
+.action-delete { color: var(--ink-light); }
 .empty-state { text-align: center; padding: 3rem; color: var(--ink-light); }
 
 /* ===== CALENDRIER ===== */

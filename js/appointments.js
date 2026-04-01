@@ -277,9 +277,9 @@ function renderList() {
       + '<td>' + a.service + '</td>'
       + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '—') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
-      + '<td>'
-        + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">✓</button>' : '')
-        + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">✕</button>' : '')
+      + '<td style="display:flex;gap:6px">'
+        + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
+        + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
       + '</td></tr>';
   }).join('');
 }
