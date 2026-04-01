@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="../css/revenue.css" />
 </head>
 <body>
@@ -34,6 +35,9 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Chiffre d'<em>affaires</em></h1>
+      <button class="btn-action" onclick="exportPDF()" id="btn-export" style="display:flex;align-items:center;gap:6px">
+        <span>&#8595;</span> Exporter PDF
+      </button>
     </div>
 
     <div class="period-tabs">

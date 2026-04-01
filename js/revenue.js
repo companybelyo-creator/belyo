@@ -118,3 +118,141 @@ async function loadData() {
   await checkSubscription(session.user.id, session.user.created_at);
   await loadData();
 })();
+
+// ===== EXPORT PDF =====
+async function exportPDF() {
+  var btn = document.getElementById('btn-export');
+  if (btn) { btn.disabled = true; btn.textContent = 'Generation...'; }
+
+  try {
+    var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
+    if (!jsPDF) { showToast('jsPDF non charge', 'error'); return; }
+
+    var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var W = 210; var margin = 16; var y = 20;
+
+    // Couleurs
+    var INK    = [26, 23, 20];
+    var GOLD   = [196, 168, 122];
+    var LIGHT  = [92, 85, 80];
+    var CREAM  = [247, 243, 238];
+
+    // Header
+    doc.setFillColor(26, 23, 20);
+    doc.rect(0, 0, W, 28, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(20);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Belyo', margin, 13);
+    doc.setFontSize(10);
+    doc.setTextColor(196, 168, 122);
+    doc.text('Rapport Chiffre d'Affaires', margin, 21);
+
+    // Date de generation
+    var now = new Date();
+    var dateStr = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+    doc.setTextColor(180, 180, 180);
+    doc.setFontSize(8);
+    doc.text('Genere le ' + dateStr, W - margin, 21, { align: 'right' });
+
+    y = 36;
+
+    // Salon name
+    var salonName = document.getElementById('sidebar-salon') ? document.getElementById('sidebar-salon').textContent : 'Mon salon';
+    doc.setFontSize(14);
+    doc.setTextColor.apply(doc, INK);
+    doc.setFont('helvetica', 'bold');
+    doc.text(salonName, margin, y);
+    y += 10;
+
+    // KPIs
+    var kpis = [
+      { label: 'CA ce mois',       val: document.getElementById('kpi-current') ? document.getElementById('kpi-current').textContent : '—' },
+      { label: 'CA sur la periode', val: document.getElementById('kpi-period')  ? document.getElementById('kpi-period').textContent  : '—' },
+      { label: 'Panier moyen',      val: document.getElementById('kpi-avg')     ? document.getElementById('kpi-avg').textContent     : '—' },
+    ];
+
+    var kpiW = (W - margin * 2 - 8) / 3;
+    kpis.forEach(function(k, i) {
+      var x = margin + i * (kpiW + 4);
+      doc.setFillColor.apply(doc, CREAM);
+      doc.roundedRect(x, y, kpiW, 22, 2, 2, 'F');
+      doc.setFontSize(8);
+      doc.setTextColor.apply(doc, LIGHT);
+      doc.setFont('helvetica', 'normal');
+      doc.text(k.label, x + kpiW / 2, y + 7, { align: 'center' });
+      doc.setFontSize(14);
+      doc.setTextColor.apply(doc, INK);
+      doc.setFont('helvetica', 'bold');
+      doc.text(k.val, x + kpiW / 2, y + 17, { align: 'center' });
+    });
+    y += 30;
+
+    // Graphique CA (capture canvas)
+    var canvas = document.getElementById('ca-chart');
+    if (canvas) {
+      var imgData = canvas.toDataURL('image/png');
+      var chartH  = 55;
+      doc.setFillColor.apply(doc, CREAM);
+      doc.roundedRect(margin, y, W - margin * 2, chartH + 10, 2, 2, 'F');
+      doc.setFontSize(9);
+      doc.setTextColor.apply(doc, INK);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Evolution du CA mensuel', margin + 6, y + 7);
+      doc.addImage(imgData, 'PNG', margin + 4, y + 10, W - margin * 2 - 8, chartH);
+      y += chartH + 18;
+    }
+
+    // Top prestations
+    var topServicesEl = document.getElementById('top-services');
+    var topClientsEl  = document.getElementById('top-clients');
+
+    function drawTopList(title, el, x, colW) {
+      doc.setFillColor.apply(doc, CREAM);
+      doc.roundedRect(x, y, colW, 8, 2, 2, 'F');
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor.apply(doc, INK);
+      doc.text(title, x + 4, y + 5.5);
+      var rowY = y + 12;
+
+      if (el) {
+        var items = el.querySelectorAll('.top-item');
+        items.forEach(function(item, i) {
+          var name = item.querySelector('.top-name') ? item.querySelector('.top-name').textContent : '';
+          var val  = item.querySelector('.top-val')  ? item.querySelector('.top-val').textContent  : '';
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor.apply(doc, i % 2 === 0 ? INK : LIGHT);
+          doc.text((i + 1) + '. ' + name, x + 4, rowY);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor.apply(doc, GOLD);
+          doc.text(val, x + colW - 4, rowY, { align: 'right' });
+          rowY += 7;
+        });
+      }
+    }
+
+    var colW = (W - margin * 2 - 6) / 2;
+    drawTopList('Top prestations', topServicesEl, margin, colW);
+    drawTopList('Top clients', topClientsEl, margin + colW + 6, colW);
+    y += 75;
+
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor.apply(doc, LIGHT);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Belyo - belyo.vercel.app', W / 2, 290, { align: 'center' });
+
+    // Telechargement
+    var mois = now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).replace(' ', '-');
+    doc.save('belyo-rapport-' + mois + '.pdf');
+    showToast('PDF exporte !');
+
+  } catch (err) {
+    console.error('Export PDF error:', err);
+    showToast('Erreur export : ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↓ Exporter PDF'; }
+  }
+}
