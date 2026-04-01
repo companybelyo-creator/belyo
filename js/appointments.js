@@ -264,7 +264,7 @@ function renderList() {
 
   var tbody = document.getElementById('appts-list');
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Aucun rendez-vous</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">Aucun rendez-vous</div></td></tr>';
     return;
   }
   tbody.innerHTML = filtered.map(function(a) {
@@ -274,7 +274,7 @@ function renderList() {
       + '<td>' + formatDateShort(a.datetime) + '</td>'
       + '<td><strong>' + formatTime(a.datetime) + '</strong></td>'
       + '<td>' + a.client_name + '</td>'
-      + '<td>' + a.service + '</td>'
+      + '<td>' + (a.service || '<span style="color:var(--ink-light)">—</span>') + '</td>'
       + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '—') + '</td>'
       + '<td>' + statusBadge(a.status) + '</td>'
       + '<td style="display:flex;gap:6px">'
@@ -544,15 +544,18 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     user_id:     currentUserId,
     client_name: clientName,
     service:     (function() {
-      var sel = document.getElementById('appt-service-select');
-      var inp = document.getElementById('appt-service');
-      if (sel && sel.value && sel.value !== 'Autre') return sel.value;
+      // appt-service-select = input hidden rempli par selectService()
+      var hidden = document.getElementById('appt-service-select');
+      var inp    = document.getElementById('appt-service');
+      // Priorité : hidden (dropdown custom), sinon input texte (Autre)
+      if (hidden && hidden.value) return hidden.value;
       return inp ? inp.value.trim() : '';
     })(),
     duration_minutes: (function() {
-      var sel = document.getElementById('appt-service-select');
-      if (!sel || !sel.value || sel.value === 'Autre') return null;
-      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][sel.value];
+      var hidden = document.getElementById('appt-service-select');
+      var name   = hidden ? hidden.value : '';
+      if (!name) return null;
+      var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
       return pd && pd.duree ? pd.duree : null;
     })(),
     datetime:    datetime,
