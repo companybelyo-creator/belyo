@@ -140,3 +140,65 @@ BEGIN
   RETURN result;
 END;
 $$;
+
+-- ============================================================
+-- B2C CLIENT ACCOUNTS
+-- ============================================================
+
+-- Slug unique par salon
+ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE;
+
+-- Table comptes clients (séparée des coiffeurs)
+CREATE TABLE IF NOT EXISTS client_accounts (
+  id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email       TEXT NOT NULL UNIQUE,
+  name        TEXT NOT NULL,
+  phone       TEXT,
+  password_hash TEXT, -- géré par Supabase Auth
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Lier les RDV publics à un compte client
+ALTER TABLE appointments ADD COLUMN IF NOT EXISTS client_account_id UUID REFERENCES client_accounts(id) ON DELETE SET NULL;
+
+-- Policy publique pour lire le slug d'un salon (DROP si existe déjà)
+DROP POLICY IF EXISTS "salon_settings_slug_read" ON salon_settings;
+CREATE POLICY "salon_settings_slug_read" ON salon_settings
+  FOR SELECT USING (true);
+
+-- Fonction pour trouver un salon par slug
+CREATE OR REPLACE FUNCTION get_salon_by_slug(p_slug TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE result JSON;
+BEGIN
+  SELECT json_build_object(
+    'user_id',    ss.user_id,
+    'salon_name', COALESCE(u.raw_user_meta_data->>'salon_name', 'Mon Salon'),
+    'slug',       ss.slug
+  )
+  INTO result
+  FROM salon_settings ss
+  JOIN auth.users u ON u.id = ss.user_id
+  WHERE ss.slug = p_slug;
+  RETURN result;
+END;
+$$;
+
+-- Fonction pour chercher des salons par nom
+CREATE OR REPLACE FUNCTION search_salons(p_query TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN (
+    SELECT json_agg(json_build_object(
+      'user_id',    ss.user_id,
+      'salon_name', COALESCE(u.raw_user_meta_data->>'salon_name', 'Mon Salon'),
+      'slug',       ss.slug
+    ))
+    FROM salon_settings ss
+    JOIN auth.users u ON u.id = ss.user_id
+    WHERE ss.slug IS NOT NULL
+    AND LOWER(COALESCE(u.raw_user_meta_data->>'salon_name', '')) LIKE LOWER('%' || p_query || '%')
+    LIMIT 10
+  );
+END;
+$$;

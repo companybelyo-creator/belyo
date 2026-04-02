@@ -1,3 +1,71 @@
+// ===== SLUG =====
+async function loadSlug(userId) {
+  var res = await sb.from('salon_settings').select('slug').eq('user_id', userId).maybeSingle();
+  if (res.data && res.data.slug) {
+    var inp = document.getElementById('salon-slug');
+    if (inp) inp.value = res.data.slug;
+    updateBookLink(res.data.slug);
+  }
+}
+
+async function saveSlug() {
+  var inp = document.getElementById('salon-slug');
+  if (!inp) return;
+  var slug = inp.value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+  if (!slug) { showToast('Slug invalide', 'error'); return; }
+  if (slug.length < 3) { showToast('Minimum 3 caractères', 'error'); return; }
+
+  var session = await sb.auth.getSession();
+  if (!session.data.session) return;
+
+  var res = await sb.from('salon_settings')
+    .update({ slug: slug })
+    .eq('user_id', session.data.session.user.id);
+
+  if (res.error) {
+    showToast(res.error.code === '23505' ? 'Ce slug est déjà pris' : 'Erreur : ' + res.error.message, 'error');
+    return;
+  }
+  inp.value = slug;
+  updateBookLink(slug);
+  showToast('Adresse enregistrée !');
+}
+
+function updateBookLink(slug) {
+  var block = document.getElementById('book-link-block');
+  if (!block || !slug) return;
+  var url = window.location.origin + '/' + slug;
+  block.innerHTML = '';
+
+  var d1 = document.createElement('div');
+  d1.style.cssText = 'font-size:13px;font-weight:500;margin-bottom:.3rem';
+  d1.textContent = 'Votre lien de réservation';
+
+  var d2 = document.createElement('div');
+  d2.style.cssText = 'font-size:12px;color:var(--ink-light);margin-bottom:.8rem';
+  d2.textContent = 'Partagez ce lien avec vos clients.';
+
+  var inp = document.createElement('input');
+  inp.type = 'text'; inp.value = url; inp.readOnly = true;
+  inp.style.cssText = 'flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;background:var(--white);font-family:var(--font-body)';
+
+  var btnCopy = document.createElement('button');
+  btnCopy.textContent = 'Copier';
+  btnCopy.style.cssText = 'padding:8px 16px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-size:12px;cursor:pointer;font-family:var(--font-body);white-space:nowrap';
+  btnCopy.onclick = function() { navigator.clipboard.writeText(url).then(function() { showToast('Lien copié !'); }); };
+
+  var btnTest = document.createElement('a');
+  btnTest.href = url; btnTest.target = '_blank'; btnTest.textContent = 'Tester →';
+  btnTest.style.cssText = 'padding:8px 14px;border:1px solid var(--border);border-radius:100px;font-size:12px;color:var(--ink-light);white-space:nowrap;text-decoration:none';
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:8px;align-items:center';
+  row.appendChild(inp); row.appendChild(btnCopy); row.appendChild(btnTest);
+
+  block.appendChild(d1);
+  block.appendChild(d2);
+  block.appendChild(row);
+}
 // ============================================================
 // SETTINGS.JS
 // ============================================================
@@ -427,6 +495,7 @@ async function savePrestations() {
   if (!session) return;
   currentUser = session.user;
   initLogout();
+  initNotifications(session.user.id);
   populateFields(currentUser);
   await loadSubscription();
   await loadPrestations();

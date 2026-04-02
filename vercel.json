@@ -2,6 +2,9 @@
   "routes": [
     { "src": "/book", "dest": "/book.html" },
     { "src": "/book.html", "dest": "/book.html" },
+    { "src": "/client", "dest": "/client.html" },
+    { "src": "/client.html", "dest": "/client.html" },
+    { "src": "/([a-z0-9-]+)", "dest": "/slug.html?slug=$1" },
     { "src": "/(.*)", "dest": "/$1" }
   ],
   "headers": [

@@ -148,6 +148,16 @@
 
         <!-- ABONNEMENT -->
         <div class="settings-section" id="section-abonnement">
+      <!-- Slug personnalisé -->
+      <div style="margin-bottom:1.5rem">
+        <div style="font-size:13px;font-weight:500;margin-bottom:.3rem">Adresse personnalisée</div>
+        <div style="font-size:12px;color:var(--ink-light);margin-bottom:.8rem">Choisissez une adresse courte pour votre salon (lettres, chiffres, tirets).</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div style="font-size:13px;color:var(--ink-light);white-space:nowrap">belyo.vercel.app/</div>
+          <input type="text" id="salon-slug" class="form-input" placeholder="mon-salon" style="flex:1" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')" />
+          <button onclick="saveSlug()" style="padding:9px 18px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-size:13px;cursor:pointer;font-family:var(--font-body);white-space:nowrap">Enregistrer</button>
+        </div>
+      </div>
       <!-- Lien réservation publique (injecté par JS) -->
       <div id="book-link-block" style="margin-bottom:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)">
         <div style="font-size:13px;font-weight:500;margin-bottom:.3rem">Votre lien de réservation</div>

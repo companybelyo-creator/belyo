@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Belyo — Mon espace client</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream:#F7F3EE; --cream-dark:#EDE7DC; --ink:#1A1714; --ink-light:#5C5550;
+      --gold:#C4A87A; --gold-light:#E8D9BF; --white:#FFFFFF; --border:rgba(26,23,20,0.1);
+      --radius:12px; --radius-sm:8px;
+      --font-display:'Cormorant Garamond',serif; --font-body:'DM Sans',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
+    a{text-decoration:none;color:inherit;}
+
+    /* Header */
+    .header{padding:1.2rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--white);}
+    .header-logo{font-family:var(--font-display);font-size:1.5rem;font-weight:600;}
+    .header-sub{font-size:12px;color:var(--ink-light);}
+    .header-link{font-size:13px;color:var(--ink-light);border-bottom:1px solid var(--border);padding-bottom:1px;}
+    .header-link:hover{color:var(--ink);}
+
+    /* Layout centré */
+    .center{max-width:420px;margin:0 auto;padding:3rem 1.5rem;}
+
+    /* Cards */
+    .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;}
+    .card-title{font-family:var(--font-display);font-size:1.6rem;font-weight:300;margin-bottom:.3rem;}
+    .card-title em{font-style:italic;color:var(--gold);}
+    .card-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;}
+
+    /* Form */
+    .form-group{margin-bottom:1rem;}
+    .form-label{display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:5px;}
+    .form-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
+    .form-input:focus{border-color:var(--gold);}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .btn-submit{width:100%;padding:13px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:opacity .2s;margin-top:.5rem;}
+    .btn-submit:hover{opacity:.88;}
+    .btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+    .form-switch{text-align:center;font-size:13px;color:var(--ink-light);margin-top:1rem;}
+    .form-switch a{color:var(--gold);cursor:pointer;border-bottom:1px solid var(--gold-light);}
+
+    /* Toggle Auth */
+    .auth-toggle{display:flex;gap:0;margin-bottom:1.5rem;border:1px solid var(--border);border-radius:100px;padding:3px;background:var(--cream);}
+    .auth-tab{flex:1;padding:8px;border-radius:100px;border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;background:transparent;color:var(--ink-light);transition:all .15s;}
+    .auth-tab.active{background:var(--white);color:var(--ink);font-weight:500;box-shadow:0 1px 4px rgba(26,23,20,0.08);}
+
+    /* Dashboard */
+    .dashboard{max-width:620px;margin:0 auto;padding:2rem 1.5rem;}
+    .dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
+    .dash-title{font-family:var(--font-display);font-size:1.8rem;font-weight:300;}
+    .dash-title em{font-style:italic;color:var(--gold);}
+    .btn-logout{font-size:13px;color:var(--ink-light);background:none;border:1px solid var(--border);padding:7px 16px;border-radius:100px;cursor:pointer;font-family:var(--font-body);}
+    .btn-logout:hover{background:var(--cream-dark);}
+
+    /* Section */
+    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.2rem;}
+    .section-title{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+    .section-icon{font-size:16px;}
+    .empty{text-align:center;padding:2rem;color:var(--ink-light);font-size:14px;}
+
+    /* RDV card */
+    .rdv-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+    .rdv-item:last-child{border-bottom:none;padding-bottom:0;}
+    .rdv-date-block{text-align:center;min-width:44px;background:var(--cream);border-radius:8px;padding:6px 4px;}
+    .rdv-day{font-size:1.2rem;font-family:var(--font-display);font-weight:600;line-height:1;}
+    .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;}
+    .rdv-info{flex:1;}
+    .rdv-salon{font-size:14px;font-weight:500;}
+    .rdv-service{font-size:12px;color:var(--ink-light);}
+    .rdv-time{font-size:12px;color:var(--ink-light);}
+    .rdv-status{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;flex-shrink:0;}
+    .status-pending{background:#FEF3C7;color:#92400E;}
+    .status-done{background:#D1FAE5;color:#065F46;}
+    .status-cancelled{background:#FEE2E2;color:#991B1B;}
+
+    /* Recherche salon */
+    .search-wrap{position:relative;margin-bottom:1rem;}
+    .search-input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;}
+    .search-input:focus{border-color:var(--gold);}
+    .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-light);font-size:14px;}
+    .search-results{margin-top:8px;}
+    .salon-result{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:background .15s;border:1px solid var(--border);}
+    .salon-result:hover{background:var(--cream-dark);border-color:var(--gold-light);}
+    .salon-result-name{font-size:14px;font-weight:500;}
+    .salon-result-slug{font-size:11px;color:var(--ink-light);}
+    .btn-book{font-size:12px;padding:6px 14px;background:var(--ink);color:var(--white);border:none;border-radius:100px;cursor:pointer;font-family:var(--font-body);white-space:nowrap;}
+
+    /* Toast */
+    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
+    .toast.show{opacity:1;}
+
+    .powered{text-align:center;font-size:12px;color:var(--ink-light);margin-top:2rem;}
+    .powered a{color:var(--gold);}
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-logo">Belyo</div>
+    <div class="header-sub">Espace client</div>
+  </div>
+  <a href="index.html" class="header-link">Vous êtes coiffeur ?</a>
+</div>
+
+<!-- AUTH (login/register) -->
+<div id="auth-view">
+  <div class="center">
+    <div class="card">
+      <h1 class="card-title">Mon <em>espace</em></h1>
+      <p class="card-sub">Gérez vos rendez-vous et réservez en ligne.</p>
+
+      <div class="auth-toggle">
+        <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Connexion</button>
+        <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Inscription</button>
+      </div>
+
+      <!-- Login -->
+      <div id="form-login">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="login-email" placeholder="sophie@email.fr" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" class="form-input" id="login-pwd" placeholder="••••••••" />
+        </div>
+        <button class="btn-submit" id="btn-login" onclick="doLogin()">Se connecter</button>
+      </div>
+
+      <!-- Register -->
+      <div id="form-register" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Prénom</label>
+            <input type="text" class="form-input" id="reg-prenom" placeholder="Sophie" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom</label>
+            <input type="text" class="form-input" id="reg-nom" placeholder="Martin" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input type="tel" class="form-input" id="reg-tel" placeholder="06 12 34 56 78" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="reg-email" placeholder="sophie@email.fr" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" class="form-input" id="reg-pwd" placeholder="Minimum 6 caractères" />
+        </div>
+        <button class="btn-submit" id="btn-register" onclick="doRegister()">Créer mon compte</button>
+      </div>
+    </div>
+    <div class="powered">Propulsé par <a href="index.html">Belyo</a></div>
+  </div>
+</div>
+
+<!-- DASHBOARD CLIENT -->
+<div id="dashboard-view" style="display:none">
+  <div class="dashboard">
+    <div class="dash-header">
+      <div>
+        <div class="dash-title">Bonjour, <em id="client-greeting">—</em></div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
+    </div>
+
+    <!-- Recherche salon -->
+    <div class="section">
+      <div class="section-title"><span class="section-icon">◈</span> Réserver chez un salon</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="salon-search" placeholder="Rechercher un salon..." oninput="searchSalons(this.value)" autocomplete="off" />
+      </div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+
+    <!-- RDV à venir -->
+    <div class="section">
+      <div class="section-title"><span class="section-icon">◎</span> Mes prochains RDV</div>
+      <div id="upcoming-rdv"><div class="empty">Chargement...</div></div>
+    </div>
+
+    <!-- Historique -->
+    <div class="section">
+      <div class="section-title"><span class="section-icon">◇</span> Historique</div>
+      <div id="past-rdv"><div class="empty">Chargement...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+// ============================================================
+// CLIENT.JS
+// ============================================================
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'error' ? '#991b1b' : '#1A1714';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+function showAuthTab(tab) {
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+// ===== AUTH =====
+async function doLogin() {
+  var email = document.getElementById('login-email').value.trim();
+  var pwd   = document.getElementById('login-pwd').value;
+  if (!email || !pwd) { showToast('Remplissez tous les champs', 'error'); return; }
+
+  var btn = document.getElementById('btn-login');
+  btn.disabled = true; btn.textContent = 'Connexion...';
+
+  var res = await sb.auth.signInWithPassword({ email: email, password: pwd });
+  if (res.error) {
+    showToast('Email ou mot de passe incorrect', 'error');
+    btn.disabled = false; btn.textContent = 'Se connecter';
+    return;
+  }
+  showDashboard(res.data.user);
+}
+
+async function doRegister() {
+  var prenom = document.getElementById('reg-prenom').value.trim();
+  var nom    = document.getElementById('reg-nom').value.trim();
+  var tel    = document.getElementById('reg-tel').value.trim();
+  var email  = document.getElementById('reg-email').value.trim();
+  var pwd    = document.getElementById('reg-pwd').value;
+
+  if (!prenom || !nom || !email || !pwd) { showToast('Remplissez tous les champs obligatoires', 'error'); return; }
+  if (pwd.length < 6) { showToast('Mot de passe trop court (min 6 caractères)', 'error'); return; }
+
+  var btn = document.getElementById('btn-register');
+  btn.disabled = true; btn.textContent = 'Création...';
+
+  var res = await sb.auth.signUp({
+    email: email, password: pwd,
+    options: { data: { name: prenom + ' ' + nom, phone: tel, role: 'client' } }
+  });
+
+  if (res.error) {
+    showToast(res.error.message, 'error');
+    btn.disabled = false; btn.textContent = 'Créer mon compte';
+    return;
+  }
+  showToast('Compte créé ! Vérifiez votre email.');
+  showAuthTab('login');
+  btn.disabled = false; btn.textContent = 'Créer mon compte';
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('dashboard-view').style.display = 'none';
+  document.getElementById('auth-view').style.display = 'block';
+}
+
+// ===== DASHBOARD =====
+function showDashboard(user) {
+  document.getElementById('auth-view').style.display = 'none';
+  document.getElementById('dashboard-view').style.display = 'block';
+
+  var meta = user.user_metadata || {};
+  var name = meta.name || user.email.split('@')[0];
+  document.getElementById('client-greeting').textContent = name.split(' ')[0];
+
+  loadRdv(user.email, meta.phone || '');
+}
+
+async function loadRdv(email, phone) {
+  var now = new Date().toISOString();
+
+  // Chercher les RDV par email dans les notes ou par client_name
+  var res = await sb.from('appointments')
+    .select('*, salon_settings(slug)')
+    .or('notes.ilike.%' + email + '%')
+    .order('datetime', { ascending: true });
+
+  var data = res.data || [];
+  var upcoming = data.filter(function(a) { return a.datetime >= now && a.status === 'pending'; });
+  var past     = data.filter(function(a) { return a.datetime < now || a.status !== 'pending'; }).slice(0, 10);
+
+  renderRdvList('upcoming-rdv', upcoming, true);
+  renderRdvList('past-rdv', past, false);
+}
+
+function renderRdvList(elId, list, isUpcoming) {
+  var el = document.getElementById(elId);
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(a) {
+    var dt    = new Date(a.datetime);
+    var day   = dt.getDate();
+    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
+    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+    var statusCls = { pending: 'status-pending', done: 'status-done', cancelled: 'status-cancelled' }[a.status] || 'status-pending';
+    var statusTxt = { pending: 'À venir', done: 'Terminé', cancelled: 'Annulé' }[a.status] || '';
+    var slug = a.salon_settings && a.salon_settings.slug ? a.salon_settings.slug : null;
+
+    return '<div class="rdv-item">'
+      + '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>'
+      + '<div class="rdv-info">'
+      + '<div class="rdv-salon">' + a.client_name + '</div>'
+      + '<div class="rdv-service">' + (a.service || '—') + '</div>'
+      + '<div class="rdv-time">' + heure + (a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '') + '</div>'
+      + '</div>'
+      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
+      + '<span class="rdv-status ' + statusCls + '">' + statusTxt + '</span>'
+      + (isUpcoming && slug ? '<a href="/' + slug + '" style="font-size:11px;color:var(--gold)">Re-réserver →</a>' : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ===== RECHERCHE SALON =====
+var searchTimer = null;
+function searchSalons(q) {
+  clearTimeout(searchTimer);
+  var results = document.getElementById('search-results');
+  if (!q.trim()) { results.innerHTML = ''; return; }
+
+  searchTimer = setTimeout(async function() {
+    var res = await sb.rpc('search_salons', { p_query: q });
+    var salons = res.data || [];
+
+    if (salons.length === 0) {
+      results.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:.5rem">Aucun salon trouvé</div>';
+      return;
+    }
+
+    results.innerHTML = salons.map(function(s) {
+      return '<div class="salon-result">'
+        + '<div>'
+        + '<div class="salon-result-name">' + s.salon_name + '</div>'
+        + '<div class="salon-result-slug">belyo.vercel.app/' + (s.slug || '') + '</div>'
+        + '</div>'
+        + '<button class="btn-book" onclick="window.location.href=\'/' + (s.slug || '') + '\'">Réserver →</button>'
+        + '</div>';
+    }).join('');
+  }, 300);
+}
+
+// ===== INIT =====
+(async function() {
+  var session = await sb.auth.getSession();
+  if (session.data.session) {
+    var user = session.data.session.user;
+    // Vérifier que c'est un compte client (pas un coiffeur)
+    var meta = user.user_metadata || {};
+    if (meta.role === 'client' || !meta.salon_name) {
+      showDashboard(user);
+    } else {
+      // C'est un coiffeur — rediriger vers le dashboard coiffeur
+      window.location.href = 'pages/dashboard.html';
+    }
+  }
+
+  // Si on arrive depuis une réservation avec un slug pré-rempli
+  var params = new URLSearchParams(window.location.search);
+  var salonSlug = params.get('book');
+  if (salonSlug) {
+    document.getElementById('salon-search').value = salonSlug;
+    searchSalons(salonSlug);
+  }
+})();
+</script>
+
+</body>
+</html>
