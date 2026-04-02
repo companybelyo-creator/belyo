@@ -148,6 +148,11 @@
 
         <!-- ABONNEMENT -->
         <div class="settings-section" id="section-abonnement">
+      <!-- Lien réservation publique (injecté par JS) -->
+      <div id="book-link-block" style="margin-bottom:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)">
+        <div style="font-size:13px;font-weight:500;margin-bottom:.3rem">Votre lien de réservation</div>
+        <div style="font-size:12px;color:var(--ink-light)">Chargement...</div>
+      </div>
           <div class="section-title">Mon <em>abonnement</em></div>
           <p class="section-sub">Gérez votre plan et vos informations de facturation.</p>
           <div class="settings-card">
@@ -234,10 +239,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   var bookUrl = window.location.origin + '/book.html?salon=' + uid;
 
   // Injecter dans la section abonnement si elle existe
-  var subsSection = document.getElementById('section-subscription');
-  if (subsSection) {
-    var linkBlock = document.createElement('div');
-    linkBlock.style.cssText = 'margin-top:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)';
+  var linkBlock = document.getElementById('book-link-block');
+  if (linkBlock) {
+    linkBlock.innerHTML = '';
+    linkBlock.style.cssText = 'margin-bottom:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)';
     // Construire le bloc via DOM pour éviter les conflits de quotes
     var d1 = document.createElement('div');
     d1.style.cssText = 'font-size:13px;font-weight:500;margin-bottom:.5rem';
@@ -267,7 +272,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     linkBlock.appendChild(d1);
     linkBlock.appendChild(d2);
     linkBlock.appendChild(row);
-    subsSection.appendChild(linkBlock);
   }
 });
 </script>
