@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   var res = await sb.auth.getSession();
   if (!res.data.session) return;
   var uid = res.data.session.user.id;
-  var bookUrl = window.location.origin + '/book.html?salon=' + uid;
+  var bookUrl = window.location.origin + '/book?salon=' + uid;
 
   // Injecter dans la section abonnement si elle existe
   var linkBlock = document.getElementById('book-link-block');
