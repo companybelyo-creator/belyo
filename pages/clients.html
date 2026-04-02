@@ -3,456 +3,147 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Belyo — Mon espace client</title>
+  <title>Clients — Belyo</title>
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --cream:#F7F3EE; --cream-dark:#EDE7DC; --ink:#1A1714; --ink-light:#5C5550;
-      --gold:#C4A87A; --gold-light:#E8D9BF; --white:#FFFFFF; --border:rgba(26,23,20,0.1);
-      --radius:12px; --radius-sm:8px;
-      --font-display:'Cormorant Garamond',serif; --font-body:'DM Sans',sans-serif;
-    }
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
-    a{text-decoration:none;color:inherit;}
-
-    /* Header */
-    .header{padding:1.2rem 2rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--white);}
-    .header-logo{font-family:var(--font-display);font-size:1.5rem;font-weight:600;}
-    .header-sub{font-size:12px;color:var(--ink-light);}
-    .header-link{font-size:13px;color:var(--ink-light);border-bottom:1px solid var(--border);padding-bottom:1px;}
-    .header-link:hover{color:var(--ink);}
-
-    /* Layout centré */
-    .center{max-width:420px;margin:0 auto;padding:3rem 1.5rem;}
-
-    /* Cards */
-    .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;}
-    .card-title{font-family:var(--font-display);font-size:1.6rem;font-weight:300;margin-bottom:.3rem;}
-    .card-title em{font-style:italic;color:var(--gold);}
-    .card-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;}
-
-    /* Form */
-    .form-group{margin-bottom:1rem;}
-    .form-label{display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:5px;}
-    .form-input{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
-    .form-input:focus{border-color:var(--gold);}
-    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-    .btn-submit{width:100%;padding:13px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:opacity .2s;margin-top:.5rem;}
-    .btn-submit:hover{opacity:.88;}
-    .btn-submit:disabled{opacity:.5;cursor:not-allowed;}
-    .form-switch{text-align:center;font-size:13px;color:var(--ink-light);margin-top:1rem;}
-    .form-switch a{color:var(--gold);cursor:pointer;border-bottom:1px solid var(--gold-light);}
-
-    /* Toggle Auth */
-    .auth-toggle{display:flex;gap:0;margin-bottom:1.5rem;border:1px solid var(--border);border-radius:100px;padding:3px;background:var(--cream);}
-    .auth-tab{flex:1;padding:8px;border-radius:100px;border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;background:transparent;color:var(--ink-light);transition:all .15s;}
-    .auth-tab.active{background:var(--white);color:var(--ink);font-weight:500;box-shadow:0 1px 4px rgba(26,23,20,0.08);}
-
-    /* Dashboard */
-    .dashboard{max-width:620px;margin:0 auto;padding:2rem 1.5rem;}
-    .dash-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;}
-    .dash-title{font-family:var(--font-display);font-size:1.8rem;font-weight:300;}
-    .dash-title em{font-style:italic;color:var(--gold);}
-    .btn-logout{font-size:13px;color:var(--ink-light);background:none;border:1px solid var(--border);padding:7px 16px;border-radius:100px;cursor:pointer;font-family:var(--font-body);}
-    .btn-logout:hover{background:var(--cream-dark);}
-
-    /* Section */
-    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.2rem;}
-    .section-title{font-size:13px;font-weight:500;color:var(--ink);margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
-    .section-icon{font-size:16px;}
-    .empty{text-align:center;padding:2rem;color:var(--ink-light);font-size:14px;}
-
-    /* RDV card */
-    .rdv-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
-    .rdv-item:last-child{border-bottom:none;padding-bottom:0;}
-    .rdv-date-block{text-align:center;min-width:44px;background:var(--cream);border-radius:8px;padding:6px 4px;}
-    .rdv-day{font-size:1.2rem;font-family:var(--font-display);font-weight:600;line-height:1;}
-    .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;}
-    .rdv-info{flex:1;}
-    .rdv-salon{font-size:14px;font-weight:500;}
-    .rdv-service{font-size:12px;color:var(--ink-light);}
-    .rdv-time{font-size:12px;color:var(--ink-light);}
-    .rdv-status{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;flex-shrink:0;}
-    .status-pending{background:#FEF3C7;color:#92400E;}
-    .status-done{background:#D1FAE5;color:#065F46;}
-    .status-cancelled{background:#FEE2E2;color:#991B1B;}
-
-    /* Recherche salon */
-    .search-wrap{position:relative;margin-bottom:1rem;}
-    .search-input{width:100%;padding:11px 14px 11px 38px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;}
-    .search-input:focus{border-color:var(--gold);}
-    .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-light);font-size:14px;}
-    .search-results{margin-top:8px;}
-    .salon-result{display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:var(--radius-sm);margin-bottom:6px;cursor:pointer;transition:background .15s;border:1px solid var(--border);}
-    .salon-result:hover{background:var(--cream-dark);border-color:var(--gold-light);}
-    .salon-result-name{font-size:14px;font-weight:500;}
-    .salon-result-slug{font-size:11px;color:var(--ink-light);}
-    .btn-book{font-size:12px;padding:6px 14px;background:var(--ink);color:var(--white);border:none;border-radius:100px;cursor:pointer;font-family:var(--font-body);white-space:nowrap;}
-
-    /* Toast */
-    .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
-    .toast.show{opacity:1;}
-
-    .powered{text-align:center;font-size:12px;color:var(--ink-light);margin-top:2rem;}
-    .powered a{color:var(--gold);}
-  </style>
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/clients.css" />
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <div class="header-logo">Belyo</div>
-    <div class="header-sub">Espace client</div>
-  </div>
-  <a href="index.html" class="header-link">Vous êtes coiffeur ?</a>
-</div>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">Belyo</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">◎</span> Tableau de bord</a>
+    <a class="sidebar-link" href="appointments.html"><span class="sidebar-icon">◈</span> Rendez-vous</a>
+    <a class="sidebar-link active" href="clients.html"><span class="sidebar-icon">◇</span> Clients</a>
+    <a class="sidebar-link" href="revenue.html"><span class="sidebar-icon">◉</span> Chiffre d'affaires</a>
+    <a class="sidebar-link" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <strong id="sidebar-salon">Chargement...</strong>
+        <span id="sidebar-email">—</span>
+      </div>
+      <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
+      <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
+    </div>
+  </aside>
 
-<!-- AUTH (login/register) -->
-<div id="auth-view">
-  <div class="center">
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">Mes <em>clients</em></h1>
+      <button class="btn-action" onclick="openAddModal()">+ Nouveau client</button>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" class="search-input" id="search" placeholder="Rechercher un client..." oninput="renderClients()" />
+    </div>
+
     <div class="card">
-      <h1 class="card-title">Mon <em>espace</em></h1>
-      <p class="card-sub">Gérez vos rendez-vous et réservez en ligne.</p>
-
-      <div class="auth-toggle">
-        <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Connexion</button>
-        <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Inscription</button>
+      <div class="card-header">
+        <span class="card-title">Liste des clients</span>
+        <span id="clients-count" style="font-size:13px;color:var(--ink-light);">—</span>
       </div>
-
-      <!-- Login -->
-      <div id="form-login">
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="login-email" placeholder="sophie@email.fr" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mot de passe</label>
-          <input type="password" class="form-input" id="login-pwd" placeholder="••••••••" />
-        </div>
-        <button class="btn-submit" id="btn-login" onclick="doLogin()">Se connecter</button>
-      </div>
-
-      <!-- Register -->
-      <div id="form-register" style="display:none">
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Prénom</label>
-            <input type="text" class="form-input" id="reg-prenom" placeholder="Sophie" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Nom</label>
-            <input type="text" class="form-input" id="reg-nom" placeholder="Martin" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Téléphone</label>
-          <input type="tel" class="form-input" id="reg-tel" placeholder="06 12 34 56 78" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="reg-email" placeholder="sophie@email.fr" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mot de passe</label>
-          <input type="password" class="form-input" id="reg-pwd" placeholder="Minimum 6 caractères" />
-        </div>
-        <button class="btn-submit" id="btn-register" onclick="doRegister()">Créer mon compte</button>
+      <div class="card-body" style="padding:0">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Téléphone</th>
+              <th>Email</th>
+              <th>Dernière visite</th>
+              <th>Visites</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="clients-list">
+            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
-    <div class="powered">Propulsé par <a href="index.html">Belyo</a></div>
+  </main>
+</div>
+
+<!-- MODAL Nouveau client -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouveau client</span>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    <form id="client-form">
+      <div class="form-group">
+        <label class="form-label">Prénom et nom</label>
+        <input type="text" class="form-input" id="c-name" placeholder="Sophie Martin" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Téléphone</label>
+        <input type="tel" class="form-input" id="c-phone" placeholder="06 12 34 56 78" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="c-email" placeholder="sophie@email.fr" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="c-notes" placeholder="Ex : allergie ammoniac, préfère le jeudi..." />
+      </div>
+      <button type="submit" class="btn-submit" id="c-submit">Ajouter le client</button>
+    </form>
   </div>
 </div>
 
-<!-- DASHBOARD CLIENT -->
-<div id="dashboard-view" style="display:none">
-  <div class="dashboard">
-    <div class="dash-header">
-      <div>
-        <div class="dash-title">Bonjour, <em id="client-greeting">—</em></div>
+<!-- FICHE CLIENT -->
+<div class="fiche-overlay" id="fiche-overlay">
+  <div class="fiche">
+    <div class="fiche-header">
+      <span class="fiche-title">Fiche client</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="openEditClient()" style="background:none;border:1px solid var(--border);border-radius:100px;padding:5px 14px;font-size:12px;cursor:pointer;font-family:var(--font-body);color:var(--ink-light);">Modifier</button>
+        <button class="modal-close" onclick="closeFiche()">×</button>
       </div>
-      <button class="btn-logout" onclick="doLogout()">Déconnexion</button>
     </div>
+    <div id="fiche-content"></div>
+  </div>
+</div>
 
-    <!-- Recherche salon -->
-    <div class="section">
-      <div class="section-title"><span class="section-icon">◈</span> Réserver chez un salon</div>
-      <div class="search-wrap">
-        <span class="search-icon">🔍</span>
-        <input type="text" class="search-input" id="salon-search" placeholder="Rechercher un salon..." oninput="searchSalons(this.value)" autocomplete="off" />
+<!-- MODAL EDITION CLIENT -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Modifier le client</span>
+      <button class="modal-close" onclick="closeEditModal()">×</button>
+    </div>
+    <form id="edit-form">
+      <input type="hidden" id="edit-client-id" />
+      <div class="form-group">
+        <label class="form-label">Prenom et nom</label>
+        <input type="text" class="form-input" id="edit-name" required />
       </div>
-      <div class="search-results" id="search-results"></div>
-    </div>
-
-    <!-- RDV à venir -->
-    <div class="section">
-      <div class="section-title"><span class="section-icon">◎</span> Mes prochains RDV</div>
-      <div id="upcoming-rdv"><div class="empty">Chargement...</div></div>
-    </div>
-
-    <!-- Historique -->
-    <div class="section">
-      <div class="section-title"><span class="section-icon">◇</span> Historique</div>
-      <div id="past-rdv"><div class="empty">Chargement...</div></div>
-    </div>
+      <div class="form-group">
+        <label class="form-label">Telephone</label>
+        <input type="tel" class="form-input" id="edit-phone" placeholder="06 12 34 56 78" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="edit-email" placeholder="sophie@email.fr" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="edit-notes" placeholder="Ex : allergie ammoniac..." />
+      </div>
+      <button type="submit" class="btn-submit" id="edit-submit">Enregistrer</button>
+    </form>
   </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script>
-// ============================================================
-// CLIENT.JS
-// ============================================================
-
-function showToast(msg, type) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = type === 'error' ? '#991b1b' : '#1A1714';
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
-}
-
-function showAuthTab(tab) {
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-  document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
-  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
-}
-
-// ===== AUTH =====
-async function doLogin() {
-  var email = document.getElementById('login-email').value.trim();
-  var pwd   = document.getElementById('login-pwd').value;
-  if (!email || !pwd) { showToast('Remplissez tous les champs', 'error'); return; }
-
-  var btn = document.getElementById('btn-login');
-  btn.disabled = true; btn.textContent = 'Connexion...';
-
-  var res = await sb.auth.signInWithPassword({ email: email, password: pwd });
-  if (res.error) {
-    showToast('Email ou mot de passe incorrect', 'error');
-    btn.disabled = false; btn.textContent = 'Se connecter';
-    return;
-  }
-  // Vérifier que c'est un client et non un salon
-  var meta = res.data.user.user_metadata || {};
-  if (meta.salon_name) {
-    await sb.auth.signOut();
-    showToast('Ce compte est un salon. Connectez-vous via belyo.vercel.app/pages/login.html', 'error');
-    btn.disabled = false; btn.textContent = 'Se connecter';
-    return;
-  }
-  showDashboard(res.data.user);
-}
-
-async function doRegister() {
-  var prenom = document.getElementById('reg-prenom').value.trim();
-  var nom    = document.getElementById('reg-nom').value.trim();
-  var tel    = document.getElementById('reg-tel').value.trim();
-  var email  = document.getElementById('reg-email').value.trim();
-  var pwd    = document.getElementById('reg-pwd').value;
-
-  if (!prenom || !nom || !email || !pwd) { showToast('Remplissez tous les champs obligatoires', 'error'); return; }
-  if (pwd.length < 6) { showToast('Mot de passe trop court (min 6 caractères)', 'error'); return; }
-
-  var btn = document.getElementById('btn-register');
-  btn.disabled = true; btn.textContent = 'Vérification...';
-
-  // Tenter la connexion d'abord — si l'email existe déjà, signUp retourne une erreur
-  var res = await sb.auth.signUp({
-    email: email, password: pwd,
-    options: { data: { name: prenom + ' ' + nom, phone: tel, role: 'client' } }
-  });
-
-  if (res.error) {
-    if (res.error.message.toLowerCase().includes('already') || res.error.status === 400) {
-      showToast('Un compte existe déjà avec cet email. Connectez-vous.', 'error');
-      // Pré-remplir le login
-      document.getElementById('login-email').value = email;
-      showAuthTab('login');
-    } else {
-      showToast(res.error.message, 'error');
-    }
-    btn.disabled = false; btn.textContent = 'Créer mon compte';
-    return;
-  }
-
-  // Vérifier si c'est un salon (pas un client)
-  if (res.data.user) {
-    var meta = res.data.user.user_metadata || {};
-    if (meta.salon_name) {
-      showToast('Ce compte est un salon. Connectez-vous via la page coiffeur.', 'error');
-      await sb.auth.signOut();
-      btn.disabled = false; btn.textContent = 'Créer mon compte';
-      return;
-    }
-  }
-
-  showToast('Compte créé ! Connectez-vous.');
-  document.getElementById('login-email').value = email;
-  showAuthTab('login');
-  btn.disabled = false; btn.textContent = 'Créer mon compte';
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  document.getElementById('dashboard-view').style.display = 'none';
-  document.getElementById('auth-view').style.display = 'block';
-}
-
-// ===== DASHBOARD =====
-async function showDashboard(user) {
-  document.getElementById('auth-view').style.display = 'none';
-  document.getElementById('dashboard-view').style.display = 'block';
-
-  var meta = user.user_metadata || {};
-  var name = meta.name || user.email.split('@')[0];
-  document.getElementById('client-greeting').textContent = name.split(' ')[0];
-
-  // Vérifier que c'est bien un client et pas un salon
-  if (meta.salon_name) {
-    // C'est un salon — ne pas afficher le dashboard client
-    document.getElementById('auth-view').style.display = 'block';
-    document.getElementById('dashboard-view').style.display = 'none';
-    showToast('Utilisez la page coiffeur pour vous connecter.', 'error');
-    await sb.auth.signOut();
-    return;
-  }
-
-  loadRdv(user.email, meta.phone || '');
-}
-
-async function loadRdv(email, phone) {
-  var now = new Date().toISOString();
-
-  // Chercher les RDV par email dans les notes
-  var res = await sb.from('appointments')
-    .select('id, client_name, service, datetime, price, status, notes, user_id')
-    .ilike('notes', '%' + email + '%')
-    .order('datetime', { ascending: false });
-
-  var data = res.data || [];
-
-  // Si téléphone disponible, chercher aussi par tel
-  if (phone && data.length === 0) {
-    var res2 = await sb.from('appointments')
-      .select('id, client_name, service, datetime, price, status, notes, user_id')
-      .ilike('notes', '%' + phone + '%')
-      .order('datetime', { ascending: false });
-    data = res2.data || [];
-  }
-
-  // Pour chaque RDV, récupérer le slug du salon
-  var userIds = [...new Set(data.map(function(a) { return a.user_id; }))];
-  var slugMap = {};
-  if (userIds.length > 0) {
-    var slugRes = await sb.from('salon_settings')
-      .select('user_id, slug')
-      .in('user_id', userIds);
-    (slugRes.data || []).forEach(function(s) { slugMap[s.user_id] = s.slug; });
-  }
-
-  data.forEach(function(a) { a.slug = slugMap[a.user_id] || null; });
-
-  var upcoming = data.filter(function(a) { return a.datetime >= now && a.status === 'pending'; }).reverse();
-  var past     = data.filter(function(a) { return a.datetime < now  || a.status !== 'pending'; }).slice(0, 10);
-
-  renderRdvList('upcoming-rdv', upcoming, true);
-  renderRdvList('past-rdv', past, false);
-
-  // Afficher le nombre de RDV trouvés
-  if (data.length === 0) {
-    // Rien trouvé — pas grave, le client est nouveau
-  }
-}
-
-function renderRdvList(elId, list, isUpcoming) {
-  var el = document.getElementById(elId);
-  if (!list || list.length === 0) {
-    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
-    return;
-  }
-  el.innerHTML = list.map(function(a) {
-    var dt    = new Date(a.datetime);
-    var day   = dt.getDate();
-    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
-    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-    var statusCls = { pending: 'status-pending', done: 'status-done', cancelled: 'status-cancelled' }[a.status] || 'status-pending';
-    var statusTxt = { pending: 'À venir', done: 'Terminé', cancelled: 'Annulé' }[a.status] || '';
-    var slug = a.slug || null;
-
-    return '<div class="rdv-item">'
-      + '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>'
-      + '<div class="rdv-info">'
-      + '<div class="rdv-salon">' + a.client_name + '</div>'
-      + '<div class="rdv-service">' + (a.service || '—') + '</div>'
-      + '<div class="rdv-time">' + heure + (a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '') + '</div>'
-      + '</div>'
-      + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">'
-      + '<span class="rdv-status ' + statusCls + '">' + statusTxt + '</span>'
-      + (isUpcoming && slug ? '<a href="/' + slug + '" style="font-size:11px;color:var(--gold)">Re-réserver →</a>' : '')
-      + '</div>'
-      + '</div>';
-  }).join('');
-}
-
-// ===== RECHERCHE SALON =====
-var searchTimer = null;
-function searchSalons(q) {
-  clearTimeout(searchTimer);
-  var results = document.getElementById('search-results');
-  if (!q.trim()) { results.innerHTML = ''; return; }
-
-  searchTimer = setTimeout(async function() {
-    var res = await sb.rpc('search_salons', { p_query: q });
-    var salons = res.data || [];
-
-    if (salons.length === 0) {
-      results.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:.5rem">Aucun salon trouvé</div>';
-      return;
-    }
-
-    results.innerHTML = salons.map(function(s) {
-      return '<div class="salon-result">'
-        + '<div>'
-        + '<div class="salon-result-name">' + s.salon_name + '</div>'
-        + '<div class="salon-result-slug">belyo.vercel.app/' + (s.slug || '') + '</div>'
-        + '</div>'
-        + '<button class="btn-book" onclick="window.location.href=\'/' + (s.slug || '') + '\'">Réserver →</button>'
-        + '</div>';
-    }).join('');
-  }, 300);
-}
-
-// ===== INIT =====
-(async function() {
-  var session = await sb.auth.getSession();
-  if (session.data.session) {
-    var user = session.data.session.user;
-    // Vérifier que c'est un compte client (pas un coiffeur)
-    var meta = user.user_metadata || {};
-    if (meta.role === 'client' || !meta.salon_name) {
-      showDashboard(user);
-    } else {
-      // C'est un coiffeur — rediriger vers le dashboard coiffeur
-      window.location.href = 'pages/dashboard.html';
-    }
-  }
-
-  // Si on arrive depuis une réservation avec un slug pré-rempli
-  var params = new URLSearchParams(window.location.search);
-  var salonSlug = params.get('book');
-  if (salonSlug) {
-    document.getElementById('salon-search').value = salonSlug;
-    searchSalons(salonSlug);
-  }
-})();
-</script>
-
+<script src="../js/supabase.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/clients.js"></script>
 </body>
 </html>
