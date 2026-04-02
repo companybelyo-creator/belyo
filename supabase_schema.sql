@@ -108,3 +108,35 @@ ALTER TABLE salon_settings ADD COLUMN IF NOT EXISTS
 
 -- Ajouter duration_minutes aux appointments
 ALTER TABLE appointments ADD COLUMN IF NOT EXISTS duration_minutes INTEGER DEFAULT 30;
+
+-- ============================================================
+-- RÉSERVATION PUBLIQUE
+-- ============================================================
+
+-- Permettre la lecture publique des paramètres salon (pour la page de réservation)
+CREATE POLICY "salon_settings_public_read" ON salon_settings
+  FOR SELECT USING (true);
+
+-- Permettre l'insertion publique de RDV (depuis la page de réservation)
+CREATE POLICY "appointments_public_insert" ON appointments
+  FOR INSERT WITH CHECK (true);
+
+-- Vue publique du profil salon (nom + email pour afficher sur la page)
+-- On lit user_metadata depuis auth.users via une fonction
+CREATE OR REPLACE FUNCTION get_salon_public_info(p_user_id UUID)
+RETURNS JSON
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'salon_name', COALESCE(raw_user_meta_data->>'salon_name', 'Mon Salon'),
+    'email', email
+  )
+  INTO result
+  FROM auth.users
+  WHERE id = p_user_id;
+  RETURN result;
+END;
+$$;

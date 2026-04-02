@@ -224,6 +224,54 @@
   </main>
 </div>
 
+<!-- Section lien réservation publique (injectée via JS dans la nav) -->
+<script>
+// Ajouter le lien de réservation publique dans les paramètres Abonnement
+document.addEventListener('DOMContentLoaded', async function() {
+  var res = await sb.auth.getSession();
+  if (!res.data.session) return;
+  var uid = res.data.session.user.id;
+  var bookUrl = window.location.origin + '/book.html?salon=' + uid;
+
+  // Injecter dans la section abonnement si elle existe
+  var subsSection = document.getElementById('section-subscription');
+  if (subsSection) {
+    var linkBlock = document.createElement('div');
+    linkBlock.style.cssText = 'margin-top:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)';
+    // Construire le bloc via DOM pour éviter les conflits de quotes
+    var d1 = document.createElement('div');
+    d1.style.cssText = 'font-size:13px;font-weight:500;margin-bottom:.5rem';
+    d1.textContent = 'Votre lien de r\u00e9servation publique';
+
+    var d2 = document.createElement('div');
+    d2.style.cssText = 'font-size:12px;color:var(--ink-light);margin-bottom:.8rem';
+    d2.textContent = 'Partagez ce lien avec vos clients pour qu\u2019ils puissent r\u00e9server en ligne.';
+
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.value = bookUrl; inp.readOnly = true;
+    inp.style.cssText = 'flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--white);font-family:var(--font-body)';
+
+    var btnCopy = document.createElement('button');
+    btnCopy.textContent = 'Copier';
+    btnCopy.style.cssText = 'padding:8px 16px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-size:12px;cursor:pointer;font-family:var(--font-body);white-space:nowrap';
+    btnCopy.onclick = function() { navigator.clipboard.writeText(bookUrl).then(function() { showToast('Lien copi\u00e9 !'); }); };
+
+    var btnTest = document.createElement('a');
+    btnTest.href = bookUrl; btnTest.target = '_blank'; btnTest.textContent = 'Tester \u2192';
+    btnTest.style.cssText = 'padding:8px 14px;border:1px solid var(--border);border-radius:100px;font-size:12px;color:var(--ink-light);white-space:nowrap;text-decoration:none';
+
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:8px;align-items:center';
+    row.appendChild(inp); row.appendChild(btnCopy); row.appendChild(btnTest);
+
+    linkBlock.appendChild(d1);
+    linkBlock.appendChild(d2);
+    linkBlock.appendChild(row);
+    subsSection.appendChild(linkBlock);
+  }
+});
+</script>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
