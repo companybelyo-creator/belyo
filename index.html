@@ -400,9 +400,34 @@
 <!-- BANDEAU DOUBLE ENTRÉE -->
 <div style="background:var(--ink);padding:.8rem 2rem;display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin-top:64px">
   <span style="font-size:13px;color:rgba(255,255,255,0.6)">Vous êtes :</span>
-  <a href="pages/register.html" style="font-size:13px;font-weight:500;color:var(--white);padding:6px 18px;border-radius:100px;border:1px solid rgba(255,255,255,0.2);transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">Coiffeur — Gérer mon salon</a>
-  <a href="client.html" style="font-size:13px;font-weight:500;color:var(--ink);background:var(--gold);padding:6px 18px;border-radius:100px;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Client — Mes rendez-vous</a>
+  <a href="pages/register.html" id="btn-coiffeur" style="font-size:13px;font-weight:500;color:var(--white);padding:6px 18px;border-radius:100px;border:1px solid rgba(255,255,255,0.2)">Coiffeur — Gérer mon salon</a>
+  <a href="client.html" style="font-size:13px;font-weight:500;color:var(--ink);background:var(--gold);padding:6px 18px;border-radius:100px">Client — Mes rendez-vous</a>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
+<script>
+// Sur la page d'accueil : si le bouton "Coiffeur" est cliqué
+// → si l'utilisateur est connecté comme client → le rediriger vers client.html
+//   avec un message pour créer son salon
+// → sinon → register.html normalement
+document.getElementById('btn-coiffeur').addEventListener('click', async function(e) {
+  e.preventDefault();
+  var sess = await sb.auth.getSession();
+  if (sess.data && sess.data.session) {
+    var meta = sess.data.session.user.user_metadata || {};
+    if (meta.salon_name) {
+      // Déjà un salon → aller au dashboard
+      window.location.href = 'pages/dashboard.html';
+    } else {
+      // Client → aller sur client.html avec modal créateur ouvert
+      window.location.href = 'client.html?openCreator=1';
+    }
+  } else {
+    // Pas connecté → inscription normale
+    window.location.href = 'pages/register.html';
+  }
+});
+</script>
 
 <!-- HERO -->
 <section class="hero">

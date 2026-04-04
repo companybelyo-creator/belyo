@@ -465,8 +465,18 @@ function renderRdvList(elId, list, isUpcoming, nowDate) {
 async function loadAllSalons() {
   var el = document.getElementById('all-salons');
   el.innerHTML = '<div class="loader-sm"><span class="spinner"></span> Chargement des salons...</div>';
-  var res = await sb.rpc('search_salons', { p_query: '' });
-  var salons = res.data || [];
+  // Charger directement depuis salon_settings sans passer par la RPC
+  var res = await sb.from('salon_settings').select('user_id, slug').not('slug', 'is', null).limit(20);
+  if (!res.data || res.data.length === 0) { el.innerHTML = ''; return; }
+  // Récupérer les noms via la RPC pour chaque salon
+  var salons = [];
+  for (var i = 0; i < res.data.length; i++) {
+    var s = res.data[i];
+    var nr = await sb.rpc('get_salon_public_info', { p_user_id: s.user_id });
+    if (nr.data) {
+      salons.push({ user_id: s.user_id, slug: s.slug, salon_name: nr.data.salon_name || 'Salon' });
+    }
+  }
   if (salons.length === 0) { el.innerHTML = ''; return; }
   renderSalonCards(salons, 'all-salons');
 }
@@ -476,14 +486,15 @@ function searchSalons(q) {
   clearTimeout(searchTimer);
   var allEl = document.getElementById('all-salons');
   var resEl = document.getElementById('search-results');
-  if (!q.trim()) {
+  if (!q || !q.trim()) {
     resEl.innerHTML = '';
     allEl.style.display = 'block';
     return;
   }
   allEl.style.display = 'none';
   searchTimer = setTimeout(async function() {
-    var res = await sb.rpc('search_salons', { p_query: q });
+    var qClean = q.trim();
+    var res = await sb.rpc('search_salons', { p_query: qClean });
     var salons = res.data || [];
     if (salons.length === 0) {
       resEl.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:.5rem 0">Aucun salon trouvé pour "' + q + '"</div>';
@@ -589,13 +600,31 @@ async function createSalon() {
 
   // Pré-remplir params URL
   var params = new URLSearchParams(window.location.search);
-  var tab    = params.get('tab');
-  var infoMsg = params.get('info');
+  var tab         = params.get('tab');
+  var infoMsg     = params.get('info');
+  var openCreator = params.get('openCreator');
+
   if (tab === 'register') showAuthTab('register');
   if (infoMsg) {
     var box = document.getElementById('info-box');
     box.textContent = decodeURIComponent(infoMsg);
     box.style.display = 'block';
+  }
+
+  // Si on arrive depuis le bouton "Coiffeur" de l'index avec un compte client
+  if (openCreator === '1') {
+    var sess2 = await sb.auth.getSession();
+    if (sess2.data && sess2.data.session) {
+      // Déjà connecté → ouvrir la modal créateur directement
+      setTimeout(openCreatorModal, 600);
+    }
+    // Sinon → afficher un message d'info dans le form d'inscription
+    else {
+      var box2 = document.getElementById('info-box');
+      box2.textContent = 'Créez votre compte, vous pourrez ensuite créer votre salon.';
+      box2.style.display = 'block';
+      showAuthTab('register');
+    }
   }
 
   updateSalonLink();
