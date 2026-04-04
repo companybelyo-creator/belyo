@@ -109,11 +109,12 @@
 <body>
 
 <div class="header">
-  <div>
+  <a href="index.html" style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light)">&#8592; Retour</a>
+  <div style="text-align:center">
     <div class="header-logo">Belyo</div>
     <div class="header-sub">Espace client</div>
   </div>
-  <a href="index.html" class="header-link">Vous êtes coiffeur ?</a>
+  <a id="salon-link" href="pages/login.html" class="header-link" style="font-size:12px">Espace coiffeur</a>
 </div>
 
 <!-- AUTH -->
@@ -235,6 +236,26 @@ function togglePwd(inputId, btn) {
     btn.innerHTML = '&#128065;';
   }
 }
+
+function updateSalonLink() {
+  var link  = document.getElementById('salon-link');
+  if (!link) return;
+  var email = document.getElementById('login-email');
+  var reg   = document.getElementById('reg-email');
+  var val   = (email && email.value.trim()) || (reg && reg.value.trim()) || '';
+  var url   = 'pages/register.html?from=client';
+  if (val) url += '&email=' + encodeURIComponent(val);
+  link.href = url;
+  link.title = val ? 'Créer un salon avec ' + val : 'Créer un salon';
+}
+
+// Mettre à jour le lien à chaque saisie email
+document.addEventListener('DOMContentLoaded', function() {
+  ['login-email','reg-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateSalonLink);
+  });
+});
 
 function showAuthTab(tab) {
   document.getElementById('tab-login').classList.toggle('active', tab === 'login');

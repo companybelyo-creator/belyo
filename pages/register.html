@@ -11,6 +11,7 @@
 <body>
 
 <div class="auth-page">
+  <a href="../index.html" style="position:fixed;top:1.2rem;left:1.5rem;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);text-decoration:none;transition:color .15s" onmouseover="this.style.color='#1A1714'" onmouseout="this.style.color='#5C5550'">&#8592; Retour</a>
   <div class="auth-card">
 
     <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
@@ -18,6 +19,9 @@
     <p class="auth-subtitle">Créez votre salon · 14 jours d'essai gratuit</p>
     <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace client</a></p>
 
+    <div id="salon-prompt-msg" style="display:none;background:var(--gold-light);border:1px solid var(--gold);color:var(--ink);font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:1rem;line-height:1.5">
+      Vous souhaitez créer votre salon sur Belyo ? Renseignez le nom de votre salon et confirmez votre mot de passe.
+    </div>
     <div class="auth-error" id="error-msg"></div>
     <div id="success-msg" style="display:none;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:1rem;line-height:1.5;"></div>
 
