@@ -190,12 +190,14 @@
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
 <script>
-// Guard salon — si client essaie d'accéder → rediriger
+// Guard salon — seuls les comptes role=salon accèdent au dashboard
 (async function() {
   var s = await sb.auth.getSession();
   if (!s.data.session) { window.location.href = 'login.html'; return; }
   var meta = s.data.session.user.user_metadata || {};
-  if (!meta.salon_name) { window.location.href = '../client.html'; }
+  if (meta.role !== 'salon') { window.location.href = '../client.html'; return; }
+  // Créer salon_settings si pas encore fait
+  await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
 })();
 // end guard-salon
 </script>

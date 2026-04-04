@@ -223,9 +223,10 @@
   <div class="modal" style="position:relative">
     <button class="modal-close" onclick="closeCreatorModal()">&#215;</button>
     <h2 class="modal-title">Créer <em style="font-style:italic;color:var(--gold)">votre salon</em></h2>
-    <p class="modal-sub">Vous deviendrez créateur et pourrez gérer votre salon depuis le dashboard Belyo.</p>
-    <div class="form-group"><label class="form-label">Nom du salon *</label><input type="text" class="form-input" id="creator-salon-name" placeholder="Ex : Salon Éclat" /></div>
-    <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem;line-height:1.5">Votre email et mot de passe actuels seront conservés. Vous pourrez toujours réserver des RDV en tant que client.</p>
+    <p class="modal-sub">Renseignez les infos de votre salon. Votre email et mot de passe restent les mêmes.</p>
+    <div class="form-group"><label class="form-label">Nom du salon *</label><input type="text" class="form-input" id="creator-salon-name" placeholder="Ex : Salon Moisan" /></div>
+    <div class="form-group"><label class="form-label">Adresse du salon *</label><input type="text" class="form-input" id="creator-salon-address" placeholder="Ex : 12 rue de la Paix, Nantes" /></div>
+    <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem;line-height:1.5">Vous pourrez toujours réserver des RDV dans d'autres salons en tant que client.</p>
     <button class="btn-submit" id="btn-create-salon" onclick="createSalon()">Créer mon salon</button>
   </div>
 </div>
@@ -329,7 +330,7 @@ async function doLogout() {
 async function showDashboard(user) {
   currentUser = user;
   var meta = user.user_metadata || {};
-  isCreator = !!(meta.salon_name || meta.role === 'creator');
+  isCreator = meta.role === 'salon';
 
   document.getElementById('auth-view').style.display = 'none';
   document.getElementById('dashboard-view').style.display = 'block';
@@ -361,22 +362,28 @@ async function showDashboard(user) {
   headerRight.innerHTML = btns;
   document.getElementById('header-sub').textContent = isCreator ? 'Coiffeur & client' : 'Espace client';
 
-  loadRdv(user.email, meta.phone || '');
+  loadRdv(user.email, meta.phone || '', meta.name || '');
   loadAllSalons();
 }
 
 // ===== RDV =====
-async function loadRdv(email, phone) {
+async function loadRdv(email, phone, name) {
   var nowStr  = new Date().toISOString();
   var nowDate = new Date();
 
-  // RPC SECURITY DEFINER pour bypass RLS
-  var res = await sb.rpc('get_client_appointments', { p_email: email });
+  // Chercher par email (+ nom si dispo) via RPC SECURITY DEFINER
+  var res = await sb.rpc('get_client_appointments', {
+    p_email: email,
+    p_name:  name || ''
+  });
   var data = res.data || [];
 
-  // Fallback tel si aucun résultat
+  // Fallback par téléphone nettoyé si toujours rien
   if (data.length === 0 && phone) {
-    var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g, '') });
+    var res2 = await sb.rpc('get_client_appointments', {
+      p_email: phone.replace(/\s/g, ''),
+      p_name:  name || ''
+    });
     data = res2.data || [];
   }
 

@@ -9,89 +9,68 @@
   <link rel="stylesheet" href="../css/main.css" />
 </head>
 <body>
-
 <div class="auth-page">
-  <a href="../index.html" style="position:fixed;top:1.2rem;left:1.5rem;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);text-decoration:none;transition:color .15s" onmouseover="this.style.color='#1A1714'" onmouseout="this.style.color='#5C5550'">&#8592; Retour</a>
+  <a href="../index.html" style="position:fixed;top:1.2rem;left:1.5rem;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);text-decoration:none">&#8592; Retour</a>
   <div class="auth-card">
-
     <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
     <p style="text-align:center;font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Espace coiffeur</p>
     <p class="auth-subtitle">Bon retour dans votre salon</p>
-    <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace client</a></p>
-
+    <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace</a></p>
     <div class="auth-error" id="error-msg"></div>
-
     <form id="login-form">
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="email" placeholder="marie@salon-eclat.fr" required autocomplete="email" />
+        <input type="email" class="form-input" id="email" placeholder="aron@salon-moisan.fr" required autocomplete="email" />
       </div>
       <div class="form-group">
         <label class="form-label" style="display:flex;justify-content:space-between;">
           Mot de passe
-          <a href="forgot.html" style="font-size:12px;color:var(--gold);font-weight:400;">Mot de passe oublié ?</a>
+          <a href="forgot.html" style="font-size:12px;color:var(--gold);font-weight:400;">Oublié ?</a>
         </label>
         <div style="position:relative">
-          <input type="password" class="form-input" id="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px" />
+          <input type="password" class="form-input" id="password" placeholder="••••••••" required style="padding-right:44px" />
           <button type="button" onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'&#128065;':'&#128064;'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px">&#128065;</button>
         </div>
       </div>
       <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
     </form>
-
-    <p class="auth-switch">Pas encore de compte ? <a href="register.html">Essai gratuit 14 jours</a></p>
+    <p class="auth-switch">Pas encore de compte ? <a href="register.html">Créer mon salon</a></p>
   </div>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script>
-  // Déjà connecté → dashboard
-  (async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      var meta = session.user.user_metadata || {};
-      if (!meta.salon_name) { window.location.href = '../client.html'; }
-      else { window.location.href = 'dashboard.html'; }
-    }
-  })();
-
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    const err = document.getElementById('error-msg');
-
-    btn.disabled = true;
-    btn.textContent = 'Connexion...';
-    err.classList.remove('visible');
-
-    const { data, error } = await sb.auth.signInWithPassword({
-      email:    document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value,
-    });
-
-    if (error) {
-      const messages = {
-        'Invalid login credentials': 'Email ou mot de passe incorrect.',
-        'Email not confirmed': 'Veuillez confirmer votre email avant de vous connecter.',
-        'Too many requests': 'Trop de tentatives. Attendez quelques minutes.',
-      };
-      err.textContent = messages[error.message] || 'Une erreur est survenue. Réessayez.';
-      err.classList.add('visible');
-      btn.disabled = false;
-      btn.textContent = 'Se connecter';
-      return;
-    }
-
-    // Connexion réussie — vérifier le rôle
-    var meta = data.user.user_metadata || {};
-    if (!meta.salon_name) {
-      // C'est un client, pas un salon
-      window.location.href = '../client.html';
-    } else {
-      window.location.href = 'dashboard.html';
-    }
+(async function() {
+  var s = await sb.auth.getSession();
+  if (!s.data.session) return;
+  var meta = s.data.session.user.user_metadata || {};
+  // Seuls les salons passent par login.html
+  if (meta.role === 'salon') window.location.href = 'dashboard.html';
+  else window.location.href = '../client.html';
+})();
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn=document.getElementById('submit-btn'),err=document.getElementById('error-msg');
+  btn.disabled=true;btn.textContent='Connexion...';err.classList.remove('visible');
+  var res=await sb.auth.signInWithPassword({
+    email:document.getElementById('email').value.trim(),
+    password:document.getElementById('password').value
   });
+  if(res.error){
+    var msgs={'Invalid login credentials':'Email ou mot de passe incorrect.','Email not confirmed':'Confirmez votre email d\'abord.','Too many requests':'Trop de tentatives, attendez.'};
+    err.textContent=msgs[res.error.message]||'Une erreur est survenue.';
+    err.classList.add('visible');btn.disabled=false;btn.textContent='Se connecter';return;
+  }
+  var meta=res.data.user.user_metadata||{};
+  if(meta.role==='salon'){
+    // Créer salon_settings si pas encore fait
+    await sb.rpc('create_salon_for_user',{p_user_id:res.data.user.id});
+    window.location.href='dashboard.html';
+  } else {
+    // Client qui essaie de se connecter ici → espace client
+    window.location.href='../client.html';
+  }
+});
 </script>
 </body>
 </html>
