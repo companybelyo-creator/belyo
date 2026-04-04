@@ -557,6 +557,25 @@ function toggleVitrine(cardId) {
   if (el) el.classList.toggle('open');
 }
 
+
+function makeSlug(name) {
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+async function createSalonWithSlug(userId, salonName) {
+  var base = makeSlug(salonName), slug = base, tries = 0;
+  while (tries < 10) {
+    var check = await sb.from('salon_settings').select('user_id').eq('slug', slug).maybeSingle();
+    if (!check.data) break;
+    tries++; slug = base + '-' + tries;
+  }
+  await sb.from('salon_settings').upsert({ user_id: userId, slug: slug, salon_name: salonName }, { onConflict: 'user_id' });
+  return slug;
+}
+
 // ===== CRÉATEUR =====
 function openCreatorModal() {
   document.getElementById('creator-modal').classList.add('open');

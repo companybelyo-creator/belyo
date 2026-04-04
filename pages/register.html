@@ -65,6 +65,30 @@
   if (meta.role === 'salon') window.location.href = 'dashboard.html';
   else window.location.href = '../client.html';
 })();
+
+function makeSlug(name) {
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // enlever accents
+    .replace(/[^a-z0-9]+/g, '-')  // remplacer non-alphanum par tiret
+    .replace(/^-+|-+$/g, '')       // trim tirets
+    .slice(0, 40);
+}
+
+async function createSalonWithSlug(userId, salonName) {
+  var base = makeSlug(salonName);
+  var slug = base;
+  var tries = 0;
+  // Tester si le slug est libre, sinon ajouter un suffixe
+  while (tries < 10) {
+    var check = await sb.from('salon_settings').select('user_id').eq('slug', slug).maybeSingle();
+    if (!check.data) break; // slug libre
+    tries++;
+    slug = base + '-' + tries;
+  }
+  await sb.from('salon_settings').upsert({ user_id: userId, slug: slug, salon_name: salonName }, { onConflict: 'user_id' });
+  return slug;
+}
+
 document.getElementById('register-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn=document.getElementById('submit-btn'),err=document.getElementById('error-msg'),ok=document.getElementById('success-msg');
@@ -89,7 +113,7 @@ document.getElementById('register-form').addEventListener('submit', async functi
     err.classList.add('visible');btn.disabled=false;btn.textContent='Créer mon salon gratuitement';return;
   }
   if(res.data.session){
-    await sb.rpc('create_salon_for_user',{p_user_id:res.data.session.user.id});
+    await createSalonWithSlug(res.data.session.user.id, salonName);
     window.location.href='dashboard.html';
   } else {
     ok.innerHTML='&#10003; Vérifiez votre email pour confirmer, puis <a href="login.html" style="color:#065f46;font-weight:500">connectez-vous</a>.';

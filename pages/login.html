@@ -48,6 +48,25 @@
   if (meta.role === 'salon') window.location.href = 'dashboard.html';
   else window.location.href = '../client.html';
 })();
+
+function makeSlug(name) {
+  return name.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+async function createSalonWithSlug(userId, salonName) {
+  var base = makeSlug(salonName), slug = base, tries = 0;
+  while (tries < 10) {
+    var check = await sb.from('salon_settings').select('user_id').eq('slug', slug).maybeSingle();
+    if (!check.data) break;
+    tries++; slug = base + '-' + tries;
+  }
+  await sb.from('salon_settings').upsert({ user_id: userId, slug: slug, salon_name: salonName }, { onConflict: 'user_id' });
+  return slug;
+}
+
 document.getElementById('login-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn=document.getElementById('submit-btn'),err=document.getElementById('error-msg');
@@ -64,7 +83,8 @@ document.getElementById('login-form').addEventListener('submit', async function(
   var meta=res.data.user.user_metadata||{};
   if(meta.role==='salon'){
     // Créer salon_settings si pas encore fait
-    await sb.rpc('create_salon_for_user',{p_user_id:res.data.user.id});
+    var meta2 = res.data.user.user_metadata || {};
+    await createSalonWithSlug(res.data.user.id, meta2.salon_name || 'mon-salon');
     window.location.href='dashboard.html';
   } else {
     // Client qui essaie de se connecter ici → espace client
