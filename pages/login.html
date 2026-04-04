@@ -14,7 +14,9 @@
   <div class="auth-card">
 
     <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
+    <p style="text-align:center;font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Espace coiffeur</p>
     <p class="auth-subtitle">Bon retour dans votre salon</p>
+    <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace client</a></p>
 
     <div class="auth-error" id="error-msg"></div>
 
@@ -28,7 +30,10 @@
           Mot de passe
           <a href="forgot.html" style="font-size:12px;color:var(--gold);font-weight:400;">Mot de passe oublié ?</a>
         </label>
-        <input type="password" class="form-input" id="password" placeholder="••••••••" required autocomplete="current-password" />
+        <div style="position:relative">
+          <input type="password" class="form-input" id="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px" />
+          <button type="button" onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'&#128065;':'&#128064;'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px">&#128065;</button>
+        </div>
       </div>
       <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
     </form>
@@ -43,7 +48,11 @@
   // Déjà connecté → dashboard
   (async () => {
     const { data: { session } } = await sb.auth.getSession();
-    if (session) window.location.href = 'dashboard.html';
+    if (session) {
+      var meta = session.user.user_metadata || {};
+      if (!meta.salon_name) { window.location.href = '../client.html'; }
+      else { window.location.href = 'dashboard.html'; }
+    }
   })();
 
   document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -73,8 +82,14 @@
       return;
     }
 
-    // Connexion réussie
-    window.location.href = 'dashboard.html';
+    // Connexion réussie — vérifier le rôle
+    var meta = data.user.user_metadata || {};
+    if (!meta.salon_name) {
+      // C'est un client, pas un salon
+      window.location.href = '../client.html';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
   });
 </script>
 </body>

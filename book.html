@@ -3,671 +3,94 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Réserver un rendez-vous</title>
-  <link rel="icon" href="data:,">
+  <title>Connexion — Belyo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --cream: #F7F3EE; --cream-dark: #EDE7DC;
-      --ink: #1A1714; --ink-light: #5C5550;
-      --gold: #C4A87A; --gold-light: #E8D9BF;
-      --white: #FFFFFF; --border: rgba(26,23,20,0.1);
-      --radius: 12px; --radius-sm: 8px;
-      --font-display: 'Cormorant Garamond', serif;
-      --font-body: 'DM Sans', sans-serif;
-    }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font-body); background: var(--cream); color: var(--ink); min-height: 100vh; }
-
-    /* Header salon */
-    .book-header {
-      background: var(--ink); color: var(--white);
-      padding: 2rem; text-align: center;
-    }
-    .book-logo { font-family: var(--font-display); font-size: 1.2rem; opacity: .5; margin-bottom: .5rem; }
-    .salon-name { font-family: var(--font-display); font-size: 2rem; font-weight: 300; }
-    .salon-tagline { font-size: 13px; opacity: .6; margin-top: .3rem; }
-
-    /* Layout */
-    .book-layout {
-      max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem 4rem;
-    }
-
-    /* Steps */
-    .steps {
-      display: flex; align-items: center; gap: 0;
-      margin-bottom: 2.5rem; padding: 1.5rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .step {
-      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px;
-      position: relative;
-    }
-    .step::after {
-      content: ''; position: absolute; top: 14px; left: 50%; right: -50%;
-      height: 1px; background: var(--border);
-    }
-    .step:last-child::after { display: none; }
-    .step-dot {
-      width: 28px; height: 28px; border-radius: 50%;
-      border: 1px solid var(--border); background: var(--white);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 500; color: var(--ink-light);
-      position: relative; z-index: 1; transition: all .2s;
-    }
-    .step.active .step-dot { background: var(--ink); color: var(--white); border-color: var(--ink); }
-    .step.done .step-dot { background: var(--gold); color: var(--ink); border-color: var(--gold); }
-    .step-label { font-size: 11px; color: var(--ink-light); }
-    .step.active .step-label { color: var(--ink); font-weight: 500; }
-
-    /* Cards */
-    .section-card {
-      background: var(--white); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;
-    }
-    .section-card-title {
-      font-size: 13px; font-weight: 500; color: var(--ink);
-      margin-bottom: 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--border);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .step-num {
-      width: 22px; height: 22px; border-radius: 50%; background: var(--ink);
-      color: var(--white); font-size: 11px; display: flex; align-items: center; justify-content: center;
-    }
-
-    /* Genre toggle */
-    .genre-row { display: flex; gap: 8px; margin-bottom: 1rem; }
-    .genre-btn {
-      flex: 1; padding: 10px; border-radius: var(--radius-sm);
-      border: 1px solid var(--border); background: transparent;
-      font-family: var(--font-body); font-size: 14px; cursor: pointer;
-      transition: all .15s; color: var(--ink-light);
-    }
-    .genre-btn.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
-
-    /* Service grid */
-    .service-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .service-btn {
-      padding: 12px 14px; border-radius: var(--radius-sm);
-      border: 1px solid var(--border); background: var(--cream);
-      cursor: pointer; transition: all .15s; text-align: left;
-      font-family: var(--font-body);
-    }
-    .service-btn:hover { border-color: var(--gold); }
-    .service-btn.selected { border-color: var(--ink); background: var(--ink); color: var(--white); }
-    .service-name { font-size: 14px; font-weight: 500; display: block; }
-    .service-price { font-size: 12px; color: var(--gold); margin-top: 2px; display: block; }
-    .service-btn.selected .service-price { color: var(--gold-light); }
-    .service-duration { font-size: 11px; color: var(--ink-light); }
-    .service-btn.selected .service-duration { color: rgba(255,255,255,.5); }
-
-    /* Calendrier */
-    .cal-nav {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
-    }
-    .cal-nav button {
-      background: none; border: 1px solid var(--border); border-radius: 50%;
-      width: 32px; height: 32px; cursor: pointer; font-size: 16px;
-      display: flex; align-items: center; justify-content: center; transition: background .15s;
-    }
-    .cal-nav button:hover { background: var(--cream-dark); }
-    .cal-nav span { font-size: 14px; font-weight: 500; text-transform: capitalize; }
-    .cal-head { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 6px; }
-    .cal-head span { text-align: center; font-size: 11px; color: var(--ink-light); font-weight: 500; padding: 4px; }
-    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
-    .cal-day {
-      text-align: center; padding: 8px 4px; font-size: 13px;
-      border-radius: 8px; cursor: pointer; border: none; background: none;
-      font-family: var(--font-body); transition: all .15s;
-    }
-    .cal-day:hover:not(.disabled):not(.empty) { background: var(--cream-dark); }
-    .cal-day.today { font-weight: 600; color: var(--gold); }
-    .cal-day.selected { background: var(--ink); color: var(--white); border-radius: 50%; }
-    .cal-day.disabled { color: var(--border); cursor: not-allowed; }
-    .cal-day.empty { cursor: default; }
-
-    /* Créneaux horaires */
-    .slots-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 1rem; }
-    .slot-btn {
-      padding: 9px; border-radius: var(--radius-sm); border: 1px solid var(--border);
-      background: var(--cream); cursor: pointer; font-family: var(--font-body);
-      font-size: 13px; font-weight: 500; transition: all .15s; color: var(--ink);
-    }
-    .slot-btn:hover:not(.taken) { border-color: var(--gold); }
-    .slot-btn.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
-    .slot-btn.taken { color: var(--border); cursor: not-allowed; text-decoration: line-through; background: transparent; }
-
-    /* Form */
-    .form-group { margin-bottom: 1rem; }
-    .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-light); margin-bottom: 5px; }
-    .form-input {
-      width: 100%; padding: 11px 14px; border: 1px solid var(--border);
-      border-radius: var(--radius-sm); font-family: var(--font-body);
-      font-size: 15px; background: var(--cream); color: var(--ink); outline: none;
-      transition: border-color .15s;
-    }
-    .form-input:focus { border-color: var(--gold); }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-    /* Récap */
-    .recap-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px;
-    }
-    .recap-row:last-child { border-bottom: none; }
-    .recap-label { color: var(--ink-light); }
-    .recap-val { font-weight: 500; }
-    .recap-price { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold); }
-
-    /* Boutons */
-    .btn-submit {
-      width: 100%; padding: 14px; background: var(--ink); color: var(--white);
-      border: none; border-radius: 100px; font-family: var(--font-body);
-      font-size: 15px; font-weight: 500; cursor: pointer; transition: opacity .2s;
-      margin-top: 1.5rem;
-    }
-    .btn-submit:hover { opacity: .88; }
-    .btn-submit:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-back {
-      background: none; border: none; color: var(--ink-light); font-family: var(--font-body);
-      font-size: 13px; cursor: pointer; margin-bottom: 1rem; display: flex; align-items: center; gap: 5px;
-    }
-    .btn-back:hover { color: var(--ink); }
-
-    /* Succès */
-    .success-screen {
-      text-align: center; padding: 3rem 1rem; display: none;
-    }
-    .success-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .success-title { font-family: var(--font-display); font-size: 2rem; font-weight: 300; margin-bottom: .5rem; }
-    .success-sub { font-size: 15px; color: var(--ink-light); max-width: 360px; margin: 0 auto 2rem; line-height: 1.6; }
-    .success-recap {
-      background: var(--white); border: 1px solid var(--border); border-radius: var(--radius);
-      padding: 1.5rem; max-width: 340px; margin: 0 auto; text-align: left;
-    }
-
-    /* Loader */
-    .loader { display: none; text-align: center; padding: 2rem; color: var(--ink-light); font-size: 14px; }
-    .spinner {
-      display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border);
-      border-top-color: var(--ink); border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px;
-      vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Toast */
-    .toast {
-      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-      background: var(--ink); color: var(--white); padding: 12px 24px;
-      border-radius: 100px; font-size: 14px; opacity: 0; transition: opacity .3s;
-      pointer-events: none; z-index: 999; white-space: nowrap;
-    }
-    .toast.show { opacity: 1; }
-
-    .powered {
-      text-align: center; font-size: 12px; color: var(--ink-light);
-      margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
-    }
-    .powered a { color: var(--gold); }
-
-    @media (max-width: 480px) {
-      .slots-grid { grid-template-columns: repeat(3,1fr); }
-      .service-grid { grid-template-columns: 1fr; }
-      .form-row { grid-template-columns: 1fr; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
 </head>
 <body>
 
-<div class="book-header">
-  <div class="book-logo">Belyo</div>
-  <div class="salon-name" id="salon-name">Chargement...</div>
-  <div class="salon-tagline">Réservez votre rendez-vous en ligne</div>
+<div class="auth-page">
+  <div class="auth-card">
+
+    <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
+    <p style="text-align:center;font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Espace coiffeur</p>
+    <p class="auth-subtitle">Bon retour dans votre salon</p>
+    <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace client</a></p>
+
+    <div class="auth-error" id="error-msg"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="email" placeholder="marie@salon-eclat.fr" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;justify-content:space-between;">
+          Mot de passe
+          <a href="forgot.html" style="font-size:12px;color:var(--gold);font-weight:400;">Mot de passe oublié ?</a>
+        </label>
+        <div style="position:relative">
+          <input type="password" class="form-input" id="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px" />
+          <button type="button" onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'&#128065;':'&#128064;'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px">&#128065;</button>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
+    </form>
+
+    <p class="auth-switch">Pas encore de compte ? <a href="register.html">Essai gratuit 14 jours</a></p>
+  </div>
 </div>
-
-<div class="book-layout">
-
-  <!-- Loader initial -->
-  <div class="loader" id="main-loader" style="display:block">
-    <span class="spinner"></span> Chargement du salon...
-  </div>
-
-  <!-- Erreur -->
-  <div id="error-screen" style="display:none;text-align:center;padding:3rem 1rem">
-    <div style="font-size:2rem;margin-bottom:1rem">⚠️</div>
-    <h2 style="font-size:1.2rem;margin-bottom:.5rem">Salon introuvable</h2>
-    <p style="color:var(--ink-light);font-size:14px">Vérifiez le lien fourni par votre salon.</p>
-  </div>
-
-  <!-- Étapes -->
-  <div id="booking-flow" style="display:none">
-    <div class="steps" id="steps-bar">
-      <div class="step active" id="step-1"><div class="step-dot">1</div><div class="step-label">Prestation</div></div>
-      <div class="step" id="step-2"><div class="step-dot">2</div><div class="step-label">Date</div></div>
-      <div class="step" id="step-3"><div class="step-dot">3</div><div class="step-label">Vos infos</div></div>
-      <div class="step" id="step-4"><div class="step-dot">4</div><div class="step-label">Confirmation</div></div>
-    </div>
-
-    <!-- ÉTAPE 1 : Prestation -->
-    <div id="view-1">
-      <div class="section-card">
-        <div class="section-card-title">
-          <span class="step-num">1</span> Choisissez votre prestation
-        </div>
-        <div class="genre-row">
-          <button class="genre-btn active" id="gbtn-homme" onclick="setBookGenre('homme')">Homme</button>
-          <button class="genre-btn" id="gbtn-femme" onclick="setBookGenre('femme')">Femme</button>
-        </div>
-        <div class="service-grid" id="service-grid">
-          <!-- rempli dynamiquement -->
-        </div>
-      </div>
-      <button class="btn-submit" id="btn-step1" onclick="goStep(2)" disabled>Choisir une date →</button>
-    </div>
-
-    <!-- ÉTAPE 2 : Date & heure -->
-    <div id="view-2" style="display:none">
-      <button class="btn-back" onclick="goStep(1)">← Retour</button>
-      <div class="section-card">
-        <div class="section-card-title"><span class="step-num">2</span> Choisissez une date</div>
-        <div class="cal-nav">
-          <button onclick="calPrevMonth()">‹</button>
-          <span id="cal-month-label">—</span>
-          <button onclick="calNextMonth()">›</button>
-        </div>
-        <div class="cal-head">
-          <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
-        </div>
-        <div class="cal-grid" id="book-cal-grid"></div>
-      </div>
-      <div class="section-card" id="slots-card" style="display:none">
-        <div class="section-card-title"><span class="step-num">2b</span> Choisissez un créneau</div>
-        <div id="slots-loader" class="loader" style="display:none"><span class="spinner"></span> Vérification des disponibilités...</div>
-        <div class="slots-grid" id="slots-grid"></div>
-      </div>
-      <button class="btn-submit" id="btn-step2" onclick="goStep(3)" disabled style="display:none">Mes coordonnées →</button>
-    </div>
-
-    <!-- ÉTAPE 3 : Infos client -->
-    <div id="view-3" style="display:none">
-      <button class="btn-back" onclick="goStep(2)">← Retour</button>
-      <div class="section-card">
-        <div class="section-card-title"><span class="step-num">3</span> Vos coordonnées</div>
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Prénom *</label>
-            <input type="text" class="form-input" id="client-prenom" placeholder="Sophie" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Nom *</label>
-            <input type="text" class="form-input" id="client-nom" placeholder="Martin" required />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Téléphone *</label>
-          <input type="tel" class="form-input" id="client-tel" placeholder="06 12 34 56 78" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" class="form-input" id="client-email" placeholder="sophie@email.fr" />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Message (optionnel)</label>
-          <input type="text" class="form-input" id="client-notes" placeholder="Allergie colorant, cheveux courts..." />
-        </div>
-      </div>
-      <button class="btn-submit" onclick="goStep(4)">Vérifier mon RDV →</button>
-    </div>
-
-    <!-- ÉTAPE 4 : Récap & confirmation -->
-    <div id="view-4" style="display:none">
-      <button class="btn-back" onclick="goStep(3)">← Retour</button>
-      <div class="section-card">
-        <div class="section-card-title"><span class="step-num">4</span> Récapitulatif</div>
-        <div class="recap-row"><span class="recap-label">Salon</span><span class="recap-val" id="recap-salon">—</span></div>
-        <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-val" id="recap-service">—</span></div>
-        <div class="recap-row"><span class="recap-label">Date</span><span class="recap-val" id="recap-date">—</span></div>
-        <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-val" id="recap-heure">—</span></div>
-        <div class="recap-row"><span class="recap-label">Client</span><span class="recap-val" id="recap-client">—</span></div>
-        <div class="recap-row"><span class="recap-label">Prix</span><span class="recap-price" id="recap-prix">—</span></div>
-      </div>
-      <button class="btn-submit" id="btn-confirm" onclick="confirmBooking()">Confirmer ma réservation ✓</button>
-      <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-top:1rem">En confirmant, vous acceptez que le salon conserve vos coordonnées.</p>
-    </div>
-  </div>
-
-  <!-- Succès -->
-  <div class="success-screen" id="success-screen">
-    <div class="success-icon">✦</div>
-    <h2 class="success-title">Réservation <em style="font-style:italic;color:var(--gold)">confirmée</em></h2>
-    <p class="success-sub">Votre rendez-vous a bien été enregistré. Le salon vous contactera si nécessaire.</p>
-    <div class="success-recap">
-      <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-val" id="success-service">—</span></div>
-      <div class="recap-row"><span class="recap-label">Date</span><span class="recap-val" id="success-date">—</span></div>
-      <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-val" id="success-heure">—</span></div>
-      <div class="recap-row"><span class="recap-label">Prix</span><span class="recap-price" id="success-prix">—</span></div>
-    </div>
-    <button class="btn-submit" style="max-width:280px;margin:2rem auto 0;display:block" onclick="location.reload()">Prendre un autre RDV</button>
-  </div>
-
-  <div class="powered">Réservation propulsée par <a href="../index.html">Belyo</a></div>
-</div>
-
-<div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+<script src="../js/supabase.js"></script>
 <script>
-// ============================================================
-// BOOK.JS — Page de réservation publique
-// ============================================================
-
-var salonId      = null;
-var salonNameStr = '';
-var prestations  = { homme: [], femme: [] };
-var prixDuree    = { homme: {}, femme: {} };
-var bookGenre    = 'homme';
-var selectedService = null;
-var selectedDate    = null;
-var selectedSlot    = null;
-var calMonth        = new Date();
-var existingAppts   = [];
-
-// Heures de travail
-var HEURE_DEBUT = 9;
-var HEURE_FIN   = 19;
-
-function showToast(msg, type) {
-  var t = document.getElementById('toast');
-  t.textContent = msg;
-  t.style.background = type === 'error' ? '#991b1b' : '#1A1714';
-  t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
-}
-
-// Init
-(async function() {
-  var params = new URLSearchParams(window.location.search);
-  salonId = params.get('salon');
-
-  if (!salonId) {
-    document.getElementById('main-loader').style.display = 'none';
-    document.getElementById('error-screen').style.display = 'block';
-    return;
-  }
-
-  try {
-    // Charger les paramètres salon
-    var res = await sb.from('salon_settings')
-      .select('prestations, custom_prestations, prix_duree')
-      .eq('user_id', salonId)
-      .maybeSingle();
-
-    if (!res.data) throw new Error('Salon non trouvé');
-
-    if (res.data.prestations) {
-      prestations.homme = (res.data.prestations.homme || []);
-      prestations.femme = (res.data.prestations.femme || []);
+  // Déjà connecté → dashboard
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      var meta = session.user.user_metadata || {};
+      if (!meta.salon_name) { window.location.href = '../client.html'; }
+      else { window.location.href = 'dashboard.html'; }
     }
-    if (res.data.prix_duree) prixDuree = res.data.prix_duree;
+  })();
 
-    // Charger le nom du salon via la fonction RPC
-    var nameRes = await sb.rpc('get_salon_public_info', { p_user_id: salonId });
-    if (nameRes.data) {
-      salonNameStr = nameRes.data.salon_name || 'Votre salon';
-      document.getElementById('salon-name').textContent = salonNameStr;
-      document.title = 'Réserver — ' + salonNameStr;
-    }
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const err = document.getElementById('error-msg');
 
-    document.getElementById('main-loader').style.display = 'none';
-    document.getElementById('booking-flow').style.display = 'block';
+    btn.disabled = true;
+    btn.textContent = 'Connexion...';
+    err.classList.remove('visible');
 
-    renderServices();
-    calMonth = new Date();
-    calMonth.setDate(1);
-    renderCal();
-
-  } catch(e) {
-    document.getElementById('main-loader').style.display = 'none';
-    document.getElementById('error-screen').style.display = 'block';
-  }
-})();
-
-// ===== ÉTAPE 1 : Prestation =====
-function setBookGenre(g) {
-  bookGenre = g;
-  document.getElementById('gbtn-homme').classList.toggle('active', g === 'homme');
-  document.getElementById('gbtn-femme').classList.toggle('active', g === 'femme');
-  selectedService = null;
-  document.getElementById('btn-step1').disabled = true;
-  renderServices();
-}
-
-function renderServices() {
-  var grid = document.getElementById('service-grid');
-  var list = prestations[bookGenre] || [];
-  if (list.length === 0) {
-    grid.innerHTML = '<p style="color:var(--ink-light);font-size:13px;grid-column:span 2">Aucune prestation configurée.</p>';
-    return;
-  }
-  grid.innerHTML = list.map(function(p) {
-    var pd    = prixDuree[bookGenre] && prixDuree[bookGenre][p];
-    var prix  = pd && pd.prix  ? pd.prix + '€'    : '';
-    var duree = pd && pd.duree ? pd.duree + ' min' : '';
-    var sel   = selectedService === p ? ' selected' : '';
-    return '<button class="service-btn' + sel + '" onclick="selectService(\'' + p.replace(/'/g, "\\'") + '\')">'
-      + '<span class="service-name">' + p + '</span>'
-      + (prix  ? '<span class="service-price">' + prix + '</span>' : '')
-      + (duree ? '<span class="service-duration">' + duree + '</span>' : '')
-      + '</button>';
-  }).join('');
-}
-
-function selectService(name) {
-  selectedService = name;
-  renderServices();
-  document.getElementById('btn-step1').disabled = false;
-}
-
-// ===== ÉTAPE 2 : Calendrier =====
-function calPrevMonth() {
-  calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1);
-  renderCal();
-}
-function calNextMonth() {
-  calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1);
-  renderCal();
-}
-
-function renderCal() {
-  var label = document.getElementById('cal-month-label');
-  var grid  = document.getElementById('book-cal-grid');
-  var year  = calMonth.getFullYear();
-  var month = calMonth.getMonth();
-  var now   = new Date(); now.setHours(0,0,0,0);
-
-  label.textContent = new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-
-  var firstDay    = new Date(year, month, 1).getDay();
-  var offset      = firstDay === 0 ? 6 : firstDay - 1;
-  var daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  var html = '';
-  for (var i = 0; i < offset; i++) html += '<button class="cal-day empty"></button>';
-  for (var d = 1; d <= daysInMonth; d++) {
-    var dayDate = new Date(year, month, d);
-    var isPast  = dayDate < now;
-    var isToday = dayDate.toDateString() === now.toDateString();
-    var isSel   = selectedDate && selectedDate.toDateString() === dayDate.toDateString();
-    var iso     = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    var cls     = 'cal-day' + (isPast ? ' disabled' : '') + (isToday ? ' today' : '') + (isSel ? ' selected' : '');
-    var handler = isPast ? '' : ' onclick="selectDay(\'' + iso + '\')"';
-    html += '<button class="' + cls + '"' + handler + '>' + d + '</button>';
-  }
-  grid.innerHTML = html;
-}
-
-async function selectDay(iso) {
-  selectedDate = new Date(iso + 'T12:00:00');
-  selectedSlot = null;
-  renderCal();
-
-  var slotsCard = document.getElementById('slots-card');
-  var btnStep2  = document.getElementById('btn-step2');
-  slotsCard.style.display = 'block';
-  btnStep2.style.display  = 'block';
-  btnStep2.disabled       = true;
-  document.getElementById('slots-loader').style.display = 'block';
-  document.getElementById('slots-grid').innerHTML = '';
-
-  // Charger les RDV existants pour cette date
-  var res = await sb.from('appointments')
-    .select('datetime, duration_minutes, status')
-    .eq('user_id', salonId)
-    .gte('datetime', iso + 'T00:00:00')
-    .lte('datetime', iso + 'T23:59:59')
-    .neq('status', 'cancelled');
-
-  existingAppts = res.data || [];
-  document.getElementById('slots-loader').style.display = 'none';
-  renderSlots();
-}
-
-function renderSlots() {
-  var grid = document.getElementById('slots-grid');
-  var pd   = prixDuree[bookGenre] && prixDuree[bookGenre][selectedService];
-  var dureeMin = (pd && pd.duree) ? pd.duree : 30;
-
-  // Générer les créneaux toutes les 30 min
-  var slots = [];
-  for (var h = HEURE_DEBUT; h < HEURE_FIN; h++) {
-    slots.push({ h: h, m: 0  });
-    slots.push({ h: h, m: 30 });
-  }
-
-  // Filtrer les créneaux passés (si aujourd'hui)
-  var now     = new Date();
-  var isToday = selectedDate.toDateString() === now.toDateString();
-
-  var html = slots.map(function(s) {
-    var slotStr = String(s.h).padStart(2,'0') + ':' + String(s.m).padStart(2,'0');
-    var slotDt  = new Date(selectedDate);
-    slotDt.setHours(s.h, s.m, 0, 0);
-
-    // Créneau passé
-    if (isToday && slotDt <= now) return '';
-
-    // Vérifier chevauchement avec RDV existants
-    var isTaken = existingAppts.some(function(a) {
-      var aDt  = new Date(a.datetime);
-      var aEnd = new Date(aDt.getTime() + ((a.duration_minutes || 30) * 60000));
-      var sEnd = new Date(slotDt.getTime() + (dureeMin * 60000));
-      return slotDt < aEnd && sEnd > aDt;
+    const { data, error } = await sb.auth.signInWithPassword({
+      email:    document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value,
     });
 
-    var isSel = selectedSlot === slotStr;
-    var cls   = 'slot-btn' + (isTaken ? ' taken' : '') + (isSel ? ' selected' : '');
-    var handler = isTaken ? '' : ' onclick="selectSlot(\'' + slotStr + '\')"';
-    return '<button class="' + cls + '"' + handler + '>' + slotStr + '</button>';
-  }).join('');
-
-  grid.innerHTML = html || '<p style="color:var(--ink-light);font-size:13px">Aucun créneau disponible ce jour.</p>';
-}
-
-function selectSlot(slot) {
-  selectedSlot = slot;
-  renderSlots();
-  document.getElementById('btn-step2').disabled = false;
-}
-
-// ===== NAVIGATION ÉTAPES =====
-function goStep(n) {
-  // Valider étape 3
-  if (n === 4) {
-    var prenom = document.getElementById('client-prenom').value.trim();
-    var nom    = document.getElementById('client-nom').value.trim();
-    var tel    = document.getElementById('client-tel').value.trim();
-    if (!prenom || !nom || !tel) {
-      showToast('Remplissez prénom, nom et téléphone.', 'error');
+    if (error) {
+      const messages = {
+        'Invalid login credentials': 'Email ou mot de passe incorrect.',
+        'Email not confirmed': 'Veuillez confirmer votre email avant de vous connecter.',
+        'Too many requests': 'Trop de tentatives. Attendez quelques minutes.',
+      };
+      err.textContent = messages[error.message] || 'Une erreur est survenue. Réessayez.';
+      err.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Se connecter';
       return;
     }
-    fillRecap();
-  }
 
-  for (var i = 1; i <= 4; i++) {
-    document.getElementById('view-' + i).style.display = i === n ? 'block' : 'none';
-    var stepEl = document.getElementById('step-' + i);
-    stepEl.classList.remove('active', 'done');
-    if (i < n)      stepEl.classList.add('done');
-    if (i === n)    stepEl.classList.add('active');
-  }
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function fillRecap() {
-  var prenom = document.getElementById('client-prenom').value.trim();
-  var nom    = document.getElementById('client-nom').value.trim();
-  var pd     = prixDuree[bookGenre] && prixDuree[bookGenre][selectedService];
-
-  document.getElementById('recap-salon').textContent   = salonNameStr;
-  document.getElementById('recap-service').textContent = selectedService || '—';
-  document.getElementById('recap-date').textContent    = selectedDate ? selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : '—';
-  document.getElementById('recap-heure').textContent   = selectedSlot || '—';
-  document.getElementById('recap-client').textContent  = prenom + ' ' + nom;
-  document.getElementById('recap-prix').textContent    = pd && pd.prix ? pd.prix + '€' : 'À définir';
-}
-
-// ===== CONFIRMATION =====
-async function confirmBooking() {
-  var btn    = document.getElementById('btn-confirm');
-  btn.disabled = true; btn.textContent = 'Envoi en cours...';
-
-  var prenom  = document.getElementById('client-prenom').value.trim();
-  var nom     = document.getElementById('client-nom').value.trim();
-  var tel     = document.getElementById('client-tel').value.trim();
-  var email   = document.getElementById('client-email').value.trim();
-  var notes   = document.getElementById('client-notes').value.trim();
-  var pd      = prixDuree[bookGenre] && prixDuree[bookGenre][selectedService];
-
-  // Construire la datetime
-  var parts = selectedSlot.split(':');
-  var dt    = new Date(selectedDate);
-  dt.setHours(parseInt(parts[0]), parseInt(parts[1]), 0, 0);
-  var iso   = dt.getFullYear() + '-'
-    + String(dt.getMonth()+1).padStart(2,'0') + '-'
-    + String(dt.getDate()).padStart(2,'0') + 'T'
-    + parts[0] + ':' + parts[1];
-
-  try {
-    var res = await sb.from('appointments').insert({
-      user_id:          salonId,
-      client_name:      prenom + ' ' + nom,
-      service:          selectedService,
-      datetime:         iso,
-      price:            pd && pd.prix ? pd.prix : null,
-      duration_minutes: pd && pd.duree ? pd.duree : 30,
-      notes:            (tel ? 'Tel: ' + tel + (email ? ' | Email: ' + email : '') : '') + (notes ? ' | ' + notes : '') || null,
-      status:           'pending',
-    });
-
-    if (res.error) throw res.error;
-
-    // Afficher le succès
-    document.getElementById('booking-flow').style.display  = 'none';
-    document.getElementById('success-screen').style.display = 'block';
-    document.getElementById('success-service').textContent = selectedService;
-    document.getElementById('success-date').textContent    = selectedDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-    document.getElementById('success-heure').textContent   = selectedSlot;
-    document.getElementById('success-prix').textContent    = pd && pd.prix ? pd.prix + '€' : 'À définir';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-
-  } catch(e) {
-    showToast('Erreur : ' + (e.message || 'Réessayez.'), 'error');
-    btn.disabled = false; btn.textContent = 'Confirmer ma réservation ✓';
-  }
-}
+    // Connexion réussie — vérifier le rôle
+    var meta = data.user.user_metadata || {};
+    if (!meta.salon_name) {
+      // C'est un client, pas un salon
+      window.location.href = '../client.html';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  });
 </script>
-
 </body>
 </html>

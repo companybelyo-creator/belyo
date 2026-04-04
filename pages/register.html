@@ -14,7 +14,9 @@
   <div class="auth-card">
 
     <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
-    <p class="auth-subtitle">Créez votre compte · 14 jours d'essai gratuit</p>
+    <p style="text-align:center;font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Espace coiffeur</p>
+    <p class="auth-subtitle">Créez votre salon · 14 jours d'essai gratuit</p>
+    <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace client</a></p>
 
     <div class="auth-error" id="error-msg"></div>
     <div id="success-msg" style="display:none;background:#d1fae5;border:1px solid #6ee7b7;color:#065f46;font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:1rem;line-height:1.5;"></div>
@@ -34,7 +36,10 @@
       </div>
       <div class="form-group">
         <label class="form-label">Mot de passe</label>
-        <input type="password" class="form-input" id="password" placeholder="8 caractères minimum" required minlength="8" autocomplete="new-password" />
+        <div style="position:relative">
+          <input type="password" class="form-input" id="password" placeholder="8 caractères minimum" required minlength="8" autocomplete="new-password" style="padding-right:44px" />
+          <button type="button" onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'&#128065;':'&#128064;'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px">&#128065;</button>
+        </div>
       </div>
       <button type="submit" class="btn-submit" id="submit-btn">Créer mon compte</button>
     </form>
@@ -46,11 +51,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script>
-  // Déjà connecté → dashboard
-  (async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) window.location.href = 'dashboard.html';
+  // Guard : si déjà connecté
+  (async function() {
+    var s = await sb.auth.getSession();
+    if (!s.data.session) return;
+    var meta = s.data.session.user.user_metadata || {};
+    // Client qui arrive ici → le renvoyer vers son espace
+    if (!meta.salon_name) { window.location.href = '../client.html'; return; }
+    // Salon déjà connecté → dashboard
+    window.location.href = 'dashboard.html';
   })();
+  // (fin guard)
 
   const errorMessages = {
     'User already registered': 'Un compte existe déjà avec cet email.',
@@ -74,6 +85,14 @@
     const password  = document.getElementById('password').value;
     const salonName = document.getElementById('salon-name').value.trim();
     const firstName = document.getElementById('first-name').value.trim();
+
+    if (!salonName) {
+      err.textContent = 'Le nom du salon est obligatoire.';
+      err.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Créer mon compte';
+      return;
+    }
 
     const { data, error } = await sb.auth.signUp({
       email,
