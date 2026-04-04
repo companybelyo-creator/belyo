@@ -3,94 +3,400 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Connexion — Belyo</title>
+  <title>Réserver — Belyo</title>
+  <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/main.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;--gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;--border:rgba(26,23,20,0.1);--radius:16px;--radius-sm:10px;--font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
+    .bk-header{background:var(--ink);padding:2.5rem 2rem 3rem;text-align:center;position:relative;overflow:hidden;}
+    .bk-header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 60% 0%,rgba(196,168,122,.15),transparent 70%);pointer-events:none;}
+    .bk-back{position:absolute;top:1.2rem;left:1.5rem;font-size:13px;color:rgba(255,255,255,.5);text-decoration:none;display:flex;align-items:center;gap:5px;}
+    .bk-back:hover{color:rgba(255,255,255,.9);}
+    .bk-belyo{font-family:var(--font-display);font-size:1rem;letter-spacing:.12em;color:var(--gold);text-transform:uppercase;margin-bottom:1rem;opacity:.8;}
+    .bk-salon-name{font-family:var(--font-display);font-size:clamp(2rem,6vw,3rem);font-weight:300;color:var(--white);line-height:1.1;margin-bottom:.5rem;}
+    .bk-salon-name em{font-style:italic;color:var(--gold);}
+    .bk-tagline{font-size:13px;color:rgba(255,255,255,.5);}
+    .bk-steps{background:var(--white);border-bottom:1px solid var(--border);display:flex;justify-content:center;}
+    .bk-step{display:flex;align-items:center;gap:8px;padding:1rem 1.2rem;font-size:13px;color:var(--ink-light);border-bottom:2px solid transparent;transition:all .2s;cursor:default;}
+    .bk-step-num{width:22px;height:22px;border-radius:50%;background:var(--cream-dark);color:var(--ink-light);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .bk-step.active{color:var(--ink);border-color:var(--gold);}
+    .bk-step.active .bk-step-num{background:var(--ink);color:var(--white);}
+    .bk-step.done .bk-step-num{background:var(--gold);color:var(--ink);}
+    .bk-body{max-width:640px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+    .bk-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;}
+    .bk-card-head{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+    .bk-card-icon{width:28px;height:28px;border-radius:8px;background:var(--ink);color:var(--white);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+    .bk-card-title{font-size:14px;font-weight:500;}
+    .bk-card-body{padding:1.5rem;}
+    .genre-row{display:flex;gap:8px;margin-bottom:1.2rem;}
+    .genre-btn{flex:1;padding:11px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--cream);font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;color:var(--ink-light);}
+    .genre-btn.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+    .genre-btn:hover:not(.active){border-color:var(--gold);}
+    .services-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .service-btn{padding:14px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--cream);cursor:pointer;transition:all .15s;text-align:left;font-family:var(--font-body);position:relative;}
+    .service-btn:hover{border-color:var(--gold);transform:translateY(-1px);}
+    .service-btn.selected{border-color:var(--ink);background:var(--ink);}
+    .service-name{font-size:14px;font-weight:500;display:block;color:var(--ink);}
+    .service-btn.selected .service-name{color:var(--white);}
+    .service-meta{display:flex;gap:8px;margin-top:4px;}
+    .service-prix{font-size:13px;color:var(--gold);font-weight:500;}
+    .service-btn.selected .service-prix{color:var(--gold-light);}
+    .service-duree{font-size:11px;color:var(--ink-light);}
+    .service-btn.selected .service-duree{color:rgba(255,255,255,.5);}
+    .service-check{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;background:var(--gold);color:var(--ink);font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;}
+    .service-btn.selected .service-check{display:flex;}
+    .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+    .cal-nav-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;font-size:18px;color:var(--ink);display:flex;align-items:center;justify-content:center;transition:background .15s;}
+    .cal-nav-btn:hover{background:var(--cream-dark);}
+    .cal-month-label{font-size:15px;font-weight:500;text-transform:capitalize;}
+    .cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:8px;}
+    .cal-head span{text-align:center;font-size:11px;font-weight:500;color:var(--ink-light);padding:4px;}
+    .cal-grid-days{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+    .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:13px;border-radius:50%;cursor:pointer;border:none;background:none;font-family:var(--font-body);transition:all .15s;}
+    .cal-day:hover:not(.disabled):not(.empty){background:var(--cream-dark);}
+    .cal-day.today{font-weight:700;color:var(--gold);}
+    .cal-day.selected{background:var(--ink);color:var(--white);}
+    .cal-day.disabled{color:var(--border);cursor:not-allowed;}
+    .cal-day.empty{cursor:default;}
+    .slots-label{font-size:12px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;margin-top:1.2rem;}
+    .slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+    .slot-btn{padding:10px 4px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--cream);cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:500;transition:all .15s;color:var(--ink);text-align:center;}
+    .slot-btn:hover:not(.taken){border-color:var(--gold);background:var(--white);}
+    .slot-btn.selected{background:var(--ink);color:var(--white);border-color:var(--ink);}
+    .slot-btn.taken{color:var(--border);cursor:not-allowed;background:transparent;text-decoration:line-through;}
+    .form-group{margin-bottom:.9rem;}
+    .form-label{display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:5px;}
+    .form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
+    .form-input:focus{border-color:var(--gold);}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .recap-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px;}
+    .recap-row:last-child{border-bottom:none;padding-bottom:0;}
+    .recap-label{color:var(--ink-light);font-size:13px;}
+    .recap-val{font-weight:500;}
+    .recap-price{font-family:var(--font-display);font-size:1.4rem;color:var(--gold);}
+    .btn-next{width:100%;padding:14px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:opacity .2s;margin-top:1.2rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn-next:hover{opacity:.88;}
+    .btn-next:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-back{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--ink-light);background:none;border:none;cursor:pointer;font-family:var(--font-body);margin-bottom:1rem;padding:0;}
+    .btn-back:hover{color:var(--ink);}
+    .success-screen{display:none;text-align:center;padding:3rem 1rem;}
+    .success-icon{width:64px;height:64px;border-radius:50%;background:var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 1.2rem;}
+    .success-title{font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:.5rem;}
+    .success-title em{font-style:italic;color:var(--gold);}
+    .success-sub{font-size:14px;color:var(--ink-light);max-width:340px;margin:0 auto 2rem;line-height:1.6;}
+    .success-recap{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;max-width:340px;margin:0 auto;text-align:left;}
+    .loader{text-align:center;padding:2rem;color:var(--ink-light);font-size:14px;}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
+    .toast.show{opacity:1;}
+    .powered{text-align:center;font-size:12px;color:var(--ink-light);margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border);}
+    .powered a{color:var(--gold);}
+    @media(max-width:480px){.slots-grid{grid-template-columns:repeat(3,1fr);}.services-grid{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}.bk-step span:last-child{display:none;}}
+  </style>
 </head>
 <body>
 
-<div class="auth-page">
-  <div class="auth-card">
-
-    <a href="../index.html" class="auth-logo" style="display:block;text-align:center;margin-bottom:.25rem;font-family:var(--font-display);font-size:1.8rem;font-weight:600;">Belyo</a>
-    <p style="text-align:center;font-size:11px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-bottom:.3rem">Espace coiffeur</p>
-    <p class="auth-subtitle">Bon retour dans votre salon</p>
-    <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-bottom:1rem">Vous êtes client ? <a href="../client.html" style="color:var(--gold)">Accéder à mon espace client</a></p>
-
-    <div class="auth-error" id="error-msg"></div>
-
-    <form id="login-form">
-      <div class="form-group">
-        <label class="form-label">Email</label>
-        <input type="email" class="form-input" id="email" placeholder="marie@salon-eclat.fr" required autocomplete="email" />
-      </div>
-      <div class="form-group">
-        <label class="form-label" style="display:flex;justify-content:space-between;">
-          Mot de passe
-          <a href="forgot.html" style="font-size:12px;color:var(--gold);font-weight:400;">Mot de passe oublié ?</a>
-        </label>
-        <div style="position:relative">
-          <input type="password" class="form-input" id="password" placeholder="••••••••" required autocomplete="current-password" style="padding-right:44px" />
-          <button type="button" onclick="var i=document.getElementById('password');i.type=i.type==='password'?'text':'password';this.innerHTML=i.type==='password'?'&#128065;':'&#128064;'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px">&#128065;</button>
-        </div>
-      </div>
-      <button type="submit" class="btn-submit" id="submit-btn">Se connecter</button>
-    </form>
-
-    <p class="auth-switch">Pas encore de compte ? <a href="register.html">Essai gratuit 14 jours</a></p>
-  </div>
+<div class="bk-header">
+  <a href="index.html" class="bk-back">&#8592; Accueil</a>
+  <div class="bk-belyo">Belyo</div>
+  <div class="bk-salon-name" id="salon-name">Chargement<em>...</em></div>
+  <div class="bk-tagline">Réservez votre rendez-vous en ligne</div>
 </div>
 
+<div class="bk-steps" id="bk-steps">
+  <div class="bk-step active" id="bk-step-1"><div class="bk-step-num">1</div><span>Prestation</span></div>
+  <div class="bk-step" id="bk-step-2"><div class="bk-step-num">2</div><span>Date</span></div>
+  <div class="bk-step" id="bk-step-3"><div class="bk-step-num">3</div><span>Coordonnées</span></div>
+  <div class="bk-step" id="bk-step-4"><div class="bk-step-num">4</div><span>Confirmation</span></div>
+</div>
+
+<div class="bk-body">
+  <div class="loader" id="main-loader"><span class="spinner"></span> Chargement du salon...</div>
+  <div id="error-screen" style="display:none;text-align:center;padding:3rem 1rem">
+    <div style="font-size:2rem;margin-bottom:1rem">&#9888;</div>
+    <h2 style="font-size:1.1rem;margin-bottom:.5rem">Salon introuvable</h2>
+    <p style="color:var(--ink-light);font-size:14px">Vérifiez le lien fourni par votre salon.</p>
+    <a href="index.html" style="display:inline-block;margin-top:1.5rem;background:var(--ink);color:var(--white);padding:10px 24px;border-radius:100px;font-size:13px">Retour</a>
+  </div>
+
+  <div id="booking-flow" style="display:none">
+
+    <!-- ÉTAPE 1 -->
+    <div id="view-1">
+      <div class="bk-card">
+        <div class="bk-card-head"><div class="bk-card-icon">1</div><div class="bk-card-title">Choisissez votre prestation</div></div>
+        <div class="bk-card-body">
+          <div class="genre-row">
+            <button class="genre-btn active" id="gbtn-homme" onclick="setBookGenre('homme')">Homme</button>
+            <button class="genre-btn" id="gbtn-femme" onclick="setBookGenre('femme')">Femme</button>
+          </div>
+          <div class="services-grid" id="service-grid"></div>
+        </div>
+      </div>
+      <button class="btn-next" id="btn-step1" onclick="goStep(2)" disabled>Choisir une date &#8594;</button>
+    </div>
+
+    <!-- ÉTAPE 2 -->
+    <div id="view-2" style="display:none" data-selected-date="">
+      <button class="btn-back" onclick="goStep(1)">&#8592; Retour</button>
+      <div class="bk-card">
+        <div class="bk-card-head"><div class="bk-card-icon">2</div><div class="bk-card-title">Choisissez une date et un créneau</div></div>
+        <div class="bk-card-body">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="calPrevMonth()">&#8249;</button>
+            <span class="cal-month-label" id="cal-month-label">—</span>
+            <button class="cal-nav-btn" onclick="calNextMonth()">&#8250;</button>
+          </div>
+          <div class="cal-head"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div>
+          <div class="cal-grid-days" id="book-cal-grid"></div>
+          <div id="slots-section" style="display:none">
+            <div class="slots-label" id="slots-date-label">Créneaux disponibles</div>
+            <div class="loader" id="slots-loader" style="display:none"><span class="spinner"></span> Vérification...</div>
+            <div class="slots-grid" id="slots-grid"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-next" id="btn-step2" onclick="goStep(3)" disabled style="display:none">Mes coordonnées &#8594;</button>
+    </div>
+
+    <!-- ÉTAPE 3 -->
+    <div id="view-3" style="display:none">
+      <button class="btn-back" onclick="goStep(2)">&#8592; Retour</button>
+      <div class="bk-card">
+        <div class="bk-card-head"><div class="bk-card-icon">3</div><div class="bk-card-title">Vos coordonnées</div></div>
+        <div class="bk-card-body">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" id="client-prenom" placeholder="Sophie" /></div>
+            <div class="form-group"><label class="form-label">Nom *</label><input type="text" class="form-input" id="client-nom" placeholder="Martin" /></div>
+          </div>
+          <div class="form-group"><label class="form-label">Téléphone *</label><input type="tel" class="form-input" id="client-tel" placeholder="06 12 34 56 78" /></div>
+          <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="client-email" placeholder="sophie@email.fr" /></div>
+          <div class="form-group"><label class="form-label">Message (optionnel)</label><input type="text" class="form-input" id="client-notes" placeholder="Allergie colorant, cheveux courts..." /></div>
+        </div>
+      </div>
+      <button class="btn-next" onclick="goStep(4)">Vérifier mon RDV &#8594;</button>
+    </div>
+
+    <!-- ÉTAPE 4 -->
+    <div id="view-4" style="display:none">
+      <button class="btn-back" onclick="goStep(3)">&#8592; Retour</button>
+      <div class="bk-card">
+        <div class="bk-card-head"><div class="bk-card-icon">4</div><div class="bk-card-title">Récapitulatif</div></div>
+        <div class="bk-card-body">
+          <div class="recap-row"><span class="recap-label">Salon</span><span class="recap-val" id="recap-salon">—</span></div>
+          <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-val" id="recap-service">—</span></div>
+          <div class="recap-row"><span class="recap-label">Date</span><span class="recap-val" id="recap-date">—</span></div>
+          <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-val" id="recap-heure">—</span></div>
+          <div class="recap-row"><span class="recap-label">Client</span><span class="recap-val" id="recap-client">—</span></div>
+          <div class="recap-row"><span class="recap-label">Prix estimé</span><span class="recap-price" id="recap-prix">—</span></div>
+        </div>
+      </div>
+      <button class="btn-next" id="btn-confirm" onclick="confirmBooking()">&#10003; Confirmer ma réservation</button>
+      <p style="font-size:12px;color:var(--ink-light);text-align:center;margin-top:.8rem;line-height:1.5">En confirmant, vous acceptez que le salon conserve vos coordonnées.</p>
+    </div>
+  </div>
+
+  <!-- Succès -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">&#10003;</div>
+    <h2 class="success-title">RDV <em>confirmé</em></h2>
+    <p class="success-sub">Votre rendez-vous est enregistré. Le salon vous contactera si nécessaire.</p>
+    <div class="success-recap">
+      <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-val" id="success-service">—</span></div>
+      <div class="recap-row"><span class="recap-label">Date</span><span class="recap-val" id="success-date">—</span></div>
+      <div class="recap-row"><span class="recap-label">Heure</span><span class="recap-val" id="success-heure">—</span></div>
+      <div class="recap-row"><span class="recap-label">Prix estimé</span><span class="recap-price" id="success-prix">—</span></div>
+    </div>
+    <button class="btn-next" style="max-width:260px;margin:2rem auto 0" onclick="location.reload()">Prendre un autre RDV</button>
+    <p style="margin-top:1rem;font-size:13px;color:var(--ink-light)"><a href="client.html" style="color:var(--gold)">Voir mes RDV dans mon espace client</a></p>
+  </div>
+
+  <div class="powered">Réservation propulsée par <a href="index.html">Belyo</a></div>
+</div>
+
+<div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supabase.js"></script>
+<script src="js/supabase.js"></script>
 <script>
-  // Déjà connecté → dashboard
-  (async () => {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      var meta = session.user.user_metadata || {};
-      if (!meta.salon_name) { window.location.href = '../client.html'; }
-      else { window.location.href = 'dashboard.html'; }
+var salonId=null,salonNameStr='',prestations={homme:[],femme:[]},prixDuree={homme:{},femme:{}};
+var bookGenre='homme',selectedService=null,selectedDate=null,selectedSlot=null;
+var calMonth=new Date(),existingAppts=[];
+var HEURE_DEBUT=9,HEURE_FIN=19;
+
+function showToast(msg,type){var t=document.getElementById('toast');t.textContent=msg;t.style.background=type==='error'?'#991b1b':'#1A1714';t.classList.add('show');setTimeout(function(){t.classList.remove('show');},3000);}
+
+(async function(){
+  var params=new URLSearchParams(window.location.search);
+  salonId=params.get('salon');
+  if(!salonId){showError();return;}
+  try{
+    var res=await sb.from('salon_settings').select('prestations,prix_duree').eq('user_id',salonId).maybeSingle();
+    if(!res.data){showError();return;}
+    if(res.data.prestations){prestations.homme=res.data.prestations.homme||[];prestations.femme=res.data.prestations.femme||[];}
+    if(res.data.prix_duree)prixDuree=res.data.prix_duree;
+    var nr=await sb.rpc('get_salon_public_info',{p_user_id:salonId});
+    if(nr.data){
+      salonNameStr=nr.data.salon_name||'Votre salon';
+      var parts=salonNameStr.split(' '),first=parts[0],rest=parts.slice(1).join(' ');
+      document.getElementById('salon-name').innerHTML=first+(rest?' <em>'+rest+'</em>':'');
+      document.title='Réserver — '+salonNameStr;
     }
-  })();
-
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    const err = document.getElementById('error-msg');
-
-    btn.disabled = true;
-    btn.textContent = 'Connexion...';
-    err.classList.remove('visible');
-
-    const { data, error } = await sb.auth.signInWithPassword({
-      email:    document.getElementById('email').value.trim(),
-      password: document.getElementById('password').value,
-    });
-
-    if (error) {
-      const messages = {
-        'Invalid login credentials': 'Email ou mot de passe incorrect.',
-        'Email not confirmed': 'Veuillez confirmer votre email avant de vous connecter.',
-        'Too many requests': 'Trop de tentatives. Attendez quelques minutes.',
-      };
-      err.textContent = messages[error.message] || 'Une erreur est survenue. Réessayez.';
-      err.classList.add('visible');
-      btn.disabled = false;
-      btn.textContent = 'Se connecter';
-      return;
+    document.getElementById('main-loader').style.display='none';
+    document.getElementById('booking-flow').style.display='block';
+    renderServices();
+    calMonth=new Date();calMonth.setDate(1);renderCal();
+    var sess=await sb.auth.getSession();
+    if(sess.data&&sess.data.session){
+      var u=sess.data.session.user,meta=u.user_metadata||{},name=(meta.name||'').split(' ');
+      if(name[0])document.getElementById('client-prenom').value=name[0];
+      if(name[1])document.getElementById('client-nom').value=name.slice(1).join(' ');
+      if(meta.phone)document.getElementById('client-tel').value=meta.phone;
+      if(u.email)document.getElementById('client-email').value=u.email;
     }
+  }catch(e){showError();}
+})();
 
-    // Connexion réussie — vérifier le rôle
-    var meta = data.user.user_metadata || {};
-    if (!meta.salon_name) {
-      // C'est un client, pas un salon
-      window.location.href = '../client.html';
-    } else {
-      window.location.href = 'dashboard.html';
+function showError(){document.getElementById('main-loader').style.display='none';document.getElementById('error-screen').style.display='block';document.getElementById('bk-steps').style.display='none';}
+
+function setBookGenre(g){bookGenre=g;document.getElementById('gbtn-homme').classList.toggle('active',g==='homme');document.getElementById('gbtn-femme').classList.toggle('active',g==='femme');selectedService=null;document.getElementById('btn-step1').disabled=true;renderServices();}
+
+function renderServices(){
+  var grid=document.getElementById('service-grid'),list=prestations[bookGenre]||[];
+  window._serviceList=list;
+  if(!list.length){grid.innerHTML='<p style="color:var(--ink-light);font-size:13px;grid-column:span 2">Aucune prestation configurée.</p>';return;}
+  grid.innerHTML=list.map(function(p,idx){
+    var pd=prixDuree[bookGenre]&&prixDuree[bookGenre][p];
+    var prix=pd&&pd.prix?pd.prix+'\u20ac':'',duree=pd&&pd.duree?pd.duree+' min':'';
+    var sel=selectedService===p?' selected':'';
+    return '<button class="service-btn'+sel+'" onclick="selectService('+idx+')">'
+      +'<span class="service-check">\u2713</span>'
+      +'<span class="service-name">'+p+'</span>'
+      +'<div class="service-meta">'+(prix?'<span class="service-prix">'+prix+'</span>':'')+(duree?'<span class="service-duree">'+duree+'</span>':'')+'</div>'
+      +'</button>';
+  }).join('');
+}
+
+function selectService(idx){selectedService=(window._serviceList||[])[idx];renderServices();document.getElementById('btn-step1').disabled=!selectedService;}
+
+function calPrevMonth(){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCal();}
+function calNextMonth(){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCal();}
+
+function renderCal(){
+  var label=document.getElementById('cal-month-label'),grid=document.getElementById('book-cal-grid');
+  var year=calMonth.getFullYear(),month=calMonth.getMonth();
+  var now=new Date();now.setHours(0,0,0,0);
+  label.textContent=new Date(year,month,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  var firstDay=new Date(year,month,1).getDay(),offset=firstDay===0?6:firstDay-1;
+  var daysInMonth=new Date(year,month+1,0).getDate();
+  var selIso=document.getElementById('view-2').dataset.selectedDate||'';
+  var html='';
+  for(var i=0;i<offset;i++)html+='<button class="cal-day empty"></button>';
+  for(var d=1;d<=daysInMonth;d++){
+    var dd=new Date(year,month,d),isPast=dd<now,isToday=dd.toDateString()===now.toDateString();
+    var dayIso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isSel=selIso===dayIso;
+    var cls='cal-day'+(isPast?' disabled':'')+(isToday?' today':'')+(isSel?' selected':'');
+    var handler=isPast?'':' onclick="selectDay(\''+dayIso+'\')"';
+    html+='<button class="'+cls+'"'+handler+'>'+d+'</button>';
+  }
+  grid.innerHTML=html;
+}
+
+async function selectDay(iso){
+  selectedDate=new Date(iso+'T12:00:00');selectedSlot=null;
+  document.getElementById('view-2').dataset.selectedDate=iso;renderCal();
+  var ss=document.getElementById('slots-section'),btn=document.getElementById('btn-step2');
+  ss.style.display='block';btn.style.display='block';btn.disabled=true;
+  document.getElementById('slots-date-label').textContent='Créneaux — '+selectedDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('slots-loader').style.display='block';
+  document.getElementById('slots-grid').innerHTML='';
+  var res=await sb.from('appointments').select('datetime,duration_minutes,status').eq('user_id',salonId).gte('datetime',iso+'T00:00:00').lte('datetime',iso+'T23:59:59').neq('status','cancelled');
+  existingAppts=res.data||[];
+  document.getElementById('slots-loader').style.display='none';
+  renderSlots();
+}
+
+function renderSlots(){
+  var grid=document.getElementById('slots-grid'),pd=prixDuree[bookGenre]&&prixDuree[bookGenre][selectedService];
+  var dureeMin=pd&&pd.duree?pd.duree:30,now=new Date(),isToday=selectedDate&&selectedDate.toDateString()===now.toDateString(),html='';
+  for(var h=HEURE_DEBUT;h<HEURE_FIN;h++){
+    for(var m=0;m<60;m+=30){
+      var slotDt=new Date(selectedDate);slotDt.setHours(h,m,0,0);
+      if(isToday&&slotDt<=now)continue;
+      var isTaken=existingAppts.some(function(a){
+        var aDt=new Date(a.datetime),aEnd=new Date(aDt.getTime()+((a.duration_minutes||30)*60000));
+        var sEnd=new Date(slotDt.getTime()+(dureeMin*60000));
+        return slotDt<aEnd&&sEnd>aDt;
+      });
+      var slotStr=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+      var isSel=selectedSlot===slotStr;
+      var cls='slot-btn'+(isTaken?' taken':'')+(isSel?' selected':'');
+      var handler=isTaken?'':' onclick="selectSlot(\''+slotStr+'\')"';
+      html+='<button class="'+cls+'"'+handler+'>'+String(h).padStart(2,'0')+'h'+(m?String(m).padStart(2,'0'):'')+' </button>';
     }
-  });
+  }
+  grid.innerHTML=html||'<p style="color:var(--ink-light);font-size:13px;grid-column:span 4">Aucun créneau disponible.</p>';
+}
+
+function selectSlot(slot){selectedSlot=slot;renderSlots();document.getElementById('btn-step2').disabled=false;}
+
+function goStep(n){
+  if(n===4){
+    var p=document.getElementById('client-prenom').value.trim(),nm=document.getElementById('client-nom').value.trim(),t=document.getElementById('client-tel').value.trim();
+    if(!p||!nm||!t){showToast('Prénom, nom et téléphone obligatoires','error');return;}
+    fillRecap();
+  }
+  for(var i=1;i<=4;i++){
+    document.getElementById('view-'+i).style.display=i===n?'block':'none';
+    var el=document.getElementById('bk-step-'+i);
+    el.classList.remove('active','done');
+    if(i<n)el.classList.add('done');
+    if(i===n)el.classList.add('active');
+  }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function fillRecap(){
+  var p=document.getElementById('client-prenom').value.trim(),nm=document.getElementById('client-nom').value.trim();
+  var pd=prixDuree[bookGenre]&&prixDuree[bookGenre][selectedService];
+  document.getElementById('recap-salon').textContent=salonNameStr;
+  document.getElementById('recap-service').textContent=selectedService||'—';
+  document.getElementById('recap-date').textContent=selectedDate?selectedDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):'—';
+  document.getElementById('recap-heure').textContent=selectedSlot||'—';
+  document.getElementById('recap-client').textContent=p+' '+nm;
+  document.getElementById('recap-prix').textContent=pd&&pd.prix?pd.prix+'\u20ac':'\u00c0 d\u00e9finir';
+}
+
+async function confirmBooking(){
+  var btn=document.getElementById('btn-confirm');btn.disabled=true;btn.textContent='Envoi...';
+  var p=document.getElementById('client-prenom').value.trim(),nm=document.getElementById('client-nom').value.trim();
+  var tel=document.getElementById('client-tel').value.trim(),email=document.getElementById('client-email').value.trim();
+  var notes=document.getElementById('client-notes').value.trim();
+  var pd=prixDuree[bookGenre]&&prixDuree[bookGenre][selectedService];
+  var parts=selectedSlot.split(':'),dt=new Date(selectedDate);
+  dt.setHours(parseInt(parts[0]),parseInt(parts[1]),0,0);
+  var iso=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+'T'+parts[0]+':'+parts[1];
+  var notesFull='Tel: '+tel+(email?' | Email: '+email:'')+(notes?' | '+notes:'');
+  try{
+    var res=await sb.from('appointments').insert({user_id:salonId,client_name:p+' '+nm,service:selectedService,datetime:iso,price:pd&&pd.prix?pd.prix:null,duration_minutes:pd&&pd.duree?pd.duree:30,notes:notesFull,status:'pending'});
+    if(res.error)throw res.error;
+    document.getElementById('booking-flow').style.display='none';
+    document.getElementById('success-screen').style.display='block';
+    document.getElementById('bk-steps').style.display='none';
+    document.getElementById('success-service').textContent=selectedService;
+    document.getElementById('success-date').textContent=selectedDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('success-heure').textContent=selectedSlot;
+    document.getElementById('success-prix').textContent=pd&&pd.prix?pd.prix+'\u20ac':'\u00c0 d\u00e9finir';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    showToast('Erreur : '+(e.message||'Réessayez.'),'error');
+    btn.disabled=false;btn.innerHTML='&#10003; Confirmer ma réservation';
+  }
+}
 </script>
 </body>
 </html>
