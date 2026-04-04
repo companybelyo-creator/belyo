@@ -204,17 +204,23 @@ function showClientInfo(client, newName) {
   } else {
     badge.style.display = 'inline-block';
     label.textContent   = newName || 'Nouveau client';
-    email.value         = '';
-    phone.value         = '';
+    // Ne pas écraser les valeurs déjà saisies par l'utilisateur
+    if (!email.value.trim()) email.value = '';
+    if (!phone.value.trim()) phone.value = '';
   }
 }
 
 document.addEventListener('click', function(e) {
-  var s = document.getElementById('client-suggestions');
+  var s     = document.getElementById('client-suggestions');
+  var block = document.getElementById('client-info-block');
   if (s && !s.contains(e.target) && e.target.id !== 'appt-client') {
     s.style.display = 'none';
-    var val = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
-    if (val && !selectedClient) showClientInfo(null, val);
+    // Afficher le bloc infos seulement s'il n'est pas déjà ouvert
+    // (pour ne pas écraser email/phone déjà saisis)
+    if (!selectedClient && block && block.style.display === 'none') {
+      var val = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+      if (val) showClientInfo(null, val);
+    }
   }
 });
 
