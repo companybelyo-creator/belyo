@@ -476,20 +476,14 @@ async function savePrestations() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
-  // Essayer UPDATE d'abord, si aucune ligne → INSERT
+  // UPDATE uniquement — la ligne existe forcément (créée à l'inscription)
   var res = await sb.from('salon_settings')
-    .update({ prestations: activePrestations, custom_prestations: customPrestations, prix_duree: prixDuree })
-    .eq('user_id', currentUser.id);
-
-  if (res.error || (res.count === 0)) {
-    // Pas encore de ligne → INSERT
-    res = await sb.from('salon_settings').insert({
-      user_id:            currentUser.id,
+    .update({
       prestations:        activePrestations,
       custom_prestations: customPrestations,
       prix_duree:         prixDuree,
-    });
-  }
+    })
+    .eq('user_id', currentUser.id);
 
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
