@@ -387,6 +387,65 @@ async function loadRdv(email, phone) {
   renderRdvList('past-rdv', past, false, nowDate);
 }
 
+function renderRdvList(elId, list, isUpcoming, nowDate) {
+  var el = document.getElementById(elId);
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
+    return;
+  }
+  var html = '';
+  list.forEach(function(a) {
+    var dt    = new Date(a.datetime);
+    var day   = dt.getDate();
+    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
+    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+    var prix  = a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '';
+    var isNow = isUpcoming && a.status === 'pending' && nowDate && (nowDate - dt) >= 0 && (nowDate - dt) < 2*3600000;
+    var cls   = isNow ? 'status-now' : ({ pending:'status-pending', done:'status-done', cancelled:'status-cancelled' }[a.status] || 'status-pending');
+    var txt   = isNow ? 'En cours'   : ({ pending:'À venir', done:'Terminé', cancelled:'Annulé' }[a.status] || '');
+    html += '<div class="rdv-item">';
+    html += '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>';
+    html += '<div class="rdv-info">';
+    html += '<div class="rdv-salon">' + (a.salon_name || 'Salon') + '</div>';
+    html += '<div class="rdv-service">' + (a.service || '—') + '</div>';
+    html += '<div class="rdv-time">' + heure + prix + '</div>';
+    html += '</div>';
+    html += '<div class="rdv-actions">';
+    html += '<span class="rdv-status ' + cls + '">' + txt + '</span>';
+    if (isUpcoming && a.slug) html += '<a class="btn-rebook" href="/' + a.slug + '">Re-réserver</a>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function renderRdvList(elId, list, isUpcoming, nowDate) {
+  var el = document.getElementById(elId);
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
+    return;
+  }
+  var html = '';
+  list.forEach(function(a) {
+    var dt    = new Date(a.datetime);
+    var day   = dt.getDate();
+    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
+    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+    var prix  = a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '';
+    var isNow = isUpcoming && a.status === 'pending' && nowDate - dt >= 0 && nowDate - dt < 2*3600000;
+    var cls   = isNow ? 'status-now' : ({ pending:'status-pending', done:'status-done', cancelled:'status-cancelled' }[a.status] || 'status-pending');
+    var txt   = isNow ? 'En cours' : ({ pending:'À venir', done:'Terminé', cancelled:'Annulé' }[a.status] || '');
+    html += '<div class="rdv-item">';
+    html += '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>';
+    html += '<div class="rdv-info"><div class="rdv-salon">' + (a.salon_name || 'Salon') + '</div>';
+    html += '<div class="rdv-service">' + (a.service || '—') + '</div>';
+    html += '<div class="rdv-time">' + heure + prix + '</div></div>';
+    html += '<div class="rdv-actions"><span class="rdv-status ' + cls + '">' + txt + '</span>';
+    if (isUpcoming && a.slug) html += '<a class="btn-rebook" href="/' + a.slug + '">Re-réserver</a>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
 // ===== SALONS =====
 async function loadAllSalons() {
   var el = document.getElementById('all-salons');
