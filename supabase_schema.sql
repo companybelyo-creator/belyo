@@ -202,3 +202,39 @@ BEGIN
   );
 END;
 $$;
+
+-- ============================================================
+-- FONCTIONS POUR ESPACE CLIENT (SECURITY DEFINER = bypass RLS)
+-- ============================================================
+
+-- Chercher les RDV d'un client par email (contenu dans notes)
+CREATE OR REPLACE FUNCTION get_client_appointments(p_email TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN (
+    SELECT json_agg(row_to_json(t))
+    FROM (
+      SELECT
+        a.id, a.client_name, a.service, a.datetime,
+        a.price, a.status, a.notes, a.user_id,
+        ss.slug,
+        COALESCE(u.raw_user_meta_data->>'salon_name', 'Salon') AS salon_name
+      FROM appointments a
+      LEFT JOIN salon_settings ss ON ss.user_id = a.user_id
+      LEFT JOIN auth.users u ON u.id = a.user_id
+      WHERE a.notes ILIKE '%' || p_email || '%'
+      ORDER BY a.datetime ASC
+    ) t
+  );
+END;
+$$;
+
+-- Créer le salon_settings pour un utilisateur existant
+CREATE OR REPLACE FUNCTION create_salon_for_user(p_user_id UUID)
+RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  INSERT INTO salon_settings (user_id)
+  VALUES (p_user_id)
+  ON CONFLICT (user_id) DO NOTHING;
+END;
+$$;

@@ -367,98 +367,24 @@ async function showDashboard(user) {
 
 // ===== RDV =====
 async function loadRdv(email, phone) {
-  var now = new Date().toISOString();
+  var nowStr  = new Date().toISOString();
+  var nowDate = new Date();
 
-  // Chercher par email dans les notes (format "Tel: ... | Email: email@...")
-  var res = await sb.from('appointments')
-    .select('id, client_name, service, datetime, price, status, notes, user_id')
-    .ilike('notes', '%' + email + '%')
-    .order('datetime', { ascending: true });
-
+  // RPC SECURITY DEFINER pour bypass RLS
+  var res = await sb.rpc('get_client_appointments', { p_email: email });
   var data = res.data || [];
 
-  // Fallback par téléphone nettoyé
+  // Fallback tel si aucun résultat
   if (data.length === 0 && phone) {
-    var cleanPhone = phone.replace(/\s/g, '');
-    var res2 = await sb.from('appointments')
-      .select('id, client_name, service, datetime, price, status, notes, user_id')
-      .ilike('notes', '%' + cleanPhone + '%')
-      .order('datetime', { ascending: true });
+    var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g, '') });
     data = res2.data || [];
   }
 
-  // Si créateur, aussi chercher les RDV pris dans d'autres salons (par client_name)
-  if (isCreator && currentUser) {
-    var meta = currentUser.user_metadata || {};
-    var fullName = (meta.name || meta.first_name || '').trim();
-    if (fullName) {
-      var res3 = await sb.from('appointments')
-        .select('id, client_name, service, datetime, price, status, notes, user_id')
-        .ilike('client_name', '%' + fullName + '%')
-        .neq('user_id', currentUser.id) // pas ses propres clients
-        .order('datetime', { ascending: true });
-      var extra = (res3.data || []).filter(function(a) {
-        return !data.find(function(d) { return d.id === a.id; });
-      });
-      data = data.concat(extra);
-    }
-  }
-
-  // Récupérer les slugs/noms des salons
-  var userIds = [];
-  data.forEach(function(a) { if (userIds.indexOf(a.user_id) === -1) userIds.push(a.user_id); });
-  var salonMap = {};
-  if (userIds.length > 0) {
-    var sRes = await sb.from('salon_settings').select('user_id, slug').in('user_id', userIds);
-    (sRes.data || []).forEach(function(s) { salonMap[s.user_id] = { slug: s.slug }; });
-    for (var i = 0; i < userIds.length; i++) {
-      var nr = await sb.rpc('get_salon_public_info', { p_user_id: userIds[i] });
-      if (nr.data && salonMap[userIds[i]]) salonMap[userIds[i]].name = nr.data.salon_name;
-    }
-  }
-  data.forEach(function(a) { var s = salonMap[a.user_id] || {}; a.slug = s.slug || null; a.salon_name = s.name || 'Salon'; });
-
-  var nowStr   = new Date().toISOString();
-  var nowDate  = new Date();
   var upcoming = data.filter(function(a) { return a.datetime >= nowStr && a.status === 'pending'; });
-  var past     = data.filter(function(a) { return a.datetime < nowStr || a.status !== 'pending'; }).reverse().slice(0, 15);
+  var past     = data.filter(function(a) { return a.datetime <  nowStr || a.status !== 'pending'; }).reverse().slice(0, 15);
 
   renderRdvList('upcoming-rdv', upcoming, true, nowDate);
   renderRdvList('past-rdv', past, false, nowDate);
-}
-
-function renderRdvList(elId, list, isUpcoming, nowDate) {
-  var el = document.getElementById(elId);
-  if (!list || list.length === 0) {
-    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
-    return;
-  }
-  var html = '';
-  list.forEach(function(a) {
-    var dt    = new Date(a.datetime);
-    var day   = dt.getDate();
-    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
-    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-    var prix  = a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '';
-
-    // Détecter si en cours (dans les 2h suivantes)
-    var isNow = isUpcoming && a.status === 'pending' && (nowDate - dt) >= 0 && (nowDate - dt) < 2*3600000;
-    var cls   = isNow ? 'status-now' : ({ pending:'status-pending', done:'status-done', cancelled:'status-cancelled' }[a.status] || 'status-pending');
-    var txt   = isNow ? 'En cours' : ({ pending:'À venir', done:'Terminé', cancelled:'Annulé' }[a.status] || '');
-
-    html += '<div class="rdv-item">';
-    html += '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>';
-    html += '<div class="rdv-info">';
-    html += '<div class="rdv-salon">' + a.salon_name + '</div>';
-    html += '<div class="rdv-service">' + (a.service || '—') + '</div>';
-    html += '<div class="rdv-time">' + heure + prix + '</div>';
-    html += '</div>';
-    html += '<div class="rdv-actions">';
-    html += '<span class="rdv-status ' + cls + '">' + txt + '</span>';
-    if (isUpcoming && a.slug) html += '<a class="btn-rebook" href="/' + a.slug + '">Re-réserver</a>';
-    html += '</div></div>';
-  });
-  el.innerHTML = html;
 }
 
 // ===== SALONS =====
@@ -583,8 +509,8 @@ async function createSalon() {
   var res = await sb.auth.updateUser({ data: { salon_name: salonName, role: 'creator' } });
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); btn.disabled = false; btn.textContent = 'Créer mon salon'; return; }
 
-  // Créer les salon_settings
-  var sRes = await sb.from('salon_settings').upsert({ user_id: currentUser.id }, { onConflict: 'user_id' });
+  // Créer les salon_settings via RPC (bypass RLS)
+  await sb.rpc('create_salon_for_user', { p_user_id: currentUser.id });
 
   closeCreatorModal();
   showToast('Salon créé ! Redirection...');
