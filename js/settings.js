@@ -476,12 +476,20 @@ async function savePrestations() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
-  var res = await sb.from('salon_settings').upsert({
-    user_id:            currentUser.id,
-    prestations:        activePrestations,
-    custom_prestations: customPrestations,
-    prix_duree:         prixDuree,
-  }, { onConflict: 'user_id' });
+  // Essayer UPDATE d'abord, si aucune ligne → INSERT
+  var res = await sb.from('salon_settings')
+    .update({ prestations: activePrestations, custom_prestations: customPrestations, prix_duree: prixDuree })
+    .eq('user_id', currentUser.id);
+
+  if (res.error || (res.count === 0)) {
+    // Pas encore de ligne → INSERT
+    res = await sb.from('salon_settings').insert({
+      user_id:            currentUser.id,
+      prestations:        activePrestations,
+      custom_prestations: customPrestations,
+      prix_duree:         prixDuree,
+    });
+  }
 
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
