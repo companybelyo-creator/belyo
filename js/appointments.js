@@ -196,7 +196,7 @@ function renderClientSuggestions(matches, rawVal) {
     var handler = idx2 >= 0
       ? 'selectClientById(' + JSON.stringify(c.id) + ')'
       : 'selectClientByData(' + JSON.stringify(c.name) + ',' + JSON.stringify(c.email || '') + ',' + JSON.stringify(c.phone || '') + ')';
-    return '<div onclick="' + handler + '" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+    return '<div onclick="event.stopPropagation();' + handler + '" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
       + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
@@ -210,7 +210,17 @@ function selectClientById(id) {
   selectedClient = client;
   document.getElementById('appt-client').value = client.name;
   document.getElementById('client-suggestions').style.display = 'none';
-  showClientInfo(client, null);
+  // Forcer le remplissage directement sans passer par showClientInfo
+  var block = document.getElementById('client-info-block');
+  var badge = document.getElementById('client-new-badge');
+  var label = document.getElementById('client-info-label');
+  var emailEl = document.getElementById('client-email');
+  var phoneEl = document.getElementById('client-phone');
+  if (block) block.style.display = 'block';
+  if (badge) badge.style.display = 'none';
+  if (label) label.textContent = client.name;
+  if (emailEl) emailEl.value = client.email || '';
+  if (phoneEl) phoneEl.value = client.phone || '';
 }
 
 function selectClient(id) { selectClientById(id); }
@@ -219,7 +229,16 @@ function selectClientByData(name, email, phone) {
   selectedClient = { id: null, name: name, email: email || '', phone: phone || '', fromBelyo: true };
   document.getElementById('appt-client').value = name;
   document.getElementById('client-suggestions').style.display = 'none';
-  showClientInfo(selectedClient, null);
+  var block   = document.getElementById('client-info-block');
+  var badge   = document.getElementById('client-new-badge');
+  var label   = document.getElementById('client-info-label');
+  var emailEl = document.getElementById('client-email');
+  var phoneEl = document.getElementById('client-phone');
+  if (block)   block.style.display = 'block';
+  if (badge)   badge.style.display = 'inline-block';
+  if (label)   label.textContent   = name;
+  if (emailEl) emailEl.value = email || '';
+  if (phoneEl) phoneEl.value = phone || '';
 }
 
 
