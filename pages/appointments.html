@@ -192,6 +192,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
+<script>
+(async function() {
+  var s = await sb.auth.getSession();
+  if (!s.data.session) { window.location.href = 'login.html'; return; }
+  var meta = s.data.session.user.user_metadata || {};
+  if (meta.role !== 'salon') { window.location.href = '../client.html'; }
+})();
+// end guard-salon
+</script>
 <script src="../js/appointments.js"></script>
 </body>
 </html>
