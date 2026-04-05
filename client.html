@@ -507,46 +507,51 @@ async function renderSalonCards(salons, targetId) {
     var s = salons[i];
     var cardId = targetId + '-' + i;
 
-    // Charger prestations
-    var settRes = await sb.from('salon_settings').select('prestations, prix_duree').eq('user_id', s.user_id).maybeSingle();
+    var settRes = await sb.from('salon_settings')
+      .select('prestations, prix_duree')
+      .eq('user_id', s.user_id)
+      .maybeSingle();
     var prestH = [], prestF = [], pd = {};
     if (settRes.data) {
       prestH = (settRes.data.prestations && settRes.data.prestations.homme) || [];
       prestF = (settRes.data.prestations && settRes.data.prestations.femme) || [];
       pd = settRes.data.prix_duree || {};
     }
-    vitrinaData[cardId] = { prestH: prestH, prestF: prestF, pd: pd, slug: s.slug };
+    vitrinaData[cardId] = { prestH: prestH, prestF: prestF, pd: pd, slug: s.slug, user_id: s.user_id };
+
+    var bookUrl = '/book.html?salon=' + s.user_id;
 
     html += '<div class="salon-card">';
-    html += '<div class="salon-card-header" onclick="toggleVitrine(' + JSON.stringify(cardId) + ')">';
-    html += '<div class="salon-card-left"><h4>' + s.salon_name + '</h4><p>belyo.vercel.app/' + (s.slug || '') + '</p></div>';
-    if (s.slug) {
-      html += '<button class="btn-book-inline" onclick="event.stopPropagation();window.location.href=\'/' + s.slug + '\'">Réserver</button>';
+    html += '<div class="salon-card-header" onclick="toggleVitrine(&quot;' + cardId + '&quot;)">';
+    html += '<div class="salon-card-left">';
+    html += '<h4>' + (s.salon_name || 'Salon') + '</h4>';
+    if (s.salon_address) {
+      html += '<p>' + s.salon_address + '</p>';
     }
     html += '</div>';
-    html += '<div class="salon-vitrine" id="vitrine-' + cardId + '">';
+    html += '<a class="btn-book-inline" href="' + bookUrl + '" onclick="event.stopPropagation()">Réserver</a>';
+    html += '</div>';
 
-    // Prestations Homme
+    html += '<div class="salon-vitrine" id="vitrine-' + cardId + '">';
     if (prestH.length > 0) {
       html += '<div class="vitrine-section-label">Homme</div><div class="vitrine-tags">';
       prestH.forEach(function(p) {
         var pdata = pd.homme && pd.homme[p];
-        var prix  = pdata && pdata.prix ? pdata.prix + '\u20ac' : '';
+        var prix = pdata && pdata.prix ? pdata.prix + '€' : '';
         html += '<span class="vtag">' + p + (prix ? ' <strong>' + prix + '</strong>' : '') + '</span>';
       });
       html += '</div>';
     }
-    // Prestations Femme
     if (prestF.length > 0) {
       html += '<div class="vitrine-section-label">Femme</div><div class="vitrine-tags">';
       prestF.forEach(function(p) {
         var pdata = pd.femme && pd.femme[p];
-        var prix  = pdata && pdata.prix ? pdata.prix + '\u20ac' : '';
+        var prix = pdata && pdata.prix ? pdata.prix + '€' : '';
         html += '<span class="vtag">' + p + (prix ? ' <strong>' + prix + '</strong>' : '') + '</span>';
       });
       html += '</div>';
     }
-    html += '<a href="/book.html?salon=' + s.user_id + '" style="display:inline-block;margin-top:12px;background:var(--ink);color:var(--white);padding:9px 20px;border-radius:100px;font-size:13px;font-weight:500">Prendre un RDV</a>';
+    html += '<a href="' + bookUrl + '" class="btn-book-inline" style="display:inline-block;margin-top:12px;background:var(--ink);color:var(--white);padding:9px 20px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none">Prendre un RDV</a>';
     html += '</div></div>';
   }
   el.innerHTML = html;
