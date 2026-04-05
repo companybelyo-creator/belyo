@@ -215,7 +215,7 @@ function showTrialBanner(daysLeft) {
   ].join(';');
 
   var msg = daysLeft <= 0
-    ? "Votre essai gratuit se termine aujourd'hui."
+    ? "Votre essai gratuit se termine aujourd\'hui."
     : 'Essai gratuit — ' + daysLeft + ' jour' + (daysLeft > 1 ? 's' : '') + ' restant' + (daysLeft > 1 ? 's' : '') + '.';
 
   banner.innerHTML = '<span>' + msg + '</span>'
@@ -328,7 +328,7 @@ function calPickerSelectDay(year, month, day) {
   var timeEl = document.getElementById('cal-picker-time');
   if (timeEl) timeEl.style.display = 'flex';
 
-  // Peupler les heures disponibles (8h-19h, bloquer heures passées si aujourd'hui)
+  // Peupler les heures disponibles (8h-19h, bloquer heures passées si aujourd\'hui)
   var hourEl = document.getElementById('cal-picker-hour');
   if (hourEl) {
     hourEl.innerHTML = '';
@@ -664,7 +664,7 @@ async function loadNotifications(userId) {
         icon: '&#9201;',
         title: a.client_name,
         desc: (a.service || 'RDV') + ' — ' + hm,
-        time: isPast ? 'Passe' : "Aujourd'hui a " + hm,
+        time: isPast ? 'Passe' : 'Aujourd\'hui a ' + hm,
         unread: !isPast,
         type: 'rdv',
       });
@@ -711,7 +711,7 @@ async function loadNotifications(userId) {
   var html = '';
 
   if (rdvItems.length > 0) {
-    html += '<div class="notif-section-label">RDV aujourd"hui (' + rdvItems.length + ')</div>';
+    html += '<div class="notif-section-label">RDV aujourd\'hui (' + rdvItems.length + ')</div>';
     html += rdvItems.map(renderNotifItem).join('');
   }
 

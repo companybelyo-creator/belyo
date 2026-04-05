@@ -283,6 +283,7 @@ async function loadData() {
   currentUserId = session.user.id;
   initSidebar(session.user);
   initLogout();
+  initNotifications(session.user.id);
   await checkSubscription(session.user.id, session.user.created_at);
   await initPlan(session.user.id, session.user.created_at);
   await loadData();
@@ -324,7 +325,7 @@ async function exportPDF() {
     doc.text('Belyo', margin, 13);
     doc.setFontSize(10);
     doc.setTextColor(196, 168, 122);
-    doc.text("Rapport Chiffre d'Affaires", margin, 21);
+    doc.text('Rapport Chiffre d\'Affaires', margin, 21);
 
     // Date de generation
     var now = new Date();
