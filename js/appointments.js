@@ -1,4 +1,3 @@
-// Belyo appointments v2.1
 // ============================================================
 // APPOINTMENTS.JS
 // ============================================================
@@ -183,6 +182,8 @@ function onClientInput(val) {
   }, 350);
 }
 
+var _suggestCache = [];
+
 function renderClientSuggestions(matches, rawVal) {
   var suggestions = document.getElementById('client-suggestions');
   if (matches.length === 0) {
@@ -190,19 +191,25 @@ function renderClientSuggestions(matches, rawVal) {
     showClientInfo(null, rawVal);
     return;
   }
+  _suggestCache = matches.slice();
   suggestions.style.display = 'block';
-  suggestions.innerHTML = matches.map(function(c) {
-    var tag = c.fromBelyo ? '<span style="font-size:10px;background:var(--gold-light);color:var(--gold);padding:1px 6px;border-radius:100px;margin-left:6px">Belyo</span>' : '';
-    var idx2 = c.id ? allClients.findIndex(function(x){ return x.id === c.id; }) : -1;
-    var handler = idx2 >= 0
-      ? 'selectClientById(' + JSON.stringify(c.id) + ')'
-      : 'selectClientByData(' + JSON.stringify(c.name) + ',' + JSON.stringify(c.email || '') + ',' + JSON.stringify(c.phone || '') + ')';
-    return '<div onclick="event.stopPropagation();' + handler + '" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+  suggestions.innerHTML = matches.map(function(c, i) {
+    var tag = c.fromBelyo
+      ? '<span style="font-size:10px;background:var(--gold-light);color:var(--gold);padding:1px 6px;border-radius:100px;margin-left:6px">Belyo</span>'
+      : '';
+    return '<div onclick="event.stopPropagation();pickClient(' + i + ')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
       + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
+}
+
+function pickClient(i) {
+  var c = _suggestCache[i];
+  if (!c) return;
+  if (c.id) { selectClientById(c.id); }
+  else { selectClientByData(c.name, c.email || '', c.phone || ''); }
 }
 
 function selectClientById(id) {
