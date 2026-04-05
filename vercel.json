@@ -1,9 +1,14 @@
 {
   "routes": [
-    { "src": "/book", "dest": "/book.html" },
     { "src": "/book.html", "dest": "/book.html" },
-    { "src": "/client", "dest": "/client.html" },
+    { "src": "/book", "dest": "/book.html" },
     { "src": "/client.html", "dest": "/client.html" },
+    { "src": "/client", "dest": "/client.html" },
+    { "src": "/index.html", "dest": "/index.html" },
+    { "src": "/pages/(.*)", "dest": "/pages/$1" },
+    { "src": "/js/(.*)", "dest": "/js/$1" },
+    { "src": "/css/(.*)", "dest": "/css/$1" },
+    { "src": "/supabase/(.*)", "dest": "/supabase/$1" },
     { "src": "/([a-z0-9-]+)", "dest": "/slug.html?slug=$1" },
     { "src": "/(.*)", "dest": "/$1" }
   ],
