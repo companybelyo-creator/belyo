@@ -216,25 +216,6 @@ function renderClientSuggestions(matches, rawVal) {
     return;
   }
 
-  suggestions.style.display = 'block';
-  suggestions.innerHTML = matches.map(function(c) {
-    return '<div onclick="selectClient(\'' + c.id + '\')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
-      + '<strong style="color:var(--ink)">' + c.name + '</strong>'
-      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
-      + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
-      + '</div>';
-  }).join('');
-
-function selectClientById(id) {
-  var client = allClients.find(function(c) { return c.id === id; });
-  if (!client) return;
-  selectedClient = client;
-  document.getElementById('appt-client').value = client.name;
-  document.getElementById('client-suggestions').style.display = 'none';
-  showClientInfo(client, null);
-}
-
-// Alias pour compatibilité
 function selectClientById(id) {
   var client = allClients.find(function(c) { return c.id === id; });
   if (!client) return;
