@@ -268,10 +268,12 @@ document.addEventListener('click', function(e) {
   var block = document.getElementById('client-info-block');
   if (s && !s.contains(e.target) && e.target.id !== 'appt-client') {
     s.style.display = 'none';
-    // Afficher le bloc infos seulement s'il n'est pas déjà ouvert
-    // (pour ne pas écraser email/phone déjà saisis)
-    if (!selectedClient && block && block.style.display === 'none') {
-      var val = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+    // Ne rien faire si un client est déjà sélectionné (ne pas écraser)
+    if (selectedClient) return;
+    // Afficher infos nouveau client seulement si le bloc est fermé
+    if (block && block.style.display === 'none') {
+      var inp = document.getElementById('appt-client');
+      var val = inp ? inp.value.trim() : '';
       if (val) showClientInfo(null, val);
     }
   }
