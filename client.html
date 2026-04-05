@@ -85,9 +85,11 @@
 
     /* Recherche + vitrine */
     .search-wrap{position:relative;margin-bottom:1rem;}
-    .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-light);font-size:14px;}
-    .search-input{width:100%;padding:11px 14px 11px 38px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
-    .search-input:focus{border-color:var(--gold);}
+    .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-light);display:flex;align-items:center;pointer-events:none;}
+    .search-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+    .search-input{width:100%;padding:12px 14px 12px 44px;border:1.5px solid var(--border);border-radius:100px;font-family:var(--font-body);font-size:14px;background:var(--white);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;}
+    .search-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,168,122,.12);}
+    .search-input::placeholder{color:var(--ink-light);}
 
     /* Salon cards */
     .salon-card{border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;transition:border-color .15s;}
@@ -193,7 +195,7 @@
         <div class="section-title">Trouver un salon</div>
       </div>
       <div class="search-wrap">
-        <span class="search-icon">&#9906;</span>
+        <span class="search-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span>
         <input type="text" class="search-input" id="salon-search" placeholder="Rechercher un salon par nom..." oninput="searchSalons(this.value)" autocomplete="off" />
       </div>
       <div id="search-results"></div>
@@ -466,7 +468,7 @@ async function loadAllSalons() {
     var s = res.data[i];
     var nr = await sb.rpc('get_salon_public_info', { p_user_id: s.user_id });
     if (nr.data) {
-      salons.push({ user_id: s.user_id, slug: s.slug, salon_name: nr.data.salon_name || 'Salon' });
+      salons.push({ user_id: s.user_id, slug: s.slug, salon_name: nr.data.salon_name || 'Salon', salon_address: nr.data.salon_address || '' });
     }
   }
   if (salons.length === 0) { el.innerHTML = ''; return; }
