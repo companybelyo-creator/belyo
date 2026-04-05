@@ -148,9 +148,11 @@ async function loadClients() {
   allClients = res.data || [];
 }
 
+var clientSearchTimer = null;
+
 function onClientInput(val) {
   selectedClient = null;
-  var block = document.getElementById('client-info-block');
+  var block       = document.getElementById('client-info-block');
   var suggestions = document.getElementById('client-suggestions');
 
   if (!val.trim()) {
@@ -158,6 +160,50 @@ function onClientInput(val) {
     block.style.display = 'none';
     return;
   }
+
+  var q = val.toLowerCase();
+  var localMatches = allClients.filter(function(c) {
+    return c.name.toLowerCase().includes(q);
+  });
+
+  renderClientSuggestions(localMatches, val.trim());
+
+  clearTimeout(clientSearchTimer);
+  clientSearchTimer = setTimeout(async function() {
+    var res = await sb.rpc('search_belyo_users', { p_query: val.trim() });
+    var belyoUsers = res.data || [];
+    var localNames = localMatches.map(function(c) { return c.name.toLowerCase(); });
+    var extra = belyoUsers.filter(function(u) {
+      return !localNames.includes((u.name || '').toLowerCase());
+    }).map(function(u) {
+      return { id: null, name: u.name, email: u.email, phone: u.phone || '', fromBelyo: true };
+    });
+    renderClientSuggestions(localMatches.concat(extra), val.trim());
+  }, 350);
+}
+
+function renderClientSuggestions(matches, rawVal) {
+  var suggestions = document.getElementById('client-suggestions');
+  if (matches.length === 0) {
+    suggestions.style.display = 'none';
+    showClientInfo(null, rawVal);
+    return;
+  }
+  suggestions.style.display = 'block';
+  suggestions.innerHTML = matches.map(function(c) {
+    var tag = c.fromBelyo ? '<span style="font-size:10px;background:var(--gold-light);color:var(--gold);padding:1px 6px;border-radius:100px;margin-left:6px">Belyo</span>' : '';
+    var idx2 = c.id ? allClients.findIndex(function(x){ return x.id === c.id; }) : -1;
+    var handler = idx2 >= 0
+      ? 'selectClientById(' + JSON.stringify(c.id) + ')'
+      : 'selectClientByData(' + JSON.stringify(c.name) + ',' + JSON.stringify(c.email || '') + ',' + JSON.stringify(c.phone || '') + ')';
+    return '<div onclick="' + handler + '" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
 
   var q = val.toLowerCase();
   var matches = allClients.filter(function(c) {
@@ -178,9 +224,8 @@ function onClientInput(val) {
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
-}
 
-function selectClient(id) {
+function selectClientById(id) {
   var client = allClients.find(function(c) { return c.id === id; });
   if (!client) return;
   selectedClient = client;
@@ -188,6 +233,26 @@ function selectClient(id) {
   document.getElementById('client-suggestions').style.display = 'none';
   showClientInfo(client, null);
 }
+
+// Alias pour compatibilité
+function selectClientById(id) {
+  var client = allClients.find(function(c) { return c.id === id; });
+  if (!client) return;
+  selectedClient = client;
+  document.getElementById('appt-client').value = client.name;
+  document.getElementById('client-suggestions').style.display = 'none';
+  showClientInfo(client, null);
+}
+
+function selectClient(id) { selectClientById(id); }
+
+function selectClientByData(name, email, phone) {
+  selectedClient = { id: null, name: name, email: email || '', phone: phone || '', fromBelyo: true };
+  document.getElementById('appt-client').value = name;
+  document.getElementById('client-suggestions').style.display = 'none';
+  showClientInfo(selectedClient, null);
+}
+
 
 function showClientInfo(client, newName) {
   var block = document.getElementById('client-info-block');

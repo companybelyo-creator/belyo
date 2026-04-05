@@ -245,3 +245,25 @@ BEGIN
   ON CONFLICT (user_id) DO NOTHING;
 END;
 $$;
+
+-- Chercher des utilisateurs Belyo par nom (pour l'autocomplete du formulaire RDV)
+CREATE OR REPLACE FUNCTION search_belyo_users(p_query TEXT)
+RETURNS JSON LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  RETURN (
+    SELECT json_agg(json_build_object(
+      'name',  COALESCE(u.raw_user_meta_data->>'name', u.email),
+      'email', u.email,
+      'phone', COALESCE(u.raw_user_meta_data->>'phone', '')
+    ))
+    FROM auth.users u
+    WHERE
+      u.raw_user_meta_data->>'role' = 'client'
+      AND (
+        LOWER(COALESCE(u.raw_user_meta_data->>'name', '')) LIKE LOWER('%' || p_query || '%')
+        OR LOWER(u.email) LIKE LOWER('%' || p_query || '%')
+      )
+    LIMIT 5
+  );
+END;
+$$;
