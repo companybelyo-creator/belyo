@@ -204,18 +204,6 @@ function renderClientSuggestions(matches, rawVal) {
   }).join('');
 }
 
-
-  var q = val.toLowerCase();
-  var matches = allClients.filter(function(c) {
-    return c.name.toLowerCase().includes(q);
-  });
-
-  if (matches.length === 0) {
-    suggestions.style.display = 'none';
-    showClientInfo(null, val.trim());
-    return;
-  }
-
 function selectClientById(id) {
   var client = allClients.find(function(c) { return c.id === id; });
   if (!client) return;
