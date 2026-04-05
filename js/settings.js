@@ -20,7 +20,8 @@ async function saveSlug() {
 
   var res = await sb.from('salon_settings')
     .update({ slug: slug })
-    .eq('user_id', session.data.session.user.id);
+    .eq('user_id', session.data.session.user.id)
+    .select();
 
   if (res.error) {
     showToast(res.error.code === '23505' ? 'Ce slug est déjà pris' : 'Erreur : ' + res.error.message, 'error');
@@ -476,14 +477,15 @@ async function savePrestations() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
-  // UPDATE uniquement — la ligne existe forcément (créée à l'inscription)
+  // UPDATE avec select() pour éviter le 400 sur Prefer: return=representation
   var res = await sb.from('salon_settings')
     .update({
       prestations:        activePrestations,
       custom_prestations: customPrestations,
       prix_duree:         prixDuree,
     })
-    .eq('user_id', currentUser.id);
+    .eq('user_id', currentUser.id)
+    .select();
 
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
