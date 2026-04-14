@@ -8,12 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="../css/revenue.css" />
 </head>
 <body>
-
 <div class="app-layout">
   <aside class="sidebar">
     <div class="sidebar-logo">Belyo</div>
@@ -35,22 +32,23 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Chiffre d'<em>affaires</em></h1>
-      <button class="btn-action" onclick="exportPDF()" id="btn-export" style="display:flex;align-items:center;gap:6px">
-        <span>&#8595;</span> Exporter PDF
-      </button>
+      <button class="btn-action" onclick="exportPDF()" id="btn-export">&#8595; Exporter PDF</button>
     </div>
 
-    <div class="period-tabs">
-      <button class="period-tab" id="tab-3m" onclick="setPeriod(3)">3 mois</button>
-      <button class="period-tab active" id="tab-6m" onclick="setPeriod(6)">6 mois</button>
-      <button class="period-tab" id="tab-12m" onclick="setPeriod(12)">12 mois</button>
+    <!-- Période + KPIs -->
+    <div class="rev-header">
+      <div class="period-tabs">
+        <button class="period-tab" id="tab-3m" onclick="setPeriod(3)">3 mois</button>
+        <button class="period-tab active" id="tab-6m" onclick="setPeriod(6)">6 mois</button>
+        <button class="period-tab" id="tab-12m" onclick="setPeriod(12)">12 mois</button>
+      </div>
     </div>
 
-    <div class="kpi-grid-3">
+    <div class="kpi-row">
       <div class="kpi-card">
         <div class="kpi-label">CA ce mois</div>
         <div class="kpi-val" id="kpi-current">—</div>
-        <div class="kpi-sub" id="kpi-vs">vs mois dernier</div>
+        <div class="kpi-sub"><span class="kpi-trend flat" id="kpi-trend">—</span><span id="kpi-vs">vs mois dernier</span></div>
       </div>
       <div class="kpi-card">
         <div class="kpi-label">CA sur la période</div>
@@ -62,33 +60,56 @@
         <div class="kpi-val" id="kpi-avg">—</div>
         <div class="kpi-sub">Par RDV terminé</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label">RDV terminés</div>
+        <div class="kpi-val" id="kpi-count">—</div>
+        <div class="kpi-sub" id="kpi-count-sub">Sur la période</div>
+      </div>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-title">Évolution du CA mensuel</div>
-      <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+    <!-- Graphique principal CA + Top services -->
+    <div class="chart-grid-2">
       <div class="chart-card">
-        <div class="chart-title">Top prestations</div>
+        <div class="chart-head">
+          <div class="chart-title">Évolution du CA mensuel</div>
+          <div class="chart-sub" id="ca-total-label">—</div>
+        </div>
+        <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">Top prestations</div>
+        </div>
         <div id="top-services" class="top-list"></div>
       </div>
+    </div>
+
+    <!-- Top clients + RDV par jour -->
+    <div class="chart-grid-eq">
       <div class="chart-card">
-        <div class="chart-title">Top clients (CA)</div>
+        <div class="chart-head">
+          <div class="chart-title">Top clients</div>
+          <div class="chart-sub">par chiffre d'affaires</div>
+        </div>
         <div id="top-clients" class="top-list"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">RDV par jour</div>
+          <div class="chart-sub">jours les plus actifs</div>
+        </div>
+        <div class="chart-wrap sm"><canvas id="weekday-chart"></canvas></div>
       </div>
     </div>
 
-    <!-- STATS AVANCEES PRO -->
-    <div id="stats-pro-section" style="display:none">
-      <div style="display:flex;align-items:center;gap:12px;margin:2rem 0 1rem">
-        <h2 style="font-family:var(--font-display);font-size:1.4rem;font-weight:300">Statistiques <em style="font-style:italic;color:var(--gold)">avancées</em></h2>
-        <span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:100px;background:var(--gold-light);color:var(--gold)">Pro</span>
+    <!-- Stats Pro -->
+    <div id="stats-pro-section" style="display:none" class="pro-section">
+      <div class="pro-badge-row">
+        <h2>Statistiques <em>avancées</em></h2>
+        <span class="badge-pro">Pro</span>
       </div>
 
-      <!-- KPIs supplémentaires -->
-      <div class="kpi-grid-3" style="margin-bottom:1.5rem">
+      <div class="kpi-row" style="margin-bottom:1.5rem">
         <div class="kpi-card">
           <div class="kpi-label">Meilleur mois</div>
           <div class="kpi-val" id="kpi-best-month">—</div>
@@ -100,42 +121,53 @@
           <div class="kpi-sub">Clients revenus 2x+</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">RDV par semaine</div>
+          <div class="kpi-label">RDV / semaine</div>
           <div class="kpi-val" id="kpi-weekly-avg">—</div>
-          <div class="kpi-sub">Moyenne sur la periode</div>
+          <div class="kpi-sub">Moyenne sur la période</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Clients uniques</div>
+          <div class="kpi-val" id="kpi-unique">—</div>
+          <div class="kpi-sub">Sur la période</div>
         </div>
       </div>
 
-      <!-- Graphiques avancés -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+      <div class="chart-grid-eq" style="margin-bottom:1.5rem">
         <div class="chart-card">
-          <div class="chart-title">RDV par jour de la semaine</div>
-          <div class="chart-wrap" style="height:180px"><canvas id="weekday-chart"></canvas></div>
+          <div class="chart-head">
+            <div class="chart-title">Heure de pointe</div>
+            <div class="chart-sub">affluence par heure</div>
+          </div>
+          <div class="chart-wrap sm"><canvas id="hour-chart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-title">RDV par heure</div>
-          <div class="chart-wrap" style="height:180px"><canvas id="hour-chart"></canvas></div>
+          <div class="chart-head">
+            <div class="chart-title">Répartition Homme / Femme</div>
+          </div>
+          <div class="donut-wrap" style="margin-top:.5rem">
+            <canvas class="donut-canvas" id="genre-chart"></canvas>
+            <div class="donut-legend" id="genre-legend"></div>
+          </div>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
-        <div class="chart-card">
-          <div class="chart-title">Repartition par genre</div>
-          <div id="genre-stats" class="top-list"></div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">Clients uniques par mois</div>
+          <div class="chart-sub">fidélisation sur la durée</div>
         </div>
-        <div class="chart-card">
-          <div class="chart-title">Evolution clients uniques</div>
-          <div class="chart-wrap" style="height:180px"><canvas id="clients-chart"></canvas></div>
-        </div>
+        <div class="chart-wrap"><canvas id="clients-chart"></canvas></div>
       </div>
     </div>
 
-    <!-- Bloc upgrade si pas Pro -->
-    <div id="stats-pro-wall" style="display:none;margin-top:2rem;border:1px solid var(--border);border-radius:var(--radius);padding:2rem;text-align:center">
-      <div style="font-size:24px;margin-bottom:.5rem">✦</div>
-      <h3 style="font-size:1rem;font-weight:500;margin-bottom:.5rem">Statistiques avancees — Plan Pro</h3>
-      <p style="font-size:13px;color:var(--ink-light);margin-bottom:1.5rem">Debloquez les graphiques avances, le taux de retention et les analyses horaires.</p>
-      <a href="settings.html" style="display:inline-block;background:var(--ink);color:var(--white);padding:10px 24px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none">Passer au Pro — 59€/mois</a>
+    <!-- Mur Pro -->
+    <div id="stats-pro-wall" style="display:none">
+      <div class="pro-wall">
+        <div class="pro-wall-icon">&#10022;</div>
+        <h3>Statistiques avancées — Plan Pro</h3>
+        <p>Débloquez les analyses horaires, le taux de fidélisation, la répartition Homme/Femme et l'évolution des clients uniques.</p>
+        <a href="settings.html" style="display:inline-block;background:var(--ink);color:var(--white);padding:10px 28px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none">Passer au Pro — 59€/mois</a>
+      </div>
     </div>
 
   </main>
@@ -143,6 +175,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/revenue.js"></script>
