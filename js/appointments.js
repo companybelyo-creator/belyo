@@ -69,12 +69,21 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Coupe par défaut
-  var coupeOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; });
-  if (coupeOpt) {
-    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][coupeOpt];
-    selectService(coupeOpt, pd && pd.prix ? pd.prix : 0);
+  // Sélectionner la première prestation par défaut (priorité à Coupe, sinon la première)
+  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
+  if (defaultOpt && defaultOpt !== 'Autre') {
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
+    var prix = pd && pd.prix ? pd.prix : 0;
+    if (!prix) {
+      var defs = {
+        homme: { 'Coupe':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
+        femme: { 'Coupe':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
+      };
+      prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
+    }
+    selectService(defaultOpt, prix);
   }
+  checkFormValidity();
 }
 
 function selectServiceByIndex(idx) {
@@ -124,6 +133,7 @@ function selectService(name, prix) {
   // Remplir le prix
   var priceInput = document.getElementById('appt-price');
   if (priceInput) priceInput.value = prix || '';
+  checkFormValidity();
 }
 
 // Fermer si clic ailleurs
@@ -152,6 +162,7 @@ var clientSearchTimer = null;
 
 function onClientInput(val) {
   selectedClient = null;
+  checkFormValidity();
   var block       = document.getElementById('client-info-block');
   var suggestions = document.getElementById('client-suggestions');
 
@@ -514,8 +525,24 @@ function openModal(presetDatetime) {
   }
   document.getElementById('modal-overlay').classList.add('open');
   updateServiceOptions();
+  // Désactiver le submit jusqu'à ce que tout soit rempli
+  var btn = document.getElementById('appt-submit');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
+  checkFormValidity();
 }
 function openModalAt(datetimeStr) { openModal(datetimeStr); }
+function checkFormValidity() {
+  var btn       = document.getElementById('appt-submit');
+  if (!btn) return;
+  var clientVal = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+  var serviceVal = document.getElementById('appt-service-select') ? document.getElementById('appt-service-select').value.trim() : '';
+  var datetimeVal = document.getElementById('appt-datetime') ? document.getElementById('appt-datetime').value.trim() : '';
+  var isValid = clientVal && serviceVal && datetimeVal;
+  btn.disabled = !isValid;
+  btn.style.opacity = isValid ? '1' : '0.45';
+  btn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
+}
+
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.getElementById('appt-form').reset();
