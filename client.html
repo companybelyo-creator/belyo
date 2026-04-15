@@ -140,13 +140,32 @@
     .vitrine-footer{margin-top:14px;display:flex;justify-content:flex-end;}
 
     /* MODAL */
-    .modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
+    .modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.55);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;opacity:0;pointer-events:none;transition:opacity .2s;}
     .modal-overlay.open{opacity:1;pointer-events:all;}
-    .modal{background:var(--white);border-radius:var(--radius);padding:2rem;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;position:relative;}
+    .modal{background:var(--white);border-radius:var(--radius) var(--radius) 0 0;padding:0;max-width:520px;width:100%;max-height:92vh;overflow-y:auto;position:relative;transform:translateY(20px);transition:transform .25s;}
+    .modal-overlay.open .modal{transform:translateY(0);}
+    .modal-handle{width:36px;height:4px;background:var(--border);border-radius:100px;margin:12px auto 0;}
     .modal-title-head{font-family:var(--font-display);font-size:1.5rem;font-weight:300;margin-bottom:.25rem;}
     .modal-title-head em{font-style:italic;color:var(--gold);}
     .modal-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.6;}
-    .modal-close-btn{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-light);line-height:1;}
+    .modal-close-btn{position:absolute;top:.8rem;right:1rem;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-light);line-height:1;}
+    /* Profil salon */
+    .sp-header{position:relative;height:160px;background:var(--cream-dark);overflow:hidden;}
+    .sp-header img{width:100%;height:100%;object-fit:cover;}
+    .sp-header-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,23,20,.6),transparent);}
+    .sp-avatar{position:absolute;bottom:-20px;left:1.4rem;width:56px;height:56px;border-radius:12px;border:3px solid var(--white);object-fit:cover;font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:white;display:flex;align-items:center;justify-content:center;}
+    .sp-body{padding:28px 1.4rem 1.4rem;}
+    .sp-name{font-family:var(--font-display);font-size:1.6rem;font-weight:300;margin-bottom:2px;}
+    .sp-addr{font-size:13px;color:var(--ink-light);display:flex;align-items:center;gap:5px;margin-bottom:1.2rem;}
+    .sp-addr svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+    .sp-divider{height:1px;background:var(--border);margin:1rem 0;}
+    .sp-section-label{font-size:11px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+    .sp-prests{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
+    .sp-tag{font-size:12px;padding:5px 11px;background:var(--cream);border-radius:100px;border:1px solid var(--border);color:var(--ink-light);}
+    .sp-tag strong{color:var(--gold);font-weight:500;margin-left:4px;}
+    .sp-book-btn{display:block;width:100%;padding:14px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .15s;margin-top:.5rem;}
+    .sp-book-btn:hover{opacity:.88;}
+    .sp-fake-note{text-align:center;font-size:13px;color:var(--ink-light);padding:1rem 0;}
 
     /* TOAST */
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
@@ -315,6 +334,15 @@
     </div>
 
     <div class="powered">Propulsé par <a href="index.html">Belyo</a></div>
+  </div>
+</div>
+
+<!-- MODAL profil salon -->
+<div class="modal-overlay" id="salon-profil-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <button class="modal-close-btn" onclick="closeSalonProfil()">×</button>
+    <div id="salon-profil-content"></div>
   </div>
 </div>
 
@@ -691,23 +719,13 @@ function renderSalonsPreview(list) {
   el.innerHTML = html;
 }
 
-// Event delegation pour toggle vitrine
-document.addEventListener('click', function(e) {
-  var main = e.target.closest('[data-vitrine]');
-  if (main && !e.target.closest('.btn-book') && !e.target.closest('a')) {
-    var vitId  = main.getAttribute('data-vitrine');
-    var vitEl  = document.getElementById(vitId);
-    var chevIdx = vitId.replace('svit-','');
-    var chevEl  = document.getElementById('chev-'+chevIdx);
-    if (vitEl) vitEl.classList.toggle('open');
-    if (chevEl) chevEl.classList.toggle('open');
-  }
-});
+
 
 // ===== CRÉATEUR =====
 function openCreatorModal()  { document.getElementById('creator-modal').classList.add('open'); }
 function closeCreatorModal() { document.getElementById('creator-modal').classList.remove('open'); }
 document.getElementById('creator-modal').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeCreatorModal(); });
+document.getElementById('salon-profil-modal').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeSalonProfil(); });
 
 function makeSlug(name) {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
