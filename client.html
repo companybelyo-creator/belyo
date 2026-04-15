@@ -134,6 +134,14 @@
     .powered{text-align:center;font-size:12px;color:var(--ink-light);margin-top:2rem;}
     .powered a{color:var(--gold);}
 
+    /* Photo salon */
+    .salon-photo { width:64px; height:64px; border-radius:10px; object-fit:cover; flex-shrink:0; background:var(--cream-dark); }
+    .salon-photo-placeholder { width:64px; height:64px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    /* Icône SVG empty state */
+    .empty-icon-svg { width:32px; height:32px; margin:0 auto .6rem; opacity:.3; }
+    /* RDV en cours highlight */
+    .rdv-item.is-now { background:linear-gradient(135deg,rgba(196,168,122,.06),transparent); border-radius:var(--radius-sm); padding-left:10px; padding-right:10px; }
+    .rdv-item.is-now .rdv-date-block { background:var(--gold-light); }
     @media(max-width:480px){
       .form-row{grid-template-columns:1fr;}
       .salon-card-main{gap:10px;}
@@ -249,7 +257,7 @@
       </div>
       <div class="section-body">
         <div id="upcoming-rdv">
-          <div class="empty-state"><div class="empty-icon">📅</div>Chargement...</div>
+          <div class="empty-state"><svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><div>Chargement...</div></div>
         </div>
       </div>
     </div>
@@ -269,7 +277,7 @@
         </div>
       </div>
       <div id="all-salons" style="padding:0 1.4rem">
-        <div class="empty-state"><div class="empty-icon">✂️</div>Chargement des salons...</div>
+        <div class="empty-state"><svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><div>Chargement des salons...</div></div>
       </div>
     </div>
 
@@ -281,7 +289,7 @@
       </div>
       <div class="section-body">
         <div id="past-rdv">
-          <div class="empty-state"><div class="empty-icon">🕐</div>Chargement...</div>
+          <div class="empty-state"><svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg><div>Chargement...</div></div>
         </div>
       </div>
     </div>
@@ -452,8 +460,15 @@ async function loadRdv(email, phone, name) {
     var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g,''), p_name: name||'' });
     data = res2.data || [];
   }
-  var upcoming = data.filter(function(a){ return a.datetime>=nowStr && a.status==='pending'; });
-  var past     = data.filter(function(a){ return a.datetime<nowStr  || a.status!=='pending'; }).reverse().slice(0,15);
+  var now2     = new Date();
+  // Séparer : en cours (démarré il y a <2h), à venir, passés
+  var enCours  = data.filter(function(a){ var dt=new Date(a.datetime); return a.status==='pending' && dt<=now2 && (now2-dt)<2*3600000; });
+  var aVenir   = data.filter(function(a){ var dt=new Date(a.datetime); return a.status==='pending' && dt>now2; });
+  // Trier à venir par date croissante
+  aVenir.sort(function(a,b){ return new Date(a.datetime)-new Date(b.datetime); });
+  var upcoming = enCours.concat(aVenir);
+  var past     = data.filter(function(a){ var dt=new Date(a.datetime); return a.status!=='pending' || (dt<now2 && (now2-dt)>=2*3600000); })
+                   .sort(function(a,b){ return new Date(b.datetime)-new Date(a.datetime); }).slice(0,15);
 
   var uc = document.getElementById('upcoming-count');
   var pc = document.getElementById('past-count');
@@ -468,7 +483,7 @@ function renderRdvList(elId, list, isUpcoming) {
   var el  = document.getElementById(elId);
   var now = new Date();
   if (!list||list.length===0) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">'+(isUpcoming?'📅':'🕐')+'</div>'+(isUpcoming?'Aucun rendez-vous à venir':'Aucun historique')+'</div>';
+    el.innerHTML = '<div class="empty-state">'+(isUpcoming?'<svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>':'<svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>')+'<div>'+(isUpcoming?'Aucun rendez-vous à venir':'Aucun historique')+'</div></div>';
     return;
   }
   el.innerHTML = list.map(function(a) {
@@ -477,10 +492,11 @@ function renderRdvList(elId, list, isUpcoming) {
     var month = dt.toLocaleDateString('fr-FR',{month:'short'});
     var heure = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
     var isNow = isUpcoming && a.status==='pending' && (now-dt)>=0 && (now-dt)<2*3600000;
+    var nowCls = isNow ? ' is-now' : '';
     var cls   = isNow?'st-now':({pending:'st-pending',done:'st-done',cancelled:'st-cancelled'}[a.status]||'st-pending');
     var txt   = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
     var prix  = a.price ? Math.round(parseFloat(a.price))+'€' : '';
-    return '<div class="rdv-item">'
+    return '<div class="rdv-item'+nowCls+'">'
       + '<div class="rdv-date-block"><div class="rdv-day">'+day+'</div><div class="rdv-month">'+month+'</div></div>'
       + '<div class="rdv-info">'
       + '<div class="rdv-salon-name">'+(a.salon_name||'Salon')+'</div>'
@@ -498,14 +514,21 @@ function renderRdvList(elId, list, isUpcoming) {
 // ===== SALONS =====
 var FAKE_SALONS = [
   { user_id:'fake-1', salon_name:'Salon Lumière', salon_address:'8 rue des Fleurs, Nantes',
+    photo:'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop',
     prestations:{homme:['Coupe','Dégradé','Barbe'],femme:['Coupe','Brushing','Coloration']},
-    prix_duree:{homme:{Coupe:{prix:22},Dégradé:{prix:20},Barbe:{prix:12}},femme:{Coupe:{prix:32},Brushing:{prix:28},Coloration:{prix:65}}} },
+    prix_duree:{homme:{Coupe:{prix:22},'Dégradé':{prix:20},Barbe:{prix:12}},femme:{Coupe:{prix:32},Brushing:{prix:28},Coloration:{prix:65}}} },
   { user_id:'fake-2', salon_name:'Studio Noir', salon_address:'15 rue Crébillon, Nantes',
+    photo:'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=200&h=200&fit=crop',
     prestations:{homme:['Coupe','Estompage','Coupe + Barbe'],femme:['Coupe','Balayage','Mèches']},
     prix_duree:{homme:{Coupe:{prix:25},Estompage:{prix:18},'Coupe + Barbe':{prix:32}},femme:{Coupe:{prix:35},Balayage:{prix:85},Mèches:{prix:75}}} },
   { user_id:'fake-3', salon_name:'Atelier Cheveux', salon_address:'22 place du Bouffay, Nantes',
+    photo:'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=200&h=200&fit=crop',
     prestations:{homme:['Coupe','Soin'],femme:['Coupe','Lissage','Permanente','Soin']},
     prix_duree:{homme:{Coupe:{prix:20},Soin:{prix:15}},femme:{Coupe:{prix:30},Lissage:{prix:85},Permanente:{prix:75},Soin:{prix:25}}} },
+  { user_id:'fake-4', salon_name:'Coiff & Style', salon_address:'3 allée des Tanneurs, Nantes',
+    photo:'https://images.unsplash.com/photo-1634302086869-84cdae4c1d02?w=200&h=200&fit=crop',
+    prestations:{homme:['Coupe','Dégradé','Coloration'],femme:['Coupe','Coloration','Soin','Brushing']},
+    prix_duree:{homme:{Coupe:{prix:23},'Dégradé':{prix:21},Coloration:{prix:40}},femme:{Coupe:{prix:34},Coloration:{prix:70},Soin:{prix:22},Brushing:{prix:27}}} },
 ];
 
 async function loadAllSalons() {
@@ -539,7 +562,7 @@ function renderSalons(list, elId) {
   var el = document.getElementById(elId);
   if (!el) return;
   if (!list||list.length===0) {
-    el.innerHTML = '<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">✂️</div>Aucun salon trouvé</div>';
+    el.innerHTML = '<div class="empty-state" style="padding:2rem 0"><svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><div>Aucun salon trouvé</div></div>';
     return;
   }
   var html = '<div class="salons-grid">';
@@ -560,7 +583,11 @@ function renderSalons(list, elId) {
 
     html += '<div class="salon-card" id="scard-'+i+'">';
     html += '<div class="salon-card-main" data-vitrine="svit-'+i+'">';
-    html += '<div class="salon-avatar" style="background:'+colors[0]+'">'+inits+'</div>';
+    var photoHtml = s.photo
+      ? '<img class="salon-photo" src="'+s.photo+'" alt="'+name+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+        + '<div class="salon-photo-placeholder" style="display:none;background:'+colors[0]+';font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:white">'+inits+'</div>'
+      : '<div class="salon-photo-placeholder" style="background:'+colors[0]+';font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:white">'+inits+'</div>';
+    html += photoHtml;
     html += '<div class="salon-info">';
     html += '<div class="salon-name">'+name+'</div>';
     if (addr) html += '<div class="salon-address">'+addr+'</div>';
