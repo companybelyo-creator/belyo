@@ -28,7 +28,7 @@ function openEditClient() {
   var c = currentFicheClient;
   document.getElementById('edit-client-id').value = c.id;
   document.getElementById('edit-name').value       = c.name  || '';
-  document.getElementById('edit-phone').value      = c.phone || '';
+  document.getElementById('edit-phone').value      = c.phone ? formatPhone(c.phone) : '';
   document.getElementById('edit-email').value      = c.email || '';
   document.getElementById('edit-notes').value      = c.notes || '';
   document.getElementById('edit-modal').classList.add('open');
@@ -57,7 +57,7 @@ function renderClients() {
   tbody.innerHTML = filtered.map(function(c) {
     return '<tr onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer">'
       + '<td><div class="client-name-cell"><div class="client-avatar">' + initials(c.name) + '</div><strong>' + c.name + '</strong></div></td>'
-      + '<td>' + (c.phone || '—') + '</td>'
+      + '<td>' + (c.phone ? formatPhone(c.phone) : '—') + '</td>'
       + '<td>' + (c.email || '—') + '</td>'
       + '<td>' + formatDate(c.last_visit) + '</td>'
       + '<td>' + (c.visit_count || 0) + '</td>'
@@ -85,7 +85,7 @@ async function openFiche(id) {
   document.getElementById('fiche-content').innerHTML = ''
     + '<div class="fiche-avatar">' + initials(client.name) + '</div>'
     + '<div class="fiche-name">' + client.name + '</div>'
-    + '<div class="fiche-meta">' + (client.phone || '') + (client.email ? ' · ' + client.email : '') + '</div>'
+    + '<div class="fiche-meta">' + (client.phone ? formatPhone(client.phone) : '') + (client.email ? ' · ' + client.email : '') + '</div>'
     + '<div class="fiche-stats">'
       + '<div class="fiche-stat"><span class="val">' + (client.visit_count || 0) + '</span><span class="lbl">Visites</span></div>'
       + '<div class="fiche-stat"><span class="val">' + totalCA.toFixed(0) + '€</span><span class="lbl">CA total</span></div>'
@@ -195,6 +195,8 @@ async function loadClients() {
   currentUserId = session.user.id;
   initSidebar(session.user);
   initLogout();
+  initNotifications(session.user.id);
   await checkSubscription(session.user.id, session.user.created_at);
+  await initPlan(session.user.id, session.user.created_at);
   await loadClients();
 })();
