@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="../css/stocks.css" />
 </head>
 <body>
-
 <div class="app-layout">
   <aside class="sidebar">
     <div class="sidebar-logo">Belyo</div>
@@ -36,34 +35,39 @@
       <button class="btn-action" onclick="openStockModal()">+ Nouveau produit</button>
     </div>
 
-    <div class="kpi-grid-3">
-      <div class="kpi-card">
-        <div class="kpi-label">Total produits</div>
-        <div class="kpi-val" id="kpi-total">—</div>
-        <div class="kpi-sub">En catalogue</div>
+    <!-- KPIs -->
+    <div class="stock-kpi-row">
+      <div class="stock-kpi">
+        <div class="stock-kpi-accent" style="background:var(--gold)"></div>
+        <div class="stock-kpi-label">Total produits</div>
+        <div class="stock-kpi-val" id="kpi-total">—</div>
+        <div class="stock-kpi-sub">En catalogue</div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Stock faible</div>
-        <div class="kpi-val" id="kpi-low" style="color:#C4A87A">—</div>
-        <div class="kpi-sub">À recommander bientôt</div>
+      <div class="stock-kpi">
+        <div class="stock-kpi-accent" style="background:#C4A87A"></div>
+        <div class="stock-kpi-label">Stock faible</div>
+        <div class="stock-kpi-val" id="kpi-low">—</div>
+        <div class="stock-kpi-sub">À recommander bientôt</div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Rupture</div>
-        <div class="kpi-val" id="kpi-empty" style="color:#C0392B">—</div>
-        <div class="kpi-sub">Quantité = 0</div>
+      <div class="stock-kpi">
+        <div class="stock-kpi-accent" style="background:#D85A30"></div>
+        <div class="stock-kpi-label">Rupture</div>
+        <div class="stock-kpi-val" id="kpi-empty">—</div>
+        <div class="stock-kpi-sub">Quantité = 0</div>
       </div>
     </div>
 
+    <!-- Recherche + filtres -->
     <div class="search-bar">
-      <input type="text" class="search-input" id="search" placeholder="Rechercher un produit ou une marque..." oninput="renderProducts()" />
+      <input type="text" class="search-input" id="search" placeholder="Rechercher un produit ou une marque..." />
     </div>
-
     <div class="tab-bar">
-      <button class="tab active" id="tab-all" onclick="setTab('all')">Tous</button>
-      <button class="tab" id="tab-low" onclick="setTab('low')">Stock faible</button>
-      <button class="tab" id="tab-empty" onclick="setTab('empty')">Rupture</button>
+      <button class="tab active" id="tab-all"   onclick="setTab('all')">Tous</button>
+      <button class="tab"        id="tab-low"   onclick="setTab('low')">Stock faible</button>
+      <button class="tab"        id="tab-empty" onclick="setTab('empty')">Rupture</button>
     </div>
 
+    <!-- Table -->
     <div class="card">
       <div class="card-header">
         <span class="card-title" id="list-title">Tous les produits</span>
@@ -78,8 +82,8 @@
               <th>Quantité</th>
               <th>Niveau</th>
               <th>Statut</th>
-              <th>Prix unitaire</th>
-              <th>Actions</th>
+              <th>Prix unit.</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="products-list">
@@ -91,7 +95,7 @@
   </main>
 </div>
 
-<!-- MODAL Nouveau produit -->
+<!-- MODAL produit -->
 <div class="modal-overlay" id="stock-modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -101,20 +105,22 @@
     <form id="product-form">
       <input type="hidden" id="edit-id" />
       <div class="form-group">
-        <label class="form-label">Nom du produit</label>
+        <label class="form-label">Nom du produit *</label>
         <input type="text" class="form-input" id="p-name" placeholder="Ex : Shampooing réparateur" required />
       </div>
       <div class="form-group">
         <label class="form-label">Marque</label>
         <input type="text" class="form-input" id="p-brand" placeholder="Ex : Kérastase, L'Oréal..." />
       </div>
-      <div class="form-group">
-        <label class="form-label">Quantité en stock</label>
-        <input type="number" class="form-input" id="p-qty" placeholder="0" min="0" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Seuil d'alerte <span style="font-weight:400;color:var(--ink-light)">(alerte si quantité ≤ ce seuil)</span></label>
-        <input type="number" class="form-input" id="p-threshold" placeholder="2" min="0" value="2" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group">
+          <label class="form-label">Quantité *</label>
+          <input type="number" class="form-input" id="p-qty" placeholder="0" min="0" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Seuil d'alerte</label>
+          <input type="number" class="form-input" id="p-threshold" placeholder="2" min="0" value="2" />
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Prix unitaire (€)</label>
@@ -125,17 +131,17 @@
   </div>
 </div>
 
-<!-- MODAL Confirmation suppression -->
+<!-- MODAL suppression -->
 <div class="modal-overlay" id="delete-overlay">
-  <div class="modal" style="max-width:380px">
+  <div class="modal" style="max-width:360px">
     <div class="modal-header">
       <span class="modal-title">Supprimer ce produit ?</span>
       <button class="modal-close" onclick="closeDeleteModal()">×</button>
     </div>
-    <p style="font-size:14px;color:var(--ink-light);margin-bottom:1.5rem">Cette action est irréversible.</p>
+    <p style="font-size:14px;color:var(--ink-light);margin-bottom:1.5rem">Cette action est irréversible. Le produit sera définitivement supprimé.</p>
     <div style="display:flex;gap:10px">
-      <button onclick="closeDeleteModal()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:100px;background:transparent;font-family:var(--font-body);font-size:14px;cursor:pointer;">Annuler</button>
-      <button onclick="confirmDelete()" id="confirm-delete-btn" style="flex:1;padding:12px;border:none;border-radius:100px;background:#C0392B;color:#fff;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer;">Supprimer</button>
+      <button onclick="closeDeleteModal()" style="flex:1;padding:12px;border:1px solid var(--border);border-radius:100px;background:transparent;font-family:var(--font-body);font-size:14px;cursor:pointer">Annuler</button>
+      <button onclick="confirmDelete()" style="flex:1;padding:12px;border:none;border-radius:100px;background:#993C1D;color:#fff;font-family:var(--font-body);font-size:14px;font-weight:500;cursor:pointer">Supprimer</button>
     </div>
   </div>
 </div>
@@ -145,6 +151,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
+<script>
+(async function() {
+  var s = await sb.auth.getSession();
+  if (!s.data.session) { window.location.href = 'login.html'; return; }
+  var meta = s.data.session.user.user_metadata || {};
+  if (meta.role !== 'salon') { window.location.href = '../client.html'; return; }
+  await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
+})();
+</script>
 <script src="../js/stocks.js"></script>
 </body>
 </html>
