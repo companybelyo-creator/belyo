@@ -502,11 +502,16 @@ async function showDashboard(user) {
 // ===== RDV =====
 async function loadRdv(email, phone, name) {
   var nowStr = new Date().toISOString();
-  var res    = await sb.rpc('get_client_appointments', { p_email: email, p_name: name||'' });
-  var data   = res.data || [];
-  if (data.length===0 && phone) {
-    var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g,''), p_name: name||'' });
-    data = res2.data || [];
+  var data = [];
+  try {
+    var res = await sb.rpc('get_client_appointments', { p_email: email, p_name: name||'' });
+    data = res.data || [];
+    if (data.length===0 && phone) {
+      var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g,''), p_name: name||'' });
+      data = res2.data || [];
+    }
+  } catch(e) {
+    console.warn('get_client_appointments error:', e);
   }
   var now2     = new Date();
   // Séparer : en cours (démarré il y a <2h), à venir, passés
