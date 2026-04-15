@@ -234,7 +234,7 @@ function renderWeekdayChart(data) {
 }
 
 // ===== STATS AVANCÉES =====
-function renderStatsAvancees(data, now) {
+async function renderStatsAvancees(data, now) {
   var section = document.getElementById('stats-pro-section');
   var wall    = document.getElementById('stats-pro-wall');
   if (currentPlan !== 'pro' && currentPlan !== 'trial') {
@@ -306,13 +306,29 @@ function renderStatsAvancees(data, now) {
     });
   }
 
-  // Genre donut
-  var femmeKw = ['brushing','coloration','balayage','meche','lissage','permanente','chignon','extension','defrisage','tresse'];
+  // Genre donut — utilise la colonne genre stockée dans appointments
+  // Fallback sur les prestations configurées du salon si genre absent
+  var salonPrests = { homme: [], femme: [] };
+  var settRes = await sb.from('salon_settings').select('prestations').eq('user_id', currentUserId).maybeSingle();
+  if (settRes.data && settRes.data.prestations) {
+    salonPrests.homme = (settRes.data.prestations.homme || []).map(function(p){ return p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); });
+    salonPrests.femme = (settRes.data.prestations.femme || []).map(function(p){ return p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); });
+  }
+
   var genreCount = {Homme:0, Femme:0};
   data.forEach(function(a) {
-    var svc = (a.service||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    if (femmeKw.some(function(k){ return svc.includes(k); })) genreCount.Femme++;
-    else genreCount.Homme++;
+    if (a.genre === 'femme') {
+      genreCount.Femme++;
+    } else if (a.genre === 'homme') {
+      genreCount.Homme++;
+    } else {
+      // Fallback : chercher dans les prestations configurées
+      var svc = (a.service||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      var inFemme = salonPrests.femme.indexOf(svc) !== -1;
+      var inHomme = salonPrests.homme.indexOf(svc) !== -1;
+      if (inFemme && !inHomme) genreCount.Femme++;
+      else genreCount.Homme++;
+    }
   });
 
   if (genreChart) genreChart.destroy();

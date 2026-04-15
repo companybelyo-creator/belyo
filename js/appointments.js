@@ -761,6 +761,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       datetime:         datetime,
       price:            priceVal ? parseFloat(priceVal) : null,
       notes:            notesVal,
+      genre:            selectedGenre,
     }).eq('id', editApptId);
   } else {
     // Mode création
@@ -773,6 +774,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       price:            priceVal ? parseFloat(priceVal) : null,
       notes:            notesVal,
       status:           'pending',
+      genre:            selectedGenre,
     });
   }
 
