@@ -413,79 +413,257 @@ async function exportPDF() {
   try {
     var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
     if (!jsPDF) { showToast('jsPDF non chargé','error'); return; }
-    var doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    var W=210, margin=16, y=20;
-    var INK=[26,23,20], GOLD=[196,168,122], LIGHT=[92,85,80], CREAM=[247,243,238];
-    doc.setFillColor(26,23,20); doc.rect(0,0,W,28,'F');
-    doc.setFont('helvetica','normal'); doc.setFontSize(20); doc.setTextColor(255,255,255);
-    doc.text('Belyo',margin,13);
-    doc.setFontSize(10); doc.setTextColor(196,168,122);
-    doc.text('Rapport Chiffre d\'Affaires',margin,21);
-    var now=new Date(), dateStr=now.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+
+    var doc    = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    var W      = 210;
+    var H      = 297;
+    var M      = 14;  // margin
+    var y      = 0;
+
+    // Couleurs
+    var C_INK   = [26,23,20];
+    var C_GOLD  = [196,168,122];
+    var C_LIGHT = [92,85,80];
+    var C_CREAM = [247,243,238];
+    var C_CREAM2= [237,231,220];
+    var C_WHITE = [255,255,255];
+    var C_TEAL  = [29,158,117];
+    var C_BORDER= [230,225,218];
+
+    var now       = new Date();
+    var salonName = document.getElementById('sidebar-salon') ? document.getElementById('sidebar-salon').textContent.trim() : 'Mon salon';
+    var dateStr   = now.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    var periodeStr = currentPeriod + ' mois';
+
+    // Récupérer les valeurs KPI
+    function kpiVal(id) { var el=document.getElementById(id); return el?el.textContent.trim():'—'; }
+
+    // ---- HEADER ----
+    doc.setFillColor.apply(doc, C_INK);
+    doc.rect(0,0,W,36,'F');
+
+    // Barre dorée fine
+    doc.setFillColor.apply(doc, C_GOLD);
+    doc.rect(0,36,W,2,'F');
+
+    // Logo Belyo
+    doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor.apply(doc,C_WHITE);
+    doc.text('Belyo', M, 18);
+
+    // Sous-titre
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc,C_GOLD);
+    doc.text('Rapport Chiffre d\'Affaires', M, 26);
+
+    // Salon + date à droite
+    doc.setFontSize(9); doc.setTextColor.apply(doc,C_WHITE);
+    doc.text(salonName, W-M, 18, {align:'right'});
     doc.setTextColor(180,180,180); doc.setFontSize(8);
-    doc.text('Généré le '+dateStr,W-margin,21,{align:'right'});
-    y=36;
-    var salonName=document.getElementById('sidebar-salon')?document.getElementById('sidebar-salon').textContent:'Mon salon';
-    doc.setFontSize(13); doc.setTextColor.apply(doc,INK); doc.setFont('helvetica','bold');
-    doc.text(salonName,margin,y); y+=10;
-    var kpis=[
-      {label:'CA ce mois', val:document.getElementById('kpi-current')?document.getElementById('kpi-current').textContent:'—'},
-      {label:'CA période',  val:document.getElementById('kpi-period')?document.getElementById('kpi-period').textContent:'—'},
-      {label:'Panier moyen',val:document.getElementById('kpi-avg')?document.getElementById('kpi-avg').textContent:'—'},
-      {label:'RDV terminés',val:document.getElementById('kpi-count')?document.getElementById('kpi-count').textContent:'—'},
+    doc.text('Généré le '+dateStr, W-M, 26, {align:'right'});
+
+    y = 46;
+
+    // ---- INTRO LIGNE ----
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc,C_LIGHT);
+    doc.text('Période analysée : '+periodeStr+' · Rendez-vous terminés uniquement', M, y);
+    y += 8;
+
+    // ---- KPI CARDS ----
+    var kpis = [
+      { label:'CA ce mois',      val:kpiVal('kpi-current'), sub:kpiVal('kpi-trend')+' '+kpiVal('kpi-vs') },
+      { label:'CA sur la période',val:kpiVal('kpi-period'),  sub:'Sur '+periodeStr },
+      { label:'Panier moyen',     val:kpiVal('kpi-avg'),     sub:'Par RDV terminé' },
+      { label:'RDV terminés',     val:kpiVal('kpi-count'),   sub:'Sur la période' },
     ];
-    var kpiW=(W-margin*2-12)/4;
-    kpis.forEach(function(k,i){
-      var x=margin+i*(kpiW+4);
-      doc.setFillColor.apply(doc,CREAM); doc.roundedRect(x,y,kpiW,22,2,2,'F');
-      doc.setFontSize(7); doc.setTextColor.apply(doc,LIGHT); doc.setFont('helvetica','normal');
-      doc.text(k.label,x+kpiW/2,y+7,{align:'center'});
-      doc.setFontSize(13); doc.setTextColor.apply(doc,INK); doc.setFont('helvetica','bold');
-      doc.text(k.val,x+kpiW/2,y+17,{align:'center'});
+    var kW = (W - M*2 - 9) / 4;
+    var kH = 24;
+    kpis.forEach(function(k,i) {
+      var x = M + i*(kW+3);
+      // Card fond
+      doc.setFillColor.apply(doc,C_CREAM); doc.roundedRect(x,y,kW,kH,2,2,'F');
+      // Bord doré en haut
+      doc.setFillColor.apply(doc,C_GOLD); doc.rect(x,y,kW,1.5,'F');
+      // Label
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,C_LIGHT);
+      doc.text(k.label, x+kW/2, y+6.5, {align:'center'});
+      // Valeur
+      doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor.apply(doc,C_INK);
+      doc.text(k.val, x+kW/2, y+16, {align:'center'});
+      // Sub
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,C_LIGHT);
+      doc.text(k.sub, x+kW/2, y+21.5, {align:'center'});
     });
-    y+=30;
-    var canvas=document.getElementById('ca-chart');
-    if(canvas){
-      var imgData=canvas.toDataURL('image/png'), chartH=55;
-      doc.setFillColor.apply(doc,CREAM); doc.roundedRect(margin,y,W-margin*2,chartH+10,2,2,'F');
-      doc.setFontSize(9); doc.setTextColor.apply(doc,INK); doc.setFont('helvetica','bold');
-      doc.text('Evolution du CA mensuel',margin+6,y+7);
-      doc.addImage(imgData,'PNG',margin+4,y+10,W-margin*2-8,chartH);
-      y+=chartH+18;
+    y += kH + 8;
+
+    // ---- GRAPHIQUE CA ----
+    var canvas = document.getElementById('ca-chart');
+    if (canvas) {
+      // Titre section
+      doc.setFillColor.apply(doc,C_INK); doc.rect(M,y,3,8,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor.apply(doc,C_INK);
+      doc.text('Évolution du CA mensuel', M+6, y+6);
+      y += 12;
+
+      var chartH = 58;
+      doc.setFillColor.apply(doc,C_CREAM); doc.roundedRect(M,y,W-M*2,chartH+4,3,3,'F');
+      doc.setDrawColor.apply(doc,C_BORDER); doc.setLineWidth(0.3);
+      doc.roundedRect(M,y,W-M*2,chartH+4,3,3,'S');
+      var img = canvas.toDataURL('image/png');
+      doc.addImage(img,'PNG',M+3,y+2,W-M*2-6,chartH);
+      y += chartH + 12;
     }
-    var colW=(W-margin*2-6)/2;
-    function drawTop(title,elId,x){
-      var el=document.getElementById(elId);
-      doc.setFillColor.apply(doc,CREAM); doc.roundedRect(x,y,colW,8,2,2,'F');
-      doc.setFontSize(9); doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,INK);
-      doc.text(title,x+4,y+5.5);
-      var rowY=y+12;
-      if(el){
-        el.querySelectorAll('.top-item').forEach(function(item,i){
-          var name=item.querySelector('.top-name')?item.querySelector('.top-name').textContent:'';
-          var val=item.querySelector('.top-val')?item.querySelector('.top-val').textContent:'';
-          doc.setFontSize(8); doc.setFont('helvetica','normal');
-          doc.setTextColor.apply(doc,i%2===0?INK:LIGHT);
-          doc.text((i+1)+'. '+name,x+4,rowY);
-          doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,GOLD);
-          doc.text(val,x+colW-4,rowY,{align:'right'});
-          rowY+=7;
+
+    // ---- TOP PRESTATIONS & TOP CLIENTS côte à côte ----
+    var colW = (W - M*2 - 6) / 2;
+
+    function drawSection(title,rows,x,yPos) {
+      // Titre
+      doc.setFillColor.apply(doc,C_INK); doc.rect(x,yPos,3,7,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor.apply(doc,C_INK);
+      doc.text(title, x+6, yPos+5.5);
+      yPos += 10;
+
+      if (rows.length === 0) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,C_LIGHT);
+        doc.text('Aucune donnée', x, yPos+4);
+        return yPos + 10;
+      }
+
+      var maxVal = rows[0].val;
+      rows.forEach(function(row,i) {
+        var rowBg = i%2===0 ? C_CREAM : C_WHITE;
+        doc.setFillColor.apply(doc,rowBg);
+        doc.rect(x,yPos,colW,7,'F');
+
+        // Numéro
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+        doc.setTextColor.apply(doc, i===0 ? C_GOLD : C_LIGHT);
+        doc.text(String(i+1), x+3, yPos+5);
+
+        // Nom
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,C_INK);
+        var name = row.name.length>22 ? row.name.slice(0,22)+'…' : row.name;
+        doc.text(name, x+8, yPos+5);
+
+        // Barre de progression
+        var barW = 28;
+        var barX = x+colW-barW-14;
+        doc.setFillColor.apply(doc,C_CREAM2); doc.roundedRect(barX,yPos+2.5,barW,2.5,1,1,'F');
+        var pct = maxVal>0 ? row.val/maxVal : 0;
+        doc.setFillColor.apply(doc,C_GOLD); doc.roundedRect(barX,yPos+2.5,barW*pct,2.5,1,1,'F');
+
+        // Valeur
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,C_INK);
+        doc.text(row.val+'€', x+colW-M/2, yPos+5, {align:'right'});
+
+        yPos += 7;
+      });
+      return yPos;
+    }
+
+    // Récupérer les tops depuis le DOM
+    function getTopFromEl(elId) {
+      var el = document.getElementById(elId);
+      if (!el) return [];
+      return Array.from(el.querySelectorAll('.top-item')).map(function(item) {
+        var name = item.querySelector('.top-name') ? item.querySelector('.top-name').textContent.trim() : '';
+        var valTxt = item.querySelector('.top-val') ? item.querySelector('.top-val').textContent.trim().replace('€','').trim() : '0';
+        return { name: name, val: parseInt(valTxt)||0 };
+      });
+    }
+
+    var topS = getTopFromEl('top-services');
+    var topC = getTopFromEl('top-clients');
+
+    var maxRows   = Math.max(topS.length, topC.length);
+    var blockH    = 10 + maxRows*7 + 4;
+    var needsPage = y + blockH > H - 20;
+    if (needsPage) { doc.addPage(); y=16; }
+
+    var yS = drawSection('Top prestations', topS, M, y);
+    var yC = drawSection('Top clients',     topC, M+colW+6, y);
+    y = Math.max(yS, yC) + 8;
+
+    // ---- STATS AVANCÉES (si Pro) ----
+    if (currentPlan === 'pro' || currentPlan === 'trial') {
+      if (y + 20 > H-20) { doc.addPage(); y=16; }
+
+      // Titre section
+      doc.setFillColor.apply(doc,C_INK); doc.rect(M,y,3,7,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor.apply(doc,C_INK);
+      doc.text('Statistiques avancées', M+6, y+5.5);
+      doc.setFillColor.apply(doc,C_GOLD); doc.roundedRect(M+6+doc.getTextWidth('Statistiques avancées')+4,y+1,12,5,2,2,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor.apply(doc,C_INK);
+      doc.text('PRO', M+6+doc.getTextWidth('Statistiques avancées')+10, y+5, {align:'center'});
+      y += 12;
+
+      // KPIs avancés
+      var kpisAdv = [
+        { label:'Meilleur mois',   val:kpiVal('kpi-best-month'), sub:kpiVal('kpi-best-month-label') },
+        { label:'Taux de retour',  val:kpiVal('kpi-retention'),  sub:'Clients revenus 2x+' },
+        { label:'RDV / semaine',   val:kpiVal('kpi-weekly-avg'), sub:'Moyenne' },
+        { label:'Clients uniques', val:kpiVal('kpi-unique'),     sub:'Sur la période' },
+      ];
+      kpisAdv.forEach(function(k,i) {
+        var x = M + i*(kW+3);
+        doc.setFillColor.apply(doc,C_CREAM); doc.roundedRect(x,y,kW,20,2,2,'F');
+        doc.setFillColor.apply(doc,[29,158,117]); doc.rect(x,y,kW,1.2,'F');
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,C_LIGHT);
+        doc.text(k.label, x+kW/2, y+6, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc,C_INK);
+        doc.text(k.val, x+kW/2, y+14, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,C_LIGHT);
+        doc.text(k.sub, x+kW/2, y+19, {align:'center'});
+      });
+      y += 24;
+
+      // Graphique heure + jours
+      var ctxH = document.getElementById('hour-chart');
+      var ctxD = document.getElementById('weekday-chart');
+      var gW   = (W-M*2-6)/2;
+      var gH   = 44;
+
+      if (ctxH && ctxD) {
+        if (y+gH+14>H-20) { doc.addPage(); y=16; }
+
+        ['Heure de pointe','RDV par jour'].forEach(function(title,idx) {
+          var gx = M + idx*(gW+6);
+          doc.setFillColor.apply(doc,C_CREAM); doc.roundedRect(gx,y,gW,gH+12,2,2,'F');
+          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,C_INK);
+          doc.text(title, gx+gW/2, y+6, {align:'center'});
+          var ctx5 = idx===0 ? ctxH : ctxD;
+          var imgG = ctx5.toDataURL('image/png');
+          doc.addImage(imgG,'PNG',gx+2,y+8,gW-4,gH);
         });
+        y += gH+18;
       }
     }
-    drawTop('Top prestations','top-services',margin);
-    drawTop('Top clients','top-clients',margin+colW+6);
-    doc.setFontSize(7); doc.setTextColor.apply(doc,LIGHT); doc.setFont('helvetica','normal');
-    doc.text('Belyo — belyo.vercel.app',W/2,290,{align:'center'});
-    var mois=now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).replace(' ','-');
+
+    // ---- FOOTER ----
+    var pageCount = doc.getNumberOfPages();
+    for (var p=1; p<=pageCount; p++) {
+      doc.setPage(p);
+      // Ligne footer
+      doc.setDrawColor.apply(doc,C_BORDER); doc.setLineWidth(0.3);
+      doc.line(M,H-14,W-M,H-14);
+      // Texte footer
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,C_LIGHT);
+      doc.text('Belyo · belyo.vercel.app · SIRET 10355130500016', M, H-9);
+      doc.text('Page '+p+'/'+pageCount, W-M, H-9, {align:'right'});
+    }
+
+    // Téléchargement
+    var mois = now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).replace(' ','-');
     doc.save('belyo-rapport-'+mois+'.pdf');
     showToast('PDF exporté !');
+
   } catch(err) {
+    console.error(err);
     showToast('Erreur export : '+err.message,'error');
   } finally {
-    if(btn){btn.disabled=false;btn.textContent='\u2193 Exporter PDF';}
+    if (btn) { btn.disabled=false; btn.innerHTML='&#8595; Exporter PDF'; }
   }
 }
+
 
 (async function() {
   var session = await requireSession();
