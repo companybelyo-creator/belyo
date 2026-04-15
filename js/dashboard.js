@@ -510,6 +510,32 @@ async function loadActivity(userId) {
   }).join('');
 }
 
+
+// ===== UPSERT CLIENT =====
+async function upsertClientFull(userId, clientName, apptDatetime, email, phone) {
+  if (!clientName || !userId) return;
+  var today = apptDatetime ? apptDatetime.slice(0, 10) : new Date().toISOString().slice(0, 10);
+  var res = await sb.from('clients')
+    .select('id, visit_count, last_visit')
+    .eq('user_id', userId)
+    .ilike('name', clientName.trim())
+    .maybeSingle();
+  var updateData = { visit_count: 1 };
+  if (email) updateData.email = email;
+  if (phone) updateData.phone = phone;
+  if (res.data) {
+    updateData.visit_count = (res.data.visit_count || 0) + 1;
+    var lastVisit = res.data.last_visit;
+    if (!lastVisit || today > lastVisit) updateData.last_visit = today;
+    await sb.from('clients').update(updateData).eq('id', res.data.id);
+  } else {
+    updateData.user_id    = userId;
+    updateData.name       = clientName.trim();
+    updateData.last_visit = today;
+    await sb.from('clients').insert(updateData);
+  }
+}
+
 // ===== NOUVEAU RDV =====
 function checkFormValidity() {
   var btn         = document.getElementById('appt-submit');
