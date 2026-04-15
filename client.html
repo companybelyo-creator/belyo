@@ -67,22 +67,42 @@
     .empty-state .empty-icon{font-size:2rem;margin-bottom:.5rem;opacity:.4;}
 
     /* RDV ITEMS */
-    .rdv-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+    .rdv-item{display:flex;align-items:stretch;gap:0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
     .rdv-item:last-child{border-bottom:none;}
-    .rdv-date-block{text-align:center;min-width:44px;background:var(--cream);border-radius:10px;padding:7px 5px;flex-shrink:0;}
-    .rdv-day{font-family:var(--font-display);font-size:1.4rem;font-weight:600;line-height:1;}
+    .rdv-item:hover{background:var(--cream);}
+    .rdv-item.is-now{background:rgba(196,168,122,.07);}
+    .rdv-item.is-now:hover{background:rgba(196,168,122,.13);}
+    /* Barre colorée gauche */
+    .rdv-accent{width:3px;flex-shrink:0;border-radius:0;}
+    .rdv-accent.now{background:var(--gold);}
+    .rdv-accent.pending{background:#FAEEDA;}
+    .rdv-accent.done{background:#E1F5EE;}
+    .rdv-accent.cancelled{background:#FAECE7;}
+    /* Contenu */
+    .rdv-body{display:flex;align-items:center;gap:14px;padding:14px 16px;flex:1;min-width:0;}
+    /* Bloc date */
+    .rdv-date-block{text-align:center;min-width:44px;flex-shrink:0;}
+    .rdv-day{font-family:var(--font-display);font-size:1.5rem;font-weight:600;line-height:1;color:var(--ink);}
     .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
-    .rdv-info{flex:1;min-width:0;}
-    .rdv-salon-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .rdv-service{font-size:12px;color:var(--ink-light);margin-top:1px;}
-    .rdv-time{font-size:12px;color:var(--ink-light);}
-    .rdv-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+    .rdv-year{font-size:10px;color:var(--ink-light);}
+    /* Séparateur vertical */
+    .rdv-sep{width:1px;background:var(--border);flex-shrink:0;align-self:stretch;margin:4px 0;}
+    /* Info */
+    .rdv-info{flex:1;min-width:0;padding-left:14px;}
+    .rdv-salon-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+    .rdv-service{font-size:12px;color:var(--ink-light);margin-top:2px;}
+    .rdv-meta{font-size:12px;color:var(--ink-light);margin-top:3px;display:flex;align-items:center;gap:6px;}
+    .rdv-meta-dot{width:3px;height:3px;border-radius:50%;background:var(--border);flex-shrink:0;}
+    /* Droite */
+    .rdv-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;padding-right:4px;}
     .rdv-status{font-size:11px;padding:3px 9px;border-radius:100px;font-weight:500;white-space:nowrap;}
     .st-pending{background:#FAEEDA;color:#854F0B;}
     .st-done{background:#E1F5EE;color:#0F6E56;}
     .st-cancelled{background:#FAECE7;color:#993C1D;}
-    .st-now{background:var(--gold-light);color:#7A5A2A;}
+    .st-now{background:var(--gold-light);color:#7A5A2A;animation:goldpulse 2s ease-in-out infinite;}
+    @keyframes goldpulse{0%,100%{opacity:1;}50%{opacity:.7;}}
     .rdv-price{font-size:13px;font-weight:500;color:var(--ink);}
+    .rdv-arrow{font-size:14px;color:var(--ink-light);margin-top:2px;}
 
     /* RECHERCHE */
     .search-wrap{position:relative;margin-bottom:1.2rem;}
@@ -482,30 +502,51 @@ async function loadRdv(email, phone, name) {
 function renderRdvList(elId, list, isUpcoming) {
   var el  = document.getElementById(elId);
   var now = new Date();
+  var calSvg = '<svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  var clkSvg = '<svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>';
   if (!list||list.length===0) {
-    el.innerHTML = '<div class="empty-state">'+(isUpcoming?'<svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>':'<svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>')+'<div>'+(isUpcoming?'Aucun rendez-vous à venir':'Aucun historique')+'</div></div>';
+    el.innerHTML = '<div class="empty-state">'+(isUpcoming?calSvg:clkSvg)+'<div>'+(isUpcoming?'Aucun rendez-vous à venir':'Aucun historique')+'</div></div>';
     return;
   }
   el.innerHTML = list.map(function(a) {
-    var dt    = new Date(a.datetime);
-    var day   = dt.getDate();
-    var month = dt.toLocaleDateString('fr-FR',{month:'short'});
-    var heure = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
-    var isNow = isUpcoming && a.status==='pending' && (now-dt)>=0 && (now-dt)<2*3600000;
-    var nowCls = isNow ? ' is-now' : '';
-    var cls   = isNow?'st-now':({pending:'st-pending',done:'st-done',cancelled:'st-cancelled'}[a.status]||'st-pending');
-    var txt   = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
-    var prix  = a.price ? Math.round(parseFloat(a.price))+'€' : '';
-    return '<div class="rdv-item'+nowCls+'">'
-      + '<div class="rdv-date-block"><div class="rdv-day">'+day+'</div><div class="rdv-month">'+month+'</div></div>'
-      + '<div class="rdv-info">'
-      + '<div class="rdv-salon-name">'+(a.salon_name||'Salon')+'</div>'
-      + '<div class="rdv-service">'+(a.service||'—')+'</div>'
-      + '<div class="rdv-time">'+heure+(a.duration_minutes?' · '+a.duration_minutes+'min':'')+'</div>'
-      + '</div>'
-      + '<div class="rdv-right">'
-      + '<span class="rdv-status '+cls+'">'+txt+'</span>'
-      + (prix?'<span class="rdv-price">'+prix+'</span>':'')
+    var dt      = new Date(a.datetime);
+    var day     = dt.getDate();
+    var month   = dt.toLocaleDateString('fr-FR',{month:'short'});
+    var year    = dt.getFullYear();
+    var nowYear = now.getFullYear();
+    var heure   = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
+    var isNow   = isUpcoming && a.status==='pending' && (now-dt)>=0 && (now-dt)<2*3600000;
+    var nowCls  = isNow ? ' is-now' : '';
+    var accentCls = isNow?'now':(a.status||'pending');
+    var stCls   = isNow?'st-now':({pending:'st-pending',done:'st-done',cancelled:'st-cancelled'}[a.status]||'st-pending');
+    var stTxt   = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
+    var prix    = a.price ? Math.round(parseFloat(a.price))+'€' : '';
+    var addr    = a.salon_address || '';
+    var bookUrl = a.user_id ? '/book.html?salon='+a.user_id : '#';
+
+    return '<div class="rdv-item'+nowCls+'" onclick="window.location.href=\'' + bookUrl + '\'">'
+      + '<div class="rdv-accent '+accentCls+'"></div>'
+      + '<div class="rdv-body">'
+        + '<div class="rdv-date-block">'
+          + '<div class="rdv-day">'+day+'</div>'
+          + '<div class="rdv-month">'+month+'</div>'
+          + (year!==nowYear?'<div class="rdv-year">'+year+'</div>':'')
+        + '</div>'
+        + '<div class="rdv-sep"></div>'
+        + '<div class="rdv-info">'
+          + '<div class="rdv-salon-name">'+(a.salon_name||'Salon')+'</div>'
+          + '<div class="rdv-service">'+(a.service||'—')+'</div>'
+          + '<div class="rdv-meta">'
+            + '<span>'+heure+'</span>'
+            + (a.duration_minutes?'<span class="rdv-meta-dot"></span><span>'+a.duration_minutes+' min</span>':'')
+            + (addr?'<span class="rdv-meta-dot"></span><span>'+addr+'</span>':'')
+          + '</div>'
+        + '</div>'
+        + '<div class="rdv-right">'
+          + '<span class="rdv-status '+stCls+'">'+stTxt+'</span>'
+          + (prix?'<span class="rdv-price">'+prix+'</span>':'')
+          + '<span class="rdv-arrow">›</span>'
+        + '</div>'
       + '</div>'
       + '</div>';
   }).join('');
