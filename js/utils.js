@@ -747,17 +747,28 @@ function formatPhone(val) {
 
 function applyPhoneFormat(input) {
   if (!input) return;
-  input.addEventListener('input', function() {
+  function doFormat() {
     var pos    = this.selectionStart;
     var before = this.value.length;
     this.value = formatPhone(this.value);
     var after  = this.value.length;
-    // Replacer le curseur
-    var newPos = pos + (after - before);
-    try { this.setSelectionRange(newPos, newPos); } catch(e) {}
+    try { this.setSelectionRange(pos + (after - before), pos + (after - before)); } catch(e) {}
+  }
+  input.addEventListener('input', doFormat);
+  input.addEventListener('blur',  function() { this.value = formatPhone(this.value); });
+  // Coller : reformater après que le contenu est collé
+  input.addEventListener('paste', function(e) {
+    var self = this;
+    setTimeout(function() {
+      self.value = formatPhone(self.value);
+    }, 0);
   });
-  input.addEventListener('blur', function() {
-    this.value = formatPhone(this.value);
+  // Drag & drop de texte
+  input.addEventListener('drop', function(e) {
+    var self = this;
+    setTimeout(function() {
+      self.value = formatPhone(self.value);
+    }, 0);
   });
 }
 
