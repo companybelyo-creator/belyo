@@ -11,7 +11,6 @@
   <link rel="stylesheet" href="../css/dashboard.css" />
 </head>
 <body>
-
 <div class="app-layout">
   <aside class="sidebar">
     <div class="sidebar-logo">Belyo</div>
@@ -31,80 +30,108 @@
   </aside>
 
   <main class="main-content">
+
+    <!-- Header -->
     <div class="page-header">
-      <h1 class="page-title">Bonjour, <em id="greeting-name">—</em></h1>
+      <div>
+        <h1 class="page-title">Bonjour, <em id="greeting-name">—</em></h1>
+        <div id="dash-date" style="font-size:13px;color:var(--ink-light);margin-top:2px">—</div>
+      </div>
       <button class="btn-action" onclick="openModal()">+ Nouveau RDV</button>
     </div>
 
-    <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">RDV aujourd'hui</div>
-        <div class="kpi-val" id="kpi-today">—</div>
-        <div class="kpi-sub">Aujourd'hui</div>
+    <!-- KPIs -->
+    <div class="dash-kpi-grid">
+      <div class="dash-kpi">
+        <div class="dash-kpi-accent" style="background:var(--gold)"></div>
+        <div class="dash-kpi-label">RDV aujourd'hui</div>
+        <div class="dash-kpi-val" id="kpi-today">—</div>
+        <div class="dash-kpi-sub"><span id="kpi-today-sub" style="color:var(--ink-light)">—</span></div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">CA ce mois</div>
-        <div class="kpi-val" id="kpi-month">—</div>
-        <div class="kpi-sub">Mois en cours</div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-accent" style="background:#1D9E75"></div>
+        <div class="dash-kpi-label">CA ce mois</div>
+        <div class="dash-kpi-val" id="kpi-month">—</div>
+        <div class="dash-kpi-sub">
+          <span class="dash-kpi-trend" id="kpi-month-trend"></span>
+          <span id="kpi-month-sub">vs mois dernier</span>
+        </div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Total clients</div>
-        <div class="kpi-val" id="kpi-clients">—</div>
-        <div class="kpi-sub">Inscrits</div>
+      <div class="dash-kpi">
+        <div class="dash-kpi-accent" style="background:#534AB7"></div>
+        <div class="dash-kpi-label">Total clients</div>
+        <div class="dash-kpi-val" id="kpi-clients">—</div>
+        <div class="dash-kpi-sub"><span id="kpi-clients-sub">Inscrits</span></div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">RDV ce mois</div>
-        <div class="kpi-val" id="kpi-month-appts">—</div>
-        <div class="kpi-sub">Mois en cours</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Rendez-vous du jour</span>
-        <a href="appointments.html" style="font-size:13px;color:var(--ink-light);">Voir tous →</a>
-      </div>
-      <div class="card-body" style="padding:0">
-        <table class="table">
-          <thead><tr><th>Heure</th><th>Client</th><th>Prestation</th><th>Prix</th><th>Statut</th></tr></thead>
-          <tbody id="today-appts">
-            <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
-          </tbody>
-        </table>
+      <div class="dash-kpi">
+        <div class="dash-kpi-accent" style="background:var(--ink)"></div>
+        <div class="dash-kpi-label">RDV ce mois</div>
+        <div class="dash-kpi-val" id="kpi-month-appts">—</div>
+        <div class="dash-kpi-sub"><span id="kpi-appts-sub">Mois en cours</span></div>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Derniers clients</span>
-        <a href="clients.html" style="font-size:13px;color:var(--ink-light);">Voir tous →</a>
+    <!-- RDV du jour + Prochain RDV -->
+    <div class="dash-grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">RDV du jour</span>
+          <a href="appointments.html" style="font-size:13px;color:var(--ink-light)">Voir tous →</a>
+        </div>
+        <div class="card-body" id="today-appts-wrap" style="padding:0 1.5rem">
+          <div class="appt-timeline" id="today-appts">
+            <div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Chargement...</div>
+          </div>
+        </div>
       </div>
-      <div class="card-body" style="padding:0">
-        <table class="table">
-          <thead><tr><th>Nom</th><th>Téléphone</th><th>Dernière visite</th><th>Visites</th></tr></thead>
-          <tbody id="recent-clients">
-            <tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
-          </tbody>
-        </table>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Prochain RDV</span>
+        </div>
+        <div class="card-body" id="next-appt-wrap" style="padding:1.2rem 1.5rem">
+          <div id="next-appt" style="font-size:13px;color:var(--ink-light)">Chargement...</div>
+        </div>
       </div>
     </div>
+
+    <!-- Derniers clients + Activité récente -->
+    <div class="dash-grid-eq">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Derniers clients</span>
+          <a href="clients.html" style="font-size:13px;color:var(--ink-light)">Voir tous →</a>
+        </div>
+        <div class="card-body" style="padding:0 1.5rem">
+          <div id="recent-clients"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Activité récente</span>
+        </div>
+        <div class="card-body" style="padding:0 1.5rem">
+          <div class="activity-list" id="activity-list">
+            <div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Chargement...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL NOUVEAU RDV -->
 <div class="modal-overlay" id="modal-overlay">
   <div class="modal" style="max-width:520px">
     <div class="modal-header"><span class="modal-title">Nouveau rendez-vous</span><button class="modal-close" onclick="closeModal()">×</button></div>
     <form id="appt-form">
-
-      <!-- Autocomplete client -->
       <div class="form-group" style="position:relative">
         <label class="form-label">Client</label>
         <input type="text" class="form-input" id="appt-client" placeholder="Rechercher ou créer un client..." required autocomplete="off" oninput="onClientInput(this.value)" />
         <div id="client-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:50;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.08)"></div>
       </div>
-
-      <!-- Infos client (masqué par défaut, visible si client sélectionné ou nouveau) -->
       <div id="client-info-block" style="display:none;background:var(--cream);border-radius:var(--radius-sm);padding:14px;margin-bottom:1.2rem;border:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <span style="font-size:13px;font-weight:500;color:var(--ink)" id="client-info-label">Infos client</span>
@@ -121,15 +148,12 @@
           </div>
         </div>
       </div>
-
-      <!-- Genre + Prestation -->
       <div class="form-group">
         <label class="form-label">Genre</label>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <button type="button" class="genre-btn active" id="genre-homme" onclick="setGenre('homme')">Homme</button>
           <button type="button" class="genre-btn" id="genre-femme" onclick="setGenre('femme')">Femme</button>
         </div>
-        <!-- Select custom avec prix à droite -->
         <div class="service-select-wrap" id="service-select-wrap">
           <div class="service-select-trigger" id="service-select-trigger" onclick="toggleServiceDropdown()">
             <span id="service-select-label" style="color:var(--ink-light)">-- Prestation --</span>
@@ -162,10 +186,8 @@
               <select id="cal-picker-hour" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)"></select>
               <span style="font-weight:500;color:var(--ink)">:</span>
               <select id="cal-picker-min" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)">
-                <option value="00">00</option>
-                <option value="15">15</option>
-                <option value="30">30</option>
-                <option value="45">45</option>
+                <option value="00">00</option><option value="15">15</option>
+                <option value="30">30</option><option value="45">45</option>
               </select>
               <button type="button" onclick="event.stopPropagation();calPickerConfirm()" style="padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">OK</button>
             </div>
@@ -173,12 +195,14 @@
         </div>
         <input type="hidden" id="appt-datetime" />
       </div>
-      <!-- Prix éditable avec valeur auto depuis les paramètres -->
       <div class="form-group">
         <label class="form-label">Prix (€)</label>
-        <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" readonly style="cursor:default;background:var(--cream-dark);color:var(--ink);pointer-events:none" />
+        <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" readonly style="cursor:default;background:var(--cream-dark);pointer-events:none" />
       </div>
-      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." />
+      </div>
       <button type="submit" class="btn-submit" id="appt-submit">Enregistrer le RDV</button>
     </form>
   </div>
@@ -190,18 +214,15 @@
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
 <script>
-// Guard salon — seuls les comptes role=salon accèdent au dashboard
 (async function() {
   var s = await sb.auth.getSession();
   if (!s.data.session) { window.location.href = 'login.html'; return; }
   var meta = s.data.session.user.user_metadata || {};
   if (meta.role !== 'salon') { window.location.href = '../client.html'; return; }
-  // Créer salon_settings si pas encore fait
   await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
 })();
-// end guard-salon
 </script>
 <script src="../js/dashboard.js"></script>
-
+<script>document.addEventListener('DOMContentLoaded', function(){ if(typeof initPhoneInputs==='function') initPhoneInputs(); });</script>
 </body>
 </html>

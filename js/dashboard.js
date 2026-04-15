@@ -288,11 +288,21 @@ console.log('[Belyo] sb disponible ?', typeof sb);
     document.getElementById('sidebar-salon').textContent = meta.salon_name || 'Mon salon';
     document.getElementById('sidebar-email').textContent = session.user.email;
 
+    // Date du jour
+    var dateEl = document.getElementById('dash-date');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+      });
+    }
+
     console.log('[Belyo] Chargement des donnees...');
     await Promise.all([
       loadKPIs(currentUserId),
       loadTodayAppointments(currentUserId),
       loadRecentClients(currentUserId),
+      loadNextAppt(currentUserId),
+      loadActivity(currentUserId),
     ]);
     console.log('[Belyo] Donnees chargees');
 
@@ -310,81 +320,180 @@ document.getElementById('logout-btn').addEventListener('click', async function(e
 
 // ===== KPIs =====
 async function loadKPIs(userId) {
-  console.log('[Belyo] loadKPIs...');
-  var today = new Date().toISOString().split('T')[0];
-  var startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  var now          = new Date();
+  var today        = now.toISOString().split('T')[0];
+  var startMonth   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  var startLastM   = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+  var endLastM     = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
 
-  var r1 = await sb.from('appointments').select('id')
+  // RDV aujourd'hui
+  var r1 = await sb.from('appointments').select('id, status')
     .eq('user_id', userId)
     .gte('datetime', today + 'T00:00:00')
     .lte('datetime', today + 'T23:59:59');
-  console.log('[Belyo] RDV aujourd\'hui:', r1.error || r1.data.length);
-  document.getElementById('kpi-today').textContent = r1.data ? r1.data.length : 0;
+  var todayAppts = r1.data || [];
+  document.getElementById('kpi-today').textContent = todayAppts.length;
+  var done = todayAppts.filter(function(a){ return a.status==='done'; }).length;
+  var sub1 = document.getElementById('kpi-today-sub');
+  if (sub1) sub1.textContent = done > 0 ? done + ' terminé' + (done>1?'s':'') : 'Aucun terminé';
 
+  // CA ce mois + tendance vs mois dernier
   var r2 = await sb.from('appointments').select('price')
-    .eq('user_id', userId).eq('status', 'done').gte('datetime', startOfMonth);
-  var ca = r2.data ? r2.data.reduce(function(sum, a) { return sum + (parseFloat(a.price) || 0); }, 0) : 0;
-  document.getElementById('kpi-month').textContent = ca.toFixed(0) + '€';
+    .eq('user_id', userId).eq('status', 'done').gte('datetime', startMonth);
+  var ca = (r2.data||[]).reduce(function(s,a){ return s+(parseFloat(a.price)||0); }, 0);
+  document.getElementById('kpi-month').textContent = Math.round(ca) + '€';
 
-  var r3 = await sb.from('clients').select('id', { count: 'exact', head: true }).eq('user_id', userId);
-  console.log('[Belyo] Clients:', r3.error || r3.count);
+  var r2b = await sb.from('appointments').select('price')
+    .eq('user_id', userId).eq('status', 'done')
+    .gte('datetime', startLastM).lte('datetime', endLastM);
+  var caLast = (r2b.data||[]).reduce(function(s,a){ return s+(parseFloat(a.price)||0); }, 0);
+  var trendEl = document.getElementById('kpi-month-trend');
+  if (trendEl) {
+    if (caLast > 0) {
+      var diff = Math.round((ca - caLast) / caLast * 100);
+      trendEl.textContent = (diff>=0?'+':'')+diff+'%';
+      trendEl.className = 'dash-kpi-trend ' + (diff>0?'trend-up':diff<0?'trend-down':'trend-flat');
+    } else {
+      trendEl.textContent = ''; trendEl.className = 'dash-kpi-trend';
+    }
+  }
+
+  // Total clients
+  var r3 = await sb.from('clients').select('id', { count:'exact', head:true }).eq('user_id', userId);
   document.getElementById('kpi-clients').textContent = r3.count != null ? r3.count : 0;
 
-  var r4 = await sb.from('appointments').select('id', { count: 'exact', head: true })
-    .eq('user_id', userId).gte('datetime', startOfMonth);
+  // RDV ce mois
+  var r4 = await sb.from('appointments').select('id', { count:'exact', head:true })
+    .eq('user_id', userId).gte('datetime', startMonth);
   document.getElementById('kpi-month-appts').textContent = r4.count != null ? r4.count : 0;
 }
 
 // ===== RDV DU JOUR =====
 async function loadTodayAppointments(userId) {
-  console.log('[Belyo] loadTodayAppointments...');
   var today = new Date().toISOString().split('T')[0];
+  var now   = new Date();
   var res = await sb.from('appointments').select('*')
     .eq('user_id', userId)
     .gte('datetime', today + 'T00:00:00')
     .lte('datetime', today + 'T23:59:59')
     .order('datetime', { ascending: true });
 
-  if (res.error) console.error('[Belyo] Erreur RDV:', res.error);
-
-  var tbody = document.getElementById('today-appts');
+  var el = document.getElementById('today-appts');
   if (!res.data || res.data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--ink-light)">Aucun rendez-vous aujourd\'hui</td></tr>';
+    el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun rendez-vous aujourd\'hui</div>';
     return;
   }
-  tbody.innerHTML = res.data.map(function(a) {
-    return '<tr>'
-      + '<td><strong>' + formatTime(a.datetime) + '</strong></td>'
-      + '<td>' + a.client_name + '</td>'
-      + '<td>' + a.service + '</td>'
-      + '<td>' + (a.price ? parseFloat(a.price).toFixed(0) + '€' : '-') + '</td>'
-      + '<td>' + statusBadge(a.status) + '</td>'
-      + '</tr>';
+
+  el.innerHTML = res.data.map(function(a) {
+    var dt    = new Date(a.datetime);
+    var isNow = Math.abs(now - dt) < 60*60*1000 && now >= dt;
+    var nowCls = isNow ? ' now' : '';
+    return '<div class="appt-row">'
+      + '<div class="appt-time-block">'
+      + '<div class="appt-time' + nowCls + '">' + formatTime(a.datetime) + '</div>'
+      + '<div class="appt-dot' + nowCls + '"></div>'
+      + '</div>'
+      + '<div class="appt-info">'
+      + '<div class="appt-client">' + a.client_name + '</div>'
+      + '<div class="appt-service-label">' + (a.service||'—') + '</div>'
+      + '</div>'
+      + '<div class="appt-right">'
+      + statusBadge(a.status)
+      + (a.price ? '<span class="appt-price">' + Math.round(parseFloat(a.price)) + '€</span>' : '')
+      + '</div>'
+      + '</div>';
   }).join('');
+}
+
+// ===== PROCHAIN RDV =====
+async function loadNextAppt(userId) {
+  var now = new Date().toISOString();
+  var res = await sb.from('appointments').select('*')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .gte('datetime', now)
+    .order('datetime', { ascending: true })
+    .limit(1);
+
+  var el = document.getElementById('next-appt');
+  if (!el) return;
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--ink-light);font-size:13px;padding:1rem 0">Aucun prochain RDV</div>';
+    return;
+  }
+  var a  = res.data[0];
+  var dt = new Date(a.datetime);
+  var diffMs = dt - new Date();
+  var diffH  = Math.floor(diffMs / 3600000);
+  var diffM  = Math.floor((diffMs % 3600000) / 60000);
+  var dans   = diffMs < 0 ? 'En cours' : diffH > 0 ? 'Dans ' + diffH + 'h' + (diffM>0?diffM+'min':'') : 'Dans ' + diffM + ' min';
+
+  el.innerHTML = ''
+    + '<div style="text-align:center;margin-bottom:1rem">'
+    + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-light);margin-bottom:.3rem">' + dans + '</div>'
+    + '<div style="font-family:var(--font-display);font-size:2rem;font-weight:300;color:var(--ink)">' + formatTime(a.datetime) + '</div>'
+    + '<div style="font-size:12px;color:var(--ink-light)">' + dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) + '</div>'
+    + '</div>'
+    + '<div style="border-top:1px solid var(--border);padding-top:1rem;display:flex;flex-direction:column;gap:6px">'
+    + '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink-light)">Client</span><span style="font-weight:500">' + a.client_name + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink-light)">Prestation</span><span style="font-weight:500">' + (a.service||'—') + '</span></div>'
+    + (a.price ? '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink-light)">Prix</span><span style="font-weight:500;color:var(--gold)">' + Math.round(parseFloat(a.price)) + '€</span></div>' : '')
+    + '</div>'
+    + '<a href="appointments.html" style="display:block;text-align:center;margin-top:1rem;font-size:12px;color:var(--ink-light)">Voir tous les RDV →</a>';
 }
 
 // ===== DERNIERS CLIENTS =====
 async function loadRecentClients(userId) {
-  console.log('[Belyo] loadRecentClients...');
   var res = await sb.from('clients').select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(5);
+    .order('last_visit', { ascending: false, nullsFirst: false })
+    .limit(6);
 
-  if (res.error) console.error('[Belyo] Erreur clients:', res.error);
-
-  var tbody = document.getElementById('recent-clients');
+  var el = document.getElementById('recent-clients');
   if (!res.data || res.data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--ink-light)">Aucun client enregistre</td></tr>';
+    el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun client</div>';
     return;
   }
-  tbody.innerHTML = res.data.map(function(c) {
-    return '<tr>'
-      + '<td><strong>' + c.name + '</strong></td>'
-      + '<td>' + (c.phone || '-') + '</td>'
-      + '<td>' + (c.last_visit ? formatDate(c.last_visit) : '-') + '</td>'
-      + '<td>' + (c.visit_count != null ? c.visit_count : 1) + '</td>'
-      + '</tr>';
+  el.innerHTML = res.data.map(function(c) {
+    var parts = (c.name||'').trim().split(' ');
+    var av    = (parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+    return '<div class="client-mini-row">'
+      + '<div class="client-mini-avatar">' + av + '</div>'
+      + '<div class="client-mini-info">'
+      + '<div class="client-mini-name">' + c.name + '</div>'
+      + '<div class="client-mini-sub">' + (c.last_visit ? 'Dernière visite : ' + formatDate(c.last_visit) : c.phone ? formatPhone(c.phone) : 'Nouveau client') + '</div>'
+      + '</div>'
+      + '<div class="client-mini-visits">' + (c.visit_count||0) + ' visite' + ((c.visit_count||0)>1?'s':'') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ===== ACTIVITÉ RÉCENTE =====
+async function loadActivity(userId) {
+  var res = await sb.from('appointments').select('client_name, service, datetime, status, price')
+    .eq('user_id', userId)
+    .order('datetime', { ascending: false })
+    .limit(8);
+
+  var el = document.getElementById('activity-list');
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucune activité</div>';
+    return;
+  }
+
+  var colors = { done:'#1D9E75', pending:'#C4A87A', cancelled:'#D85A30' };
+  var labels = { done:'RDV terminé', pending:'RDV prévu', cancelled:'RDV annulé' };
+
+  el.innerHTML = res.data.map(function(a) {
+    var dt    = new Date(a.datetime);
+    var color = colors[a.status] || '#888';
+    var label = labels[a.status] || a.status;
+    var timeStr = dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) + ' ' + formatTime(a.datetime);
+    return '<div class="activity-item">'
+      + '<div class="activity-dot" style="background:' + color + '"></div>'
+      + '<div class="activity-text"><strong>' + a.client_name + '</strong> — ' + (a.service||'—') + (a.price?' (' + Math.round(parseFloat(a.price)) + '€)':'') + '<br><span style="font-size:11px;color:var(--ink-light)">' + label + '</span></div>'
+      + '<div class="activity-time">' + timeStr + '</div>'
+      + '</div>';
   }).join('');
 }
 
