@@ -55,12 +55,21 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Coupe par défaut
-  var coupeOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; });
-  if (coupeOpt) {
-    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][coupeOpt];
-    selectService(coupeOpt, pd && pd.prix ? pd.prix : 0);
+  // Première prestation par défaut
+  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
+  if (defaultOpt && defaultOpt !== 'Autre') {
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
+    var prix = pd && pd.prix ? pd.prix : 0;
+    if (!prix) {
+      var defs = {
+        homme: { 'Coupe':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
+        femme:  { 'Coupe':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
+      };
+      prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
+    }
+    selectService(defaultOpt, prix);
   }
+  checkFormValidity();
 }
 
 function selectServiceByIndex(idx) {
@@ -136,6 +145,7 @@ async function loadClients() {
 
 function onClientInput(val) {
   selectedClient = null;
+  checkFormValidity();
   var block = document.getElementById('client-info-block');
   var suggestions = document.getElementById('client-suggestions');
 
@@ -231,6 +241,9 @@ function openModal() {
   if (input) { input.min = minStr; input.value = dt; }
   document.getElementById('modal-overlay').classList.add('open');
   updateServiceOptions();
+  var btn = document.getElementById('appt-submit');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
+  checkFormValidity();
 }
 
 function closeModal() {
@@ -498,40 +511,74 @@ async function loadActivity(userId) {
 }
 
 // ===== NOUVEAU RDV =====
+function checkFormValidity() {
+  var btn         = document.getElementById('appt-submit');
+  if (!btn) return;
+  var clientVal   = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+  var serviceVal  = document.getElementById('appt-service-select') ? document.getElementById('appt-service-select').value.trim() : '';
+  var datetimeVal = document.getElementById('appt-datetime') ? document.getElementById('appt-datetime').value.trim() : '';
+  var isValid = clientVal && serviceVal && datetimeVal;
+  btn.disabled      = !isValid;
+  btn.style.opacity = isValid ? '1' : '0.45';
+  btn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
+}
+
 document.getElementById('appt-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn = document.getElementById('appt-submit');
-  btn.disabled = true;
-  btn.textContent = 'Enregistrement...';
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
 
-  var priceVal = document.getElementById('appt-price').value;
+  var clientName  = document.getElementById('appt-client').value.trim();
+  var datetime    = document.getElementById('appt-datetime').value;
+  var priceVal    = document.getElementById('appt-price').value;
+  var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
+  var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
+  var notesVal    = document.getElementById('appt-notes').value.trim() || null;
+
+  var serviceVal = (function() {
+    var hidden = document.getElementById('appt-service-select');
+    var inp    = document.getElementById('appt-service');
+    if (hidden && hidden.value) return hidden.value;
+    return inp ? inp.value.trim() : '';
+  })();
+
+  var durationVal = (function() {
+    var name = serviceVal;
+    if (!name) return null;
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
+    return pd && pd.duree ? pd.duree : null;
+  })();
+
   var res = await sb.from('appointments').insert({
-    user_id:     currentUserId,
-    client_name: document.getElementById('appt-client').value.trim(),
-    service:     document.getElementById('appt-service').value.trim(),
-    datetime:    document.getElementById('appt-datetime').value,
-    price:       priceVal ? parseFloat(priceVal) : null,
-    status:      'pending',
+    user_id:          currentUserId,
+    client_name:      clientName,
+    service:          serviceVal,
+    duration_minutes: durationVal,
+    datetime:         datetime,
+    price:            priceVal ? parseFloat(priceVal) : null,
+    notes:            notesVal,
+    status:           'pending',
+    genre:            selectedGenre,
   });
 
-  btn.disabled = false;
-  btn.textContent = 'Enregistrer le RDV';
+  btn.disabled = false; btn.textContent = 'Enregistrer le RDV';
 
   if (res.error) {
-    console.error('[Belyo] Erreur insert RDV:', res.error);
     showToast('Erreur : ' + res.error.message, 'error');
     return;
   }
 
-  // Créer/mettre à jour automatiquement le client
-  var clientName2 = document.getElementById('appt-client').value.trim();
-  var datetime2   = document.getElementById('appt-datetime').value;
-  await upsertClient(currentUserId, clientName2, datetime2);
+  // Créer/mettre à jour le client avec email et téléphone
+  await upsertClientFull(currentUserId, clientName, datetime, clientEmail, clientPhone);
 
   closeModal();
-  showToast('Rendez-vous ajoute !');
-  await loadKPIs(currentUserId);
-  await loadTodayAppointments(currentUserId);
+  showToast('Rendez-vous ajouté !');
+  await Promise.all([
+    loadKPIs(currentUserId),
+    loadTodayAppointments(currentUserId),
+    loadNextAppt(currentUserId),
+    loadActivity(currentUserId),
+  ]);
 });
 
 document.getElementById('modal-overlay').addEventListener('click', function(e) {
