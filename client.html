@@ -15,221 +15,296 @@
 
     /* HEADER */
     .header{padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--white);position:sticky;top:0;z-index:50;}
-    .header-left{display:flex;align-items:center;gap:1rem;}
-    .header-back{font-size:13px;color:var(--ink-light);display:flex;align-items:center;gap:4px;}
-    .header-back:hover{color:var(--ink);}
-    .header-logo{font-family:var(--font-display);font-size:1.4rem;font-weight:600;}
-    .header-sub{font-size:11px;color:var(--ink-light);}
-    .header-right{display:flex;align-items:center;gap:10px;}
-    .btn-salon-link{font-size:12px;padding:7px 14px;border-radius:100px;border:1px solid var(--border);color:var(--ink-light);transition:all .15s;}
-    .btn-salon-link:hover{background:var(--cream-dark);color:var(--ink);}
-    .btn-salon-link.creator{background:var(--ink);color:var(--white);border-color:var(--ink);}
-    .btn-salon-link.creator:hover{opacity:.85;}
+    .header-logo{font-family:var(--font-display);font-size:1.5rem;font-weight:600;letter-spacing:-.01em;}
+    .header-right{display:flex;align-items:center;gap:8px;}
+    .btn-sm{font-size:12px;padding:7px 14px;border-radius:100px;border:1px solid var(--border);color:var(--ink-light);background:transparent;cursor:pointer;font-family:var(--font-body);transition:all .15s;text-decoration:none;display:inline-block;}
+    .btn-sm:hover{background:var(--cream-dark);color:var(--ink);}
+    .btn-sm.primary{background:var(--ink);color:var(--white);border-color:var(--ink);}
+    .btn-sm.primary:hover{opacity:.88;}
 
-    /* AUTH */
+    /* AUTH LAYOUT */
     .auth-wrap{max-width:420px;margin:0 auto;padding:3rem 1.5rem;}
-    .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;}
-    .card-title{font-family:var(--font-display);font-size:1.6rem;font-weight:300;margin-bottom:.3rem;}
-    .card-title em{font-style:italic;color:var(--gold);}
-    .card-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.5;}
+    .auth-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;}
+    .auth-title{font-family:var(--font-display);font-size:1.8rem;font-weight:300;margin-bottom:.25rem;}
+    .auth-title em{font-style:italic;color:var(--gold);}
+    .auth-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.6;}
     .auth-toggle{display:flex;margin-bottom:1.5rem;border:1px solid var(--border);border-radius:100px;padding:3px;background:var(--cream);}
     .auth-tab{flex:1;padding:8px;border-radius:100px;border:none;font-family:var(--font-body);font-size:13px;cursor:pointer;background:transparent;color:var(--ink-light);transition:all .15s;}
     .auth-tab.active{background:var(--white);color:var(--ink);font-weight:500;box-shadow:0 1px 4px rgba(26,23,20,.08);}
-    .form-group{margin-bottom:.9rem;}
-    .form-label{display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:5px;}
+    .form-group{margin-bottom:.85rem;}
+    .form-label{display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:4px;}
     .form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
     .form-input:focus{border-color:var(--gold);}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
     .pwd-wrap{position:relative;}
     .pwd-wrap .form-input{padding-right:44px;}
-    .pwd-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px;line-height:1;}
+    .pwd-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:16px;}
     .btn-submit{width:100%;padding:13px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;transition:opacity .2s;margin-top:.5rem;}
     .btn-submit:hover{opacity:.88;}
-    .btn-submit:disabled{opacity:.5;cursor:not-allowed;}
+    .btn-submit:disabled{opacity:.45;cursor:not-allowed;}
     .info-box{background:var(--gold-light);border:1px solid var(--gold);border-radius:var(--radius-sm);padding:10px 14px;font-size:13px;color:var(--ink);margin-bottom:1rem;line-height:1.5;display:none;}
+    .divider{text-align:center;font-size:12px;color:var(--ink-light);margin:1rem 0;position:relative;}
+    .divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border);}
+    .divider::before{left:0;}.divider::after{right:0;}
 
     /* DASHBOARD */
-    .dash-wrap{max-width:680px;margin:0 auto;padding:2rem 1.5rem 5rem;}
-    .dash-hello{font-family:var(--font-display);font-size:1.8rem;font-weight:300;margin-bottom:.3rem;}
+    .dash-wrap{max-width:760px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+    .dash-hero{margin-bottom:2rem;}
+    .dash-hello{font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:.2rem;}
     .dash-hello em{font-style:italic;color:var(--gold);}
-    .dash-role{font-size:12px;color:var(--ink-light);margin-bottom:2rem;display:flex;align-items:center;gap:6px;}
+    .dash-meta{font-size:12px;color:var(--ink-light);display:flex;align-items:center;gap:6px;}
     .role-badge{font-size:11px;font-weight:500;padding:2px 10px;border-radius:100px;}
     .role-badge.creator{background:var(--ink);color:var(--white);}
     .role-badge.client{background:var(--cream-dark);color:var(--ink-light);}
 
-    /* Sections */
-    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.2rem;}
-    .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);}
+    /* SECTIONS */
+    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.2rem;overflow:hidden;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.4rem;border-bottom:1px solid var(--border);}
     .section-title{font-size:13px;font-weight:500;}
-    .empty{text-align:center;padding:2rem;color:var(--ink-light);font-size:14px;}
+    .section-count{font-size:12px;color:var(--ink-light);}
+    .section-body{padding:0 1.4rem;}
+    .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--ink-light);font-size:14px;}
+    .empty-state .empty-icon{font-size:2rem;margin-bottom:.5rem;opacity:.4;}
 
-    /* RDV */
-    .rdv-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
-    .rdv-item:last-child{border-bottom:none;padding-bottom:0;}
-    .rdv-date-block{text-align:center;min-width:46px;background:var(--cream);border-radius:8px;padding:6px 4px;flex-shrink:0;}
-    .rdv-day{font-size:1.3rem;font-family:var(--font-display);font-weight:600;line-height:1;}
-    .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;}
+    /* RDV ITEMS */
+    .rdv-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+    .rdv-item:last-child{border-bottom:none;}
+    .rdv-date-block{text-align:center;min-width:44px;background:var(--cream);border-radius:10px;padding:7px 5px;flex-shrink:0;}
+    .rdv-day{font-family:var(--font-display);font-size:1.4rem;font-weight:600;line-height:1;}
+    .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.06em;margin-top:1px;}
     .rdv-info{flex:1;min-width:0;}
-    .rdv-salon{font-size:14px;font-weight:500;}
-    .rdv-service{font-size:12px;color:var(--ink-light);}
+    .rdv-salon-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .rdv-service{font-size:12px;color:var(--ink-light);margin-top:1px;}
     .rdv-time{font-size:12px;color:var(--ink-light);}
-    .rdv-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
-    .rdv-status{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:500;white-space:nowrap;}
-    .status-pending{background:#FEF3C7;color:#92400E;}
-    .status-done{background:#D1FAE5;color:#065F46;}
-    .status-cancelled{background:#FEE2E2;color:#991B1B;}
-    .status-now{background:var(--gold-light);color:#7A5A2A;animation:pulse 2s infinite;}
-    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.7;}}
-    .btn-rebook{font-size:11px;color:var(--gold);border-bottom:1px solid var(--gold-light);}
-    .btn-rebook:hover{color:var(--ink);}
+    .rdv-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+    .rdv-status{font-size:11px;padding:3px 9px;border-radius:100px;font-weight:500;white-space:nowrap;}
+    .st-pending{background:#FAEEDA;color:#854F0B;}
+    .st-done{background:#E1F5EE;color:#0F6E56;}
+    .st-cancelled{background:#FAECE7;color:#993C1D;}
+    .st-now{background:var(--gold-light);color:#7A5A2A;}
+    .rdv-price{font-size:13px;font-weight:500;color:var(--ink);}
 
-    /* Recherche + vitrine */
-    .search-wrap{position:relative;margin-bottom:1rem;}
-    .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-light);display:flex;align-items:center;pointer-events:none;}
-    .search-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
-    .search-input{width:100%;padding:12px 14px 12px 44px;border:1.5px solid var(--border);border-radius:100px;font-family:var(--font-body);font-size:14px;background:var(--white);color:var(--ink);outline:none;transition:border-color .2s,box-shadow .2s;}
-    .search-input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,168,122,.12);}
-    .search-input::placeholder{color:var(--ink-light);}
+    /* RECHERCHE */
+    .search-wrap{position:relative;margin-bottom:1.2rem;}
+    .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-light);pointer-events:none;}
+    .search-icon svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+    .search-input-client{width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--border);border-radius:100px;font-family:var(--font-body);font-size:14px;background:var(--white);color:var(--ink);outline:none;transition:border-color .2s;}
+    .search-input-client:focus{border-color:var(--gold);}
+    .search-input-client::placeholder{color:var(--ink-light);}
 
-    /* Salon cards */
-    .salon-card{border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;overflow:hidden;transition:border-color .15s;}
-    .salon-card:hover{border-color:var(--gold-light);}
-    .salon-card-header{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:var(--cream);}
-    .salon-card-left h4{font-size:14px;font-weight:500;margin-bottom:2px;}
-    .salon-card-left p{font-size:11px;color:var(--ink-light);}
-    .btn-book-inline{font-size:12px;padding:7px 14px;background:var(--ink);color:var(--white);border:none;border-radius:100px;cursor:pointer;font-family:var(--font-body);white-space:nowrap;flex-shrink:0;}
-    .salon-vitrine{display:none;padding:14px;border-top:1px solid var(--border);background:var(--white);}
+    /* SALON CARDS */
+    .salons-grid{display:flex;flex-direction:column;gap:10px;padding:1.4rem 0;}
+    .salon-card{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .2s,box-shadow .2s;background:var(--white);}
+    .salon-card:hover{border-color:var(--gold-light);box-shadow:0 2px 12px rgba(196,168,122,.12);}
+    .salon-card-main{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;}
+    .salon-avatar{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1.4rem;font-weight:600;flex-shrink:0;color:var(--white);letter-spacing:-.01em;}
+    .salon-info{flex:1;min-width:0;}
+    .salon-name{font-size:15px;font-weight:500;margin-bottom:2px;}
+    .salon-address{font-size:12px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .salon-tags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap;}
+    .salon-tag{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border);}
+    .salon-card-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+    .salon-chevron{font-size:11px;color:var(--ink-light);transition:transform .2s;}
+    .salon-chevron.open{transform:rotate(180deg);}
+    .btn-book{font-size:12px;padding:8px 16px;background:var(--ink);color:var(--white);border:none;border-radius:100px;cursor:pointer;font-family:var(--font-body);font-weight:500;white-space:nowrap;transition:opacity .15s;}
+    .btn-book:hover{opacity:.85;}
+
+    /* VITRINE */
+    .salon-vitrine{display:none;border-top:1px solid var(--border);padding:14px 16px;background:var(--cream);}
     .salon-vitrine.open{display:block;}
-    .vitrine-section-label{font-size:11px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;margin-top:10px;}
-    .vitrine-section-label:first-child{margin-top:0;}
-    .vitrine-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:2px;}
-    .vtag{font-size:12px;padding:4px 10px;background:var(--cream);border-radius:100px;border:1px solid var(--border);color:var(--ink-light);display:flex;align-items:center;gap:5px;}
-    .vtag strong{color:var(--gold);font-weight:500;}
+    .vitrine-label{font-size:10px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;margin-top:10px;}
+    .vitrine-label:first-child{margin-top:0;}
+    .vitrine-tags{display:flex;flex-wrap:wrap;gap:5px;}
+    .vtag{font-size:12px;padding:4px 10px;background:var(--white);border-radius:100px;border:1px solid var(--border);color:var(--ink-light);display:flex;align-items:center;gap:4px;}
+    .vtag-price{color:var(--gold);font-weight:500;}
+    .vitrine-footer{margin-top:14px;display:flex;justify-content:flex-end;}
 
-    /* Modal créateur */
-    .modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
+    /* MODAL */
+    .modal-overlay{position:fixed;inset:0;background:rgba(26,23,20,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s;}
     .modal-overlay.open{opacity:1;pointer-events:all;}
-    .modal{background:var(--white);border-radius:var(--radius);padding:2rem;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;}
-    .modal-title{font-family:var(--font-display);font-size:1.4rem;font-weight:300;margin-bottom:.3rem;}
-    .modal-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.5;}
-    .modal-close{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-light);}
+    .modal{background:var(--white);border-radius:var(--radius);padding:2rem;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;position:relative;}
+    .modal-title-head{font-family:var(--font-display);font-size:1.5rem;font-weight:300;margin-bottom:.25rem;}
+    .modal-title-head em{font-style:italic;color:var(--gold);}
+    .modal-sub{font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.6;}
+    .modal-close-btn{position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-light);line-height:1;}
 
+    /* TOAST */
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
     .toast.show{opacity:1;}
     .powered{text-align:center;font-size:12px;color:var(--ink-light);margin-top:2rem;}
     .powered a{color:var(--gold);}
-    .loader-sm{text-align:center;padding:1.5rem;color:var(--ink-light);font-size:13px;}
-    .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px;}
-    @keyframes spin{to{transform:rotate(360deg);}}
-    @media(max-width:480px){.form-row{grid-template-columns:1fr;}}
+
+    @media(max-width:480px){
+      .form-row{grid-template-columns:1fr;}
+      .salon-card-main{gap:10px;}
+      .salon-avatar{width:44px;height:44px;font-size:1.1rem;}
+    }
   </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <div class="header-left">
-    <a href="index.html" class="header-back">&#8592;</a>
-    <div>
-      <div class="header-logo">Belyo</div>
-      <div class="header-sub" id="header-sub">Espace client</div>
-    </div>
-  </div>
+  <div class="header-logo">Belyo</div>
   <div class="header-right" id="header-right">
-    <a id="salon-link" href="pages/login.html" class="btn-salon-link">Espace coiffeur</a>
+    <a href="pages/register.html?from=client" class="btn-sm" id="salon-link">Espace coiffeur</a>
   </div>
 </div>
 
-<!-- AUTH -->
+<!-- VUE AUTH -->
 <div id="auth-view">
   <div class="auth-wrap">
-    <div class="card">
-      <h1 class="card-title">Mon <em>espace</em></h1>
-      <p class="card-sub">Réservez, gérez vos RDV et accédez à vos salons favoris.</p>
-      <div class="auth-toggle">
-        <button class="auth-tab active" id="tab-login" onclick="showAuthTab('login')">Connexion</button>
-        <button class="auth-tab" id="tab-register" onclick="showAuthTab('register')">Inscription</button>
-      </div>
-      <div class="info-box" id="info-box"></div>
+    <div class="auth-card">
+      <div class="auth-title">Bonjour, <em>bienvenue</em></div>
+      <div class="auth-sub">Connectez-vous pour voir vos rendez-vous et découvrir des salons près de chez vous.</div>
 
-      <!-- Login -->
+      <div id="info-box" class="info-box"></div>
+
+      <div class="auth-toggle">
+        <button class="auth-tab active" id="tab-login"    onclick="showAuthTab('login')">Connexion</button>
+        <button class="auth-tab"        id="tab-register" onclick="showAuthTab('register')">Inscription</button>
+      </div>
+
+      <!-- LOGIN -->
       <div id="form-login">
-        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" placeholder="sophie@email.fr" oninput="updateSalonLink()" /></div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="login-email" placeholder="sophie@email.fr" oninput="updateSalonLink()" />
+        </div>
         <div class="form-group">
           <label class="form-label">Mot de passe</label>
-          <div class="pwd-wrap"><input type="password" class="form-input" id="login-pwd" placeholder="••••••••" /><button type="button" class="pwd-eye" onclick="togglePwd('login-pwd',this)">&#128065;</button></div>
+          <div class="pwd-wrap">
+            <input type="password" class="form-input" id="login-pwd" placeholder="••••••••" />
+            <button type="button" class="pwd-eye" onclick="togglePwd('login-pwd',this)">&#128065;</button>
+          </div>
         </div>
-        <button class="btn-submit" id="btn-login" onclick="doLogin()">Se connecter</button>
+        <button class="btn-submit" onclick="doLogin()" id="btn-login">Se connecter</button>
+        <div class="divider" style="margin-top:1.2rem">ou</div>
+        <div style="text-align:center;font-size:13px;color:var(--ink-light)">
+          Pas encore de compte ? <a onclick="showAuthTab('register')" style="color:var(--gold);cursor:pointer">S'inscrire</a>
+        </div>
       </div>
 
-      <!-- Register -->
+      <!-- REGISTER -->
       <div id="form-register" style="display:none">
         <div class="form-row">
-          <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" id="reg-prenom" placeholder="Sophie" /></div>
-          <div class="form-group"><label class="form-label">Nom *</label><input type="text" class="form-input" id="reg-nom" placeholder="Martin" /></div>
+          <div class="form-group">
+            <label class="form-label">Prénom *</label>
+            <input type="text" class="form-input" id="reg-prenom" placeholder="Sophie" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nom *</label>
+            <input type="text" class="form-input" id="reg-nom" placeholder="Martin" />
+          </div>
         </div>
-        <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="reg-tel" placeholder="06 12 34 56 78" /></div>
-        <div class="form-group"><label class="form-label">Email *</label><input type="email" class="form-input" id="reg-email" placeholder="sophie@email.fr" oninput="updateSalonLink()" /></div>
+        <div class="form-group">
+          <label class="form-label">Téléphone</label>
+          <input type="tel" class="form-input" id="reg-tel" placeholder="06 12 34 56 78" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-input" id="reg-email" placeholder="sophie@email.fr" oninput="updateSalonLink()" />
+        </div>
         <div class="form-group">
           <label class="form-label">Mot de passe *</label>
-          <div class="pwd-wrap"><input type="password" class="form-input" id="reg-pwd" placeholder="Minimum 6 caractères" /><button type="button" class="pwd-eye" onclick="togglePwd('reg-pwd',this)">&#128065;</button></div>
+          <div class="pwd-wrap">
+            <input type="password" class="form-input" id="reg-pwd" placeholder="6 caractères minimum" />
+            <button type="button" class="pwd-eye" onclick="togglePwd('reg-pwd',this)">&#128065;</button>
+          </div>
         </div>
-        <button class="btn-submit" id="btn-register" onclick="doRegister()">Créer mon compte</button>
+        <button class="btn-submit" onclick="doRegister()" id="btn-register">Créer mon compte</button>
+        <div style="text-align:center;font-size:13px;color:var(--ink-light);margin-top:1rem">
+          Déjà un compte ? <a onclick="showAuthTab('login')" style="color:var(--gold);cursor:pointer">Se connecter</a>
+        </div>
       </div>
+    </div>
+
+    <!-- Salons en bas même sans connexion -->
+    <div style="margin-top:2rem">
+      <div style="font-size:13px;font-weight:500;margin-bottom:1rem;color:var(--ink-light)">Découvrez nos salons</div>
+      <div id="auth-salons-preview"></div>
     </div>
     <div class="powered">Propulsé par <a href="index.html">Belyo</a></div>
   </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- VUE DASHBOARD -->
 <div id="dashboard-view" style="display:none">
   <div class="dash-wrap">
-    <div class="dash-hello">Bonjour, <em id="client-greeting">—</em></div>
-    <div class="dash-role">
-      <span class="role-badge" id="role-badge">Client</span>
-      <span id="role-label">Espace client</span>
-    </div>
 
-    <!-- Recherche salon -->
-    <div class="section">
-      <div class="section-head">
-        <div class="section-title">Trouver un salon</div>
+    <!-- Hero -->
+    <div class="dash-hero">
+      <div class="dash-hello">Bonjour, <em id="client-greeting">—</em></div>
+      <div class="dash-meta">
+        <span class="role-badge client" id="role-badge">Client</span>
+        <span id="role-label">Espace client</span>
       </div>
-      <div class="search-wrap">
-        <span class="search-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span>
-        <input type="text" class="search-input" id="salon-search" placeholder="Rechercher un salon par nom..." oninput="searchSalons(this.value)" autocomplete="off" />
-      </div>
-      <div id="search-results"></div>
-      <div id="all-salons" style="margin-top:6px"></div>
     </div>
 
     <!-- RDV à venir -->
     <div class="section">
       <div class="section-head">
-        <div class="section-title">Mes prochains RDV</div>
+        <span class="section-title">Rendez-vous à venir</span>
+        <span class="section-count" id="upcoming-count"></span>
       </div>
-      <div id="upcoming-rdv"><div class="loader-sm"><span class="spinner"></span> Chargement...</div></div>
+      <div class="section-body">
+        <div id="upcoming-rdv">
+          <div class="empty-state"><div class="empty-icon">📅</div>Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Salons -->
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Salons Belyo</span>
+        <span class="section-count" id="salons-count"></span>
+      </div>
+      <div style="padding:1rem 1.4rem 0">
+        <div class="search-wrap">
+          <div class="search-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <input type="text" class="search-input-client" id="search-salons" placeholder="Rechercher un salon par nom ou ville..." oninput="onSearchSalons()" />
+        </div>
+      </div>
+      <div id="all-salons" style="padding:0 1.4rem">
+        <div class="empty-state"><div class="empty-icon">✂️</div>Chargement des salons...</div>
+      </div>
     </div>
 
     <!-- Historique -->
     <div class="section">
       <div class="section-head">
-        <div class="section-title">Historique</div>
+        <span class="section-title">Historique</span>
+        <span class="section-count" id="past-count"></span>
       </div>
-      <div id="past-rdv"><div class="loader-sm"><span class="spinner"></span> Chargement...</div></div>
+      <div class="section-body">
+        <div id="past-rdv">
+          <div class="empty-state"><div class="empty-icon">🕐</div>Chargement...</div>
+        </div>
+      </div>
     </div>
+
+    <div class="powered">Propulsé par <a href="index.html">Belyo</a></div>
   </div>
 </div>
 
-<!-- Modal créer salon -->
+<!-- MODAL créateur salon -->
 <div class="modal-overlay" id="creator-modal">
-  <div class="modal" style="position:relative">
-    <button class="modal-close" onclick="closeCreatorModal()">&#215;</button>
-    <h2 class="modal-title">Créer <em style="font-style:italic;color:var(--gold)">votre salon</em></h2>
-    <p class="modal-sub">Renseignez les infos de votre salon. Votre email et mot de passe restent les mêmes.</p>
-    <div class="form-group"><label class="form-label">Nom du salon *</label><input type="text" class="form-input" id="creator-salon-name" placeholder="Ex : Salon Moisan" /></div>
-    <div class="form-group"><label class="form-label">Adresse du salon *</label><input type="text" class="form-input" id="creator-salon-address" placeholder="Ex : 12 rue de la Paix, Nantes" /></div>
-    <p style="font-size:12px;color:var(--ink-light);margin-bottom:1rem;line-height:1.5">Vous pourrez toujours réserver des RDV dans d'autres salons en tant que client.</p>
-    <button class="btn-submit" id="btn-create-salon" onclick="createSalon()">Créer mon salon</button>
+  <div class="modal">
+    <button class="modal-close-btn" onclick="closeCreatorModal()">×</button>
+    <div class="modal-title-head">Créer <em>mon salon</em></div>
+    <div class="modal-sub">Vous rejoignez Belyo en tant que professionnel. Vous aurez accès à votre dashboard coiffeur.</div>
+    <div class="form-group">
+      <label class="form-label">Nom du salon *</label>
+      <input type="text" class="form-input" id="creator-salon-name" placeholder="Ex : Salon Moisan" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Adresse</label>
+      <input type="text" class="form-input" id="creator-salon-address" placeholder="12 rue de la Paix, Nantes" />
+    </div>
+    <button class="btn-submit" onclick="createSalon()" id="btn-create-salon">Créer mon salon</button>
   </div>
 </div>
 
@@ -237,14 +312,35 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
+<script src="js/utils.js"></script>
 <script>
+
 var currentUser = null;
 var isCreator   = false;
+var allSalonsData = [];
+
+// Couleurs pour avatars salons
+var AVATAR_COLORS = [
+  ['#3C3489','#EEEDFE'],['#0F6E56','#E1F5EE'],['#993C1D','#FAECE7'],
+  ['#185FA5','#E6F1FB'],['#854F0B','#FAEEDA'],['#1A1714','#F1EFE8'],
+  ['#3B6D11','#EAF3DE'],['#993556','#FBEAF0'],
+];
+
+function avatarColor(name) {
+  var idx = 0;
+  for (var i=0;i<name.length;i++) idx += name.charCodeAt(i);
+  return AVATAR_COLORS[idx % AVATAR_COLORS.length];
+}
+
+function salonInitials(name) {
+  var parts = (name||'S').trim().split(' ');
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
 
 function showToast(msg, type) {
   var t = document.getElementById('toast');
   t.textContent = msg;
-  t.style.background = type === 'error' ? '#991b1b' : '#1A1714';
+  t.style.background = type === 'error' ? '#993C1D' : '#1A1714';
   t.classList.add('show');
   setTimeout(function() { t.classList.remove('show'); }, 3500);
 }
@@ -256,38 +352,31 @@ function togglePwd(id, btn) {
 }
 
 function showAuthTab(tab) {
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
-  document.getElementById('form-login').style.display    = tab === 'login'    ? 'block' : 'none';
-  document.getElementById('form-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab==='login');
+  document.getElementById('tab-register').classList.toggle('active', tab==='register');
+  document.getElementById('form-login').style.display    = tab==='login'    ? 'block' : 'none';
+  document.getElementById('form-register').style.display = tab==='register' ? 'block' : 'none';
 }
 
 function updateSalonLink() {
-  var loginEmail = document.getElementById('login-email');
-  var regEmail   = document.getElementById('reg-email');
-  var email = (loginEmail && loginEmail.value.trim()) || (regEmail && regEmail.value.trim()) || '';
+  var e1 = document.getElementById('login-email');
+  var e2 = document.getElementById('reg-email');
+  var email = (e1 && e1.value.trim()) || (e2 && e2.value.trim()) || '';
   var link  = document.getElementById('salon-link');
   if (!link) return;
-  var url = 'pages/register.html?from=client';
-  if (email) url += '&email=' + encodeURIComponent(email);
-  link.href = url;
+  link.href = 'pages/register.html?from=client' + (email ? '&email='+encodeURIComponent(email) : '');
 }
 
 // ===== AUTH =====
 async function doLogin() {
   var email = document.getElementById('login-email').value.trim();
   var pwd   = document.getElementById('login-pwd').value;
-  if (!email || !pwd) { showToast('Remplissez tous les champs', 'error'); return; }
+  if (!email || !pwd) { showToast('Remplissez tous les champs','error'); return; }
   var btn = document.getElementById('btn-login');
-  btn.disabled = true; btn.textContent = 'Connexion...';
-  var res = await sb.auth.signInWithPassword({ email: email, password: pwd });
-  if (res.error) {
-    showToast('Email ou mot de passe incorrect', 'error');
-    btn.disabled = false; btn.textContent = 'Se connecter'; return;
-  }
-  var meta = res.data.user.user_metadata || {};
-  // Un salon peut aussi se connecter ici et accéder en tant que client
-  btn.disabled = false; btn.textContent = 'Se connecter';
+  btn.disabled=true; btn.textContent='Connexion...';
+  var res = await sb.auth.signInWithPassword({ email, password: pwd });
+  btn.disabled=false; btn.textContent='Se connecter';
+  if (res.error) { showToast('Email ou mot de passe incorrect','error'); return; }
   showDashboard(res.data.user);
 }
 
@@ -297,314 +386,286 @@ async function doRegister() {
   var tel    = document.getElementById('reg-tel').value.trim();
   var email  = document.getElementById('reg-email').value.trim();
   var pwd    = document.getElementById('reg-pwd').value;
-  if (!prenom || !nom || !email || !pwd) { showToast('Remplissez les champs obligatoires', 'error'); return; }
-  if (pwd.length < 6) { showToast('Mot de passe trop court (6 car. min.)', 'error'); return; }
+  if (!prenom||!nom||!email||!pwd) { showToast('Remplissez les champs obligatoires','error'); return; }
+  if (pwd.length < 6) { showToast('Mot de passe trop court (6 car. min.)','error'); return; }
   var btn = document.getElementById('btn-register');
-  btn.disabled = true; btn.textContent = 'Création...';
-  var res = await sb.auth.signUp({
-    email: email, password: pwd,
-    options: { data: { name: prenom + ' ' + nom, phone: tel, role: 'client' } }
-  });
+  btn.disabled=true; btn.textContent='Création...';
+  var res = await sb.auth.signUp({ email, password: pwd, options:{ data:{ name: prenom+' '+nom, phone: tel, role:'client' } } });
+  btn.disabled=false; btn.textContent='Créer mon compte';
   if (res.error) {
-    var msg = (res.error.message || '').toLowerCase();
-    if (msg.indexOf('already') !== -1) {
-      showToast('Email déjà utilisé. Connectez-vous.', 'error');
-      document.getElementById('login-email').value = email;
-      showAuthTab('login');
-    } else { showToast(res.error.message, 'error'); }
-    btn.disabled = false; btn.textContent = 'Créer mon compte'; return;
+    var msg = (res.error.message||'').toLowerCase();
+    if (msg.indexOf('already')!==-1) { showToast('Email déjà utilisé. Connectez-vous.','error'); document.getElementById('login-email').value=email; showAuthTab('login'); }
+    else showToast(res.error.message,'error');
+    return;
   }
   showToast('Compte créé ! Connectez-vous.');
   document.getElementById('login-email').value = email;
   showAuthTab('login');
-  btn.disabled = false; btn.textContent = 'Créer mon compte';
 }
 
 async function doLogout() {
   await sb.auth.signOut();
-  currentUser = null; isCreator = false;
-  document.getElementById('dashboard-view').style.display = 'none';
-  document.getElementById('auth-view').style.display = 'block';
-  updateSalonLink();
+  currentUser=null; isCreator=false;
+  document.getElementById('dashboard-view').style.display='none';
+  document.getElementById('auth-view').style.display='block';
+  document.getElementById('header-right').innerHTML='<a href="pages/register.html?from=client" class="btn-sm" id="salon-link">Espace coiffeur</a>';
 }
 
 // ===== DASHBOARD =====
 async function showDashboard(user) {
   currentUser = user;
-  var meta = user.user_metadata || {};
-  isCreator = meta.role === 'salon';
+  var meta    = user.user_metadata || {};
+  isCreator   = meta.role === 'salon';
 
-  document.getElementById('auth-view').style.display = 'none';
+  document.getElementById('auth-view').style.display      = 'none';
   document.getElementById('dashboard-view').style.display = 'block';
 
-  var name = (meta.name || meta.first_name || user.email.split('@')[0]).split(' ')[0];
+  var name = (meta.name||meta.first_name||user.email.split('@')[0]).split(' ')[0];
   document.getElementById('client-greeting').textContent = name;
 
-  // Badge rôle
   var badge = document.getElementById('role-badge');
   var label = document.getElementById('role-label');
   if (isCreator) {
-    badge.textContent = 'Créateur';
-    badge.className   = 'role-badge creator';
+    badge.textContent='Coiffeur'; badge.className='role-badge creator';
     label.textContent = meta.salon_name || 'Salon';
   } else {
-    badge.textContent = 'Client';
-    badge.className   = 'role-badge client';
-    label.textContent = 'Espace client';
+    badge.textContent='Client'; badge.className='role-badge client';
+    label.textContent='Espace client';
   }
 
-  // Header droit : bouton logout + bouton dashboard salon si créateur
-  var headerRight = document.getElementById('header-right');
-  var btns = '<button onclick="doLogout()" style="font-size:13px;color:var(--ink-light);background:none;border:1px solid var(--border);padding:7px 14px;border-radius:100px;cursor:pointer;font-family:var(--font-body)">Déconnexion</button>';
-  if (isCreator) {
-    btns = '<a href="pages/dashboard.html" class="btn-salon-link creator">Mon salon &#8594;</a>' + btns;
-  } else {
-    btns = '<button onclick="openCreatorModal()" class="btn-salon-link">Créer mon salon</button>' + btns;
-  }
-  headerRight.innerHTML = btns;
-  document.getElementById('header-sub').textContent = isCreator ? 'Coiffeur & client' : 'Espace client';
+  var hr = document.getElementById('header-right');
+  var btns = '<button onclick="doLogout()" class="btn-sm">Déconnexion</button>';
+  if (isCreator) btns = '<a href="pages/dashboard.html" class="btn-sm primary">Mon dashboard →</a>' + btns;
+  else           btns = '<button onclick="openCreatorModal()" class="btn-sm">Créer mon salon</button>' + btns;
+  hr.innerHTML = btns;
 
-  loadRdv(user.email, meta.phone || '', meta.name || '');
+  loadRdv(user.email, meta.phone||'', meta.name||'');
   loadAllSalons();
 }
 
 // ===== RDV =====
 async function loadRdv(email, phone, name) {
-  var nowStr  = new Date().toISOString();
-  var nowDate = new Date();
-
-  // Chercher par email (+ nom si dispo) via RPC SECURITY DEFINER
-  var res = await sb.rpc('get_client_appointments', {
-    p_email: email,
-    p_name:  name || ''
-  });
-  var data = res.data || [];
-
-  // Fallback par téléphone nettoyé si toujours rien
-  if (data.length === 0 && phone) {
-    var res2 = await sb.rpc('get_client_appointments', {
-      p_email: phone.replace(/\s/g, ''),
-      p_name:  name || ''
-    });
+  var nowStr = new Date().toISOString();
+  var res    = await sb.rpc('get_client_appointments', { p_email: email, p_name: name||'' });
+  var data   = res.data || [];
+  if (data.length===0 && phone) {
+    var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g,''), p_name: name||'' });
     data = res2.data || [];
   }
+  var upcoming = data.filter(function(a){ return a.datetime>=nowStr && a.status==='pending'; });
+  var past     = data.filter(function(a){ return a.datetime<nowStr  || a.status!=='pending'; }).reverse().slice(0,15);
 
-  var upcoming = data.filter(function(a) { return a.datetime >= nowStr && a.status === 'pending'; });
-  var past     = data.filter(function(a) { return a.datetime <  nowStr || a.status !== 'pending'; }).reverse().slice(0, 15);
+  var uc = document.getElementById('upcoming-count');
+  var pc = document.getElementById('past-count');
+  if (uc) uc.textContent = upcoming.length > 0 ? upcoming.length+' RDV' : '';
+  if (pc) pc.textContent = past.length > 0 ? past.length+' RDV' : '';
 
-  renderRdvList('upcoming-rdv', upcoming, true, nowDate);
-  renderRdvList('past-rdv', past, false, nowDate);
+  renderRdvList('upcoming-rdv', upcoming, true);
+  renderRdvList('past-rdv', past, false);
 }
 
-function renderRdvList(elId, list, isUpcoming, nowDate) {
-  var el = document.getElementById(elId);
-  if (!list || list.length === 0) {
-    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
+function renderRdvList(elId, list, isUpcoming) {
+  var el  = document.getElementById(elId);
+  var now = new Date();
+  if (!list||list.length===0) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">'+(isUpcoming?'📅':'🕐')+'</div>'+(isUpcoming?'Aucun rendez-vous à venir':'Aucun historique')+'</div>';
     return;
   }
-  var html = '';
-  list.forEach(function(a) {
+  el.innerHTML = list.map(function(a) {
     var dt    = new Date(a.datetime);
     var day   = dt.getDate();
-    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
-    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-    var prix  = a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '';
-    var isNow = isUpcoming && a.status === 'pending' && nowDate && (nowDate - dt) >= 0 && (nowDate - dt) < 2*3600000;
-    var cls   = isNow ? 'status-now' : ({ pending:'status-pending', done:'status-done', cancelled:'status-cancelled' }[a.status] || 'status-pending');
-    var txt   = isNow ? 'En cours'   : ({ pending:'À venir', done:'Terminé', cancelled:'Annulé' }[a.status] || '');
-    html += '<div class="rdv-item">';
-    html += '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>';
-    html += '<div class="rdv-info">';
-    html += '<div class="rdv-salon">' + (a.salon_name || 'Salon') + '</div>';
-    html += '<div class="rdv-service">' + (a.service || '—') + '</div>';
-    html += '<div class="rdv-time">' + heure + prix + '</div>';
-    html += '</div>';
-    html += '<div class="rdv-actions">';
-    html += '<span class="rdv-status ' + cls + '">' + txt + '</span>';
-    if (isUpcoming && a.slug) html += '<a class="btn-rebook" href="/' + a.slug + '">Re-réserver</a>';
-    html += '</div></div>';
-  });
-  el.innerHTML = html;
-}
-
-function renderRdvList(elId, list, isUpcoming, nowDate) {
-  var el = document.getElementById(elId);
-  if (!list || list.length === 0) {
-    el.innerHTML = '<div class="empty">' + (isUpcoming ? 'Aucun RDV à venir' : 'Aucun historique') + '</div>';
-    return;
-  }
-  var html = '';
-  list.forEach(function(a) {
-    var dt    = new Date(a.datetime);
-    var day   = dt.getDate();
-    var month = dt.toLocaleDateString('fr-FR', { month: 'short' });
-    var heure = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-    var prix  = a.price ? ' · ' + parseFloat(a.price).toFixed(0) + '€' : '';
-    var isNow = isUpcoming && a.status === 'pending' && nowDate - dt >= 0 && nowDate - dt < 2*3600000;
-    var cls   = isNow ? 'status-now' : ({ pending:'status-pending', done:'status-done', cancelled:'status-cancelled' }[a.status] || 'status-pending');
-    var txt   = isNow ? 'En cours' : ({ pending:'À venir', done:'Terminé', cancelled:'Annulé' }[a.status] || '');
-    html += '<div class="rdv-item">';
-    html += '<div class="rdv-date-block"><div class="rdv-day">' + day + '</div><div class="rdv-month">' + month + '</div></div>';
-    html += '<div class="rdv-info"><div class="rdv-salon">' + (a.salon_name || 'Salon') + '</div>';
-    html += '<div class="rdv-service">' + (a.service || '—') + '</div>';
-    html += '<div class="rdv-time">' + heure + prix + '</div></div>';
-    html += '<div class="rdv-actions"><span class="rdv-status ' + cls + '">' + txt + '</span>';
-    if (isUpcoming && a.slug) html += '<a class="btn-rebook" href="/' + a.slug + '">Re-réserver</a>';
-    html += '</div></div>';
-  });
-  el.innerHTML = html;
+    var month = dt.toLocaleDateString('fr-FR',{month:'short'});
+    var heure = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
+    var isNow = isUpcoming && a.status==='pending' && (now-dt)>=0 && (now-dt)<2*3600000;
+    var cls   = isNow?'st-now':({pending:'st-pending',done:'st-done',cancelled:'st-cancelled'}[a.status]||'st-pending');
+    var txt   = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
+    var prix  = a.price ? Math.round(parseFloat(a.price))+'€' : '';
+    return '<div class="rdv-item">'
+      + '<div class="rdv-date-block"><div class="rdv-day">'+day+'</div><div class="rdv-month">'+month+'</div></div>'
+      + '<div class="rdv-info">'
+      + '<div class="rdv-salon-name">'+(a.salon_name||'Salon')+'</div>'
+      + '<div class="rdv-service">'+(a.service||'—')+'</div>'
+      + '<div class="rdv-time">'+heure+(a.duration_minutes?' · '+a.duration_minutes+'min':'')+'</div>'
+      + '</div>'
+      + '<div class="rdv-right">'
+      + '<span class="rdv-status '+cls+'">'+txt+'</span>'
+      + (prix?'<span class="rdv-price">'+prix+'</span>':'')
+      + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 // ===== SALONS =====
+var FAKE_SALONS = [
+  { user_id:'fake-1', salon_name:'Salon Lumière', salon_address:'8 rue des Fleurs, Nantes',
+    prestations:{homme:['Coupe','Dégradé','Barbe'],femme:['Coupe','Brushing','Coloration']},
+    prix_duree:{homme:{Coupe:{prix:22},Dégradé:{prix:20},Barbe:{prix:12}},femme:{Coupe:{prix:32},Brushing:{prix:28},Coloration:{prix:65}}} },
+  { user_id:'fake-2', salon_name:'Studio Noir', salon_address:'15 rue Crébillon, Nantes',
+    prestations:{homme:['Coupe','Estompage','Coupe + Barbe'],femme:['Coupe','Balayage','Mèches']},
+    prix_duree:{homme:{Coupe:{prix:25},Estompage:{prix:18},'Coupe + Barbe':{prix:32}},femme:{Coupe:{prix:35},Balayage:{prix:85},Mèches:{prix:75}}} },
+  { user_id:'fake-3', salon_name:'Atelier Cheveux', salon_address:'22 place du Bouffay, Nantes',
+    prestations:{homme:['Coupe','Soin'],femme:['Coupe','Lissage','Permanente','Soin']},
+    prix_duree:{homme:{Coupe:{prix:20},Soin:{prix:15}},femme:{Coupe:{prix:30},Lissage:{prix:85},Permanente:{prix:75},Soin:{prix:25}}} },
+];
+
 async function loadAllSalons() {
-  var el = document.getElementById('all-salons');
-  el.innerHTML = '<div class="loader-sm"><span class="spinner"></span> Chargement des salons...</div>';
-  // Charger directement depuis salon_settings sans passer par la RPC
-  var res = await sb.from('salon_settings').select('user_id, slug').not('slug', 'is', null).limit(20);
-  if (!res.data || res.data.length === 0) { el.innerHTML = ''; return; }
-  // Récupérer les noms via la RPC pour chaque salon
-  var salons = [];
-  for (var i = 0; i < res.data.length; i++) {
-    var s = res.data[i];
-    var nr = await sb.rpc('get_salon_public_info', { p_user_id: s.user_id });
-    if (nr.data) {
-      salons.push({ user_id: s.user_id, slug: s.slug, salon_name: nr.data.salon_name || 'Salon', salon_address: nr.data.salon_address || '' });
-    }
-  }
-  if (salons.length === 0) { el.innerHTML = ''; return; }
-  renderSalonCards(salons, 'all-salons');
+  var res = await sb.from('salon_settings')
+    .select('user_id, salon_name, salon_address, prestations, prix_duree, slug')
+    .not('salon_name', 'is', null)
+    .limit(20);
+
+  var real = (res.data||[]).filter(function(s){ return s.salon_name && s.salon_name.trim(); });
+  allSalonsData = real.concat(FAKE_SALONS);
+  renderSalons(allSalonsData, 'all-salons');
+
+  var sc = document.getElementById('salons-count');
+  if (sc) sc.textContent = allSalonsData.length + ' salon' + (allSalonsData.length>1?'s':'');
+
+  // Aperçu sur la page auth
+  renderSalonsPreview(allSalonsData.slice(0,3));
 }
 
-var searchTimer = null;
-function searchSalons(q) {
-  clearTimeout(searchTimer);
-  var allEl = document.getElementById('all-salons');
-  var resEl = document.getElementById('search-results');
-  if (!q || !q.trim()) {
-    resEl.innerHTML = '';
-    allEl.style.display = 'block';
+function onSearchSalons() {
+  var q = document.getElementById('search-salons').value.toLowerCase().trim();
+  if (!q) { renderSalons(allSalonsData,'all-salons'); return; }
+  var filtered = allSalonsData.filter(function(s){
+    return (s.salon_name||'').toLowerCase().includes(q)
+      || (s.salon_address||'').toLowerCase().includes(q);
+  });
+  renderSalons(filtered,'all-salons');
+}
+
+function renderSalons(list, elId) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  if (!list||list.length===0) {
+    el.innerHTML = '<div class="empty-state" style="padding:2rem 0"><div class="empty-icon">✂️</div>Aucun salon trouvé</div>';
     return;
   }
-  allEl.style.display = 'none';
-  searchTimer = setTimeout(async function() {
-    var qClean = q.trim();
-    var res = await sb.rpc('search_salons', { p_query: qClean });
-    var salons = res.data || [];
-    if (salons.length === 0) {
-      resEl.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:.5rem 0">Aucun salon trouvé pour "' + q + '"</div>';
-      return;
-    }
-    renderSalonCards(salons, 'search-results');
-  }, 300);
-}
+  var html = '<div class="salons-grid">';
+  list.forEach(function(s, i) {
+    var name    = s.salon_name || 'Salon';
+    var addr    = s.salon_address || '';
+    var isFake  = (s.user_id||'').startsWith('fake-');
+    var bookUrl = isFake ? '#' : '/book.html?salon='+s.user_id;
+    var colors  = avatarColor(name);
+    var inits   = salonInitials(name);
+    var pd      = s.prix_duree || {};
+    var prestH  = (s.prestations&&s.prestations.homme)||[];
+    var prestF  = (s.prestations&&s.prestations.femme)||[];
 
-var vitrinaData = {};
-async function renderSalonCards(salons, targetId) {
-  var el = document.getElementById(targetId);
-  el.innerHTML = '<div class="loader-sm"><span class="spinner"></span></div>';
-  var html = '';
-  for (var i = 0; i < salons.length; i++) {
-    var s = salons[i];
-    var cardId = targetId + '-' + i;
+    // Tags résumé
+    var allPrest = prestH.slice(0,2).concat(prestF.slice(0,2));
+    var tagHtml  = allPrest.map(function(p){ return '<span class="salon-tag">'+p+'</span>'; }).join('');
 
-    var settRes = await sb.from('salon_settings')
-      .select('prestations, prix_duree')
-      .eq('user_id', s.user_id)
-      .maybeSingle();
-    var prestH = [], prestF = [], pd = {};
-    if (settRes.data) {
-      prestH = (settRes.data.prestations && settRes.data.prestations.homme) || [];
-      prestF = (settRes.data.prestations && settRes.data.prestations.femme) || [];
-      pd = settRes.data.prix_duree || {};
-    }
-    vitrinaData[cardId] = { prestH: prestH, prestF: prestF, pd: pd, slug: s.slug, user_id: s.user_id };
-
-    var bookUrl = '/book.html?salon=' + s.user_id;
-
-    html += '<div class="salon-card">';
-    html += '<div class="salon-card-header" onclick="toggleVitrine(&quot;' + cardId + '&quot;)">';
-    html += '<div class="salon-card-left">';
-    html += '<h4>' + (s.salon_name || 'Salon') + '</h4>';
-    if (s.salon_address) {
-      html += '<p>' + s.salon_address + '</p>';
-    }
+    html += '<div class="salon-card" id="scard-'+i+'">';
+    html += '<div class="salon-card-main" data-vitrine="svit-'+i+'">';
+    html += '<div class="salon-avatar" style="background:'+colors[0]+'">'+inits+'</div>';
+    html += '<div class="salon-info">';
+    html += '<div class="salon-name">'+name+'</div>';
+    if (addr) html += '<div class="salon-address">'+addr+'</div>';
+    if (tagHtml) html += '<div class="salon-tags">'+tagHtml+'</div>';
     html += '</div>';
-    html += '<a class="btn-book-inline" href="' + bookUrl + '" onclick="event.stopPropagation()">Réserver</a>';
+    html += '<div class="salon-card-actions">';
+    if (!isFake) html += '<a class="btn-book" href="'+bookUrl+'" onclick="event.stopPropagation()">Réserver</a>';
+    html += '<span class="salon-chevron" id="chev-'+i+'">&#9660;</span>';
+    html += '</div>';
     html += '</div>';
 
-    html += '<div class="salon-vitrine" id="vitrine-' + cardId + '">';
-    if (prestH.length > 0) {
-      html += '<div class="vitrine-section-label">Homme</div><div class="vitrine-tags">';
-      prestH.forEach(function(p) {
-        var pdata = pd.homme && pd.homme[p];
-        var prix = pdata && pdata.prix ? pdata.prix + '€' : '';
-        html += '<span class="vtag">' + p + (prix ? ' <strong>' + prix + '</strong>' : '') + '</span>';
+    // Vitrine
+    html += '<div class="salon-vitrine" id="svit-'+i+'">';
+    if (prestH.length>0) {
+      html += '<div class="vitrine-label">Homme</div><div class="vitrine-tags">';
+      prestH.forEach(function(p){
+        var pdata = pd.homme&&pd.homme[p];
+        var prix  = pdata&&pdata.prix?pdata.prix+'€':'';
+        html += '<span class="vtag">'+p+(prix?' <span class="vtag-price">'+prix+'</span>':'')+'</span>';
       });
       html += '</div>';
     }
-    if (prestF.length > 0) {
-      html += '<div class="vitrine-section-label">Femme</div><div class="vitrine-tags">';
-      prestF.forEach(function(p) {
-        var pdata = pd.femme && pd.femme[p];
-        var prix = pdata && pdata.prix ? pdata.prix + '€' : '';
-        html += '<span class="vtag">' + p + (prix ? ' <strong>' + prix + '</strong>' : '') + '</span>';
+    if (prestF.length>0) {
+      html += '<div class="vitrine-label" style="margin-top:10px">Femme</div><div class="vitrine-tags">';
+      prestF.forEach(function(p){
+        var pdata = pd.femme&&pd.femme[p];
+        var prix  = pdata&&pdata.prix?pdata.prix+'€':'';
+        html += '<span class="vtag">'+p+(prix?' <span class="vtag-price">'+prix+'</span>':'')+'</span>';
       });
       html += '</div>';
     }
-    html += '<a href="' + bookUrl + '" class="btn-book-inline" style="display:inline-block;margin-top:12px;background:var(--ink);color:var(--white);padding:9px 20px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none">Prendre un RDV</a>';
+    if (!isFake) {
+      html += '<div class="vitrine-footer"><a href="'+bookUrl+'" class="btn-book">Prendre un RDV</a></div>';
+    } else {
+      html += '<div style="margin-top:12px;font-size:12px;color:var(--ink-light)">Ce salon n\'est pas encore sur Belyo.</div>';
+    }
     html += '</div></div>';
-  }
+  });
+  html += '</div>';
   el.innerHTML = html;
 }
 
-function toggleVitrine(cardId) {
-  var el = document.getElementById('vitrine-' + cardId);
-  if (el) el.classList.toggle('open');
+function renderSalonsPreview(list) {
+  var el = document.getElementById('auth-salons-preview');
+  if (!el) return;
+  var html = '<div style="display:flex;flex-direction:column;gap:8px">';
+  list.forEach(function(s) {
+    var name   = s.salon_name||'Salon';
+    var colors = avatarColor(name);
+    var inits  = salonInitials(name);
+    var isFake = (s.user_id||'').startsWith('fake-');
+    var bookUrl= isFake ? '#' : '/book.html?salon='+s.user_id;
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;align-items:center;gap:10px">'
+      + '<div style="width:38px;height:38px;border-radius:8px;background:'+colors[0]+';display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:600;color:white;flex-shrink:0">'+inits+'</div>'
+      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+name+'</div>'+(s.salon_address?'<div style="font-size:11px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.salon_address+'</div>':'')+'</div>'
+      + (isFake?'':'<a href="'+bookUrl+'" style="font-size:11px;padding:5px 12px;background:var(--ink);color:white;border-radius:100px;white-space:nowrap">Réserver</a>')
+      + '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
 }
 
-
-function makeSlug(name) {
-  return name.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40);
-}
-async function createSalonWithSlug(userId, salonName) {
-  var base = makeSlug(salonName), slug = base, tries = 0;
-  while (tries < 10) {
-    var check = await sb.from('salon_settings').select('user_id').eq('slug', slug).maybeSingle();
-    if (!check.data) break;
-    tries++; slug = base + '-' + tries;
+// Event delegation pour toggle vitrine
+document.addEventListener('click', function(e) {
+  var main = e.target.closest('[data-vitrine]');
+  if (main && !e.target.closest('.btn-book') && !e.target.closest('a')) {
+    var vitId  = main.getAttribute('data-vitrine');
+    var vitEl  = document.getElementById(vitId);
+    var chevIdx = vitId.replace('svit-','');
+    var chevEl  = document.getElementById('chev-'+chevIdx);
+    if (vitEl) vitEl.classList.toggle('open');
+    if (chevEl) chevEl.classList.toggle('open');
   }
-  await sb.from('salon_settings').upsert({ user_id: userId, slug: slug, salon_name: salonName }, { onConflict: 'user_id' });
-  return slug;
-}
+});
 
 // ===== CRÉATEUR =====
-function openCreatorModal() {
-  document.getElementById('creator-modal').classList.add('open');
+function openCreatorModal()  { document.getElementById('creator-modal').classList.add('open'); }
+function closeCreatorModal() { document.getElementById('creator-modal').classList.remove('open'); }
+document.getElementById('creator-modal').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeCreatorModal(); });
+
+function makeSlug(name) {
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 }
-function closeCreatorModal() {
-  document.getElementById('creator-modal').classList.remove('open');
+async function createSalonWithSlug(userId, salonName) {
+  var base=makeSlug(salonName), slug=base, tries=0;
+  while(tries<10) {
+    var check = await sb.from('salon_settings').select('user_id').eq('slug',slug).maybeSingle();
+    if (!check.data) break;
+    tries++; slug=base+'-'+tries;
+  }
+  await sb.from('salon_settings').upsert({ user_id:userId, slug, salon_name:salonName },{ onConflict:'user_id' });
+  return slug;
 }
 
 async function createSalon() {
   var salonName = document.getElementById('creator-salon-name').value.trim();
-  if (!salonName) { showToast('Entrez le nom de votre salon', 'error'); return; }
+  if (!salonName) { showToast('Entrez le nom de votre salon','error'); return; }
   var btn = document.getElementById('btn-create-salon');
-  btn.disabled = true; btn.textContent = 'Création...';
-
-  // Mettre à jour les metadata avec le nom du salon
-  var res = await sb.auth.updateUser({ data: { salon_name: salonName, role: 'creator' } });
-  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); btn.disabled = false; btn.textContent = 'Créer mon salon'; return; }
-
-  // Créer les salon_settings via RPC (bypass RLS)
+  btn.disabled=true; btn.textContent='Création...';
+  var res = await sb.auth.updateUser({ data:{ salon_name:salonName, role:'salon' } });
+  if (res.error) { showToast('Erreur : '+res.error.message,'error'); btn.disabled=false; btn.textContent='Créer mon salon'; return; }
   await sb.rpc('create_salon_for_user', { p_user_id: currentUser.id });
-
   closeCreatorModal();
   showToast('Salon créé ! Redirection...');
-  setTimeout(function() { window.location.href = 'pages/dashboard.html'; }, 1500);
+  setTimeout(function(){ window.location.href='pages/dashboard.html'; }, 1500);
 }
 
 // ===== INIT =====
@@ -612,41 +673,25 @@ async function createSalon() {
   var session = await sb.auth.getSession();
   if (session.data && session.data.session) {
     showDashboard(session.data.session.user);
+  } else {
+    loadAllSalons(); // charger les salons même sans connexion
   }
 
-  // Pré-remplir params URL
-  var params = new URLSearchParams(window.location.search);
+  var params      = new URLSearchParams(window.location.search);
   var tab         = params.get('tab');
   var infoMsg     = params.get('info');
   var openCreator = params.get('openCreator');
 
-  if (tab === 'register') showAuthTab('register');
-  if (infoMsg) {
-    var box = document.getElementById('info-box');
-    box.textContent = decodeURIComponent(infoMsg);
-    box.style.display = 'block';
-  }
-
-  // Si on arrive depuis le bouton "Coiffeur" de l'index avec un compte client
-  if (openCreator === '1') {
+  if (tab==='register') showAuthTab('register');
+  if (infoMsg) { var box=document.getElementById('info-box'); box.textContent=decodeURIComponent(infoMsg); box.style.display='block'; }
+  if (openCreator==='1') {
     var sess2 = await sb.auth.getSession();
-    if (sess2.data && sess2.data.session) {
-      // Déjà connecté → ouvrir la modal créateur directement
-      setTimeout(openCreatorModal, 600);
-    }
-    // Sinon → afficher un message d'info dans le form d'inscription
-    else {
-      var box2 = document.getElementById('info-box');
-      box2.textContent = 'Créez votre compte, vous pourrez ensuite créer votre salon.';
-      box2.style.display = 'block';
-      showAuthTab('register');
-    }
+    if (sess2.data&&sess2.data.session) setTimeout(openCreatorModal, 600);
+    else { var b2=document.getElementById('info-box'); b2.textContent='Créez votre compte, vous pourrez ensuite créer votre salon.'; b2.style.display='block'; showAuthTab('register'); }
   }
-
   updateSalonLink();
-  loadAllSalons();
 })();
 </script>
-
+<script>document.addEventListener('DOMContentLoaded',function(){ if(typeof initPhoneInputs==='function') initPhoneInputs(); });</script>
 </body>
 </html>
