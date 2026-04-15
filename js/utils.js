@@ -733,3 +733,36 @@ function renderNotifItem(n) {
     + '</div>'
     + '</div>';
 }
+// ===== FORMAT TÉLÉPHONE =====
+function formatPhone(val) {
+  // Garder uniquement les chiffres et le + initial
+  var digits = val.replace(/[^\d]/g, '');
+  // Grouper par 2 : 06 12 34 56 78
+  var parts = [];
+  for (var i = 0; i < digits.length && i < 10; i += 2) {
+    parts.push(digits.slice(i, i + 2));
+  }
+  return parts.join(' ');
+}
+
+function applyPhoneFormat(input) {
+  if (!input) return;
+  input.addEventListener('input', function() {
+    var pos    = this.selectionStart;
+    var before = this.value.length;
+    this.value = formatPhone(this.value);
+    var after  = this.value.length;
+    // Replacer le curseur
+    var newPos = pos + (after - before);
+    try { this.setSelectionRange(newPos, newPos); } catch(e) {}
+  });
+  input.addEventListener('blur', function() {
+    this.value = formatPhone(this.value);
+  });
+}
+
+function initPhoneInputs() {
+  document.querySelectorAll('input[type="tel"]').forEach(function(inp) {
+    applyPhoneFormat(inp);
+  });
+}
