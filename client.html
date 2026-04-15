@@ -505,13 +505,13 @@ async function loadRdv(email, phone, name) {
   var data = [];
   try {
     var res = await sb.rpc('get_client_appointments', { p_email: email, p_name: name||'' });
-    data = res.data || [];
-    if (data.length===0 && phone) {
-      var res2 = await sb.rpc('get_client_appointments', { p_email: phone.replace(/\s/g,''), p_name: name||'' });
-      data = res2.data || [];
+    if (!res.error) {
+      data = res.data || [];
+    } else {
+      console.warn('RPC error:', res.error.message);
     }
   } catch(e) {
-    console.warn('get_client_appointments error:', e);
+    console.warn('get_client_appointments unavailable');
   }
   var now2     = new Date();
   // Séparer : en cours (démarré il y a <2h), à venir, passés
@@ -607,7 +607,7 @@ var FAKE_SALONS = [
 
 async function loadAllSalons() {
   var res = await sb.from('salon_settings')
-    .select('user_id, salon_name, salon_address, prestations, prix_duree, slug')
+    .select('user_id, salon_name, prestations, prix_duree, slug')
     .not('salon_name', 'is', null)
     .limit(20);
 
