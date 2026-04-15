@@ -5,6 +5,7 @@
 var currentUserId      = null;
 var allClients         = [];
 var currentFicheClient = null;
+var selectedClientIds  = new Set();
 
 function initials(name) {
   var parts = (name || '').trim().split(' ');
@@ -55,13 +56,16 @@ function renderClients() {
 
   // Toute la ligne est cliquable
   tbody.innerHTML = filtered.map(function(c) {
-    return '<tr onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer">'
-      + '<td><div class="client-name-cell"><div class="client-avatar">' + initials(c.name) + '</div><strong>' + c.name + '</strong></div></td>'
-      + '<td>' + (c.phone ? formatPhone(c.phone) : '—') + '</td>'
-      + '<td>' + (c.email || '—') + '</td>'
-      + '<td>' + formatDate(c.last_visit) + '</td>'
-      + '<td>' + (c.visit_count || 0) + '</td>'
-      + '<td style="text-align:right"><span style="font-size:12px;color:var(--ink-light)">Voir fiche →</span></td>'
+    var checked = selectedClientIds.has(c.id) ? 'checked' : '';
+    var rowSel  = selectedClientIds.has(c.id) ? 'row-selected' : '';
+    return '<tr id="crow-' + c.id + '" class="' + rowSel + '">'
+      + '<td onclick="event.stopPropagation()"><input type="checkbox" ' + checked + ' onchange="toggleClientRow(\'' + c.id + '\',this.checked)" style="cursor:pointer;width:15px;height:15px" /></td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer"><div class="client-name-cell"><div class="client-avatar">' + initials(c.name) + '</div><strong>' + c.name + '</strong></div></td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer">' + (c.phone ? formatPhone(c.phone) : '—') + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer">' + (c.email || '—') + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer">' + formatDate(c.last_visit) + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer">' + (c.visit_count || 0) + '</td>'
+      + '<td style="text-align:right" onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer"><span style="font-size:12px;color:var(--ink-light)">Voir fiche →</span></td>'
       + '</tr>';
   }).join('');
 }
@@ -187,6 +191,52 @@ async function loadClients() {
     .order('name', { ascending: true });
   allClients = res.data || [];
   renderClients();
+}
+
+// ===== SÉLECTION + SUPPRESSION =====
+function toggleClientRow(id, checked) {
+  if (checked) selectedClientIds.add(id);
+  else selectedClientIds.delete(id);
+  updateClientsSelectionBar();
+  var row = document.getElementById('crow-' + id);
+  if (row) row.classList.toggle('row-selected', checked);
+}
+
+function toggleAllClients(checked) {
+  var checkboxes = document.querySelectorAll('#clients-list input[type="checkbox"]');
+  checkboxes.forEach(function(cb) {
+    cb.checked = checked;
+    var row = cb.closest('tr');
+    if (!row) return;
+    var id = row.id.replace('crow-', '');
+    if (checked) selectedClientIds.add(id);
+    else selectedClientIds.delete(id);
+    row.classList.toggle('row-selected', checked);
+  });
+  updateClientsSelectionBar();
+}
+
+function updateClientsSelectionBar() {
+  var bar   = document.getElementById('clients-selection-bar');
+  var count = document.getElementById('clients-selection-count');
+  var n     = selectedClientIds.size;
+  if (bar) bar.style.display = n > 0 ? 'flex' : 'none';
+  if (count) count.textContent = n + ' sélectionné' + (n > 1 ? 's' : '');
+  var ca = document.getElementById('clients-check-all');
+  if (ca) ca.checked = n > 0 && n === document.querySelectorAll('#clients-list input[type="checkbox"]').length;
+}
+
+async function deleteSelectedClients() {
+  var n = selectedClientIds.size;
+  if (n === 0) return;
+  if (!confirm('Supprimer ' + n + ' client' + (n > 1 ? 's' : '') + ' ? Cette action est irréversible.')) return;
+  var ids = Array.from(selectedClientIds);
+  var res = await sb.from('clients').delete().in('id', ids);
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  selectedClientIds.clear();
+  updateClientsSelectionBar();
+  showToast(n + ' client' + (n > 1 ? 's' : '') + ' supprimé' + (n > 1 ? 's' : '') + '.');
+  await loadClients();
 }
 
 (async function() {

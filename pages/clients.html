@@ -43,12 +43,19 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">Liste des clients</span>
-        <span id="clients-count" style="font-size:13px;color:var(--ink-light);">—</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span id="clients-count" style="font-size:13px;color:var(--ink-light);">—</span>
+          <div id="clients-selection-bar" style="display:none;align-items:center;gap:8px">
+            <span id="clients-selection-count" style="font-size:13px;color:var(--ink-light)"></span>
+            <button onclick="deleteSelectedClients()" style="padding:5px 14px;border-radius:100px;border:1px solid var(--border);font-size:12px;background:var(--white);color:var(--ink);font-family:var(--font-body);cursor:pointer">Supprimer</button>
+          </div>
+        </div>
       </div>
       <div class="card-body" style="padding:0">
         <table class="table">
           <thead>
             <tr>
+              <th style="width:36px"><input type="checkbox" id="clients-check-all" onchange="toggleAllClients(this.checked)" style="cursor:pointer;width:15px;height:15px" /></th>
               <th>Nom</th>
               <th>Téléphone</th>
               <th>Email</th>
@@ -58,7 +65,7 @@
             </tr>
           </thead>
           <tbody id="clients-list">
-            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
+            <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
           </tbody>
         </table>
       </div>
@@ -144,6 +151,19 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
+<script>
+// Guard salon — seuls les comptes role=salon accèdent au dashboard
+(async function() {
+  var s = await sb.auth.getSession();
+  if (!s.data.session) { window.location.href = 'login.html'; return; }
+  var meta = s.data.session.user.user_metadata || {};
+  if (meta.role !== 'salon') { window.location.href = '../client.html'; return; }
+  // Créer salon_settings si pas encore fait
+  await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
+})();
+// end guard-salon
+</script>
 <script src="../js/clients.js"></script>
+<script>document.addEventListener("DOMContentLoaded", function(){ if(typeof initPhoneInputs==="function") initPhoneInputs(); });</script>
 </body>
 </html>
