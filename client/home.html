@@ -14,15 +14,13 @@
     a{text-decoration:none;color:inherit;}
 
     /* ── APP BAR ── */
-    .appbar{background:var(--ink);position:sticky;top:0;z-index:60;}
-    .appbar-inner{max-width:900px;margin:0 auto;display:flex;align-items:stretch;}
-    .appbar-logo{font-family:var(--font-display);font-size:1.4rem;font-weight:600;color:var(--white);padding:.75rem 1.5rem;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0;}
-    .appbar-nav{display:flex;flex:1;}
-    .appbar-tab{padding:.75rem 1.2rem;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font-body);white-space:nowrap;}
-    .appbar-tab.active{color:var(--white);border-bottom-color:var(--gold);}
-    .appbar-tab:hover:not(.active){color:rgba(255,255,255,.7);}
-    .appbar-tab.logout{margin-left:auto;color:rgba(255,255,255,.3);}
-    .appbar-tab.logout:hover{color:rgba(255,255,255,.6);border-bottom-color:transparent;}
+    .appbar{background:var(--ink);position:sticky;top:0;z-index:60;height:60px;}
+    .appbar-inner{height:100%;max-width:960px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+    .appbar-nav{display:flex;align-items:center;gap:2rem;}
+    .appbar-tab{font-size:14px;font-weight:400;color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none;font-family:var(--font-body);padding:0;transition:color .15s;white-space:nowrap;text-decoration:none;display:inline-block;}
+    .appbar-tab.active{color:var(--gold);font-weight:500;}
+    .appbar-tab:hover:not(.active){color:rgba(255,255,255,.85);}
+    .appbar-logo{font-family:var(--font-display);font-size:1.6rem;font-weight:600;color:var(--white);letter-spacing:-.01em;}
 
     /* CONTENU */
     .page-content{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
@@ -100,14 +98,14 @@
 <!-- APP BAR -->
 <div class="appbar">
   <div class="appbar-inner">
-    <div class="appbar-logo">Belyo</div>
     <nav class="appbar-nav">
       <button class="appbar-tab active" id="tab-salons" onclick="switchTab('salons')">Salons</button>
       <button class="appbar-tab" id="tab-rdv" onclick="switchTab('rdv')">Mes RDV</button>
       <button class="appbar-tab" id="tab-creator" onclick="handleCreatorTab()" style="display:none">Créer mon salon</button>
       <a class="appbar-tab" id="tab-dashboard" href="/pages/dashboard.html" style="display:none">Mon salon</a>
-      <button class="appbar-tab logout" onclick="doLogout()">Déconnexion</button>
+      <button class="appbar-tab" onclick="doLogout()">Déconnexion</button>
     </nav>
+    <div class="appbar-logo">Belyo</div>
   </div>
 </div>
 
