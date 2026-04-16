@@ -8,40 +8,95 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
-    :root{--cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;--gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;--border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;--font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;}
+    :root{
+      --cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;
+      --gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;
+      --border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;
+      --font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;
+    }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
-    a{text-decoration:none;color:inherit;}
+    a{text-decoration:none;color:inherit;} img{display:block;}
 
     /* ── APP BAR ── */
-    .appbar{background:var(--ink);position:sticky;top:0;z-index:60;height:64px;}
-    .appbar-inner{height:100%;max-width:960px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;}
-    .appbar-logo{font-family:var(--font-display);font-size:1.6rem;font-weight:600;color:var(--white);letter-spacing:-.01em;}
+    .appbar{background:var(--ink);height:64px;position:sticky;top:0;z-index:60;}
+    .appbar-inner{height:100%;max-width:1100px;margin:0 auto;padding:0 2rem;
+      display:flex;align-items:center;justify-content:space-between;}
+    .appbar-logo{font-family:var(--font-display);font-size:1.6rem;font-weight:600;
+      color:var(--white);letter-spacing:-.01em;flex-shrink:0;}
     .appbar-nav{display:flex;align-items:center;gap:2rem;}
-    .appbar-tab{font-size:13.5px;font-weight:400;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:var(--font-body);padding:0;transition:color .15s;white-space:nowrap;text-decoration:none;display:inline-block;}
-    .appbar-tab.active{color:var(--gold);font-weight:500;}
-    .appbar-tab:hover:not(.active){color:rgba(255,255,255,.8);}
+    .nav-item{font-size:13.5px;font-weight:400;color:rgba(255,255,255,.45);
+      cursor:pointer;background:none;border:none;font-family:var(--font-body);
+      padding:0;transition:color .15s;white-space:nowrap;text-decoration:none;}
+    .nav-item.active{color:var(--gold);font-weight:500;}
+    .nav-item:hover:not(.active){color:rgba(255,255,255,.85);}
 
-    /* CONTENU */
-    .page-content{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
+    /* ── PAGE ── */
+    .page{max-width:1100px;margin:0 auto;padding:2rem 2rem 5rem;}
 
-    /* SALUTATION */
-    .greeting{margin-bottom:1.5rem;}
-    .greeting-name{font-family:var(--font-display);font-size:1.8rem;font-weight:300;}
-    .greeting-name em{font-style:italic;color:var(--gold);}
-    .greeting-sub{font-size:13px;color:var(--ink-light);margin-top:2px;}
+    /* ── HERO ROW ── */
+    .hero-row{display:flex;align-items:center;justify-content:space-between;
+      gap:2rem;margin-bottom:2rem;}
+    .hero-left{}
+    .hello{font-family:var(--font-display);font-size:2rem;font-weight:300;line-height:1.1;}
+    .hello em{font-style:italic;color:var(--gold);}
+    .hello-sub{font-size:13px;color:var(--ink-light);margin-top:4px;}
+    .search-wrap{position:relative;width:280px;flex-shrink:0;}
+    .search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);
+      pointer-events:none;color:var(--ink-light);}
+    .search-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;
+      stroke-width:2;stroke-linecap:round;}
+    .search-input{width:100%;padding:11px 14px 11px 40px;
+      border:1.5px solid var(--border);border-radius:100px;
+      font-family:var(--font-body);font-size:14px;background:var(--white);
+      color:var(--ink);outline:none;transition:border-color .15s;}
+    .search-input:focus{border-color:var(--gold);}
+    .search-input::placeholder{color:var(--ink-light);}
 
-    /* SECTIONS */
-    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden;}
-    .section-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.4rem;border-bottom:1px solid var(--border);}
+    /* ── GRILLE SALONS ── */
+    .salons-grid{display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+    .salon-card{background:var(--white);border:1px solid var(--border);
+      border-radius:var(--radius);overflow:hidden;cursor:pointer;
+      transition:border-color .18s,box-shadow .18s;}
+    .salon-card:hover{border-color:var(--gold-light);
+      box-shadow:0 4px 20px rgba(196,168,122,.14);}
+    .salon-card-img{height:160px;overflow:hidden;background:var(--cream-dark);}
+    .salon-card-img img{width:100%;height:100%;object-fit:cover;
+      transition:transform .35s;}
+    .salon-card:hover .salon-card-img img{transform:scale(1.05);}
+    .salon-card-body{padding:14px 16px 16px;}
+    .salon-card-name{font-size:15px;font-weight:500;color:var(--ink);
+      margin-bottom:7px;}
+    .salon-card-meta{display:flex;align-items:center;flex-wrap:wrap;
+      gap:6px;margin-bottom:10px;}
+    .meta-chip{display:flex;align-items:center;gap:3px;
+      font-size:12px;color:var(--ink-light);}
+    .meta-chip svg{width:11px;height:11px;stroke:currentColor;fill:none;
+      stroke-width:2;stroke-linecap:round;flex-shrink:0;}
+    .meta-sep{width:3px;height:3px;border-radius:50%;
+      background:rgba(26,23,20,.2);flex-shrink:0;}
+    .stars{display:flex;gap:1px;align-items:center;}
+    .star{width:11px;height:11px;fill:var(--gold);}
+    .star.e{fill:var(--cream-dark);}
+    .salon-tags{display:flex;gap:5px;flex-wrap:wrap;}
+    .stag{font-size:11px;padding:3px 9px;border-radius:100px;
+      background:var(--cream);color:var(--ink-light);
+      border:1px solid var(--border);}
+
+    /* ── RDV ── */
+    .section{background:var(--white);border:1px solid var(--border);
+      border-radius:var(--radius);margin-bottom:1rem;overflow:hidden;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;
+      padding:1rem 1.4rem;border-bottom:1px solid var(--border);}
     .section-title{font-size:13px;font-weight:500;}
     .section-count{font-size:12px;color:var(--ink-light);}
     .section-body{padding:0 1.4rem;}
-    .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--ink-light);font-size:14px;}
-    .empty-icon{width:36px;height:36px;margin:0 auto .7rem;opacity:.25;}
-
-    /* RDV */
-    .rdv-item{display:flex;align-items:stretch;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+    .empty-state{text-align:center;padding:2.5rem 1rem;
+      color:var(--ink-light);font-size:14px;}
+    .rdv-item{display:flex;align-items:stretch;
+      border-bottom:1px solid var(--border);cursor:pointer;
+      transition:background .12s;}
     .rdv-item:last-child{border-bottom:none;}
     .rdv-item:hover{background:var(--cream);}
     .rdv-item.is-now{background:rgba(196,168,122,.07);}
@@ -50,54 +105,43 @@
     .rdv-accent.pending{background:#FAEEDA;}
     .rdv-accent.done{background:#E1F5EE;}
     .rdv-accent.cancelled{background:#FAECE7;}
-    .rdv-body{display:flex;align-items:center;gap:14px;padding:13px 16px;flex:1;min-width:0;}
-    .rdv-date-block{text-align:center;min-width:42px;flex-shrink:0;}
-    .rdv-day{font-family:var(--font-display);font-size:1.4rem;font-weight:600;line-height:1;}
-    .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
-    .rdv-sep{width:1px;background:var(--border);align-self:stretch;margin:3px 0;flex-shrink:0;}
+    .rdv-body{display:flex;align-items:center;gap:14px;
+      padding:13px 16px;flex:1;min-width:0;}
+    .rdv-date{text-align:center;min-width:42px;flex-shrink:0;}
+    .rdv-day{font-family:var(--font-display);font-size:1.4rem;
+      font-weight:600;line-height:1;}
+    .rdv-month{font-size:10px;color:var(--ink-light);
+      text-transform:uppercase;letter-spacing:.05em;}
+    .rdv-sep{width:1px;background:var(--border);
+      align-self:stretch;margin:3px 0;flex-shrink:0;}
     .rdv-info{flex:1;min-width:0;padding-left:12px;}
-    .rdv-salon-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .rdv-salon{font-size:13px;font-weight:500;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .rdv-service{font-size:12px;color:var(--ink-light);margin-top:1px;}
-    .rdv-meta-row{font-size:11px;color:var(--ink-light);margin-top:2px;display:flex;gap:5px;align-items:center;}
-    .rdv-meta-dot{width:2px;height:2px;border-radius:50%;background:var(--border);}
-    .rdv-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
-    .rdv-status{font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;white-space:nowrap;}
-    .st-pending{background:#FAEEDA;color:#854F0B;}
-    .st-done{background:#E1F5EE;color:#0F6E56;}
-    .st-cancelled{background:#FAECE7;color:#993C1D;}
-    .st-now{background:var(--gold-light);color:#7A5A2A;}
+    .rdv-time{font-size:11px;color:var(--ink-light);margin-top:2px;}
+    .rdv-right{display:flex;flex-direction:column;
+      align-items:flex-end;gap:4px;flex-shrink:0;}
+    .badge{font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;}
+    .b-pending{background:#FAEEDA;color:#854F0B;}
+    .b-done{background:#E1F5EE;color:#0F6E56;}
+    .b-cancelled{background:#FAECE7;color:#993C1D;}
+    .b-now{background:var(--gold-light);color:#7A5A2A;}
     .rdv-price{font-size:12px;font-weight:500;color:var(--ink);}
 
-    /* SALONS */
-    .salons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
-    .salon-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
-    .salon-card:hover{border-color:var(--gold-light);box-shadow:0 2px 16px rgba(196,168,122,.12);}
-    .salon-card-photo{height:140px;overflow:hidden;background:var(--cream-dark);}
-    .salon-card-photo img{width:100%;height:100%;object-fit:cover;transition:transform .3s;}
-    .salon-card:hover .salon-card-photo img{transform:scale(1.03);}
-    .salon-card-body{padding:14px 16px;}
-    .salon-card-name{font-size:15px;font-weight:500;margin-bottom:4px;color:var(--ink);}
-    .salon-card-meta{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-    .salon-meta-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-light);}
-    .salon-meta-item svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
-    .salon-meta-sep{width:3px;height:3px;border-radius:50%;background:var(--border);flex-shrink:0;}
-    .salon-stars{display:flex;align-items:center;gap:2px;}
-    .salon-star{width:11px;height:11px;fill:var(--gold);}
-    .salon-star.empty{fill:var(--cream-dark);}
-    .salon-tags{display:flex;gap:5px;flex-wrap:wrap;}
-    .salon-tag{font-size:11px;padding:3px 9px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border);}
-
-    /* SEARCH */
-    .search-wrap{position:relative;margin-bottom:1rem;}
-    .search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-light);}
-    .search-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
-    .search-input{width:100%;padding:11px 13px 11px 38px;border:1.5px solid var(--border);border-radius:100px;font-family:var(--font-body);font-size:14px;background:var(--white);color:var(--ink);outline:none;transition:border-color .15s;}
-    .search-input:focus{border-color:var(--gold);}
-    .search-input::placeholder{color:var(--ink-light);}
-
     /* TOAST */
-    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:var(--ink);color:var(--white);padding:12px 24px;
+      border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;
+      pointer-events:none;z-index:999;white-space:nowrap;}
     .toast.show{opacity:1;}
+
+    @media(max-width:700px){
+      .hero-row{flex-direction:column;align-items:flex-start;gap:1rem;}
+      .search-wrap{width:100%;}
+      .salons-grid{grid-template-columns:1fr;}
+      .appbar-nav{gap:1.2rem;}
+      .nav-item{font-size:12px;}
+    }
   </style>
 </head>
 <body>
@@ -107,33 +151,33 @@
   <div class="appbar-inner">
     <div class="appbar-logo">Belyo</div>
     <nav class="appbar-nav">
-      <button class="appbar-tab active" id="tab-salons" onclick="switchTab('salons')">Salons</button>
-      <button class="appbar-tab" id="tab-rdv" onclick="switchTab('rdv')">Mes RDV</button>
-      <button class="appbar-tab" id="tab-creator" onclick="handleCreatorTab()" style="display:none">Créer mon salon</button>
-      <a class="appbar-tab" id="tab-dashboard" href="/pages/dashboard.html" style="display:none">Mon salon</a>
-      <button class="appbar-tab" onclick="doLogout()">Déconnexion</button>
+      <button class="nav-item active" id="tab-salons" onclick="switchTab('salons')">Salons</button>
+      <button class="nav-item" id="tab-rdv" onclick="switchTab('rdv')">Mes RDV</button>
+      <button class="nav-item" id="tab-creator" onclick="openCreator()" style="display:none">Créer mon salon</button>
+      <a class="nav-item" id="tab-dashboard" href="/pages/dashboard.html" style="display:none">Mon salon</a>
+      <button class="nav-item" onclick="doLogout()">Déconnexion</button>
     </nav>
   </div>
 </div>
 
-<!-- CONTENU -->
-<div class="page-content">
+<!-- PAGE -->
+<div class="page">
 
   <!-- VUE SALONS -->
   <div id="view-salons">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem">
-      <div>
-        <div class="greeting-name">Bonjour, <em id="greeting-name">—</em></div>
-        <div class="greeting-sub" id="greeting-sub">Découvrez les salons disponibles</div>
+    <div class="hero-row">
+      <div class="hero-left">
+        <div class="hello">Bonjour, <em id="greeting-name">—</em></div>
+        <div class="hello-sub" id="greeting-sub">Découvrez les salons disponibles</div>
       </div>
-      <div class="search-wrap" style="margin:0;width:240px;flex-shrink:0">
+      <div class="search-wrap">
         <div class="search-icon">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </div>
-        <input type="text" class="search-input" id="search-salons" placeholder="Rechercher un salon..." oninput="onSearch()" />
+        <input class="search-input" type="text" id="search-salons"
+          placeholder="Rechercher un salon..." oninput="onSearch()" />
       </div>
     </div>
-
     <div id="salons-list">
       <div class="empty-state">Chargement...</div>
     </div>
@@ -141,27 +185,25 @@
 
   <!-- VUE RDV -->
   <div id="view-rdv" style="display:none">
+    <div class="hero-row" style="margin-bottom:1.5rem">
+      <div class="hello">Mes <em>rendez-vous</em></div>
+    </div>
     <div class="section">
       <div class="section-head">
-        <span class="section-title">Rendez-vous à venir</span>
+        <span class="section-title">À venir</span>
         <span class="section-count" id="upcoming-count"></span>
       </div>
       <div class="section-body">
-        <div id="upcoming-rdv">
-          <div class="empty-state">Chargement...</div>
-        </div>
+        <div id="upcoming-rdv"><div class="empty-state">Chargement...</div></div>
       </div>
     </div>
-
     <div class="section">
       <div class="section-head">
         <span class="section-title">Historique</span>
         <span class="section-count" id="past-count"></span>
       </div>
       <div class="section-body">
-        <div id="past-rdv">
-          <div class="empty-state">Chargement...</div>
-        </div>
+        <div id="past-rdv"><div class="empty-state">Chargement...</div></div>
       </div>
     </div>
   </div>
@@ -169,20 +211,38 @@
 </div>
 
 <!-- MODAL créer salon -->
-<div id="creator-modal" style="position:fixed;inset:0;background:rgba(26,23,20,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s">
-  <div style="background:var(--white);border-radius:var(--radius);padding:2rem;max-width:420px;width:100%;position:relative">
-    <button onclick="closeCreator()" style="position:absolute;top:.8rem;right:1rem;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-light)">×</button>
-    <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:300;margin-bottom:.3rem">Créer <em style="font-style:italic;color:var(--gold)">mon salon</em></div>
-    <div style="font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.5">Vous rejoignez Belyo en tant que professionnel.</div>
+<div id="creator-modal" style="position:fixed;inset:0;background:rgba(26,23,20,.55);
+  z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;
+  opacity:0;pointer-events:none;transition:opacity .2s">
+  <div style="background:var(--white);border-radius:var(--radius);padding:2rem;
+    max-width:420px;width:100%;position:relative">
+    <button onclick="closeCreator()" style="position:absolute;top:.8rem;right:1rem;
+      background:none;border:none;font-size:22px;cursor:pointer;
+      color:var(--ink-light)">×</button>
+    <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:300;
+      margin-bottom:.3rem">Créer <em style="font-style:italic;color:var(--gold)">mon salon</em></div>
+    <div style="font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.5">
+      Vous rejoignez Belyo en tant que professionnel.</div>
     <div style="margin-bottom:.85rem">
-      <label style="display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:4px">Nom du salon *</label>
-      <input type="text" id="creator-name" placeholder="Ex : Salon Moisan" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none" />
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--ink-light);
+        margin-bottom:4px">Nom du salon *</label>
+      <input type="text" id="creator-name" placeholder="Ex : Salon Moisan"
+        style="width:100%;padding:11px 14px;border:1.5px solid var(--border);
+        border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;
+        background:var(--cream);color:var(--ink);outline:none" />
     </div>
     <div style="margin-bottom:.85rem">
-      <label style="display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:4px">Adresse</label>
-      <input type="text" id="creator-addr" placeholder="12 rue de la Paix, Nantes" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none" />
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--ink-light);
+        margin-bottom:4px">Adresse</label>
+      <input type="text" id="creator-addr" placeholder="12 rue de la Paix, Nantes"
+        style="width:100%;padding:11px 14px;border:1.5px solid var(--border);
+        border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;
+        background:var(--cream);color:var(--ink);outline:none" />
     </div>
-    <button id="btn-create" onclick="createSalon()" style="width:100%;padding:13px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;margin-top:.3rem">Créer mon salon</button>
+    <button id="btn-create" onclick="createSalon()"
+      style="width:100%;padding:13px;background:var(--ink);color:var(--white);
+      border:none;border-radius:100px;font-family:var(--font-body);
+      font-size:15px;font-weight:500;cursor:pointer;margin-top:.3rem">Créer mon salon</button>
   </div>
 </div>
 
@@ -193,23 +253,24 @@
 <script>
 var currentUser   = null;
 var allSalons     = [];
-var DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=120&h=120&fit=crop&q=80';
-var DEFAULT_TAGS  = ['Coupe', 'Couleur', 'Brushing'];
+var DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=400&fit=crop&q=80';
+var DEFAULT_TAGS  = ['Coupe','Couleur','Brushing'];
 
 function showToast(msg, type) {
   var t = document.getElementById('toast');
   t.textContent = msg;
   t.style.background = type==='error' ? '#993C1D' : '#1A1714';
   t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 3500);
+  setTimeout(function(){ t.classList.remove('show'); }, 3000);
 }
 
 // ── Tabs ──
 function switchTab(tab) {
-  document.getElementById('tab-salons').classList.toggle('active', tab==='salons');
-  document.getElementById('tab-rdv').classList.toggle('active', tab==='rdv');
-  document.getElementById('view-salons').style.display = tab==='salons' ? 'block' : 'none';
-  document.getElementById('view-rdv').style.display    = tab==='rdv'    ? 'block' : 'none';
+  ['salons','rdv'].forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    var v = document.getElementById('view-'+t);
+    if (v) v.style.display = t===tab ? 'block' : 'none';
+  });
 }
 
 // ── Logout ──
@@ -222,43 +283,67 @@ async function doLogout() {
 function onSearch() {
   var q = document.getElementById('search-salons').value.toLowerCase().trim();
   var filtered = q ? allSalons.filter(function(s){
-    return (s.salon_name||'').toLowerCase().includes(q)||(s.salon_address||'').toLowerCase().includes(q);
+    return (s.salon_name||'').toLowerCase().includes(q)
+        || (s.salon_address||'').toLowerCase().includes(q);
   }) : allSalons;
   renderSalons(filtered);
 }
 
 async function loadSalons() {
   var res = await sb.from('salon_settings')
-    .select('user_id, salon_name, salon_address, prestations, prix_duree')
+    .select('user_id,salon_name,salon_address,prestations,prix_duree')
     .not('salon_name','is',null).limit(30);
   allSalons = (res.data||[]).filter(function(s){ return s.salon_name&&s.salon_name.trim(); });
-  var sc = document.getElementById('salons-count');
-  if (sc) sc.textContent = allSalons.length + ' salon' + (allSalons.length>1?'s':'');
   renderSalons(allSalons);
+}
+
+function starsHtml(n) {
+  var h = '';
+  for (var i=1;i<=5;i++)
+    h += '<svg class="star'+(i<=Math.round(n)?'':' e')+'" viewBox="0 0 24 24">'
+      +'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>'
+      +'</svg>';
+  return h;
 }
 
 function renderSalons(list) {
   var el = document.getElementById('salons-list');
-  if (!list||list.length===0) {
-    el.innerHTML = '<div class="empty-state">Aucun salon disponible</div>';
+  if (!list||!list.length) {
+    el.innerHTML = '<div class="empty-state">Aucun salon disponible pour le moment</div>';
     return;
   }
-  var html = '<div class="salons-list">';
+  var html = '<div class="salons-grid">';
   list.forEach(function(s) {
     var name   = s.salon_name||'Salon';
-    var addr   = s.salon_address||'';
+    var addr   = s.salon_address||'Nantes';
     var prestH = (s.prestations&&s.prestations.homme)||[];
     var prestF = (s.prestations&&s.prestations.femme)||[];
-    var tags   = prestH.slice(0,2).concat(prestF.slice(0,2));
+    var uniq   = [];
+    prestH.concat(prestF).forEach(function(p){
+      if (uniq.indexOf(p)===-1) uniq.push(p);
+    });
+    var tags = uniq.slice(0,3);
     if (!tags.length) tags = DEFAULT_TAGS;
-    var tagsHtml = tags.map(function(t){ return '<span class="salon-tag">'+t+'</span>'; }).join('');
-    var url = '/client/salon-detail.html?salon='+s.user_id;
-    html += '<div class="salon-row" onclick="window.location.href=\''+url+'\'">'
-      + '<img class="salon-thumb" src="'+DEFAULT_PHOTO+'" alt="'+name+'" loading="lazy">'
-      + '<div class="salon-row-info">'
-      + '<div class="salon-row-name">'+name+'</div>'
-      + (addr?'<div class="salon-row-addr">'+addr+'</div>':'')
-      + '<div class="salon-row-tags">'+tagsHtml+'</div>'
+    var note = 4.8;
+    var dist = (Math.floor(Math.random()*25+2)/10).toFixed(1);
+    var url  = '/client/salon-detail.html?salon='+s.user_id;
+
+    html += '<div class="salon-card" onclick="window.location.href=\''+url+'\'">'
+      + '<div class="salon-card-img">'
+      + '<img src="'+DEFAULT_PHOTO+'" alt="'+name+'" loading="lazy">'
+      + '</div>'
+      + '<div class="salon-card-body">'
+      + '<div class="salon-card-name">'+name+'</div>'
+      + '<div class="salon-card-meta">'
+      + '<div class="meta-chip"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>'+addr+'</div>'
+      + '<span class="meta-sep"></span>'
+      + '<div class="meta-chip"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>'+dist+' km</div>'
+      + '<span class="meta-sep"></span>'
+      + '<div class="meta-chip"><div class="stars">'+starsHtml(note)+'</div>&nbsp;'+note+'</div>'
+      + '</div>'
+      + '<div class="salon-tags">'
+      + tags.map(function(t){ return '<span class="stag">'+t+'</span>'; }).join('')
+      + '</div>'
       + '</div>'
       + '</div>';
   });
@@ -268,24 +353,31 @@ function renderSalons(list) {
 
 // ── RDV ──
 async function loadRdv(email, phone, name) {
-  var now = new Date();
+  var now  = new Date();
   var data = [];
   try {
     var res = await sb.rpc('get_client_appointments', { p_email:email, p_name:name||'' });
     if (!res.error) data = res.data||[];
-  } catch(e) {}
+  } catch(e){}
 
-  var nowStr   = now.toISOString();
-  var enCours  = data.filter(function(a){ var dt=new Date(a.datetime); return a.status==='pending'&&dt<=now&&(now-dt)<2*3600000; });
-  var aVenir   = data.filter(function(a){ var dt=new Date(a.datetime); return a.status==='pending'&&dt>now; });
-  aVenir.sort(function(a,b){ return new Date(a.datetime)-new Date(b.datetime); });
+  var enCours = data.filter(function(a){
+    var dt=new Date(a.datetime);
+    return a.status==='pending'&&dt<=now&&(now-dt)<2*3600000;
+  });
+  var aVenir = data.filter(function(a){
+    var dt=new Date(a.datetime);
+    return a.status==='pending'&&dt>now;
+  }).sort(function(a,b){ return new Date(a.datetime)-new Date(b.datetime); });
   var upcoming = enCours.concat(aVenir);
-  var past     = data.filter(function(a){ var dt=new Date(a.datetime); return a.status!=='pending'||(dt<now&&(now-dt)>=2*3600000); })
-                     .sort(function(a,b){ return new Date(b.datetime)-new Date(a.datetime); }).slice(0,15);
+  var past = data.filter(function(a){
+    var dt=new Date(a.datetime);
+    return a.status!=='pending'||(dt<now&&(now-dt)>=2*3600000);
+  }).sort(function(a,b){ return new Date(b.datetime)-new Date(a.datetime); }).slice(0,15);
 
-  var uc=document.getElementById('upcoming-count'), pc=document.getElementById('past-count');
-  if (uc) uc.textContent = upcoming.length?upcoming.length+' RDV':'';
-  if (pc) pc.textContent = past.length?past.length+' RDV':'';
+  var uc = document.getElementById('upcoming-count');
+  var pc = document.getElementById('past-count');
+  if (uc) uc.textContent = upcoming.length ? upcoming.length+' RDV' : '';
+  if (pc) pc.textContent = past.length ? past.length+' RDV' : '';
   renderRdv('upcoming-rdv', upcoming, true, now);
   renderRdv('past-rdv', past, false, now);
 }
@@ -297,54 +389,50 @@ function renderRdv(elId, list, isUpcoming, now) {
     return;
   }
   el.innerHTML = list.map(function(a) {
-    var dt      = new Date(a.datetime);
-    var day     = dt.getDate();
-    var month   = dt.toLocaleDateString('fr-FR',{month:'short'});
-    var heure   = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
-    var isNow   = isUpcoming&&a.status==='pending'&&(now-dt)>=0&&(now-dt)<2*3600000;
-    var acCls   = isNow?'now':(a.status||'pending');
-    var stCls   = isNow?'st-now':({pending:'st-pending',done:'st-done',cancelled:'st-cancelled'}[a.status]||'st-pending');
-    var stTxt   = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
-    var prix    = a.price?Math.round(parseFloat(a.price))+'€':'';
-    var addr    = a.salon_address||'';
-    var bookUrl = a.user_id?'/client/book.html?salon='+a.user_id:'#';
-    return '<div class="rdv-item'+(isNow?' is-now':'')+'" onclick="window.location.href=\''+bookUrl+'\'">'
-      + '<div class="rdv-accent '+acCls+'"></div>'
-      + '<div class="rdv-body">'
-      + '<div class="rdv-date-block"><div class="rdv-day">'+day+'</div><div class="rdv-month">'+month+'</div></div>'
-      + '<div class="rdv-sep"></div>'
-      + '<div class="rdv-info">'
-      + '<div class="rdv-salon-name">'+(a.salon_name||'Salon')+'</div>'
-      + '<div class="rdv-service">'+(a.service||'—')+'</div>'
-      + '<div class="rdv-meta-row"><span>'+heure+'</span>'+(addr?'<span class="rdv-meta-dot"></span><span>'+addr+'</span>':'')+'</div>'
-      + '</div>'
-      + '<div class="rdv-right">'
-      + '<span class="rdv-status '+stCls+'">'+stTxt+'</span>'
-      + (prix?'<span class="rdv-price">'+prix+'</span>':'')
-      + '</div>'
-      + '</div></div>';
+    var dt    = new Date(a.datetime);
+    var isNow = isUpcoming&&a.status==='pending'&&(now-dt)>=0&&(now-dt)<2*3600000;
+    var ac    = isNow?'now':(a.status||'pending');
+    var bc    = isNow?'b-now':('b-'+(a.status||'pending'));
+    var bt    = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
+    var prix  = a.price?Math.round(parseFloat(a.price))+'€':'';
+    var heure = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
+    var book  = a.user_id?'/client/book.html?salon='+a.user_id:'#';
+    return '<div class="rdv-item'+(isNow?' is-now':'')+'" onclick="window.location.href=\''+book+'\'">'
+      +'<div class="rdv-accent '+ac+'"></div>'
+      +'<div class="rdv-body">'
+      +'<div class="rdv-date"><div class="rdv-day">'+dt.getDate()+'</div>'
+      +'<div class="rdv-month">'+dt.toLocaleDateString('fr-FR',{month:'short'})+'</div></div>'
+      +'<div class="rdv-sep"></div>'
+      +'<div class="rdv-info">'
+      +'<div class="rdv-salon">'+(a.salon_name||'Salon')+'</div>'
+      +'<div class="rdv-service">'+(a.service||'—')+'</div>'
+      +'<div class="rdv-time">'+heure+(a.salon_address?' · '+a.salon_address:'')+'</div>'
+      +'</div>'
+      +'<div class="rdv-right">'
+      +'<span class="badge '+bc+'">'+bt+'</span>'
+      +(prix?'<span class="rdv-price">'+prix+'</span>':'')
+      +'</div>'
+      +'</div></div>';
   }).join('');
 }
 
 // ── Créer salon ──
-function handleCreatorTab() { openCreator(); }
 function openCreator()  { var m=document.getElementById('creator-modal'); m.style.opacity='1'; m.style.pointerEvents='all'; }
 function closeCreator() { var m=document.getElementById('creator-modal'); m.style.opacity='0'; m.style.pointerEvents='none'; }
-document.getElementById('creator-modal').addEventListener('click', function(e){ if(e.target===this) closeCreator(); });
+document.getElementById('creator-modal').addEventListener('click',function(e){ if(e.target===this) closeCreator(); });
 
 function makeSlug(n){ return n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40); }
 
 async function createSalon() {
-  var salonName = document.getElementById('creator-name').value.trim();
-  var salonAddr = document.getElementById('creator-addr').value.trim();
-  if (!salonName) { showToast('Entrez le nom du salon','error'); return; }
+  var nm = document.getElementById('creator-name').value.trim();
+  var ad = document.getElementById('creator-addr').value.trim();
+  if (!nm) { showToast('Entrez le nom du salon','error'); return; }
   var btn = document.getElementById('btn-create');
   btn.disabled=true; btn.textContent='Création...';
-  await sb.auth.updateUser({ data:{ salon_name:salonName, role:'salon' } });
-  var uid = currentUser.id;
-  var base=makeSlug(salonName), slug=base, tries=0;
+  await sb.auth.updateUser({ data:{ salon_name:nm, role:'salon' } });
+  var uid=currentUser.id, base=makeSlug(nm), slug=base, tries=0;
   while(tries<10){ var c=await sb.from('salon_settings').select('user_id').eq('slug',slug).maybeSingle(); if(!c.data)break; tries++; slug=base+'-'+tries; }
-  await sb.from('salon_settings').upsert({ user_id:uid, slug, salon_name:salonName, salon_address:salonAddr||null },{ onConflict:'user_id' });
+  await sb.from('salon_settings').upsert({ user_id:uid, slug, salon_name:nm, salon_address:ad||null },{ onConflict:'user_id' });
   closeCreator();
   showToast('Salon créé ! Redirection...');
   setTimeout(function(){ window.location.href='/pages/dashboard.html'; }, 1500);
@@ -360,14 +448,10 @@ async function createSalon() {
   var isSalon = meta.role==='salon';
 
   document.getElementById('greeting-name').textContent = name;
-  document.getElementById('greeting-sub').textContent  = isSalon ? 'Vous avez aussi un espace salon' : 'Découvrez les salons disponibles';
+  document.getElementById('greeting-sub').textContent  = isSalon ? 'Vous avez aussi un espace coiffeur' : 'Découvrez les salons disponibles';
 
-  // Afficher le bon onglet selon le rôle
-  if (isSalon) {
-    document.getElementById('tab-dashboard').style.display = 'block';
-  } else {
-    document.getElementById('tab-creator').style.display = 'block';
-  }
+  if (isSalon) document.getElementById('tab-dashboard').style.display = 'inline-block';
+  else         document.getElementById('tab-creator').style.display   = 'inline-block';
 
   loadSalons();
   loadRdv(currentUser.email, meta.phone||'', meta.name||'');
