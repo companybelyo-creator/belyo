@@ -15,94 +15,103 @@
 
     /* APPBAR */
     .appbar{background:var(--ink);height:64px;position:sticky;top:0;z-index:60;}
-    .appbar-inner{height:100%;max-width:1100px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;}
-    .appbar-logo{font-family:var(--font-display);font-size:1.6rem;font-weight:600;color:var(--white);}
-    .appbar-back{display:flex;align-items:center;gap:6px;font-size:13px;color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;font-family:var(--font-body);transition:color .15s;}
+    .appbar-inner{height:100%;max-width:900px;margin:0 auto;padding:0 2rem;
+      display:flex;align-items:center;justify-content:space-between;}
+    .appbar-back{display:flex;align-items:center;gap:6px;font-size:13px;
+      color:rgba(255,255,255,.5);background:none;border:none;cursor:pointer;
+      font-family:var(--font-body);transition:color .15s;}
     .appbar-back:hover{color:var(--white);}
     .appbar-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+    .appbar-logo{font-family:var(--font-display);font-size:1.6rem;font-weight:600;color:var(--white);}
 
     /* GALERIE */
-    .gallery{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;height:360px;}
+    .gallery{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;height:340px;}
     .g-main{grid-row:1/3;overflow:hidden;background:var(--cream-dark);}
     .g-side{overflow:hidden;background:var(--cream-dark);}
     .g-main img,.g-side img{width:100%;height:100%;object-fit:cover;}
 
-    /* LAYOUT */
-    .layout{max-width:1100px;margin:0 auto;padding:2.5rem 2rem 120px;display:grid;grid-template-columns:1fr 320px;gap:2.5rem;align-items:start;}
+    /* PAGE */
+    .page{max-width:900px;margin:0 auto;padding:2.5rem 2rem 4rem;}
 
-    /* COLONNE GAUCHE */
-    .salon-name{font-family:var(--font-display);font-size:2.8rem;font-weight:300;line-height:1.1;margin-bottom:.8rem;}
+    /* EN-TÊTE */
+    .salon-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;margin-bottom:1.5rem;}
+    .salon-name{font-family:var(--font-display);font-size:2.6rem;font-weight:300;line-height:1.1;margin-bottom:.5rem;}
     .salon-name em{font-style:italic;color:var(--gold);}
-
-    /* Infos rapides */
-    .info-row{display:flex;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
-    .info-chip{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--ink-light);}
-    .info-chip svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;}
-    .info-chip strong{color:var(--ink);}
-    .stars{display:flex;gap:1px;}
-    .star{width:13px;height:13px;fill:var(--gold);}
+    .info-chips{display:flex;align-items:center;flex-wrap:wrap;gap:.8rem;}
+    .chip{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--ink-light);}
+    .chip svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+    .chip strong{color:var(--ink);}
+    .stars{display:flex;gap:1px;align-items:center;}
+    .star{width:12px;height:12px;fill:var(--gold);}
     .star.e{fill:var(--cream-dark);}
+    /* Bouton réserver */
+    .btn-reserve{padding:10px 24px;background:var(--gold);color:var(--ink);
+      border:none;border-radius:100px;font-family:var(--font-body);font-size:14px;
+      font-weight:500;cursor:pointer;text-decoration:none;display:inline-block;
+      transition:opacity .15s;white-space:nowrap;flex-shrink:0;}
+    .btn-reserve:hover{opacity:.85;}
 
-    /* Prestations */
-    .block-title{font-family:var(--font-display);font-size:1.4rem;font-weight:300;margin-bottom:1rem;}
+    /* DIVIDER */
+    .sep{height:1px;background:var(--border);margin:2rem 0;}
+
+    /* LAYOUT 2 COLONNES */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;}
+
+    /* BLOC TITRE */
+    .block-title{font-family:var(--font-display);font-size:1.3rem;font-weight:300;margin-bottom:1rem;}
     .block-title em{font-style:italic;color:var(--gold);}
-    .genre-tabs{display:flex;gap:4px;margin-bottom:1rem;}
-    .gtab{padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--ink-light);font-family:var(--font-body);transition:all .15s;}
-    .gtab.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
-    .prest-list{display:flex;flex-direction:column;gap:1px;margin-bottom:2rem;}
-    .prest-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:var(--radius-sm);transition:background .1s;cursor:pointer;}
-    .prest-row:hover{background:var(--white);}
-    .prest-left{display:flex;align-items:center;gap:10px;}
-    .prest-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;}
-    .prest-name{font-size:14px;}
-    .prest-dur{font-size:12px;color:var(--ink-light);margin-left:4px;}
-    .prest-prix{font-size:14px;font-weight:500;color:var(--ink);}
-    .prest-na{font-size:13px;color:var(--ink-light);}
 
-    /* Avis */
-    .reviews-bar{display:flex;align-items:center;gap:14px;padding:1rem 1.2rem;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;}
-    .score-big{font-family:var(--font-display);font-size:2.4rem;font-weight:300;line-height:1;}
-    .review-item{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:8px;}
-    .review-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+    /* GENRE TABS */
+    .genre-tabs{display:flex;gap:4px;margin-bottom:.8rem;}
+    .gtab{padding:5px 14px;border-radius:100px;border:1px solid var(--border);
+      font-size:13px;font-weight:500;cursor:pointer;background:transparent;
+      color:var(--ink-light);font-family:var(--font-body);transition:all .15s;}
+    .gtab.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+
+    /* PRESTATIONS */
+    .prest-list{display:flex;flex-direction:column;gap:1px;}
+    .prest-row{display:flex;align-items:center;justify-content:space-between;
+      padding:10px 12px;border-radius:var(--radius-sm);transition:background .1s;cursor:pointer;}
+    .prest-row:hover{background:var(--white);}
+    .prest-left{display:flex;align-items:center;gap:8px;}
+    .prest-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+    .prest-name{font-size:13.5px;}
+    .prest-dur{font-size:11px;color:var(--ink-light);margin-left:3px;}
+    .prest-prix{font-size:13.5px;font-weight:500;color:var(--ink);}
+    .prest-na{font-size:12px;color:var(--ink-light);}
+
+    /* AVIS */
+    .avis-score{display:flex;align-items:center;gap:12px;margin-bottom:1rem;}
+    .score-num{font-family:var(--font-display);font-size:2.2rem;font-weight:300;line-height:1;}
+    .review-item{background:var(--white);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px;}
+    .review-head{display:flex;justify-content:space-between;margin-bottom:3px;}
     .review-author{font-size:13px;font-weight:500;}
     .review-date{font-size:11px;color:var(--ink-light);}
-    .review-text{font-size:13px;color:var(--ink-light);line-height:1.5;margin-top:5px;}
+    .review-text{font-size:13px;color:var(--ink-light);line-height:1.5;margin-top:4px;}
 
-    /* STICKY CARD */
-    .sticky-wrap{position:sticky;top:84px;}
-    .sticky-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
-    .sticky-head{background:var(--ink);padding:1.4rem 1.6rem;}
-    .sticky-sname{font-family:var(--font-display);font-size:1.5rem;font-weight:300;color:var(--white);margin-bottom:.2rem;}
-    .sticky-sub{font-size:12px;color:rgba(255,255,255,.4);}
-    .sticky-body{padding:1.4rem 1.6rem;}
-    .sticky-info{display:flex;flex-direction:column;gap:10px;margin-bottom:1.4rem;}
-    .si-row{display:flex;align-items:center;gap:10px;}
-    .si-icon{width:30px;height:30px;border-radius:8px;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .si-icon svg{width:13px;height:13px;stroke:var(--ink-light);fill:none;stroke-width:2;stroke-linecap:round;}
-    .si-label{font-size:11px;color:var(--ink-light);}
-    .si-val{font-size:13px;font-weight:500;color:var(--ink);}
-    .btn-gold{display:block;width:100%;padding:14px;background:var(--gold);color:var(--ink);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .15s;}
-    .btn-gold:hover{opacity:.88;}
-
-    /* CTA MOBILE */
-    .cta-mob{display:none;position:fixed;bottom:0;left:0;right:0;padding:1rem 1.5rem;background:var(--white);border-top:1px solid var(--border);z-index:100;}
-    .cta-mob a{display:block;width:100%;padding:15px;background:var(--gold);color:var(--ink);border-radius:100px;font-family:var(--font-body);font-size:16px;font-weight:500;text-align:center;}
+    /* INFO SALON */
+    .info-block{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;margin-bottom:1rem;}
+    .info-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+    .info-row:last-child{border-bottom:none;padding-bottom:0;}
+    .info-icon{width:28px;height:28px;border-radius:7px;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .info-icon svg{width:13px;height:13px;stroke:var(--ink-light);fill:none;stroke-width:2;}
+    .info-label{font-size:11px;color:var(--ink-light);}
+    .info-val{font-size:13px;font-weight:500;color:var(--ink);}
 
     /* LOADER */
     .loader{text-align:center;padding:5rem;color:var(--ink-light);}
-    .spin{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
+    .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--border);
+      border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;
+      vertical-align:middle;margin-right:6px;}
     @keyframes spin{to{transform:rotate(360deg);}}
 
-    @media(max-width:800px){
-      .gallery{grid-template-columns:1fr 1fr;height:240px;}
-      .layout{grid-template-columns:1fr;padding-bottom:90px;}
-      .sticky-wrap{display:none;}
-      .cta-mob{display:block;}
-      .salon-name{font-size:2rem;}
-    }
-    @media(max-width:500px){
-      .gallery{grid-template-columns:1fr;height:200px;}
+    @media(max-width:700px){
+      .gallery{grid-template-columns:1fr;height:220px;}
       .g-side{display:none;}
+      .two-col{grid-template-columns:1fr;}
+      .salon-header{flex-direction:column;gap:.8rem;}
+      .salon-name{font-size:2rem;}
     }
   </style>
 </head>
@@ -128,51 +137,78 @@
 
 <div id="page-loader" class="loader"><span class="spin"></span>Chargement...</div>
 
-<div class="layout" id="page-layout" style="display:none">
+<div class="page" id="page-body" style="display:none">
 
-  <!-- GAUCHE -->
-  <div id="col-left"></div>
+  <!-- EN-TÊTE : nom + bouton -->
+  <div class="salon-header">
+    <div>
+      <div class="salon-name" id="salon-name-el"></div>
+      <div class="info-chips" id="info-chips-el"></div>
+    </div>
+    <a id="btn-reserve" href="#" class="btn-reserve">Réserver</a>
+  </div>
 
-  <!-- DROITE sticky -->
-  <div class="sticky-wrap" id="col-right"></div>
+  <div class="sep"></div>
 
-</div>
+  <!-- PRESTATIONS + AVIS CÔTE À CÔTE -->
+  <div class="two-col">
+    <!-- Prestations -->
+    <div>
+      <div class="block-title">Nos <em>prestations</em></div>
+      <div class="genre-tabs">
+        <button class="gtab active" id="gtab-homme" onclick="setGenre('homme')">Homme</button>
+        <button class="gtab" id="gtab-femme" onclick="setGenre('femme')">Femme</button>
+      </div>
+      <div id="prest-content"></div>
+    </div>
+    <!-- Avis -->
+    <div>
+      <div class="block-title"><em>Avis</em> clients</div>
+      <div class="avis-score">
+        <div class="score-num" id="score-num">4.8</div>
+        <div>
+          <div class="stars" id="score-stars"></div>
+          <div style="font-size:12px;color:var(--ink-light);margin-top:3px" id="score-count"></div>
+        </div>
+      </div>
+      <div id="reviews-list"></div>
+    </div>
+  </div>
 
-<div class="cta-mob" id="cta-mob" style="display:none">
-  <a id="cta-mob-link" href="#">Prendre un rendez-vous</a>
+  <div class="sep"></div>
+
+  <!-- INFOS + DESCRIPTION CÔTE À CÔTE -->
+  <div class="two-col">
+    <!-- À propos -->
+    <div>
+      <div class="block-title">À <em>propos</em></div>
+      <p style="font-size:14px;color:var(--ink-light);line-height:1.7;margin-bottom:.8rem" id="about-text"></p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="about-tags"></div>
+    </div>
+    <!-- Infos pratiques -->
+    <div>
+      <div class="block-title">Infos <em>pratiques</em></div>
+      <div class="info-block" id="info-block"></div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script>
 var FAKE_REVIEWS = [
-  {author:'Marie L.',  note:5, date:'Jan 2025', text:'Accueil chaleureux, coupe parfaite. Je recommande !'},
-  {author:'Thomas R.', note:5, date:'Mar 2025', text:'Excellent travail, résultat propre. Je reviens régulièrement.'},
-  {author:'Sophie M.', note:4, date:'Avr 2025', text:'Très bonne prestation, personnel aux petits soins.'},
+  {author:'Marie L.',  note:5, date:'Jan 2025', text:'Accueil chaleureux, coupe parfaite. Je recommande vivement ce salon !'},
+  {author:'Thomas R.', note:5, date:'Mar 2025', text:'Excellent travail, résultat vraiment propre. Je reviens régulièrement depuis 2 ans.'},
+  {author:'Sophie M.', note:4, date:'Avr 2025', text:'Très bonne prestation, personnel aux petits soins et à l\'écoute.'},
 ];
 var AVG = 4.8;
-var DEFAULT_P = {
-  homme:[{name:'Coupe',prix:20,duree:30},{name:'Coloration',prix:40,duree:60},{name:'Brushing',prix:15,duree:20}],
-  femme:[{name:'Coupe',prix:30,duree:45},{name:'Couleur',  prix:65,duree:90},{name:'Brushing',prix:25,duree:35}]
-};
-var salonPrests = {homme:[], femme:[]};
-var bookUrl = '#';
-var curGenre = 'homme';
-
-function starsHtml(n, s) {
-  var h=''; s=s||14;
-  for(var i=1;i<=5;i++)
-    h+='<svg class="star'+(i<=Math.round(n)?'':' e')+'" style="width:'+s+'px;height:'+s+'px" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
-  return h;
-}
-
-// Catalogue complet avec prix par défaut
 var CATALOGUE = {
   homme:{
     'Coupe':{prix:20,duree:30},'Dégradé':{prix:20,duree:30},'Barbe':{prix:10,duree:15},
     'Coupe + Barbe':{prix:28,duree:45},'Estompage':{prix:18,duree:25},'Soin':{prix:15,duree:20},
-    'Coloration':{prix:35,duree:60},'Rasage':{prix:15,duree:20},'Keratine':{prix:80,duree:120},
-    'Taille moustache':{prix:8,duree:10},'Permanente homme':{prix:50,duree:75}
+    'Coloration':{prix:35,duree:60},'Rasage':{prix:15,duree:20},'Taille moustache':{prix:8,duree:10},
+    'Permanente homme':{prix:50,duree:75},'Keratine':{prix:80,duree:120}
   },
   femme:{
     'Coupe':{prix:30,duree:45},'Brushing':{prix:25,duree:40},'Coloration':{prix:60,duree:90},
@@ -182,17 +218,32 @@ var CATALOGUE = {
     'Tresse':{prix:40,duree:60},'Coupe enfant':{prix:20,duree:30}
   }
 };
+var DEFAULT_P = {
+  homme:[{name:'Coupe',prix:20,duree:30},{name:'Coloration',prix:40,duree:60},{name:'Brushing',prix:15,duree:20}],
+  femme:[{name:'Coupe',prix:30,duree:45},{name:'Couleur',prix:65,duree:90},{name:'Brushing',prix:25,duree:35}]
+};
+var salonPrests = {homme:[], femme:[]};
+var bookUrl = '#';
+var curGenre = 'homme';
+
+function starsHtml(n, s) {
+  s = s||13; var h='';
+  for(var i=1;i<=5;i++)
+    h+='<svg class="star'+(i<=Math.round(n)?'':' e')+'" style="width:'+s+'px;height:'+s+'px" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  return h;
+}
 
 function buildPrests(genre, s, pd) {
   var names = (s.prestations&&s.prestations[genre])||[];
   if (!names.length) return DEFAULT_P[genre];
   return names.map(function(n){
-    // Priorité : prix_duree du salon → catalogue par défaut → 0
-    var fromSalon   = pd[genre]&&pd[genre][n];
-    var fromCatalogue = CATALOGUE[genre]&&CATALOGUE[genre][n];
-    var prix  = (fromSalon&&fromSalon.prix)  || (fromCatalogue&&fromCatalogue.prix)  || 0;
-    var duree = (fromSalon&&fromSalon.duree) || (fromCatalogue&&fromCatalogue.duree) || 0;
-    return {name:n, prix:prix, duree:duree};
+    var fromSalon = pd[genre]&&pd[genre][n];
+    var fromCat   = CATALOGUE[genre]&&CATALOGUE[genre][n];
+    return {
+      name:  n,
+      prix:  (fromSalon&&fromSalon.prix)  || (fromCat&&fromCat.prix)  || 0,
+      duree: (fromSalon&&fromSalon.duree) || (fromCat&&fromCat.duree) || 0
+    };
   });
 }
 
@@ -200,13 +251,13 @@ function renderPrests(genre) {
   var list = salonPrests[genre]||[];
   var h = '<div class="prest-list">';
   list.forEach(function(p){
-    var burl = bookUrl+'&service='+encodeURIComponent(p.name)+'&genre='+genre;
-    h += '<div class="prest-row" onclick="window.location.href=\''+burl+'\'">'
+    var url = bookUrl+'&service='+encodeURIComponent(p.name)+'&genre='+genre;
+    h += '<div class="prest-row" onclick="window.location.href=\''+url+'\'">'
       +'<div class="prest-left"><div class="prest-dot"></div>'
       +'<span class="prest-name">'+p.name+'</span>'
-      +(p.duree?'<span class="prest-dur">'+p.duree+' min</span>':'')
+      +(p.duree?'<span class="prest-dur">· '+p.duree+' min</span>':'')
       +'</div>'
-      +(p.prix?'<span class="prest-prix">'+p.prix+'€</span>':'<span class="prest-na">Sur devis</span>')
+      +(p.prix?'<span class="prest-prix">'+p.prix+' €</span>':'<span class="prest-na">Sur devis</span>')
       +'</div>';
   });
   h += '</div>';
@@ -222,7 +273,7 @@ function setGenre(g) {
 
 (async function(){
   var params = new URLSearchParams(window.location.search);
-  var sid    = params.get('salon'), slug = params.get('slug');
+  var sid = params.get('salon'), slug = params.get('slug');
   if (!sid&&!slug){ document.getElementById('page-loader').innerHTML='Salon introuvable.'; return; }
 
   var q = sb.from('salon_settings').select('user_id,salon_name,salon_address,prestations,prix_duree,slug');
@@ -239,75 +290,68 @@ function setGenre(g) {
 
   salonPrests.homme = buildPrests('homme', s, pd);
   salonPrests.femme = buildPrests('femme', s, pd);
-  var totalP  = salonPrests.homme.length + salonPrests.femme.length;
+
   var prices  = salonPrests.homme.concat(salonPrests.femme).map(function(p){return p.prix;}).filter(Boolean);
-  var minPrix = prices.length ? Math.min.apply(null,prices) : 0;
+  var minPrix = prices.length ? Math.min.apply(null, prices) : 0;
   var dist    = (Math.floor(Math.random()*25+2)/10).toFixed(1);
 
-  // ── Nom ──
+  // Nom
   var parts = name.trim().split(' ');
-  var n1=parts[0], n2=parts.slice(1).join(' ');
+  var n1 = parts[0], n2 = parts.slice(1).join(' ');
+  document.getElementById('salon-name-el').innerHTML = n2 ? n1+' <em>'+n2+'</em>' : '<em>'+n1+'</em>';
 
-  // ── COLONNE GAUCHE ──
-  var left = '';
-  left += '<div class="salon-name">'+(n2?n1+' <em>'+n2+'</em>':'<em>'+n1+'</em>')+'</div>';
+  // Chips infos
+  var chips = '';
+  if (addr) chips += '<div class="chip"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><strong>'+addr+'</strong></div>';
+  chips += '<div class="chip"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>'+dist+' km</div>';
+  chips += '<div class="chip"><div class="stars">'+starsHtml(AVG,12)+'</div>&nbsp;<strong>'+AVG+'</strong>&nbsp;<span style="color:var(--ink-light)">('+FAKE_REVIEWS.length+' avis)</span></div>';
+  if (minPrix) chips += '<div class="chip">À partir de <strong>'+minPrix+' €</strong></div>';
+  document.getElementById('info-chips-el').innerHTML = chips;
 
-  // Infos rapides
-  left += '<div class="info-row">';
-  if (addr) left += '<div class="info-chip"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg><strong>'+addr+'</strong></div>';
-  left += '<div class="info-chip"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>'+dist+' km</div>';
-  left += '<div class="info-chip"><div class="stars">'+starsHtml(AVG,13)+'</div>&nbsp;<strong>'+AVG+'</strong>&nbsp;('+FAKE_REVIEWS.length+' avis)</div>';
-  left += '<div class="info-chip"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>'+totalP+' prestations</div>';
-  left += '</div>';
+  // Bouton réserver
+  document.getElementById('btn-reserve').href = bookUrl;
 
   // Prestations
-  left += '<div class="block-title">Nos <em>prestations</em></div>';
-  left += '<div class="genre-tabs"><button class="gtab active" id="gtab-homme" onclick="setGenre(\'homme\')">Homme</button><button class="gtab" id="gtab-femme" onclick="setGenre(\'femme\')">Femme</button></div>';
-  left += '<div id="prest-content"></div>';
-
-  // Séparateur
-  left += '<div style="height:1px;background:var(--border);margin:2rem 0"></div>';
-
-  // Avis
-  left += '<div class="block-title"><em>Avis</em> clients</div>';
-  left += '<div class="reviews-bar">'
-    +'<div class="score-big">'+AVG+'</div>'
-    +'<div><div class="stars" style="margin-bottom:4px">'+starsHtml(AVG,15)+'</div>'
-    +'<div style="font-size:13px;font-weight:500">'+FAKE_REVIEWS.length+' avis vérifiés</div></div>'
-    +'</div>';
-  FAKE_REVIEWS.forEach(function(r){
-    left += '<div class="review-item">'
-      +'<div class="review-head"><span class="review-author">'+r.author+'</span><span class="review-date">'+r.date+'</span></div>'
-      +'<div class="stars">'+starsHtml(r.note,12)+'</div>'
-      +'<div class="review-text">'+r.text+'</div>'
-      +'</div>';
-  });
-
-  document.getElementById('col-left').innerHTML = left;
   renderPrests('homme');
 
-  // ── COLONNE DROITE ──
-  var right = '<div class="sticky-card">'
-    +'<div class="sticky-head"><div class="sticky-sname">'+name+'</div>'
-    +(addr?'<div class="sticky-sub">'+addr+'</div>':'<div class="sticky-sub">Salon de coiffure · Belyo</div>')
-    +'</div>'
-    +'<div class="sticky-body">'
-    +'<div class="sticky-info">'
-    +'<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div><div><div class="si-label">Distance estimée</div><div class="si-val">'+dist+' km</div></div></div>'
-    +'<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div><div class="si-label">Note</div><div class="si-val" style="display:flex;align-items:center;gap:4px">'+AVG+' <span class="stars">'+starsHtml(AVG,11)+'</span></div></div></div>'
-    +(minPrix?'<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="si-label">À partir de</div><div class="si-val">'+minPrix+' €</div></div></div>':'')
-    +'</div>'
-    +'<a href="'+bookUrl+'" class="btn-gold">Prendre un rendez-vous</a>'
-    +'</div></div>';
+  // Avis
+  document.getElementById('score-stars').innerHTML = starsHtml(AVG, 14);
+  document.getElementById('score-count').textContent = FAKE_REVIEWS.length+' avis vérifiés';
+  document.getElementById('reviews-list').innerHTML = FAKE_REVIEWS.map(function(r){
+    return '<div class="review-item">'
+      +'<div class="review-head"><span class="review-author">'+r.author+'</span><span class="review-date">'+r.date+'</span></div>'
+      +'<div class="stars">'+starsHtml(r.note,11)+'</div>'
+      +'<div class="review-text">'+r.text+'</div>'
+      +'</div>';
+  }).join('');
 
-  document.getElementById('col-right').innerHTML = right;
+  // À propos
+  var aboutTexts = [
+    'Salon moderne au cœur de Nantes, '+name+' vous accueille dans un cadre chaleureux et élégant. Notre équipe de coiffeurs passionnés est à votre écoute pour sublimer votre style.',
+    'Fort de plusieurs années d\'expérience, nous proposons des prestations haut de gamme pour hommes et femmes, avec des produits de qualité sélectionnés avec soin.',
+  ];
+  document.getElementById('about-text').textContent = aboutTexts[0];
+  var tags = ['Coloration végétale','Produits bio','Parking à proximité','Réservation en ligne','Équipe expérimentée'];
+  document.getElementById('about-tags').innerHTML = tags.map(function(t){
+    return '<span style="font-size:11px;padding:3px 10px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border)">'+t+'</span>';
+  }).join('');
 
-  // CTA mobile
-  document.getElementById('cta-mob-link').href = bookUrl;
-  document.getElementById('cta-mob').style.display = 'block';
+  // Infos pratiques
+  var infos = [
+    {icon:'<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>', label:'Adresse', val: addr||'Nantes, France'},
+    {icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>', label:'Horaires', val:'Mar–Sam · 9h–19h'},
+    {icon:'<svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.7 11.79a19.79 19.79 0 01-3.07-8.67A2 2 0 012.61 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 8.6a16 16 0 006.29 6.29l.97-.97a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>', label:'Téléphone', val:'Demander à la réservation'},
+    {icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></svg>', label:'À partir de', val: minPrix ? minPrix+' €' : 'Voir les prestations'},
+  ];
+  document.getElementById('info-block').innerHTML = infos.map(function(i){
+    return '<div class="info-row">'
+      +'<div class="info-icon">'+i.icon+'</div>'
+      +'<div><div class="info-label">'+i.label+'</div><div class="info-val">'+i.val+'</div></div>'
+      +'</div>';
+  }).join('');
 
   document.getElementById('page-loader').style.display = 'none';
-  document.getElementById('page-layout').style.display = 'grid';
+  document.getElementById('page-body').style.display   = 'block';
 })();
 </script>
 </body>
