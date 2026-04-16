@@ -126,7 +126,7 @@
     <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
     Retour
   </button>
-  <a href="/client.html" class="header-logo">Belyo</a>
+  <a href="/client/home.html" class="header-logo">Belyo</a>
 </div>
 
 <div class="gallery">
@@ -147,7 +147,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+<script src="../js/supabase.js"></script>
 <script>
 var FAKE_REVIEWS = [
   { author:'Marie L.', note:5, date:'Janvier 2025', text:'Accueil chaleureux, coupe parfaite. Je recommande vivement !' },
@@ -248,8 +248,11 @@ function setGenreTab(genre) {
     left += '<div class="salon-addr"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>'+addr+'</div>';
   }
 
-  // Avis
-  left += '<div class="reviews-bar">'
+  // Saut avant prestations
+  left += '<div style="height:1.5rem"></div>';
+
+  // Prestations AVANT les avis
+
     + '<div class="reviews-score">'+AVG_NOTE+'</div>'
     + '<div>'
     + '<div class="reviews-stars">'+starsSvg(AVG_NOTE, false)+'</div>'
@@ -268,15 +271,33 @@ function setGenreTab(genre) {
   });
   left += '</div>';
 
-  left += '<div class="section-sep"></div>';
-
-  // Prestations
+  // Prestations TITLE
   left += '<div class="section-head"><div class="section-title">Nos <em>prestations</em></div><span class="section-badge">'+totalP+' services</span></div>';
   left += '<div class="genre-tabs">'
     + '<button class="genre-tab active" id="tab-homme" onclick="setGenreTab(\'homme\')">Homme</button>'
     + '<button class="genre-tab" id="tab-femme" onclick="setGenreTab(\'femme\')">Femme</button>'
     + '</div>';
   left += '<div id="prest-content"></div>';
+
+  // Avis EN BAS
+  left += '<div class="section-sep"></div>';
+  left += '<div class="section-head"><div class="section-title">Avis <em>clients</em></div></div>';
+  left += '<div class="reviews-bar">'
+    + '<div class="reviews-score">'+AVG_NOTE+'</div>'
+    + '<div>'
+    + '<div class="reviews-stars">'+starsSvg(AVG_NOTE, false)+'</div>'
+    + '<div class="reviews-info" style="margin-top:3px"><div class="reviews-count">'+FAKE_REVIEWS.length+' avis</div><div class="reviews-sub">Clients vérifiés</div></div>'
+    + '</div>'
+    + '</div>';
+  left += '<div class="review-list">';
+  FAKE_REVIEWS.forEach(function(r) {
+    left += '<div class="review-item">'
+      + '<div class="review-head"><span class="review-author">'+r.author+'</span><span class="review-date">'+r.date+'</span></div>'
+      + '<div class="review-stars">'+starsSvg(r.note, true)+'</div>'
+      + '<div class="review-text">'+r.text+'</div>'
+      + '</div>';
+  });
+  left += '</div>';
 
   document.getElementById('col-left').innerHTML = left;
   renderPrests('homme');

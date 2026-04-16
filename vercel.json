@@ -45,6 +45,46 @@
       "dest": "/salon-detail.html"
     },
     {
+      "src": "/client/login",
+      "dest": "/client/login.html"
+    },
+    {
+      "src": "/client/login.html",
+      "dest": "/client/login.html"
+    },
+    {
+      "src": "/client/home",
+      "dest": "/client/home.html"
+    },
+    {
+      "src": "/client/home.html",
+      "dest": "/client/home.html"
+    },
+    {
+      "src": "/client/book",
+      "dest": "/client/book.html"
+    },
+    {
+      "src": "/client/book.html",
+      "dest": "/client/book.html"
+    },
+    {
+      "src": "/client/salon-detail",
+      "dest": "/client/salon-detail.html"
+    },
+    {
+      "src": "/client/salon-detail.html",
+      "dest": "/client/salon-detail.html"
+    },
+    {
+      "src": "/client/slug",
+      "dest": "/client/slug.html"
+    },
+    {
+      "src": "/client/slug.html",
+      "dest": "/client/slug.html"
+    },
+    {
       "src": "/([a-z0-9-]+)",
       "dest": "/slug.html?slug=$1"
     },

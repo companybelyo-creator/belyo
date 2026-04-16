@@ -103,7 +103,7 @@
 <body>
 
 <div class="bk-header">
-  <a href="/client.html" class="bk-back">&#8592; Accueil</a>
+  <a href="/client/home.html" class="bk-back">&#8592; Accueil</a>
   <div class="bk-belyo">Belyo</div>
   <div class="bk-salon-name" id="salon-name">Chargement<em>...</em></div>
   <div class="bk-tagline">Réservez votre rendez-vous en ligne</div>
@@ -122,7 +122,7 @@
     <div style="font-size:2rem;margin-bottom:1rem">&#9888;</div>
     <h2 style="font-size:1.1rem;margin-bottom:.5rem">Salon introuvable</h2>
     <p style="color:var(--ink-light);font-size:14px">Vérifiez le lien fourni par votre salon.</p>
-    <a href="/client.html" style="display:inline-block;margin-top:1.5rem;background:var(--ink);color:var(--white);padding:10px 24px;border-radius:100px;font-size:13px">Retour</a>
+    <a href="/client/home.html" style="display:inline-block;margin-top:1.5rem;background:var(--ink);color:var(--white);padding:10px 24px;border-radius:100px;font-size:13px">Retour</a>
   </div>
 
   <div id="booking-flow" style="display:none">
@@ -214,7 +214,7 @@
       <div class="recap-row"><span class="recap-label">Prix estimé</span><span class="recap-price" id="success-prix">—</span></div>
     </div>
     <button class="btn-next" style="max-width:260px;margin:2rem auto 0" onclick="location.reload()">Prendre un autre RDV</button>
-    <p style="margin-top:1rem;font-size:13px;color:var(--ink-light)"><a href="client.html" style="color:var(--gold)">Voir mes RDV dans mon espace client</a></p>
+    <p style="margin-top:1rem;font-size:13px;color:var(--ink-light)"><a href="/client/home.html" style="color:var(--gold)">Voir mes RDV dans mon espace client</a></p>
   </div>
 
   <div class="powered">Réservation propulsée par <a href="index.html">Belyo</a></div>
@@ -222,7 +222,7 @@
 
 <div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
+<script src="../js/supabase.js"></script>
 <script>
 var salonId=null,salonNameStr='',prestations={homme:[],femme:[]},prixDuree={homme:{},femme:{}};
 var bookGenre='homme',selectedService=null,selectedDate=null,selectedSlot=null;

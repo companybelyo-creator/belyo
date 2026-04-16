@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mon espace — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;--gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;--border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;--font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
+    a{text-decoration:none;color:inherit;}
+
+    /* ── APP BAR ── */
+    .appbar{background:var(--ink);position:sticky;top:0;z-index:60;}
+    .appbar-top{padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
+    .appbar-logo{font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--white);}
+    .appbar-actions{display:flex;align-items:center;gap:8px;}
+    .appbar-btn{font-size:12px;padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);background:transparent;cursor:pointer;font-family:var(--font-body);transition:all .15s;text-decoration:none;display:inline-block;}
+    .appbar-btn:hover{background:rgba(255,255,255,.1);color:var(--white);}
+    .appbar-btn.gold{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:500;}
+    .appbar-btn.gold:hover{opacity:.9;}
+
+    /* TABS */
+    .appbar-tabs{display:flex;border-top:1px solid rgba(255,255,255,.08);}
+    .appbar-tab{flex:1;padding:.7rem 1rem;text-align:center;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font-body);}
+    .appbar-tab.active{color:var(--white);border-bottom-color:var(--gold);}
+    .appbar-tab:hover:not(.active){color:rgba(255,255,255,.7);}
+
+    /* CONTENU */
+    .page-content{max-width:680px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
+
+    /* SALUTATION */
+    .greeting{margin-bottom:1.5rem;}
+    .greeting-name{font-family:var(--font-display);font-size:1.8rem;font-weight:300;}
+    .greeting-name em{font-style:italic;color:var(--gold);}
+    .greeting-sub{font-size:13px;color:var(--ink-light);margin-top:2px;}
+
+    /* SECTIONS */
+    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1rem;overflow:hidden;}
+    .section-head{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.4rem;border-bottom:1px solid var(--border);}
+    .section-title{font-size:13px;font-weight:500;}
+    .section-count{font-size:12px;color:var(--ink-light);}
+    .section-body{padding:0 1.4rem;}
+    .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--ink-light);font-size:14px;}
+    .empty-icon{width:36px;height:36px;margin:0 auto .7rem;opacity:.25;}
+
+    /* RDV */
+    .rdv-item{display:flex;align-items:stretch;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+    .rdv-item:last-child{border-bottom:none;}
+    .rdv-item:hover{background:var(--cream);}
+    .rdv-item.is-now{background:rgba(196,168,122,.07);}
+    .rdv-accent{width:3px;flex-shrink:0;}
+    .rdv-accent.now{background:var(--gold);}
+    .rdv-accent.pending{background:#FAEEDA;}
+    .rdv-accent.done{background:#E1F5EE;}
+    .rdv-accent.cancelled{background:#FAECE7;}
+    .rdv-body{display:flex;align-items:center;gap:14px;padding:13px 16px;flex:1;min-width:0;}
+    .rdv-date-block{text-align:center;min-width:42px;flex-shrink:0;}
+    .rdv-day{font-family:var(--font-display);font-size:1.4rem;font-weight:600;line-height:1;}
+    .rdv-month{font-size:10px;color:var(--ink-light);text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
+    .rdv-sep{width:1px;background:var(--border);align-self:stretch;margin:3px 0;flex-shrink:0;}
+    .rdv-info{flex:1;min-width:0;padding-left:12px;}
+    .rdv-salon-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .rdv-service{font-size:12px;color:var(--ink-light);margin-top:1px;}
+    .rdv-meta-row{font-size:11px;color:var(--ink-light);margin-top:2px;display:flex;gap:5px;align-items:center;}
+    .rdv-meta-dot{width:2px;height:2px;border-radius:50%;background:var(--border);}
+    .rdv-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+    .rdv-status{font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;white-space:nowrap;}
+    .st-pending{background:#FAEEDA;color:#854F0B;}
+    .st-done{background:#E1F5EE;color:#0F6E56;}
+    .st-cancelled{background:#FAECE7;color:#993C1D;}
+    .st-now{background:var(--gold-light);color:#7A5A2A;}
+    .rdv-price{font-size:12px;font-weight:500;color:var(--ink);}
+
+    /* SALONS */
+    .salons-list{display:flex;flex-direction:column;gap:0;}
+    .salon-row{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
+    .salon-row:last-child{border-bottom:none;}
+    .salon-row:hover{background:var(--cream);}
+    .salon-thumb{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--cream-dark);}
+    .salon-row-info{flex:1;min-width:0;}
+    .salon-row-name{font-size:13px;font-weight:500;margin-bottom:2px;}
+    .salon-row-addr{font-size:12px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .salon-row-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
+    .salon-tag{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border);}
+
+    /* SEARCH */
+    .search-wrap{position:relative;margin-bottom:1rem;}
+    .search-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--ink-light);}
+    .search-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+    .search-input{width:100%;padding:11px 13px 11px 38px;border:1.5px solid var(--border);border-radius:100px;font-family:var(--font-body);font-size:14px;background:var(--white);color:var(--ink);outline:none;transition:border-color .15s;}
+    .search-input:focus{border-color:var(--gold);}
+    .search-input::placeholder{color:var(--ink-light);}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap;}
+    .toast.show{opacity:1;}
+  </style>
+</head>
+<body>
+
+<!-- APP BAR -->
+<div class="appbar">
+  <div class="appbar-top">
+    <div class="appbar-logo">Belyo</div>
+    <div class="appbar-actions">
+      <span id="appbar-creator-btn"></span>
+      <button class="appbar-btn" onclick="doLogout()">Déconnexion</button>
+    </div>
+  </div>
+  <div class="appbar-tabs">
+    <button class="appbar-tab active" id="tab-salons"  onclick="switchTab('salons')">Salons</button>
+    <button class="appbar-tab"        id="tab-rdv"     onclick="switchTab('rdv')">Mes RDV</button>
+  </div>
+</div>
+
+<!-- CONTENU -->
+<div class="page-content">
+
+  <!-- VUE SALONS -->
+  <div id="view-salons">
+    <div class="greeting">
+      <div class="greeting-name">Bonjour, <em id="greeting-name">—</em></div>
+      <div class="greeting-sub" id="greeting-sub">Découvrez les salons disponibles</div>
+    </div>
+
+    <div class="search-wrap">
+      <div class="search-icon">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <input type="text" class="search-input" id="search-salons" placeholder="Rechercher un salon..." oninput="onSearch()" />
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Salons Belyo</span>
+        <span class="section-count" id="salons-count"></span>
+      </div>
+      <div id="salons-list">
+        <div class="empty-state">Chargement...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VUE RDV -->
+  <div id="view-rdv" style="display:none">
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Rendez-vous à venir</span>
+        <span class="section-count" id="upcoming-count"></span>
+      </div>
+      <div class="section-body">
+        <div id="upcoming-rdv">
+          <div class="empty-state">Chargement...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-head">
+        <span class="section-title">Historique</span>
+        <span class="section-count" id="past-count"></span>
+      </div>
+      <div class="section-body">
+        <div id="past-rdv">
+          <div class="empty-state">Chargement...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL créer salon -->
+<div id="creator-modal" style="position:fixed;inset:0;background:rgba(26,23,20,.55);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:opacity .2s">
+  <div style="background:var(--white);border-radius:var(--radius);padding:2rem;max-width:420px;width:100%;position:relative">
+    <button onclick="closeCreator()" style="position:absolute;top:.8rem;right:1rem;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-light)">×</button>
+    <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:300;margin-bottom:.3rem">Créer <em style="font-style:italic;color:var(--gold)">mon salon</em></div>
+    <div style="font-size:13px;color:var(--ink-light);margin-bottom:1.5rem;line-height:1.5">Vous rejoignez Belyo en tant que professionnel.</div>
+    <div style="margin-bottom:.85rem">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:4px">Nom du salon *</label>
+      <input type="text" id="creator-name" placeholder="Ex : Salon Moisan" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none" />
+    </div>
+    <div style="margin-bottom:.85rem">
+      <label style="display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:4px">Adresse</label>
+      <input type="text" id="creator-addr" placeholder="12 rue de la Paix, Nantes" style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;background:var(--cream);color:var(--ink);outline:none" />
+    </div>
+    <button id="btn-create" onclick="createSalon()" style="width:100%;padding:13px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;margin-top:.3rem">Créer mon salon</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script>
+var currentUser   = null;
+var allSalons     = [];
+var DEFAULT_PHOTO = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=120&h=120&fit=crop&q=80';
+var DEFAULT_TAGS  = ['Coupe', 'Couleur', 'Brushing'];
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type==='error' ? '#993C1D' : '#1A1714';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 3500);
+}
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.getElementById('tab-salons').classList.toggle('active', tab==='salons');
+  document.getElementById('tab-rdv').classList.toggle('active', tab==='rdv');
+  document.getElementById('view-salons').style.display = tab==='salons' ? 'block' : 'none';
+  document.getElementById('view-rdv').style.display    = tab==='rdv'    ? 'block' : 'none';
+}
+
+// ── Logout ──
+async function doLogout() {
+  await sb.auth.signOut();
+  window.location.href = '/client/login.html';
+}
+
+// ── Salons ──
+function onSearch() {
+  var q = document.getElementById('search-salons').value.toLowerCase().trim();
+  var filtered = q ? allSalons.filter(function(s){
+    return (s.salon_name||'').toLowerCase().includes(q)||(s.salon_address||'').toLowerCase().includes(q);
+  }) : allSalons;
+  renderSalons(filtered);
+}
+
+async function loadSalons() {
+  var res = await sb.from('salon_settings')
+    .select('user_id, salon_name, salon_address, prestations, prix_duree')
+    .not('salon_name','is',null).limit(30);
+  allSalons = (res.data||[]).filter(function(s){ return s.salon_name&&s.salon_name.trim(); });
+  var sc = document.getElementById('salons-count');
+  if (sc) sc.textContent = allSalons.length + ' salon' + (allSalons.length>1?'s':'');
+  renderSalons(allSalons);
+}
+
+function renderSalons(list) {
+  var el = document.getElementById('salons-list');
+  if (!list||list.length===0) {
+    el.innerHTML = '<div class="empty-state">Aucun salon disponible</div>';
+    return;
+  }
+  var html = '<div class="salons-list">';
+  list.forEach(function(s) {
+    var name   = s.salon_name||'Salon';
+    var addr   = s.salon_address||'';
+    var prestH = (s.prestations&&s.prestations.homme)||[];
+    var prestF = (s.prestations&&s.prestations.femme)||[];
+    var tags   = prestH.slice(0,2).concat(prestF.slice(0,2));
+    if (!tags.length) tags = DEFAULT_TAGS;
+    var tagsHtml = tags.map(function(t){ return '<span class="salon-tag">'+t+'</span>'; }).join('');
+    var url = '/client/salon-detail.html?salon='+s.user_id;
+    html += '<div class="salon-row" onclick="window.location.href=\''+url+'\'">'
+      + '<img class="salon-thumb" src="'+DEFAULT_PHOTO+'" alt="'+name+'" loading="lazy">'
+      + '<div class="salon-row-info">'
+      + '<div class="salon-row-name">'+name+'</div>'
+      + (addr?'<div class="salon-row-addr">'+addr+'</div>':'')
+      + '<div class="salon-row-tags">'+tagsHtml+'</div>'
+      + '</div>'
+      + '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ── RDV ──
+async function loadRdv(email, phone, name) {
+  var now = new Date();
+  var data = [];
+  try {
+    var res = await sb.rpc('get_client_appointments', { p_email:email, p_name:name||'' });
+    if (!res.error) data = res.data||[];
+  } catch(e) {}
+
+  var nowStr   = now.toISOString();
+  var enCours  = data.filter(function(a){ var dt=new Date(a.datetime); return a.status==='pending'&&dt<=now&&(now-dt)<2*3600000; });
+  var aVenir   = data.filter(function(a){ var dt=new Date(a.datetime); return a.status==='pending'&&dt>now; });
+  aVenir.sort(function(a,b){ return new Date(a.datetime)-new Date(b.datetime); });
+  var upcoming = enCours.concat(aVenir);
+  var past     = data.filter(function(a){ var dt=new Date(a.datetime); return a.status!=='pending'||(dt<now&&(now-dt)>=2*3600000); })
+                     .sort(function(a,b){ return new Date(b.datetime)-new Date(a.datetime); }).slice(0,15);
+
+  var uc=document.getElementById('upcoming-count'), pc=document.getElementById('past-count');
+  if (uc) uc.textContent = upcoming.length?upcoming.length+' RDV':'';
+  if (pc) pc.textContent = past.length?past.length+' RDV':'';
+  renderRdv('upcoming-rdv', upcoming, true, now);
+  renderRdv('past-rdv', past, false, now);
+}
+
+function renderRdv(elId, list, isUpcoming, now) {
+  var el = document.getElementById(elId);
+  if (!list||!list.length) {
+    el.innerHTML = '<div class="empty-state">'+(isUpcoming?'Aucun rendez-vous à venir':'Aucun historique')+'</div>';
+    return;
+  }
+  el.innerHTML = list.map(function(a) {
+    var dt      = new Date(a.datetime);
+    var day     = dt.getDate();
+    var month   = dt.toLocaleDateString('fr-FR',{month:'short'});
+    var heure   = String(dt.getHours()).padStart(2,'0')+'h'+String(dt.getMinutes()).padStart(2,'0');
+    var isNow   = isUpcoming&&a.status==='pending'&&(now-dt)>=0&&(now-dt)<2*3600000;
+    var acCls   = isNow?'now':(a.status||'pending');
+    var stCls   = isNow?'st-now':({pending:'st-pending',done:'st-done',cancelled:'st-cancelled'}[a.status]||'st-pending');
+    var stTxt   = isNow?'En cours':({pending:'À venir',done:'Terminé',cancelled:'Annulé'}[a.status]||'');
+    var prix    = a.price?Math.round(parseFloat(a.price))+'€':'';
+    var addr    = a.salon_address||'';
+    var bookUrl = a.user_id?'/client/book.html?salon='+a.user_id:'#';
+    return '<div class="rdv-item'+(isNow?' is-now':'')+'" onclick="window.location.href=\''+bookUrl+'\'">'
+      + '<div class="rdv-accent '+acCls+'"></div>'
+      + '<div class="rdv-body">'
+      + '<div class="rdv-date-block"><div class="rdv-day">'+day+'</div><div class="rdv-month">'+month+'</div></div>'
+      + '<div class="rdv-sep"></div>'
+      + '<div class="rdv-info">'
+      + '<div class="rdv-salon-name">'+(a.salon_name||'Salon')+'</div>'
+      + '<div class="rdv-service">'+(a.service||'—')+'</div>'
+      + '<div class="rdv-meta-row"><span>'+heure+'</span>'+(addr?'<span class="rdv-meta-dot"></span><span>'+addr+'</span>':'')+'</div>'
+      + '</div>'
+      + '<div class="rdv-right">'
+      + '<span class="rdv-status '+stCls+'">'+stTxt+'</span>'
+      + (prix?'<span class="rdv-price">'+prix+'</span>':'')
+      + '</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+// ── Créer salon ──
+function openCreator()  { var m=document.getElementById('creator-modal'); m.style.opacity='1'; m.style.pointerEvents='all'; }
+function closeCreator() { var m=document.getElementById('creator-modal'); m.style.opacity='0'; m.style.pointerEvents='none'; }
+document.getElementById('creator-modal').addEventListener('click', function(e){ if(e.target===this) closeCreator(); });
+
+function makeSlug(n){ return n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40); }
+
+async function createSalon() {
+  var salonName = document.getElementById('creator-name').value.trim();
+  var salonAddr = document.getElementById('creator-addr').value.trim();
+  if (!salonName) { showToast('Entrez le nom du salon','error'); return; }
+  var btn = document.getElementById('btn-create');
+  btn.disabled=true; btn.textContent='Création...';
+  await sb.auth.updateUser({ data:{ salon_name:salonName, role:'salon' } });
+  var uid = currentUser.id;
+  var base=makeSlug(salonName), slug=base, tries=0;
+  while(tries<10){ var c=await sb.from('salon_settings').select('user_id').eq('slug',slug).maybeSingle(); if(!c.data)break; tries++; slug=base+'-'+tries; }
+  await sb.from('salon_settings').upsert({ user_id:uid, slug, salon_name:salonName, salon_address:salonAddr||null },{ onConflict:'user_id' });
+  closeCreator();
+  showToast('Salon créé ! Redirection...');
+  setTimeout(function(){ window.location.href='/pages/dashboard.html'; }, 1500);
+}
+
+// ── Init ──
+(async function(){
+  var session = await sb.auth.getSession();
+  if (!session.data||!session.data.session) { window.location.href='/client/login.html'; return; }
+  currentUser = session.data.session.user;
+  var meta    = currentUser.user_metadata||{};
+  var name    = (meta.name||meta.first_name||currentUser.email.split('@')[0]).split(' ')[0];
+  var isSalon = meta.role==='salon';
+
+  document.getElementById('greeting-name').textContent = name;
+  document.getElementById('greeting-sub').textContent  = isSalon ? 'Vous avez aussi un espace salon' : 'Découvrez les salons disponibles';
+
+  // Bouton créer salon ou aller au dashboard
+  var creatorEl = document.getElementById('appbar-creator-btn');
+  if (isSalon) {
+    creatorEl.innerHTML = '<a href="/pages/dashboard.html" class="appbar-btn gold">Mon salon →</a>';
+  } else {
+    creatorEl.innerHTML = '<button class="appbar-btn" onclick="openCreator()">Créer mon salon</button>';
+  }
+
+  loadSalons();
+  loadRdv(currentUser.email, meta.phone||'', meta.name||'');
+})();
+</script>
+</body>
+</html>
