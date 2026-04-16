@@ -8,137 +8,114 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
-    :root{
-      --cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;
-      --gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;
-      --border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;
-      --font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;
-    }
+    :root{--cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;--gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;--border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;--font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
-    a{text-decoration:none;color:inherit;}
-    img{display:block;}
+    a{text-decoration:none;color:inherit;} img{display:block;}
 
-    /* ── HEADER ── */
-    .header{
-      padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
-      background:var(--white);border-bottom:1px solid var(--border);
-      position:sticky;top:0;z-index:60;
-    }
-    .btn-back{
-      display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);
-      background:none;border:none;cursor:pointer;font-family:var(--font-body);padding:0;
-    }
-    .btn-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+    /* HEADER */
+    .header{padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:60;}
+    .btn-back{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);background:none;border:none;cursor:pointer;font-family:var(--font-body);padding:0;transition:color .15s;}
     .btn-back:hover{color:var(--ink);}
+    .btn-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
     .header-logo{font-family:var(--font-display);font-size:1.4rem;font-weight:600;}
 
-    /* ── GALERIE ── */
-    .gallery{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:220px 140px;gap:4px;height:360px;}
-    .gallery-main{grid-row:1/3;overflow:hidden;background:var(--cream-dark);}
-    .gallery-main img{width:100%;height:100%;object-fit:cover;}
-    .gallery-side{overflow:hidden;background:var(--cream-dark);position:relative;}
-    .gallery-side img{width:100%;height:100%;object-fit:cover;}
-    .gallery-side:last-child::after{
-      content:'Voir plus';position:absolute;inset:0;
-      background:rgba(26,23,20,.45);display:flex;align-items:center;justify-content:center;
-      font-size:12px;font-weight:500;color:white;letter-spacing:.03em;
-    }
+    /* GALERIE */
+    .gallery{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:3px;height:360px;background:var(--ink);}
+    .g-main{grid-row:1/3;overflow:hidden;}
+    .g-main img,.g-side img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
+    .g-main:hover img,.g-side:hover img{transform:scale(1.03);}
+    .g-side{overflow:hidden;position:relative;}
 
-    /* ── LAYOUT PRINCIPAL ── */
-    .page-body{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 140px;display:grid;grid-template-columns:1fr 360px;gap:2rem;align-items:start;}
+    /* LAYOUT */
+    .page-layout{max-width:1040px;margin:0 auto;padding:2rem 1.5rem 140px;display:grid;grid-template-columns:1fr 340px;gap:2.5rem;align-items:start;}
 
-    /* ── COLONNE GAUCHE ── */
-    .col-left{}
-    .salon-name{font-family:var(--font-display);font-size:2.6rem;font-weight:300;line-height:1.1;margin-bottom:.5rem;}
+    /* COLONNE GAUCHE */
+    .salon-name{font-family:var(--font-display);font-size:2.8rem;font-weight:300;line-height:1.1;margin-bottom:.6rem;}
     .salon-name em{font-style:italic;color:var(--gold);}
-    .meta-list{display:flex;flex-direction:column;gap:8px;margin-bottom:1.8rem;}
-    .meta-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-light);}
-    .meta-row svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0;opacity:.7;}
-    .meta-row strong{color:var(--ink);font-weight:500;}
+    .salon-addr{font-size:14px;color:var(--ink-light);display:flex;align-items:center;gap:7px;margin-bottom:2rem;}
+    .salon-addr svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+
+    /* Avis */
+    .reviews-bar{display:flex;align-items:center;gap:12px;padding:1rem 1.4rem;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.5rem;}
+    .reviews-score{font-family:var(--font-display);font-size:2.4rem;font-weight:300;color:var(--ink);line-height:1;}
+    .reviews-stars{display:flex;gap:2px;}
+    .star{width:16px;height:16px;fill:var(--gold);}
+    .star.empty{fill:var(--cream-dark);stroke:var(--border);stroke-width:1;}
+    .reviews-info{flex:1;}
+    .reviews-count{font-size:13px;font-weight:500;color:var(--ink);}
+    .reviews-sub{font-size:12px;color:var(--ink-light);}
+    .review-list{display:flex;flex-direction:column;gap:10px;margin-top:1rem;}
+    .review-item{background:var(--cream);border-radius:var(--radius-sm);padding:12px 14px;}
+    .review-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+    .review-author{font-size:13px;font-weight:500;}
+    .review-date{font-size:11px;color:var(--ink-light);}
+    .review-stars{display:flex;gap:2px;margin-bottom:5px;}
+    .review-text{font-size:13px;color:var(--ink-light);line-height:1.5;}
+
+    /* Séparateur section */
+    .section-sep{height:1px;background:var(--border);margin:1.8rem 0;}
+    .section-head{display:flex;align-items:baseline;gap:10px;margin-bottom:1.2rem;}
+    .section-title{font-family:var(--font-display);font-size:1.4rem;font-weight:300;}
+    .section-title em{font-style:italic;color:var(--gold);}
+    .section-badge{font-size:11px;font-weight:500;color:var(--ink-light);background:var(--cream-dark);padding:2px 8px;border-radius:100px;}
 
     /* Prestations */
-    .prest-block{margin-bottom:2rem;}
-    .prest-genre-title{
-      font-size:11px;font-weight:500;color:var(--ink-light);
-      text-transform:uppercase;letter-spacing:.08em;
-      margin-bottom:.8rem;padding-bottom:.5rem;
-      border-bottom:1px solid var(--border);
-    }
-    .prest-list{display:flex;flex-direction:column;gap:2px;margin-bottom:1.4rem;}
-    .prest-row{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:11px 14px;border-radius:var(--radius-sm);
-      transition:background .1s;
-    }
-    .prest-row:hover{background:var(--cream);}
-    .prest-row-left{display:flex;align-items:center;gap:10px;}
-    .prest-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+    .genre-tabs{display:flex;gap:4px;margin-bottom:1rem;}
+    .genre-tab{padding:6px 16px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:500;cursor:pointer;background:transparent;color:var(--ink-light);font-family:var(--font-body);transition:all .15s;}
+    .genre-tab.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+    .genre-tab:hover:not(.active){background:var(--cream-dark);}
+    .prest-list{display:flex;flex-direction:column;gap:1px;}
+    .prest-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-radius:var(--radius-sm);transition:background .1s;cursor:pointer;}
+    .prest-row:hover{background:var(--white);}
+    .prest-left{display:flex;align-items:center;gap:10px;}
+    .prest-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;}
     .prest-name{font-size:14px;color:var(--ink);}
-    .prest-duration{font-size:12px;color:var(--ink-light);margin-left:6px;}
-    .prest-prix{font-size:14px;font-weight:500;color:var(--ink);}
+    .prest-dur{font-size:12px;color:var(--ink-light);margin-left:6px;}
+    .prest-right{display:flex;align-items:center;gap:12px;}
+    .prest-prix{font-size:15px;font-weight:500;color:var(--ink);}
     .prest-prix-na{font-size:13px;color:var(--ink-light);}
+    .prest-book-btn{font-size:11px;padding:4px 12px;background:var(--ink);color:var(--white);border:none;border-radius:100px;cursor:pointer;font-family:var(--font-body);opacity:0;transition:opacity .15s;white-space:nowrap;}
+    .prest-row:hover .prest-book-btn{opacity:1;}
 
-    /* ── COLONNE DROITE (sticky) ── */
-    .col-right{}
-    .sticky-card{
-      position:sticky;top:80px;
-      background:var(--white);border:1px solid var(--border);
-      border-radius:var(--radius);overflow:hidden;
-    }
-    .sticky-card-head{
-      background:var(--ink);padding:1.4rem 1.6rem;
-    }
-    .sticky-card-name{font-family:var(--font-display);font-size:1.5rem;font-weight:300;color:white;margin-bottom:.2rem;}
-    .sticky-card-sub{font-size:12px;color:rgba(255,255,255,.55);}
-    .sticky-card-body{padding:1.4rem 1.6rem;}
-    .sticky-meta{display:flex;flex-direction:column;gap:8px;margin-bottom:1.4rem;}
-    .sticky-meta-row{display:flex;align-items:flex-start;gap:10px;font-size:13px;}
-    .sticky-meta-icon{width:32px;height:32px;border-radius:8px;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-    .sticky-meta-icon svg{width:15px;height:15px;stroke:var(--ink-light);fill:none;stroke-width:2;stroke-linecap:round;}
-    .sticky-meta-label{font-size:11px;color:var(--ink-light);margin-bottom:1px;}
-    .sticky-meta-val{font-size:13px;font-weight:500;color:var(--ink);}
-    .btn-reserve{
-      display:block;width:100%;padding:14px;
-      background:var(--gold);color:var(--ink);
-      border:none;border-radius:100px;
-      font-family:var(--font-body);font-size:15px;font-weight:500;
-      cursor:pointer;text-align:center;text-decoration:none;
-      transition:opacity .15s;
-    }
+    /* COLONNE DROITE */
+    .sticky-wrap{position:sticky;top:80px;}
+    .sticky-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;}
+    .sticky-head{background:var(--ink);padding:1.4rem 1.6rem;}
+    .sticky-name{font-family:var(--font-display);font-size:1.6rem;font-weight:300;color:white;line-height:1.1;margin-bottom:.2rem;}
+    .sticky-sub{font-size:12px;color:rgba(255,255,255,.45);}
+    .sticky-body{padding:1.4rem 1.6rem;}
+    .sticky-info{display:flex;flex-direction:column;gap:10px;margin-bottom:1.4rem;}
+    .sticky-info-row{display:flex;align-items:center;gap:10px;}
+    .sticky-icon{width:30px;height:30px;border-radius:8px;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .sticky-icon svg{width:14px;height:14px;stroke:var(--ink-light);fill:none;stroke-width:2;stroke-linecap:round;}
+    .sticky-label{font-size:11px;color:var(--ink-light);}
+    .sticky-val{font-size:13px;font-weight:500;color:var(--ink);}
+    .sticky-stars{display:flex;gap:2px;align-items:center;}
+    .sticky-star{width:12px;height:12px;fill:var(--gold);}
+    .btn-reserve{display:block;width:100%;padding:14px;background:var(--gold);color:var(--ink);border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;font-weight:500;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .15s;}
     .btn-reserve:hover{opacity:.88;}
 
-    /* ── CTA MOBILE (caché sur desktop) ── */
-    .cta-mobile{
-      display:none;
-      position:fixed;bottom:0;left:0;right:0;
-      padding:1rem 1.5rem env(safe-area-inset-bottom,.5rem);
-      background:var(--white);border-top:1px solid var(--border);z-index:100;
-    }
-    .cta-mobile a{
-      display:block;width:100%;padding:15px;
-      background:var(--ink);color:var(--white);
-      border:none;border-radius:100px;
-      font-family:var(--font-body);font-size:16px;font-weight:500;
-      cursor:pointer;text-align:center;text-decoration:none;
-    }
+    /* CTA MOBILE */
+    .cta-mobile{display:none;position:fixed;bottom:0;left:0;right:0;padding:1rem 1.5rem;background:var(--white);border-top:1px solid var(--border);z-index:100;}
+    .cta-mobile a{display:block;width:100%;padding:15px;background:var(--ink);color:var(--white);border-radius:100px;font-family:var(--font-body);font-size:16px;font-weight:500;text-align:center;}
 
-    /* ── LOADER ── */
+    /* LOADER */
     .loader{text-align:center;padding:5rem 1rem;color:var(--ink-light);font-size:14px;}
     .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
     @keyframes spin{to{transform:rotate(360deg);}}
 
-    /* ── RESPONSIVE ── */
-    @media(max-width:760px){
-      .gallery{grid-template-columns:1fr 1fr;grid-template-rows:180px 110px;height:290px;}
-      .page-body{grid-template-columns:1fr;padding-bottom:100px;}
-      .col-right{display:none;}
+    /* RESPONSIVE */
+    @media(max-width:800px){
+      .gallery{grid-template-columns:1fr 1fr;height:260px;}
+      .page-layout{grid-template-columns:1fr;padding-bottom:100px;}
+      .sticky-wrap{display:none;}
       .cta-mobile{display:block;}
       .salon-name{font-size:2rem;}
     }
     @media(max-width:480px){
       .gallery{grid-template-columns:1fr;height:220px;}
-      .gallery-side{display:none;}
+      .g-side{display:none;}
     }
   </style>
 </head>
@@ -149,31 +126,22 @@
     <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
     Retour
   </button>
-  <a href="client.html" class="header-logo">Belyo</a>
+  <a href="/client.html" class="header-logo">Belyo</a>
 </div>
 
-<!-- GALERIE -->
-<div class="gallery" id="gallery">
-  <div class="gallery-main"><img id="img-main" src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=600&fit=crop&q=80" alt="Salon" /></div>
-  <div class="gallery-side"><img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop&q=80" alt="" /></div>
-  <div class="gallery-side"><img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&h=300&fit=crop&q=80" alt="" /></div>
+<div class="gallery">
+  <div class="g-main"><img src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=900&h=700&fit=crop&q=85" alt="Salon" /></div>
+  <div class="g-side"><img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&h=350&fit=crop&q=80" alt="" /></div>
+  <div class="g-side"><img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=500&h=350&fit=crop&q=80" alt="" /></div>
 </div>
 
-<!-- LOADER initial -->
 <div id="page-loader" class="loader"><span class="spinner"></span>Chargement...</div>
 
-<!-- BODY (caché jusqu'au chargement) -->
-<div class="page-body" id="page-body" style="display:none">
-
-  <!-- GAUCHE -->
-  <div class="col-left" id="col-left"></div>
-
-  <!-- DROITE -->
-  <div class="col-right" id="col-right"></div>
-
+<div class="page-layout" id="page-layout" style="display:none">
+  <div id="col-left"></div>
+  <div class="sticky-wrap" id="col-right"></div>
 </div>
 
-<!-- CTA MOBILE -->
 <div class="cta-mobile" id="cta-mobile" style="display:none">
   <a id="btn-mobile" href="#">Prendre un rendez-vous</a>
 </div>
@@ -181,151 +149,161 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
+var FAKE_REVIEWS = [
+  { author:'Marie L.', note:5, date:'Janvier 2025', text:'Accueil chaleureux, coupe parfaite. Je recommande vivement !' },
+  { author:'Thomas R.', note:5, date:'Mars 2025',   text:'Excellent travail, résultat vraiment propre. Je reviens régulièrement.' },
+  { author:'Sophie M.', note:4, date:'Avril 2025',  text:'Très bonne prestation, personnel aux petits soins.' },
+];
+var AVG_NOTE = 4.8;
+
+function starsSvg(n, small) {
+  var s = small ? 12 : 16;
+  var html = '';
+  for (var i = 1; i <= 5; i++) {
+    if (i <= Math.round(n)) html += '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" class="star"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+    else html += '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" class="star empty"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  }
+  return html;
+}
+
 var DEFAULT_P = {
-  homme: [
-    { name:'Coupe',    prix:20, duree:30 },
-    { name:'Dégradé',  prix:20, duree:30 },
-    { name:'Brushing', prix:15, duree:20 },
-  ],
-  femme: [
-    { name:'Coupe',     prix:30, duree:45 },
-    { name:'Couleur',   prix:65, duree:90 },
-    { name:'Brushing',  prix:25, duree:35 },
-  ]
+  homme:[{name:'Coupe',prix:20,duree:30},{name:'Coloration',prix:40,duree:60},{name:'Brushing',prix:15,duree:20}],
+  femme:[{name:'Coupe',prix:30,duree:45},{name:'Couleur',prix:65,duree:90},{name:'Brushing',prix:25,duree:35}]
 };
 
-function pinSvg(){return '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';}
-function clockSvg(){return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>';}
-function sciSvg(){return '<svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>';}
+var currentGenre = 'homme';
+var salonPrests  = { homme:[], femme:[] };
+var bookUrl      = '#';
+
+function buildPrests(genre, s, pd) {
+  var names = (s.prestations && s.prestations[genre]) || [];
+  if (!names.length) return DEFAULT_P[genre];
+  return names.map(function(name) {
+    var p = pd[genre] && pd[genre][name];
+    return { name:name, prix:p&&p.prix?p.prix:0, duree:p&&p.duree?p.duree:0 };
+  });
+}
+
+function renderPrests(genre) {
+  var list = salonPrests[genre] || [];
+  var html = '<div class="prest-list">';
+  list.forEach(function(p) {
+    var bookWithPrest = bookUrl + '&service=' + encodeURIComponent(p.name) + '&genre=' + genre;
+    html += '<div class="prest-row" onclick="window.location.href=\'' + bookWithPrest + '\'">'
+      + '<div class="prest-left"><div class="prest-dot"></div><span class="prest-name">'+p.name+'</span>'
+      + (p.duree?'<span class="prest-dur">'+p.duree+' min</span>':'')
+      + '</div>'
+      + '<div class="prest-right">'
+      + (p.prix?'<span class="prest-prix">'+p.prix+'\u20ac</span>':'<span class="prest-prix-na">Sur devis</span>')
+      + '<button class="prest-book-btn">Réserver</button>'
+      + '</div>'
+      + '</div>';
+  });
+  html += '</div>';
+  document.getElementById('prest-content').innerHTML = html;
+}
+
+function setGenreTab(genre) {
+  currentGenre = genre;
+  document.getElementById('tab-homme').classList.toggle('active', genre==='homme');
+  document.getElementById('tab-femme').classList.toggle('active', genre==='femme');
+  renderPrests(genre);
+}
 
 (async function() {
   var params  = new URLSearchParams(window.location.search);
   var salonId = params.get('salon');
   var slug    = params.get('slug');
+  if (!salonId && !slug) { document.getElementById('page-loader').innerHTML='Salon introuvable.'; return; }
 
-  if (!salonId && !slug) {
-    document.getElementById('page-loader').innerHTML = 'Salon introuvable.';
-    return;
-  }
-
-  var q = sb.from('salon_settings')
-    .select('user_id, salon_name, salon_address, prestations, prix_duree, slug');
+  var q = sb.from('salon_settings').select('user_id, salon_name, salon_address, prestations, prix_duree, slug');
   if (salonId) q = q.eq('user_id', salonId);
   else         q = q.eq('slug', slug);
-
   var res = await q.maybeSingle();
-  if (!res.data) {
-    document.getElementById('page-loader').innerHTML = 'Salon introuvable.';
-    return;
-  }
 
-  var s       = res.data;
-  var name    = s.salon_name || 'Salon';
-  var addr    = s.salon_address || '';
-  var pd      = s.prix_duree || {};
-  var bookUrl = '/book.html?salon=' + s.user_id;
+  if (!res.data) { document.getElementById('page-loader').innerHTML='Salon introuvable.'; return; }
 
+  var s    = res.data;
+  var name = s.salon_name || 'Salon';
+  var addr = s.salon_address || '';
+  var pd   = s.prix_duree || {};
+  bookUrl  = '/book.html?salon=' + s.user_id;
   document.title = name + ' — Belyo';
 
-  // Prestations avec fallback
-  var prestH = buildPrestList('homme', s, pd);
-  var prestF = buildPrestList('femme', s, pd);
+  salonPrests.homme = buildPrests('homme', s, pd);
+  salonPrests.femme = buildPrests('femme', s, pd);
+  var totalP = salonPrests.homme.length + salonPrests.femme.length;
+  var minPrix = Math.min.apply(null,
+    salonPrests.homme.concat(salonPrests.femme).map(function(p){return p.prix;}).filter(function(p){return p>0;})
+  ) || 0;
+
+  // ── Nom ──
+  var parts = name.trim().split(' ');
+  var n1 = parts[0], n2 = parts.slice(1).join(' ');
 
   // ── Colonne gauche ──
-  var nameParts = name.trim().split(' ');
-  var first     = nameParts[0];
-  var rest      = nameParts.slice(1).join(' ');
-
   var left = '';
-  left += '<div class="salon-name">' + (rest ? first + ' <em>' + rest + '</em>' : '<em>' + first + '</em>') + '</div>';
-
-  left += '<div class="meta-list">';
+  left += '<div class="salon-name">'+(n2?n1+' <em>'+n2+'</em>':'<em>'+n1+'</em>')+'</div>';
   if (addr) {
-    left += '<div class="meta-row">' + pinSvg() + addr + '</div>';
+    left += '<div class="salon-addr"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>'+addr+'</div>';
   }
-  left += '<div class="meta-row">' + sciSvg() + '<span>' + (prestH.length + prestF.length) + ' prestations disponibles</span></div>';
+
+  // Avis
+  left += '<div class="reviews-bar">'
+    + '<div class="reviews-score">'+AVG_NOTE+'</div>'
+    + '<div>'
+    + '<div class="reviews-stars">'+starsSvg(AVG_NOTE, false)+'</div>'
+    + '<div class="reviews-info" style="margin-top:3px"><div class="reviews-count">'+FAKE_REVIEWS.length+' avis</div><div class="reviews-sub">Clients vérifiés</div></div>'
+    + '</div>'
+    + '</div>';
+
+  // Commentaires
+  left += '<div class="review-list">';
+  FAKE_REVIEWS.forEach(function(r) {
+    left += '<div class="review-item">'
+      + '<div class="review-head"><span class="review-author">'+r.author+'</span><span class="review-date">'+r.date+'</span></div>'
+      + '<div class="review-stars">'+starsSvg(r.note, true)+'</div>'
+      + '<div class="review-text">'+r.text+'</div>'
+      + '</div>';
+  });
   left += '</div>';
 
-  // Prestations Homme
-  if (prestH.length > 0) {
-    left += '<div class="prest-block">';
-    left += '<div class="prest-genre-title">Homme</div>';
-    left += '<div class="prest-list">';
-    prestH.forEach(function(p) {
-      left += '<div class="prest-row">'
-        + '<div class="prest-row-left"><div class="prest-dot"></div><span class="prest-name">' + p.name + '</span>'
-        + (p.duree ? '<span class="prest-duration">· ' + p.duree + ' min</span>' : '')
-        + '</div>'
-        + (p.prix ? '<span class="prest-prix">' + p.prix + '€</span>' : '<span class="prest-prix-na">Sur devis</span>')
-        + '</div>';
-    });
-    left += '</div></div>';
-  }
+  left += '<div class="section-sep"></div>';
 
-  // Prestations Femme
-  if (prestF.length > 0) {
-    left += '<div class="prest-block">';
-    left += '<div class="prest-genre-title">Femme</div>';
-    left += '<div class="prest-list">';
-    prestF.forEach(function(p) {
-      left += '<div class="prest-row">'
-        + '<div class="prest-row-left"><div class="prest-dot"></div><span class="prest-name">' + p.name + '</span>'
-        + (p.duree ? '<span class="prest-duration">· ' + p.duree + ' min</span>' : '')
-        + '</div>'
-        + (p.prix ? '<span class="prest-prix">' + p.prix + '€</span>' : '<span class="prest-prix-na">Sur devis</span>')
-        + '</div>';
-    });
-    left += '</div></div>';
-  }
+  // Prestations
+  left += '<div class="section-head"><div class="section-title">Nos <em>prestations</em></div><span class="section-badge">'+totalP+' services</span></div>';
+  left += '<div class="genre-tabs">'
+    + '<button class="genre-tab active" id="tab-homme" onclick="setGenreTab(\'homme\')">Homme</button>'
+    + '<button class="genre-tab" id="tab-femme" onclick="setGenreTab(\'femme\')">Femme</button>'
+    + '</div>';
+  left += '<div id="prest-content"></div>';
 
   document.getElementById('col-left').innerHTML = left;
+  renderPrests('homme');
 
   // ── Colonne droite ──
-  var right = '';
-  right += '<div class="sticky-card">';
-  right += '<div class="sticky-card-head"><div class="sticky-card-name">' + name + '</div><div class="sticky-card-sub">Salon de coiffure · Nantes</div></div>';
-  right += '<div class="sticky-card-body">';
-  right += '<div class="sticky-meta">';
+  var right = '<div class="sticky-card">'
+    + '<div class="sticky-head"><div class="sticky-name">'+name+'</div><div class="sticky-sub">Salon de coiffure · Belyo</div></div>'
+    + '<div class="sticky-body">'
+    + '<div class="sticky-info">';
+
   if (addr) {
-    right += '<div class="sticky-meta-row"><div class="sticky-meta-icon">' + pinSvg() + '</div><div><div class="sticky-meta-label">Adresse</div><div class="sticky-meta-val">' + addr + '</div></div></div>';
+    right += '<div class="sticky-info-row"><div class="sticky-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="sticky-label">Adresse</div><div class="sticky-val">'+addr+'</div></div></div>';
   }
-  var minPrix = getMinPrix(prestH.concat(prestF));
-  if (minPrix) {
-    right += '<div class="sticky-meta-row"><div class="sticky-meta-icon">' + clockSvg() + '</div><div><div class="sticky-meta-label">À partir de</div><div class="sticky-meta-val">' + minPrix + '€</div></div></div>';
+  right += '<div class="sticky-info-row"><div class="sticky-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div><div class="sticky-label">Note</div><div class="sticky-val" style="display:flex;align-items:center;gap:5px">'+AVG_NOTE+' <span style="display:flex;gap:1px">'+starsSvg(AVG_NOTE,true)+'</span></div></div></div>';
+  if (minPrix > 0) {
+    right += '<div class="sticky-info-row"><div class="sticky-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="sticky-label">À partir de</div><div class="sticky-val">'+minPrix+' €</div></div></div>';
   }
-  right += '<div class="sticky-meta-row"><div class="sticky-meta-icon">' + sciSvg() + '</div><div><div class="sticky-meta-label">Prestations</div><div class="sticky-meta-val">' + (prestH.length + prestF.length) + ' disponibles</div></div></div>';
-  right += '</div>';
-  right += '<a href="' + bookUrl + '" class="btn-reserve">Prendre un rendez-vous</a>';
-  right += '</div></div>';
+  right += '</div>'
+    + '<a href="'+bookUrl+'" class="btn-reserve">Prendre un rendez-vous</a>'
+    + '</div></div>';
 
   document.getElementById('col-right').innerHTML = right;
-
-  // CTA mobile
   document.getElementById('btn-mobile').href = bookUrl;
   document.getElementById('cta-mobile').style.display = 'block';
-
-  // Afficher
   document.getElementById('page-loader').style.display = 'none';
-  document.getElementById('page-body').style.display   = 'grid';
+  document.getElementById('page-layout').style.display = 'grid';
 })();
-
-function buildPrestList(genre, s, pd) {
-  var names = (s.prestations && s.prestations[genre]) || [];
-  if (names.length === 0) return DEFAULT_P[genre];
-  return names.map(function(name) {
-    var pdata = pd[genre] && pd[genre][name];
-    return {
-      name:  name,
-      prix:  pdata && pdata.prix  ? pdata.prix  : 0,
-      duree: pdata && pdata.duree ? pdata.duree : 0
-    };
-  });
-}
-
-function getMinPrix(list) {
-  var prices = list.map(function(p){ return p.prix; }).filter(function(p){ return p > 0; });
-  return prices.length > 0 ? Math.min.apply(null, prices) : 0;
-}
 </script>
 </body>
 </html>
