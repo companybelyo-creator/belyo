@@ -586,39 +586,30 @@ function renderRdvList(elId, list, isUpcoming) {
 }
 
 // ===== SALONS =====
-var FAKE_SALONS = [
-  { user_id:'fake-1', salon_name:'Salon Lumière', salon_address:'8 rue des Fleurs, Nantes',
-    photo:'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200&h=200&fit=crop',
-    prestations:{homme:['Coupe','Dégradé','Barbe'],femme:['Coupe','Brushing','Coloration']},
-    prix_duree:{homme:{Coupe:{prix:22},'Dégradé':{prix:20},Barbe:{prix:12}},femme:{Coupe:{prix:32},Brushing:{prix:28},Coloration:{prix:65}}} },
-  { user_id:'fake-2', salon_name:'Studio Noir', salon_address:'15 rue Crébillon, Nantes',
-    photo:'https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=200&h=200&fit=crop',
-    prestations:{homme:['Coupe','Estompage','Coupe + Barbe'],femme:['Coupe','Balayage','Mèches']},
-    prix_duree:{homme:{Coupe:{prix:25},Estompage:{prix:18},'Coupe + Barbe':{prix:32}},femme:{Coupe:{prix:35},Balayage:{prix:85},Mèches:{prix:75}}} },
-  { user_id:'fake-3', salon_name:'Atelier Cheveux', salon_address:'22 place du Bouffay, Nantes',
-    photo:'https://images.unsplash.com/photo-1562322140-8baeececf3df?w=200&h=200&fit=crop',
-    prestations:{homme:['Coupe','Soin'],femme:['Coupe','Lissage','Permanente','Soin']},
-    prix_duree:{homme:{Coupe:{prix:20},Soin:{prix:15}},femme:{Coupe:{prix:30},Lissage:{prix:85},Permanente:{prix:75},Soin:{prix:25}}} },
-  { user_id:'fake-4', salon_name:'Coiff & Style', salon_address:'3 allée des Tanneurs, Nantes',
-    photo:'https://images.unsplash.com/photo-1634302086869-84cdae4c1d02?w=200&h=200&fit=crop',
-    prestations:{homme:['Coupe','Dégradé','Coloration'],femme:['Coupe','Coloration','Soin','Brushing']},
-    prix_duree:{homme:{Coupe:{prix:23},'Dégradé':{prix:21},Coloration:{prix:40}},femme:{Coupe:{prix:34},Coloration:{prix:70},Soin:{prix:22},Brushing:{prix:27}}} },
-];
+var DEFAULT_SALON_PHOTO = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop';
 
 async function loadAllSalons() {
   var res = await sb.from('salon_settings')
-    .select('user_id, salon_name, prestations, prix_duree, slug')
+    .select('user_id, salon_name, salon_address, prestations, prix_duree, slug')
     .not('salon_name', 'is', null)
-    .limit(20);
+    .limit(30);
 
-  var real = (res.data||[]).filter(function(s){ return s.salon_name && s.salon_name.trim(); });
-  allSalonsData = real.concat(FAKE_SALONS);
+  if (res.error) {
+    // Fallback sans salon_address si la colonne n'existe pas encore
+    var res2 = await sb.from('salon_settings')
+      .select('user_id, salon_name, prestations, prix_duree, slug')
+      .not('salon_name', 'is', null)
+      .limit(30);
+    allSalonsData = (res2.data||[]).filter(function(s){ return s.salon_name && s.salon_name.trim(); });
+  } else {
+    allSalonsData = (res.data||[]).filter(function(s){ return s.salon_name && s.salon_name.trim(); });
+  }
+
   renderSalons(allSalonsData, 'all-salons');
 
   var sc = document.getElementById('salons-count');
   if (sc) sc.textContent = allSalonsData.length + ' salon' + (allSalonsData.length>1?'s':'');
 
-  // Aperçu sur la page auth
   renderSalonsPreview(allSalonsData.slice(0,3));
 }
 
@@ -707,17 +698,14 @@ function renderSalons(list, elId) {
 function renderSalonsPreview(list) {
   var el = document.getElementById('auth-salons-preview');
   if (!el) return;
+  if (!list||list.length===0) { el.innerHTML = ''; return; }
   var html = '<div style="display:flex;flex-direction:column;gap:8px">';
   list.forEach(function(s) {
-    var name   = s.salon_name||'Salon';
-    var colors = avatarColor(name);
-    var inits  = salonInitials(name);
-    var isFake = (s.user_id||'').startsWith('fake-');
-    var bookUrl= isFake ? '#' : '/book.html?salon='+s.user_id;
+    var name = s.salon_name||'Salon';
+    var addr = s.salon_address||'';
     html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;align-items:center;gap:10px">'
-      + '<div style="width:38px;height:38px;border-radius:8px;background:'+colors[0]+';display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:1rem;font-weight:600;color:white;flex-shrink:0">'+inits+'</div>'
-      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+name+'</div>'+(s.salon_address?'<div style="font-size:11px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+s.salon_address+'</div>':'')+'</div>'
-      + (isFake?'':'<a href="'+bookUrl+'" style="font-size:11px;padding:5px 12px;background:var(--ink);color:white;border-radius:100px;white-space:nowrap">Réserver</a>')
+      + '<img style="width:38px;height:38px;border-radius:8px;object-fit:cover;flex-shrink:0" src="'+DEFAULT_SALON_PHOTO+'" alt="'+name+'">'
+      + '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500">'+name+'</div>'+(addr?'<div style="font-size:11px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+addr+'</div>':'')+'</div>'
       + '</div>';
   });
   html += '</div>';
