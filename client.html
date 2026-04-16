@@ -617,70 +617,31 @@ function onSearchSalons() {
 function renderSalons(list, elId) {
   var el = document.getElementById(elId);
   if (!el) return;
-  if (!list||list.length===0) {
-    el.innerHTML = '<div class="empty-state" style="padding:2rem 0"><svg class="empty-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg><div>Aucun salon trouvé</div></div>';
+  if (!list || list.length === 0) {
+    el.innerHTML = '<div class="empty-state" style="padding:2.5rem 0"><div>Aucun salon disponible</div></div>';
     return;
   }
+  var DEFAULT_TAGS = ['Coupe', 'Couleur', 'Brushing'];
   var html = '<div class="salons-grid">';
-  list.forEach(function(s, i) {
-    var name    = s.salon_name || 'Salon';
-    var addr    = s.salon_address || '';
-    var isFake  = (s.user_id||'').startsWith('fake-');
-    var bookUrl = isFake ? '#' : '/book.html?salon='+s.user_id;
-    var colors  = avatarColor(name);
-    var inits   = salonInitials(name);
-    var pd      = s.prix_duree || {};
-    var prestH  = (s.prestations&&s.prestations.homme)||[];
-    var prestF  = (s.prestations&&s.prestations.femme)||[];
-
-    // Tags résumé
-    var allPrest = prestH.slice(0,2).concat(prestF.slice(0,2));
-    var tagHtml  = allPrest.map(function(p){ return '<span class="salon-tag">'+p+'</span>'; }).join('');
-
-    html += '<div class="salon-card" id="scard-'+i+'">';
-    html += '<div class="salon-card-main" data-vitrine="svit-'+i+'">';
-    var photoHtml = s.photo
-      ? '<img class="salon-photo" src="'+s.photo+'" alt="'+name+'" loading="lazy" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
-        + '<div class="salon-photo-placeholder" style="display:none;background:'+colors[0]+';font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:white">'+inits+'</div>'
-      : '<div class="salon-photo-placeholder" style="background:'+colors[0]+';font-family:var(--font-display);font-size:1.3rem;font-weight:600;color:white">'+inits+'</div>';
-    html += photoHtml;
-    html += '<div class="salon-info">';
-    html += '<div class="salon-name">'+name+'</div>';
-    if (addr) html += '<div class="salon-address">'+addr+'</div>';
-    if (tagHtml) html += '<div class="salon-tags">'+tagHtml+'</div>';
-    html += '</div>';
-    html += '<div class="salon-card-actions">';
-    if (!isFake) html += '<a class="btn-book" href="'+bookUrl+'" onclick="event.stopPropagation()">Réserver</a>';
-    html += '<span class="salon-chevron" id="chev-'+i+'">&#9660;</span>';
-    html += '</div>';
-    html += '</div>';
-
-    // Vitrine
-    html += '<div class="salon-vitrine" id="svit-'+i+'">';
-    if (prestH.length>0) {
-      html += '<div class="vitrine-label">Homme</div><div class="vitrine-tags">';
-      prestH.forEach(function(p){
-        var pdata = pd.homme&&pd.homme[p];
-        var prix  = pdata&&pdata.prix?pdata.prix+'€':'';
-        html += '<span class="vtag">'+p+(prix?' <span class="vtag-price">'+prix+'</span>':'')+'</span>';
-      });
-      html += '</div>';
-    }
-    if (prestF.length>0) {
-      html += '<div class="vitrine-label" style="margin-top:10px">Femme</div><div class="vitrine-tags">';
-      prestF.forEach(function(p){
-        var pdata = pd.femme&&pd.femme[p];
-        var prix  = pdata&&pdata.prix?pdata.prix+'€':'';
-        html += '<span class="vtag">'+p+(prix?' <span class="vtag-price">'+prix+'</span>':'')+'</span>';
-      });
-      html += '</div>';
-    }
-    if (!isFake) {
-      html += '<div class="vitrine-footer"><a href="'+bookUrl+'" class="btn-book">Prendre un RDV</a></div>';
-    } else {
-      html += '<div style="margin-top:12px;font-size:12px;color:var(--ink-light)">Ce salon n\'est pas encore sur Belyo.</div>';
-    }
-    html += '</div></div>';
+  list.forEach(function(s) {
+    var name      = s.salon_name || 'Salon';
+    var addr      = s.salon_address || '';
+    var detailUrl = '/salon-detail.html?salon=' + s.user_id;
+    var prestH    = (s.prestations && s.prestations.homme) || [];
+    var prestF    = (s.prestations && s.prestations.femme) || [];
+    var tags      = prestH.slice(0, 2).concat(prestF.slice(0, 2));
+    if (tags.length === 0) tags = DEFAULT_TAGS;
+    var tagsHtml  = tags.map(function(t) { return '<span class="salon-tag">' + t + '</span>'; }).join('');
+    html += '<div class="salon-card" style="cursor:pointer" onclick="window.location.href=\'' + detailUrl + '\'">'
+      + '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px">'
+      + '<img style="width:54px;height:54px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--cream-dark)" src="' + DEFAULT_SALON_PHOTO + '" alt="' + name + '" loading="lazy">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:14px;font-weight:500;color:var(--ink);margin-bottom:3px">' + name + '</div>'
+      + (addr ? '<div style="font-size:12px;color:var(--ink-light);margin-bottom:4px">' + addr + '</div>' : '')
+      + '<div style="display:flex;flex-wrap:wrap;gap:4px">' + tagsHtml + '</div>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
   });
   html += '</div>';
   el.innerHTML = html;
