@@ -1,23 +1,70 @@
 {
   "routes": [
-    { "src": "/book.html", "dest": "/book.html" },
-    { "src": "/book", "dest": "/book.html" },
-    { "src": "/client.html", "dest": "/client.html" },
-    { "src": "/client", "dest": "/client.html" },
-    { "src": "/index.html", "dest": "/index.html" },
-    { "src": "/pages/(.*)", "dest": "/pages/$1" },
-    { "src": "/js/(.*)", "dest": "/js/$1" },
-    { "src": "/css/(.*)", "dest": "/css/$1" },
-    { "src": "/supabase/(.*)", "dest": "/supabase/$1" },
-    { "src": "/([a-z0-9-]+)", "dest": "/slug.html?slug=$1" },
-    { "src": "/(.*)", "dest": "/$1" }
+    {
+      "src": "/book.html",
+      "dest": "/book.html"
+    },
+    {
+      "src": "/book",
+      "dest": "/book.html"
+    },
+    {
+      "src": "/client.html",
+      "dest": "/client.html"
+    },
+    {
+      "src": "/client",
+      "dest": "/client.html"
+    },
+    {
+      "src": "/index.html",
+      "dest": "/index.html"
+    },
+    {
+      "src": "/pages/(.*)",
+      "dest": "/pages/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/js/$1"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/css/$1"
+    },
+    {
+      "src": "/supabase/(.*)",
+      "dest": "/supabase/$1"
+    },
+    {
+      "src": "/salon-detail.html",
+      "dest": "/salon-detail.html"
+    },
+    {
+      "src": "/salon-detail",
+      "dest": "/salon-detail.html"
+    },
+    {
+      "src": "/([a-z0-9-]+)",
+      "dest": "/slug.html?slug=$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" }
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        }
       ]
     }
   ]

@@ -337,15 +337,6 @@
   </div>
 </div>
 
-<!-- MODAL profil salon -->
-<div class="modal-overlay" id="salon-profil-modal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <button class="modal-close-btn" onclick="closeSalonProfil()">×</button>
-    <div id="salon-profil-content"></div>
-  </div>
-</div>
-
 <!-- MODAL créateur salon -->
 <div class="modal-overlay" id="creator-modal">
   <div class="modal">
@@ -718,7 +709,6 @@ function renderSalonsPreview(list) {
 function openCreatorModal()  { document.getElementById('creator-modal').classList.add('open'); }
 function closeCreatorModal() { document.getElementById('creator-modal').classList.remove('open'); }
 document.getElementById('creator-modal').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeCreatorModal(); });
-document.getElementById('salon-profil-modal').addEventListener('click', function(e){ if(e.target===e.currentTarget) closeSalonProfil(); });
 
 function makeSlug(name) {
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
