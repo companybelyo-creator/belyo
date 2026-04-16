@@ -14,13 +14,13 @@
     a{text-decoration:none;color:inherit;}
 
     /* ── APP BAR ── */
-    .appbar{background:var(--ink);position:sticky;top:0;z-index:60;height:60px;}
-    .appbar-inner{height:100%;max-width:960px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;}
-    .appbar-nav{display:flex;align-items:center;gap:2rem;}
-    .appbar-tab{font-size:14px;font-weight:400;color:rgba(255,255,255,.5);cursor:pointer;background:none;border:none;font-family:var(--font-body);padding:0;transition:color .15s;white-space:nowrap;text-decoration:none;display:inline-block;}
-    .appbar-tab.active{color:var(--gold);font-weight:500;}
-    .appbar-tab:hover:not(.active){color:rgba(255,255,255,.85);}
+    .appbar{background:var(--ink);position:sticky;top:0;z-index:60;height:64px;}
+    .appbar-inner{height:100%;max-width:960px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;}
     .appbar-logo{font-family:var(--font-display);font-size:1.6rem;font-weight:600;color:var(--white);letter-spacing:-.01em;}
+    .appbar-nav{display:flex;align-items:center;gap:2rem;}
+    .appbar-tab{font-size:13.5px;font-weight:400;color:rgba(255,255,255,.45);cursor:pointer;background:none;border:none;font-family:var(--font-body);padding:0;transition:color .15s;white-space:nowrap;text-decoration:none;display:inline-block;}
+    .appbar-tab.active{color:var(--gold);font-weight:500;}
+    .appbar-tab:hover:not(.active){color:rgba(255,255,255,.8);}
 
     /* CONTENU */
     .page-content{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
@@ -69,15 +69,22 @@
     .rdv-price{font-size:12px;font-weight:500;color:var(--ink);}
 
     /* SALONS */
-    .salons-list{display:flex;flex-direction:column;gap:0;}
-    .salon-row{display:flex;align-items:center;gap:16px;padding:16px 18px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
-    .salon-row:last-child{border-bottom:none;}
-    .salon-row:hover{background:var(--cream);}
-    .salon-thumb{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--cream-dark);}
-    .salon-row-info{flex:1;min-width:0;}
-    .salon-row-name{font-size:15px;font-weight:500;margin-bottom:3px;}
-    .salon-row-addr{font-size:13px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .salon-row-tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+    .salons-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+    .salon-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+    .salon-card:hover{border-color:var(--gold-light);box-shadow:0 2px 16px rgba(196,168,122,.12);}
+    .salon-card-photo{height:140px;overflow:hidden;background:var(--cream-dark);}
+    .salon-card-photo img{width:100%;height:100%;object-fit:cover;transition:transform .3s;}
+    .salon-card:hover .salon-card-photo img{transform:scale(1.03);}
+    .salon-card-body{padding:14px 16px;}
+    .salon-card-name{font-size:15px;font-weight:500;margin-bottom:4px;color:var(--ink);}
+    .salon-card-meta{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+    .salon-meta-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-light);}
+    .salon-meta-item svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex-shrink:0;}
+    .salon-meta-sep{width:3px;height:3px;border-radius:50%;background:var(--border);flex-shrink:0;}
+    .salon-stars{display:flex;align-items:center;gap:2px;}
+    .salon-star{width:11px;height:11px;fill:var(--gold);}
+    .salon-star.empty{fill:var(--cream-dark);}
+    .salon-tags{display:flex;gap:5px;flex-wrap:wrap;}
     .salon-tag{font-size:11px;padding:3px 9px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border);}
 
     /* SEARCH */
@@ -98,6 +105,7 @@
 <!-- APP BAR -->
 <div class="appbar">
   <div class="appbar-inner">
+    <div class="appbar-logo">Belyo</div>
     <nav class="appbar-nav">
       <button class="appbar-tab active" id="tab-salons" onclick="switchTab('salons')">Salons</button>
       <button class="appbar-tab" id="tab-rdv" onclick="switchTab('rdv')">Mes RDV</button>
@@ -105,7 +113,6 @@
       <a class="appbar-tab" id="tab-dashboard" href="/pages/dashboard.html" style="display:none">Mon salon</a>
       <button class="appbar-tab" onclick="doLogout()">Déconnexion</button>
     </nav>
-    <div class="appbar-logo">Belyo</div>
   </div>
 </div>
 
@@ -114,27 +121,21 @@
 
   <!-- VUE SALONS -->
   <div id="view-salons">
-    <div class="greeting">
-      <div class="greeting-name">Bonjour, <em id="greeting-name">—</em></div>
-      <div class="greeting-sub" id="greeting-sub">Découvrez les salons disponibles</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;gap:1rem">
+      <div>
+        <div class="greeting-name">Bonjour, <em id="greeting-name">—</em></div>
+        <div class="greeting-sub" id="greeting-sub">Découvrez les salons disponibles</div>
+      </div>
+      <div class="search-wrap" style="margin:0;width:240px;flex-shrink:0">
+        <div class="search-icon">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <input type="text" class="search-input" id="search-salons" placeholder="Rechercher un salon..." oninput="onSearch()" />
+      </div>
     </div>
 
-    <div class="section">
-      <div class="section-head">
-        <div>
-          <div class="section-title">Salons Belyo</div>
-          <div class="section-count" id="salons-count" style="margin-top:2px"></div>
-        </div>
-        <div class="search-wrap" style="margin:0;width:220px">
-          <div class="search-icon">
-            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          </div>
-          <input type="text" class="search-input" id="search-salons" placeholder="Rechercher..." oninput="onSearch()" style="font-size:13px;padding:8px 12px 8px 34px;" />
-        </div>
-      </div>
-      <div id="salons-list">
-        <div class="empty-state">Chargement...</div>
-      </div>
+    <div id="salons-list">
+      <div class="empty-state">Chargement...</div>
     </div>
   </div>
 
