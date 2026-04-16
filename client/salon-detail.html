@@ -166,12 +166,33 @@ function starsHtml(n, s) {
   return h;
 }
 
+// Catalogue complet avec prix par défaut
+var CATALOGUE = {
+  homme:{
+    'Coupe':{prix:20,duree:30},'Dégradé':{prix:20,duree:30},'Barbe':{prix:10,duree:15},
+    'Coupe + Barbe':{prix:28,duree:45},'Estompage':{prix:18,duree:25},'Soin':{prix:15,duree:20},
+    'Coloration':{prix:35,duree:60},'Rasage':{prix:15,duree:20},'Keratine':{prix:80,duree:120},
+    'Taille moustache':{prix:8,duree:10},'Permanente homme':{prix:50,duree:75}
+  },
+  femme:{
+    'Coupe':{prix:30,duree:45},'Brushing':{prix:25,duree:40},'Coloration':{prix:60,duree:90},
+    'Balayage':{prix:80,duree:120},'Mèches':{prix:70,duree:90},'Soin':{prix:20,duree:30},
+    'Lissage':{prix:80,duree:90},'Permanente':{prix:70,duree:90},'Chignon':{prix:45,duree:60},
+    'Extension':{prix:150,duree:180},'Défrisage':{prix:60,duree:90},'Keratine':{prix:90,duree:120},
+    'Tresse':{prix:40,duree:60},'Coupe enfant':{prix:20,duree:30}
+  }
+};
+
 function buildPrests(genre, s, pd) {
   var names = (s.prestations&&s.prestations[genre])||[];
   if (!names.length) return DEFAULT_P[genre];
   return names.map(function(n){
-    var p=pd[genre]&&pd[genre][n];
-    return {name:n, prix:p&&p.prix?p.prix:0, duree:p&&p.duree?p.duree:0};
+    // Priorité : prix_duree du salon → catalogue par défaut → 0
+    var fromSalon   = pd[genre]&&pd[genre][n];
+    var fromCatalogue = CATALOGUE[genre]&&CATALOGUE[genre][n];
+    var prix  = (fromSalon&&fromSalon.prix)  || (fromCatalogue&&fromCatalogue.prix)  || 0;
+    var duree = (fromSalon&&fromSalon.duree) || (fromCatalogue&&fromCatalogue.duree) || 0;
+    return {name:n, prix:prix, duree:duree};
   });
 }
 
@@ -268,14 +289,14 @@ function setGenre(g) {
   // ── COLONNE DROITE ──
   var right = '<div class="sticky-card">'
     +'<div class="sticky-head"><div class="sticky-sname">'+name+'</div>'
-    +'<div class="sticky-sub">Salon de coiffure · Belyo</div></div>'
+    +(addr?'<div class="sticky-sub">'+addr+'</div>':'<div class="sticky-sub">Salon de coiffure · Belyo</div>')
+    +'</div>'
     +'<div class="sticky-body">'
-    +'<div class="sticky-info">';
-  if (addr) right += '<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="si-label">Adresse</div><div class="si-val">'+addr+'</div></div></div>';
-  right += '<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div><div><div class="si-label">Distance</div><div class="si-val">'+dist+' km</div></div></div>';
-  right += '<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div><div class="si-label">Note</div><div class="si-val" style="display:flex;align-items:center;gap:4px">'+AVG+' <span class="stars">'+starsHtml(AVG,11)+'</span></div></div></div>';
-  if (minPrix) right += '<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="si-label">À partir de</div><div class="si-val">'+minPrix+' €</div></div></div>';
-  right += '</div>'
+    +'<div class="sticky-info">'
+    +'<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div><div><div class="si-label">Distance estimée</div><div class="si-val">'+dist+' km</div></div></div>'
+    +'<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div><div class="si-label">Note</div><div class="si-val" style="display:flex;align-items:center;gap:4px">'+AVG+' <span class="stars">'+starsHtml(AVG,11)+'</span></div></div></div>'
+    +(minPrix?'<div class="si-row"><div class="si-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div><div><div class="si-label">À partir de</div><div class="si-val">'+minPrix+' €</div></div></div>':'')
+    +'</div>'
     +'<a href="'+bookUrl+'" class="btn-gold">Prendre un rendez-vous</a>'
     +'</div></div>';
 

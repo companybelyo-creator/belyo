@@ -317,14 +317,30 @@ async function loadPrestations() {
     .eq('user_id', currentUser.id)
     .maybeSingle();
 
+  var needsSave = false;
   if (res.data) {
-    activePrestations = res.data.prestations      || buildDefaultActive();
+    activePrestations = res.data.prestations       || buildDefaultActive();
     customPrestations = res.data.custom_prestations || { homme: [], femme: [] };
-    prixDuree         = res.data.prix_duree        || buildDefaultPrixDuree();
+    if (!res.data.prix_duree) {
+      prixDuree  = buildDefaultPrixDuree();
+      needsSave  = true;  // sauvegarder les prix par défaut en base
+    } else {
+      prixDuree = res.data.prix_duree;
+    }
   } else {
     activePrestations = buildDefaultActive();
     customPrestations = { homme: [], femme: [] };
     prixDuree         = buildDefaultPrixDuree();
+    needsSave         = true;
+  }
+
+  // Sauvegarder les prix par défaut si jamais configurés
+  if (needsSave) {
+    await sb.from('salon_settings').upsert({
+      user_id:   currentUser.id,
+      prestations:       activePrestations,
+      prix_duree:        prixDuree,
+    }, { onConflict: 'user_id' });
   }
 
   renderPrestations('homme');
