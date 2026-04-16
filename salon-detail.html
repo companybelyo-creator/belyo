@@ -8,58 +8,137 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
-    :root{--cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;--gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;--border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;--font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;}
+    :root{
+      --cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;
+      --gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;
+      --border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;
+      --font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;
+    }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
     a{text-decoration:none;color:inherit;}
+    img{display:block;}
 
-    /* HEADER */
-    .header{padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
-    .btn-back{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);background:none;border:none;cursor:pointer;font-family:var(--font-body);padding:0;transition:color .15s;}
-    .btn-back:hover{color:var(--ink);}
+    /* ── HEADER ── */
+    .header{
+      padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;
+      background:var(--white);border-bottom:1px solid var(--border);
+      position:sticky;top:0;z-index:60;
+    }
+    .btn-back{
+      display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-light);
+      background:none;border:none;cursor:pointer;font-family:var(--font-body);padding:0;
+    }
     .btn-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
-    .header-logo{font-family:var(--font-display);font-size:1.3rem;font-weight:600;margin-left:auto;}
+    .btn-back:hover{color:var(--ink);}
+    .header-logo{font-family:var(--font-display);font-size:1.4rem;font-weight:600;}
 
-    /* HERO */
-    .salon-hero{position:relative;height:240px;background:var(--cream-dark);overflow:hidden;}
-    .salon-hero img{width:100%;height:100%;object-fit:cover;}
-    .salon-hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(26,23,20,.65) 0%,transparent 50%);}
+    /* ── GALERIE ── */
+    .gallery{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:220px 140px;gap:4px;height:360px;}
+    .gallery-main{grid-row:1/3;overflow:hidden;background:var(--cream-dark);}
+    .gallery-main img{width:100%;height:100%;object-fit:cover;}
+    .gallery-side{overflow:hidden;background:var(--cream-dark);position:relative;}
+    .gallery-side img{width:100%;height:100%;object-fit:cover;}
+    .gallery-side:last-child::after{
+      content:'Voir plus';position:absolute;inset:0;
+      background:rgba(26,23,20,.45);display:flex;align-items:center;justify-content:center;
+      font-size:12px;font-weight:500;color:white;letter-spacing:.03em;
+    }
 
-    /* CONTENT */
-    .content{max-width:600px;margin:0 auto;padding:0 1.5rem 120px;}
+    /* ── LAYOUT PRINCIPAL ── */
+    .page-body{max-width:1000px;margin:0 auto;padding:2rem 1.5rem 140px;display:grid;grid-template-columns:1fr 360px;gap:2rem;align-items:start;}
 
-    /* INFO CARD */
-    .info-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;margin-top:-2rem;position:relative;z-index:10;margin-bottom:1rem;}
-    .salon-name{font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:.3rem;}
+    /* ── COLONNE GAUCHE ── */
+    .col-left{}
+    .salon-name{font-family:var(--font-display);font-size:2.6rem;font-weight:300;line-height:1.1;margin-bottom:.5rem;}
     .salon-name em{font-style:italic;color:var(--gold);}
-    .salon-meta{display:flex;flex-direction:column;gap:6px;margin-top:.8rem;}
-    .meta-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-light);}
-    .meta-row svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;}
+    .meta-list{display:flex;flex-direction:column;gap:8px;margin-bottom:1.8rem;}
+    .meta-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-light);}
+    .meta-row svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;flex-shrink:0;opacity:.7;}
+    .meta-row strong{color:var(--ink);font-weight:500;}
 
-    /* SECTIONS */
-    .section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.4rem;margin-bottom:1rem;}
-    .section-title{font-size:11px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:1rem;}
-    .prest-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .prest-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--cream);border-radius:var(--radius-sm);border:1px solid var(--border);}
-    .prest-name{font-size:13px;font-weight:400;color:var(--ink);}
-    .prest-prix{font-size:13px;font-weight:500;color:var(--gold);}
-    .prest-section-label{font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:8px;margin-top:12px;}
-    .prest-section-label:first-child{margin-top:0;}
+    /* Prestations */
+    .prest-block{margin-bottom:2rem;}
+    .prest-genre-title{
+      font-size:11px;font-weight:500;color:var(--ink-light);
+      text-transform:uppercase;letter-spacing:.08em;
+      margin-bottom:.8rem;padding-bottom:.5rem;
+      border-bottom:1px solid var(--border);
+    }
+    .prest-list{display:flex;flex-direction:column;gap:2px;margin-bottom:1.4rem;}
+    .prest-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:11px 14px;border-radius:var(--radius-sm);
+      transition:background .1s;
+    }
+    .prest-row:hover{background:var(--cream);}
+    .prest-row-left{display:flex;align-items:center;gap:10px;}
+    .prest-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);flex-shrink:0;}
+    .prest-name{font-size:14px;color:var(--ink);}
+    .prest-duration{font-size:12px;color:var(--ink-light);margin-left:6px;}
+    .prest-prix{font-size:14px;font-weight:500;color:var(--ink);}
+    .prest-prix-na{font-size:13px;color:var(--ink-light);}
 
-    /* CTA fixé en bas */
-    .cta-bar{position:fixed;bottom:0;left:0;right:0;padding:1rem 1.5rem;background:var(--white);border-top:1px solid var(--border);z-index:100;}
-    .cta-bar-inner{max-width:600px;margin:0 auto;}
-    .btn-reserve{display:block;width:100%;padding:15px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:16px;font-weight:500;cursor:pointer;text-align:center;text-decoration:none;transition:opacity .15s;}
+    /* ── COLONNE DROITE (sticky) ── */
+    .col-right{}
+    .sticky-card{
+      position:sticky;top:80px;
+      background:var(--white);border:1px solid var(--border);
+      border-radius:var(--radius);overflow:hidden;
+    }
+    .sticky-card-head{
+      background:var(--ink);padding:1.4rem 1.6rem;
+    }
+    .sticky-card-name{font-family:var(--font-display);font-size:1.5rem;font-weight:300;color:white;margin-bottom:.2rem;}
+    .sticky-card-sub{font-size:12px;color:rgba(255,255,255,.55);}
+    .sticky-card-body{padding:1.4rem 1.6rem;}
+    .sticky-meta{display:flex;flex-direction:column;gap:8px;margin-bottom:1.4rem;}
+    .sticky-meta-row{display:flex;align-items:flex-start;gap:10px;font-size:13px;}
+    .sticky-meta-icon{width:32px;height:32px;border-radius:8px;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .sticky-meta-icon svg{width:15px;height:15px;stroke:var(--ink-light);fill:none;stroke-width:2;stroke-linecap:round;}
+    .sticky-meta-label{font-size:11px;color:var(--ink-light);margin-bottom:1px;}
+    .sticky-meta-val{font-size:13px;font-weight:500;color:var(--ink);}
+    .btn-reserve{
+      display:block;width:100%;padding:14px;
+      background:var(--gold);color:var(--ink);
+      border:none;border-radius:100px;
+      font-family:var(--font-body);font-size:15px;font-weight:500;
+      cursor:pointer;text-align:center;text-decoration:none;
+      transition:opacity .15s;
+    }
     .btn-reserve:hover{opacity:.88;}
 
-    /* Loading */
-    .loader{text-align:center;padding:4rem 1rem;color:var(--ink-light);font-size:14px;}
+    /* ── CTA MOBILE (caché sur desktop) ── */
+    .cta-mobile{
+      display:none;
+      position:fixed;bottom:0;left:0;right:0;
+      padding:1rem 1.5rem env(safe-area-inset-bottom,.5rem);
+      background:var(--white);border-top:1px solid var(--border);z-index:100;
+    }
+    .cta-mobile a{
+      display:block;width:100%;padding:15px;
+      background:var(--ink);color:var(--white);
+      border:none;border-radius:100px;
+      font-family:var(--font-body);font-size:16px;font-weight:500;
+      cursor:pointer;text-align:center;text-decoration:none;
+    }
+
+    /* ── LOADER ── */
+    .loader{text-align:center;padding:5rem 1rem;color:var(--ink-light);font-size:14px;}
     .spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
     @keyframes spin{to{transform:rotate(360deg);}}
 
+    /* ── RESPONSIVE ── */
+    @media(max-width:760px){
+      .gallery{grid-template-columns:1fr 1fr;grid-template-rows:180px 110px;height:290px;}
+      .page-body{grid-template-columns:1fr;padding-bottom:100px;}
+      .col-right{display:none;}
+      .cta-mobile{display:block;}
+      .salon-name{font-size:2rem;}
+    }
     @media(max-width:480px){
-      .prest-grid{grid-template-columns:1fr;}
-      .salon-hero{height:200px;}
+      .gallery{grid-template-columns:1fr;height:220px;}
+      .gallery-side{display:none;}
     }
   </style>
 </head>
@@ -73,129 +152,180 @@
   <a href="client.html" class="header-logo">Belyo</a>
 </div>
 
-<!-- HERO -->
-<div class="salon-hero" id="salon-hero">
-  <img id="salon-hero-img" src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=400&fit=crop" alt="Salon" />
-  <div class="salon-hero-overlay"></div>
+<!-- GALERIE -->
+<div class="gallery" id="gallery">
+  <div class="gallery-main"><img id="img-main" src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&h=600&fit=crop&q=80" alt="Salon" /></div>
+  <div class="gallery-side"><img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop&q=80" alt="" /></div>
+  <div class="gallery-side"><img src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&h=300&fit=crop&q=80" alt="" /></div>
 </div>
 
-<!-- CONTENU -->
-<div class="content">
+<!-- LOADER initial -->
+<div id="page-loader" class="loader"><span class="spinner"></span>Chargement...</div>
 
-  <div id="salon-content">
-    <div class="loader"><span class="spinner"></span>Chargement...</div>
-  </div>
+<!-- BODY (caché jusqu'au chargement) -->
+<div class="page-body" id="page-body" style="display:none">
+
+  <!-- GAUCHE -->
+  <div class="col-left" id="col-left"></div>
+
+  <!-- DROITE -->
+  <div class="col-right" id="col-right"></div>
 
 </div>
 
-<!-- CTA BAR -->
-<div class="cta-bar" id="cta-bar" style="display:none">
-  <div class="cta-bar-inner">
-    <a id="btn-reserve" href="#" class="btn-reserve">Prendre un rendez-vous</a>
-  </div>
+<!-- CTA MOBILE -->
+<div class="cta-mobile" id="cta-mobile" style="display:none">
+  <a id="btn-mobile" href="#">Prendre un rendez-vous</a>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script>
-
-var DEFAULT_PRESTATIONS = {
-  homme: ['Coupe', 'Coloration', 'Brushing'],
-  femme: ['Coupe', 'Coloration', 'Brushing']
+var DEFAULT_P = {
+  homme: [
+    { name:'Coupe',    prix:20, duree:30 },
+    { name:'Dégradé',  prix:20, duree:30 },
+    { name:'Brushing', prix:15, duree:20 },
+  ],
+  femme: [
+    { name:'Coupe',     prix:30, duree:45 },
+    { name:'Couleur',   prix:65, duree:90 },
+    { name:'Brushing',  prix:25, duree:35 },
+  ]
 };
 
+function pinSvg(){return '<svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';}
+function clockSvg(){return '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>';}
+function sciSvg(){return '<svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>';}
+
 (async function() {
-  var params   = new URLSearchParams(window.location.search);
-  var salonId  = params.get('salon');
-  var slug     = params.get('slug');
+  var params  = new URLSearchParams(window.location.search);
+  var salonId = params.get('salon');
+  var slug    = params.get('slug');
 
   if (!salonId && !slug) {
-    document.getElementById('salon-content').innerHTML = '<div class="loader">Salon introuvable.</div>';
+    document.getElementById('page-loader').innerHTML = 'Salon introuvable.';
     return;
   }
 
   var q = sb.from('salon_settings')
     .select('user_id, salon_name, salon_address, prestations, prix_duree, slug');
-
   if (salonId) q = q.eq('user_id', salonId);
   else         q = q.eq('slug', slug);
 
   var res = await q.maybeSingle();
-
   if (!res.data) {
-    document.getElementById('salon-content').innerHTML = '<div class="loader">Salon introuvable.</div>';
+    document.getElementById('page-loader').innerHTML = 'Salon introuvable.';
     return;
   }
 
-  var s      = res.data;
-  var name   = s.salon_name || 'Salon';
-  var addr   = s.salon_address || '';
-  var pd     = s.prix_duree || {};
-  var prestH = (s.prestations && s.prestations.homme) || DEFAULT_PRESTATIONS.homme;
-  var prestF = (s.prestations && s.prestations.femme) || DEFAULT_PRESTATIONS.femme;
+  var s       = res.data;
+  var name    = s.salon_name || 'Salon';
+  var addr    = s.salon_address || '';
+  var pd      = s.prix_duree || {};
   var bookUrl = '/book.html?salon=' + s.user_id;
 
-  // Titre page
   document.title = name + ' — Belyo';
 
-  // CTA
-  document.getElementById('btn-reserve').href = bookUrl;
-  document.getElementById('cta-bar').style.display = 'block';
+  // Prestations avec fallback
+  var prestH = buildPrestList('homme', s, pd);
+  var prestF = buildPrestList('femme', s, pd);
 
-  // Construire le contenu
-  var nameParts = name.split(' ');
-  var firstWord = nameParts[0];
+  // ── Colonne gauche ──
+  var nameParts = name.trim().split(' ');
+  var first     = nameParts[0];
   var rest      = nameParts.slice(1).join(' ');
 
-  var html = '';
+  var left = '';
+  left += '<div class="salon-name">' + (rest ? first + ' <em>' + rest + '</em>' : '<em>' + first + '</em>') + '</div>';
 
-  // Info card
-  html += '<div class="info-card">';
-  html += '<div class="salon-name">' + (rest ? firstWord + ' <em>' + rest + '</em>' : '<em>' + firstWord + '</em>') + '</div>';
-  if (addr || s.slug) {
-    html += '<div class="salon-meta">';
-    if (addr) {
-      html += '<div class="meta-row"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' + addr + '</div>';
-    }
-    html += '</div>';
+  left += '<div class="meta-list">';
+  if (addr) {
+    left += '<div class="meta-row">' + pinSvg() + addr + '</div>';
   }
-  html += '</div>';
+  left += '<div class="meta-row">' + sciSvg() + '<span>' + (prestH.length + prestF.length) + ' prestations disponibles</span></div>';
+  left += '</div>';
 
-  // Prestations
-  var hasPrest = prestH.length > 0 || prestF.length > 0;
-  if (hasPrest) {
-    html += '<div class="section">';
-    html += '<div class="section-title">Prestations</div>';
-
-    if (prestH.length > 0) {
-      html += '<div class="prest-section-label">Homme</div>';
-      html += '<div class="prest-grid">';
-      prestH.forEach(function(p) {
-        var pdata = pd.homme && pd.homme[p];
-        var prix  = pdata && pdata.prix ? pdata.prix + '€' : '';
-        html += '<div class="prest-item"><span class="prest-name">' + p + '</span>'
-          + (prix ? '<span class="prest-prix">' + prix + '</span>' : '') + '</div>';
-      });
-      html += '</div>';
-    }
-
-    if (prestF.length > 0) {
-      html += '<div class="prest-section-label" style="margin-top:14px">Femme</div>';
-      html += '<div class="prest-grid">';
-      prestF.forEach(function(p) {
-        var pdata = pd.femme && pd.femme[p];
-        var prix  = pdata && pdata.prix ? pdata.prix + '€' : '';
-        html += '<div class="prest-item"><span class="prest-name">' + p + '</span>'
-          + (prix ? '<span class="prest-prix">' + prix + '</span>' : '') + '</div>';
-      });
-      html += '</div>';
-    }
-
-    html += '</div>';
+  // Prestations Homme
+  if (prestH.length > 0) {
+    left += '<div class="prest-block">';
+    left += '<div class="prest-genre-title">Homme</div>';
+    left += '<div class="prest-list">';
+    prestH.forEach(function(p) {
+      left += '<div class="prest-row">'
+        + '<div class="prest-row-left"><div class="prest-dot"></div><span class="prest-name">' + p.name + '</span>'
+        + (p.duree ? '<span class="prest-duration">· ' + p.duree + ' min</span>' : '')
+        + '</div>'
+        + (p.prix ? '<span class="prest-prix">' + p.prix + '€</span>' : '<span class="prest-prix-na">Sur devis</span>')
+        + '</div>';
+    });
+    left += '</div></div>';
   }
 
-  document.getElementById('salon-content').innerHTML = html;
+  // Prestations Femme
+  if (prestF.length > 0) {
+    left += '<div class="prest-block">';
+    left += '<div class="prest-genre-title">Femme</div>';
+    left += '<div class="prest-list">';
+    prestF.forEach(function(p) {
+      left += '<div class="prest-row">'
+        + '<div class="prest-row-left"><div class="prest-dot"></div><span class="prest-name">' + p.name + '</span>'
+        + (p.duree ? '<span class="prest-duration">· ' + p.duree + ' min</span>' : '')
+        + '</div>'
+        + (p.prix ? '<span class="prest-prix">' + p.prix + '€</span>' : '<span class="prest-prix-na">Sur devis</span>')
+        + '</div>';
+    });
+    left += '</div></div>';
+  }
+
+  document.getElementById('col-left').innerHTML = left;
+
+  // ── Colonne droite ──
+  var right = '';
+  right += '<div class="sticky-card">';
+  right += '<div class="sticky-card-head"><div class="sticky-card-name">' + name + '</div><div class="sticky-card-sub">Salon de coiffure · Nantes</div></div>';
+  right += '<div class="sticky-card-body">';
+  right += '<div class="sticky-meta">';
+  if (addr) {
+    right += '<div class="sticky-meta-row"><div class="sticky-meta-icon">' + pinSvg() + '</div><div><div class="sticky-meta-label">Adresse</div><div class="sticky-meta-val">' + addr + '</div></div></div>';
+  }
+  var minPrix = getMinPrix(prestH.concat(prestF));
+  if (minPrix) {
+    right += '<div class="sticky-meta-row"><div class="sticky-meta-icon">' + clockSvg() + '</div><div><div class="sticky-meta-label">À partir de</div><div class="sticky-meta-val">' + minPrix + '€</div></div></div>';
+  }
+  right += '<div class="sticky-meta-row"><div class="sticky-meta-icon">' + sciSvg() + '</div><div><div class="sticky-meta-label">Prestations</div><div class="sticky-meta-val">' + (prestH.length + prestF.length) + ' disponibles</div></div></div>';
+  right += '</div>';
+  right += '<a href="' + bookUrl + '" class="btn-reserve">Prendre un rendez-vous</a>';
+  right += '</div></div>';
+
+  document.getElementById('col-right').innerHTML = right;
+
+  // CTA mobile
+  document.getElementById('btn-mobile').href = bookUrl;
+  document.getElementById('cta-mobile').style.display = 'block';
+
+  // Afficher
+  document.getElementById('page-loader').style.display = 'none';
+  document.getElementById('page-body').style.display   = 'grid';
 })();
+
+function buildPrestList(genre, s, pd) {
+  var names = (s.prestations && s.prestations[genre]) || [];
+  if (names.length === 0) return DEFAULT_P[genre];
+  return names.map(function(name) {
+    var pdata = pd[genre] && pd[genre][name];
+    return {
+      name:  name,
+      prix:  pdata && pdata.prix  ? pdata.prix  : 0,
+      duree: pdata && pdata.duree ? pdata.duree : 0
+    };
+  });
+}
+
+function getMinPrix(list) {
+  var prices = list.map(function(p){ return p.prix; }).filter(function(p){ return p > 0; });
+  return prices.length > 0 ? Math.min.apply(null, prices) : 0;
+}
 </script>
 </body>
 </html>
