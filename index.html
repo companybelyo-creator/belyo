@@ -393,15 +393,15 @@
     <a href="#features">Fonctionnalités</a>
     <a href="#pricing">Tarifs</a>
     <a href="#testimonials">Avis</a>
-    <a href="pages/register.html" class="nav-cta">Essai gratuit →</a>
+    <a href="pages/login.html" class="nav-cta">Connexion →</a>
   </div>
 </nav>
 
 <!-- BANDEAU DOUBLE ENTRÉE -->
 <div style="background:var(--ink);padding:.8rem 2rem;display:flex;align-items:center;justify-content:center;gap:1.5rem;flex-wrap:wrap;margin-top:64px">
   <span style="font-size:13px;color:rgba(255,255,255,0.6)">Vous êtes :</span>
-  <a href="pages/register.html" id="btn-coiffeur" style="font-size:13px;font-weight:500;color:var(--white);padding:6px 18px;border-radius:100px;border:1px solid rgba(255,255,255,0.2)">Coiffeur — Gérer mon salon</a>
-  <a href="client.html" style="font-size:13px;font-weight:500;color:var(--ink);background:var(--gold);padding:6px 18px;border-radius:100px">Client — Mes rendez-vous</a>
+  <a href="pages/login.html" id="btn-coiffeur" style="font-size:13px;font-weight:500;color:var(--white);padding:6px 18px;border-radius:100px;border:1px solid rgba(255,255,255,0.2)">Coiffeur — Gérer mon salon</a>
+  <a href="/client/login.html" style="font-size:13px;font-weight:500;color:var(--ink);background:var(--gold);padding:6px 18px;border-radius:100px">Client — Mes rendez-vous</a>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
@@ -420,7 +420,7 @@ document.getElementById('btn-coiffeur').addEventListener('click', async function
       window.location.href = 'pages/dashboard.html';
     } else {
       // Client → aller sur client.html avec modal créateur ouvert
-      window.location.href = 'client.html?openCreator=1';
+      window.location.href = '/client/home.html';
     }
   } else {
     // Pas connecté → inscription normale
@@ -442,7 +442,7 @@ document.getElementById('btn-coiffeur').addEventListener('click', async function
       Rendez-vous, clients, chiffre d'affaires, stocks — tout depuis un seul dashboard. Pensé pour les coiffeurs, pas pour les comptables.
     </p>
     <div class="hero-actions reveal reveal-delay-3">
-      <a href="pages/register.html" class="btn-hero">Commencer gratuitement →</a>
+      <a href="pages/login.html" class="btn-hero">Commencer gratuitement →</a>
       <a href="#features" class="btn-hero-ghost">Voir les fonctionnalités</a>
     </div>
     <div class="hero-trust reveal reveal-delay-4">
@@ -644,7 +644,7 @@ document.getElementById('btn-coiffeur').addEventListener('click', async function
           <li>Gestion des stocks</li>
           <li>Rappels email automatiques</li>
         </ul>
-        <a href="pages/register.html" class="btn-plan">Commencer l'essai gratuit</a>
+        <a href="pages/login.html" class="btn-plan">Commencer l'essai gratuit</a>
         <div class="plan-trial">14 jours gratuits, sans engagement</div>
       </div>
       <div class="pricing-card featured reveal reveal-delay-1">
@@ -660,7 +660,7 @@ document.getElementById('btn-coiffeur').addEventListener('click', async function
           <li>Taux de retour, créneaux, genre</li>
           <li>Support prioritaire</li>
         </ul>
-        <a href="pages/register.html" class="btn-plan">Commencer l'essai gratuit</a>
+        <a href="pages/login.html" class="btn-plan">Commencer l'essai gratuit</a>
         <div class="plan-trial">14 jours gratuits, sans engagement</div>
       </div>
     </div>
@@ -672,8 +672,8 @@ document.getElementById('btn-coiffeur').addEventListener('click', async function
   <h2 class="reveal">Prêt à gérer votre salon<br /><em>autrement ?</em></h2>
   <p class="reveal">Rejoignez Belyo. 14 jours gratuits, aucune CB requise.</p>
   <div class="cta-actions reveal">
-    <a href="pages/register.html" class="btn-hero">Commencer gratuitement →</a>
-    <a href="pages/login.html" style="font-size:14px;color:var(--ink-light);border-bottom:1px solid var(--border);padding-bottom:1px">Déjà un compte ? Connexion</a>
+    <a href="pages/login.html" class="btn-hero">Commencer gratuitement →</a>
+    <a href="pages/login.html" style="font-size:14px;color:var(--ink-light);border-bottom:1px solid var(--border);padding-bottom:1px">Coiffeur — Se connecter</a>
   </div>
 </section>
 
