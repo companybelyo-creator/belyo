@@ -15,22 +15,17 @@
 
     /* ── APP BAR ── */
     .appbar{background:var(--ink);position:sticky;top:0;z-index:60;}
-    .appbar-top{padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
-    .appbar-logo{font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--white);}
-    .appbar-actions{display:flex;align-items:center;gap:8px;}
-    .appbar-btn{font-size:12px;padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);background:transparent;cursor:pointer;font-family:var(--font-body);transition:all .15s;text-decoration:none;display:inline-block;}
-    .appbar-btn:hover{background:rgba(255,255,255,.1);color:var(--white);}
-    .appbar-btn.gold{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:500;}
-    .appbar-btn.gold:hover{opacity:.9;}
-
-    /* TABS */
-    .appbar-tabs{display:flex;border-top:1px solid rgba(255,255,255,.08);}
-    .appbar-tab{flex:1;padding:.7rem 1rem;text-align:center;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font-body);}
+    .appbar-inner{max-width:900px;margin:0 auto;display:flex;align-items:stretch;}
+    .appbar-logo{font-family:var(--font-display);font-size:1.4rem;font-weight:600;color:var(--white);padding:.75rem 1.5rem;display:flex;align-items:center;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0;}
+    .appbar-nav{display:flex;flex:1;}
+    .appbar-tab{padding:.75rem 1.2rem;font-size:13px;font-weight:500;color:rgba(255,255,255,.45);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:none;border-left:none;border-right:none;border-top:none;font-family:var(--font-body);white-space:nowrap;}
     .appbar-tab.active{color:var(--white);border-bottom-color:var(--gold);}
     .appbar-tab:hover:not(.active){color:rgba(255,255,255,.7);}
+    .appbar-tab.logout{margin-left:auto;color:rgba(255,255,255,.3);}
+    .appbar-tab.logout:hover{color:rgba(255,255,255,.6);border-bottom-color:transparent;}
 
     /* CONTENU */
-    .page-content{max-width:680px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
+    .page-content{max-width:900px;margin:0 auto;padding:1.5rem 1.5rem 4rem;}
 
     /* SALUTATION */
     .greeting{margin-bottom:1.5rem;}
@@ -77,15 +72,15 @@
 
     /* SALONS */
     .salons-list{display:flex;flex-direction:column;gap:0;}
-    .salon-row{display:flex;align-items:center;gap:14px;padding:13px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
+    .salon-row{display:flex;align-items:center;gap:16px;padding:16px 18px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;}
     .salon-row:last-child{border-bottom:none;}
     .salon-row:hover{background:var(--cream);}
-    .salon-thumb{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--cream-dark);}
+    .salon-thumb{width:64px;height:64px;border-radius:12px;object-fit:cover;flex-shrink:0;background:var(--cream-dark);}
     .salon-row-info{flex:1;min-width:0;}
-    .salon-row-name{font-size:13px;font-weight:500;margin-bottom:2px;}
-    .salon-row-addr{font-size:12px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .salon-row-tags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;}
-    .salon-tag{font-size:10px;padding:2px 7px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border);}
+    .salon-row-name{font-size:15px;font-weight:500;margin-bottom:3px;}
+    .salon-row-addr{font-size:13px;color:var(--ink-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .salon-row-tags{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+    .salon-tag{font-size:11px;padding:3px 9px;border-radius:100px;background:var(--cream);color:var(--ink-light);border:1px solid var(--border);}
 
     /* SEARCH */
     .search-wrap{position:relative;margin-bottom:1rem;}
@@ -104,16 +99,15 @@
 
 <!-- APP BAR -->
 <div class="appbar">
-  <div class="appbar-top">
+  <div class="appbar-inner">
     <div class="appbar-logo">Belyo</div>
-    <div class="appbar-actions">
-      <span id="appbar-creator-btn"></span>
-      <button class="appbar-btn" onclick="doLogout()">Déconnexion</button>
-    </div>
-  </div>
-  <div class="appbar-tabs">
-    <button class="appbar-tab active" id="tab-salons"  onclick="switchTab('salons')">Salons</button>
-    <button class="appbar-tab"        id="tab-rdv"     onclick="switchTab('rdv')">Mes RDV</button>
+    <nav class="appbar-nav">
+      <button class="appbar-tab active" id="tab-salons" onclick="switchTab('salons')">Salons</button>
+      <button class="appbar-tab" id="tab-rdv" onclick="switchTab('rdv')">Mes RDV</button>
+      <button class="appbar-tab" id="tab-creator" onclick="handleCreatorTab()" style="display:none">Créer mon salon</button>
+      <a class="appbar-tab" id="tab-dashboard" href="/pages/dashboard.html" style="display:none">Mon salon</a>
+      <button class="appbar-tab logout" onclick="doLogout()">Déconnexion</button>
+    </nav>
   </div>
 </div>
 
@@ -127,17 +121,18 @@
       <div class="greeting-sub" id="greeting-sub">Découvrez les salons disponibles</div>
     </div>
 
-    <div class="search-wrap">
-      <div class="search-icon">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-      <input type="text" class="search-input" id="search-salons" placeholder="Rechercher un salon..." oninput="onSearch()" />
-    </div>
-
     <div class="section">
       <div class="section-head">
-        <span class="section-title">Salons Belyo</span>
-        <span class="section-count" id="salons-count"></span>
+        <div>
+          <div class="section-title">Salons Belyo</div>
+          <div class="section-count" id="salons-count" style="margin-top:2px"></div>
+        </div>
+        <div class="search-wrap" style="margin:0;width:220px">
+          <div class="search-icon">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <input type="text" class="search-input" id="search-salons" placeholder="Rechercher..." oninput="onSearch()" style="font-size:13px;padding:8px 12px 8px 34px;" />
+        </div>
       </div>
       <div id="salons-list">
         <div class="empty-state">Chargement...</div>
@@ -333,6 +328,7 @@ function renderRdv(elId, list, isUpcoming, now) {
 }
 
 // ── Créer salon ──
+function handleCreatorTab() { openCreator(); }
 function openCreator()  { var m=document.getElementById('creator-modal'); m.style.opacity='1'; m.style.pointerEvents='all'; }
 function closeCreator() { var m=document.getElementById('creator-modal'); m.style.opacity='0'; m.style.pointerEvents='none'; }
 document.getElementById('creator-modal').addEventListener('click', function(e){ if(e.target===this) closeCreator(); });
@@ -367,12 +363,11 @@ async function createSalon() {
   document.getElementById('greeting-name').textContent = name;
   document.getElementById('greeting-sub').textContent  = isSalon ? 'Vous avez aussi un espace salon' : 'Découvrez les salons disponibles';
 
-  // Bouton créer salon ou aller au dashboard
-  var creatorEl = document.getElementById('appbar-creator-btn');
+  // Afficher le bon onglet selon le rôle
   if (isSalon) {
-    creatorEl.innerHTML = '<a href="/pages/dashboard.html" class="appbar-btn gold">Mon salon →</a>';
+    document.getElementById('tab-dashboard').style.display = 'block';
   } else {
-    creatorEl.innerHTML = '<button class="appbar-btn" onclick="openCreator()">Créer mon salon</button>';
+    document.getElementById('tab-creator').style.display = 'block';
   }
 
   loadSalons();
