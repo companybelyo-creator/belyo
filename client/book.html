@@ -84,17 +84,17 @@
     .service-item.selected .service-check{display:flex;}
 
     /* CALENDRIER */
-    .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+    .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
     .cal-nav-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
       background:none;cursor:pointer;font-size:16px;color:var(--ink);
       display:flex;align-items:center;justify-content:center;transition:background .15s;}
     .cal-nav-btn:hover{background:var(--cream-dark);}
     .cal-month-label{font-size:15px;font-weight:500;text-transform:capitalize;}
-    .cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:6px;}
-    .cal-head span{text-align:center;font-size:11px;font-weight:500;color:var(--ink-light);padding:3px;}
-    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-    .cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;
-      font-size:13px;border-radius:50%;cursor:pointer;border:none;background:none;
+    .cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+    .cal-head span{text-align:center;font-size:11px;font-weight:500;color:var(--ink-light);padding:2px;}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+    .cal-day{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+      margin:0 auto;font-size:13px;border-radius:50%;cursor:pointer;border:none;background:none;
       font-family:var(--font-body);transition:all .15s;position:relative;}
     .cal-day:hover:not(.disabled):not(.empty){background:var(--cream-dark);}
     .cal-day.today{font-weight:700;color:var(--gold);}
