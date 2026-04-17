@@ -536,8 +536,9 @@ ul { list-style: none; }
   text-transform: uppercase;
   letter-spacing: .05em;
   color: var(--ink-light);
-  padding: 0 1rem .8rem;
+  padding: .8rem 1rem;
   border-bottom: 1px solid var(--border);
+  vertical-align: middle;
 }
 .table td {
   padding: .9rem 1rem;
