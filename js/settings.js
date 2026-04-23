@@ -511,21 +511,17 @@ async function savePrestations() {
 
 // ===== PLANNING =====
 var JOURS_SEMAINE = [
-  {label:'Lundi',   short:'Lun'},
-  {label:'Mardi',   short:'Mar'},
-  {label:'Mercredi',short:'Mer'},
-  {label:'Jeudi',   short:'Jeu'},
-  {label:'Vendredi',short:'Ven'},
-  {label:'Samedi',  short:'Sam'},
+  {label:'Lundi',short:'Lun'},{label:'Mardi',short:'Mar'},{label:'Mercredi',short:'Mer'},
+  {label:'Jeudi',short:'Jeu'},{label:'Vendredi',short:'Ven'},{label:'Samedi',short:'Sam'},
   {label:'Dimanche',short:'Dim'},
 ];
 var planningData = {
-  jours:  { 0:true, 1:true, 2:true, 3:true, 4:true, 5:true, 6:false },
+  jours:  {0:true,1:true,2:true,3:true,4:true,5:true,6:false},
   heures: {},
   conges: []
 };
 
-function defaultPlages() { return [{ debut:'09:00', fin:'19:00' }]; }
+function defaultPlages() { return [{debut:'09:00',fin:'19:00'}]; }
 function getPlages(i) {
   var h = planningData.heures[i];
   if (!h) return defaultPlages();
@@ -533,104 +529,290 @@ function getPlages(i) {
   return h.length ? h : defaultPlages();
 }
 
-// Génère toutes les options h00/h15/h30/h45
-function buildTimeOptions(selected) {
-  var opts = '';
-  for (var hh = 6; hh <= 23; hh++) {
-    [0, 15, 30, 45].forEach(function(mm) {
-      var val = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
-      var label = String(hh).padStart(2,'0') + 'h' + (mm ? String(mm).padStart(2,'0') : '00');
-      opts += '<option value="'+val+'"'+(selected===val?' selected':'')+'>'+label+'</option>';
-    });
-  }
-  return opts;
+// ── Roulette (drum picker) ──
+var HEURES = [];
+for (var hh=6;hh<=23;hh++) [0,15,30,45].forEach(function(mm){ HEURES.push(String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')); });
+
+var drumState = {}; // {id: {values, index, dragging, startY, startIndex}}
+
+function drumLabel(val) {
+  var p = val.split(':');
+  return p[0]+'h'+(p[1]==='00'?'00':p[1]);
 }
 
-function renderPlanningDays() {
-  var el = document.getElementById('planning-days');
-  if (!el) return;
+function buildDrum(id, values, selected, onchange) {
+  var idx = values.indexOf(selected);
+  if (idx < 0) idx = 0;
+  drumState[id] = {values:values, index:idx, cb:onchange};
+  return '<div class="drum" id="drum-'+id+'" '
+    +'onmousedown="drumStart(event,\''+id+'\')" '
+    +'ontouchstart="drumStart(event,\''+id+'\')">'
+    +'<div class="drum-inner" id="drum-inner-'+id+'"></div>'
+    +'</div>';
+}
+
+function renderDrum(id) {
+  var s = drumState[id]; if(!s) return;
+  var el = document.getElementById('drum-inner-'+id); if(!el) return;
   var h = '';
-  JOURS_SEMAINE.forEach(function(j, i) {
+  for (var k=s.index-2; k<=s.index+2; k++) {
+    var vi = ((k%s.values.length)+s.values.length)%s.values.length;
+    var cls = k===s.index ? 'drum-item center' : 'drum-item';
+    h += '<div class="'+cls+'">'+drumLabel(s.values[vi])+'</div>';
+  }
+  el.innerHTML = h;
+}
+
+function drumStart(e, id) {
+  e.preventDefault();
+  var s = drumState[id]; if(!s) return;
+  s.dragging = true;
+  s.startY = e.touches ? e.touches[0].clientY : e.clientY;
+  s.startIndex = s.index;
+  function onMove(ev) {
+    if (!s.dragging) return;
+    var y = ev.touches ? ev.touches[0].clientY : ev.clientY;
+    var delta = Math.round((s.startY - y) / 14);
+    var ni = ((s.startIndex + delta) % s.values.length + s.values.length) % s.values.length;
+    if (ni !== s.index) { s.index = ni; renderDrum(id); }
+  }
+  function onUp() {
+    s.dragging = false;
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onUp);
+    if (s.cb) s.cb(s.values[s.index]);
+  }
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  document.addEventListener('touchmove', onMove, {passive:true});
+  document.addEventListener('touchend', onUp);
+  renderDrum(id);
+}
+
+function getDrumVal(id) {
+  var s = drumState[id]; if(!s) return null;
+  return s.values[s.index];
+}
+
+// ── Render planning ──
+function renderPlanningDays() {
+  var el = document.getElementById('planning-days'); if(!el) return;
+  var html = '';
+  JOURS_SEMAINE.forEach(function(j,i) {
     var actif  = planningData.jours[i] !== false;
     var plages = actif ? getPlages(i) : [];
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden">'
+      // Ligne header
+      +'<div style="display:flex;align-items:center;padding:12px 16px;gap:14px'+(actif?';border-bottom:1px solid var(--border)':'')+'">'
+      +'<label style="position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer">'
+      +'<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="opacity:0;width:0;height:0">'
+      +'<span id="sw-'+i+'" style="position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s">'
+      +'<span style="position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s"></span>'
+      +'</span></label>'
+      +'<span style="font-size:14px;font-weight:500;min-width:95px;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j.label+'</span>'
+      +(actif
+        ? '<span style="font-size:12px;color:var(--ink-light);flex:1">'+plages.length+' plage'+(plages.length>1?'s':'')+'</span>'
+          +'<button onclick="addPlage('+i+')" style="padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)">+ pause</button>'
+        : '<span style="font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px">Fermé</span>')
+      +'</div>';
 
-    h += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:0;overflow:hidden;margin-bottom:6px">'
-
-      // ── Ligne principale ──
-      + '<div style="display:flex;align-items:center;padding:13px 16px;gap:14px">'
-
-      // Toggle switch
-      + '<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer">'
-      + '<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="opacity:0;width:0;height:0">'
-      + '<span style="position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s" id="sw-track-'+i+'">'
-      + '<span style="position:absolute;width:16px;height:16px;background:var(--white);border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s" id="sw-thumb-'+i+'"></span>'
-      + '</span>'
-      + '</label>'
-
-      // Nom du jour
-      + '<span style="font-size:14px;font-weight:500;min-width:90px;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j.label+'</span>'
-
-      + (actif
-          // Plages horaires inline
-          ? '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1">'
-            + plages.map(function(p, pi) {
-                return '<div style="display:flex;align-items:center;gap:6px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px">'
-                  + '<select onchange="updatePlage('+i+','+pi+',\'debut\',this.value)" style="border:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--ink);cursor:pointer;outline:none;-webkit-appearance:none;padding:0">'
-                  + buildTimeOptions(p.debut)
-                  + '</select>'
-                  + '<span style="font-size:12px;color:var(--ink-light);padding:0 2px">→</span>'
-                  + '<select onchange="updatePlage('+i+','+pi+',\'fin\',this.value)" style="border:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--ink);cursor:pointer;outline:none;-webkit-appearance:none;padding:0">'
-                  + buildTimeOptions(p.fin)
-                  + '</select>'
-                  + (plages.length > 1
-                      ? '<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-light);padding:0 0 0 4px;line-height:1;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
-                      : '')
-                  + '</div>';
-              }).join('')
-            + '<button onclick="addPlage('+i+')" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:var(--radius-sm);border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light);transition:all .15s;white-space:nowrap" onmouseover="this.style.borderColor=\'var(--gold)\';this.style.color=\'var(--ink)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--ink-light)\'">+ pause</button>'
-            + '</div>'
-          // Fermé
-          : '<div style="flex:1;display:flex;align-items:center">'
-            + '<span style="font-size:12px;color:var(--ink-light);background:var(--cream);padding:4px 10px;border-radius:100px">Fermé</span>'
-            + '</div>'
-        )
-
-      + '</div>' // fin ligne principale
-      + '</div>'; // fin card
+    // Plages avec drum pickers
+    if (actif && plages.length) {
+      html += '<div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center">';
+      plages.forEach(function(p,pi) {
+        var dIdD = 'pd-'+i+'-'+pi+'-d', dIdF = 'pd-'+i+'-'+pi+'-f';
+        // Valider que debut < fin
+        var debutOk = HEURES.indexOf(p.debut)>=0 ? p.debut : '09:00';
+        var finOk   = HEURES.indexOf(p.fin)>=0   ? p.fin   : '19:00';
+        if (HEURES.indexOf(finOk) <= HEURES.indexOf(debutOk)) finOk = HEURES[Math.min(HEURES.indexOf(debutOk)+4, HEURES.length-1)];
+        html += '<div class="plage-pill">'
+          +(plages.length>1?'<span style="font-size:11px;color:var(--ink-light);margin-right:2px">'+(pi+1)+'.</span>':'')
+          +buildDrum(dIdD, HEURES, debutOk, function(v){updatePlageFrom(i,pi,'debut',dIdD,dIdF);})
+          +'<span style="font-size:12px;color:var(--ink-light)">–</span>'
+          +buildDrum(dIdF, HEURES, finOk, function(v){updatePlageFrom(i,pi,'fin',dIdD,dIdF);})
+          +(plages.length>1?'<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 0 0 6px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>':'')
+          +'</div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
   });
-  el.innerHTML = h;
+  el.innerHTML = html;
+  // Render tous les drums
+  Object.keys(drumState).forEach(renderDrum);
+}
+
+function updatePlageFrom(i, pi, type, dIdD, dIdF) {
+  var plages = getPlages(i);
+  var vD = getDrumVal(dIdD)||plages[pi].debut;
+  var vF = getDrumVal(dIdF)||plages[pi].fin;
+  // Validation : fin doit être après debut
+  if (HEURES.indexOf(vF) <= HEURES.indexOf(vD)) {
+    var ni = Math.min(HEURES.indexOf(vD)+4, HEURES.length-1);
+    vF = HEURES[ni];
+    if (drumState[dIdF]) { drumState[dIdF].index = ni; renderDrum(dIdF); }
+  }
+  plages[pi] = {debut: vD, fin: vF};
+  planningData.heures[i] = plages;
 }
 
 function toggleJour(i) {
   var checked = document.getElementById('jour-'+i).checked;
   planningData.jours[i] = checked;
-  if (checked && (!planningData.heures[i] || !planningData.heures[i].length)) {
-    planningData.heures[i] = defaultPlages();
-  }
+  if (checked && (!planningData.heures[i]||!planningData.heures[i].length)) planningData.heures[i] = defaultPlages();
   renderPlanningDays();
 }
 
 function addPlage(i) {
   var plages = getPlages(i);
-  var lastFin = plages[plages.length-1].fin || '19:00';
-  var parts   = lastFin.split(':');
-  var newH    = Math.min(parseInt(parts[0])+2, 22);
-  plages.push({ debut: lastFin, fin: String(newH).padStart(2,'0')+':00' });
+  var lastFin = plages[plages.length-1].fin||'19:00';
+  var idx = HEURES.indexOf(lastFin);
+  var newD = HEURES[Math.min(idx+1,HEURES.length-1)];
+  var newF = HEURES[Math.min(idx+9,HEURES.length-1)];
+  plages.push({debut:newD, fin:newF});
   planningData.heures[i] = plages;
   renderPlanningDays();
 }
 
 function removePlage(i, pi) {
   var plages = getPlages(i);
-  plages.splice(pi, 1);
+  plages.splice(pi,1);
   planningData.heures[i] = plages;
   renderPlanningDays();
 }
 
-function updatePlage(i, pi, type, val) {
-  var plages = getPlages(i);
-  plages[pi][type] = val;
-  planningData.heures[i] = plages;
+// ── Calendrier congés ──
+var congeCalMonth = new Date();
+var congeRangeStart = null, congeRangeEnd = null, congeSelecting = false;
+
+function congeCalPrev() { congeCalMonth = new Date(congeCalMonth.getFullYear(),congeCalMonth.getMonth()-1,1); renderCongeCal(); }
+function congeCalNext() { congeCalMonth = new Date(congeCalMonth.getFullYear(),congeCalMonth.getMonth()+1,1); renderCongeCal(); }
+
+function renderCongeCal() {
+  var year=congeCalMonth.getFullYear(), month=congeCalMonth.getMonth();
+  var now=new Date(); now.setHours(0,0,0,0);
+  var lbl=document.getElementById('conge-cal-label');
+  if(lbl) lbl.textContent=new Date(year,month,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  var firstDay=new Date(year,month,1).getDay(), offset=firstDay===0?6:firstDay-1;
+  var days=new Date(year,month+1,0).getDate();
+  var grid=document.getElementById('conge-cal-grid'); if(!grid) return;
+  var h='';
+  for(var k=0;k<offset;k++) h+='<div></div>';
+  for(var d=1;d<=days;d++){
+    var dd=new Date(year,month,d);
+    var iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var isPast=dd<now;
+    var cls='conge-cal-day'+(isPast?' past':'');
+    var s=congeRangeStart, e=congeRangeEnd||congeRangeStart;
+    if(s&&e){
+      var lo=s<e?s:e, hi=s<e?e:s;
+      if(iso===lo&&iso===hi) cls+=' single';
+      else if(iso===lo) cls+=' range-start';
+      else if(iso===hi) cls+=' range-end';
+      else if(iso>lo&&iso<hi) cls+=' in-range';
+    }
+    h+='<button class="'+cls+'"'+(isPast?'':' onclick="congeCalClick(\''+iso+'\',event)"')+'>'+d+'</button>';
+  }
+  grid.innerHTML=h;
+  var info=document.getElementById('conge-sel-info');
+  if(info){
+    if(!congeRangeStart) info.textContent='Cliquez sur une date pour commencer';
+    else if(!congeRangeEnd||congeRangeStart===congeRangeEnd) info.textContent='Cliquez sur une 2e date pour la période, ou "Bloquer" pour un seul jour';
+    else {
+      var d1=new Date(congeRangeStart).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      var d2=new Date(congeRangeEnd).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+      info.textContent='Période : '+d1+' → '+d2;
+    }
+  }
+}
+
+function congeCalClick(iso, e) {
+  if(!congeRangeStart||congeRangeEnd) {
+    congeRangeStart=iso; congeRangeEnd=null;
+  } else {
+    if(iso<congeRangeStart) { congeRangeEnd=congeRangeStart; congeRangeStart=iso; }
+    else congeRangeEnd=iso;
+  }
+  renderCongeCal();
+}
+
+function addConge() {
+  if(!congeRangeStart) { showToast('Sélectionnez au moins une date','error'); return; }
+  var debut=congeRangeStart, fin=congeRangeEnd||congeRangeStart;
+  if(fin<debut){var tmp=fin;fin=debut;debut=tmp;}
+  var label=document.getElementById('conge-label').value.trim()||'Congé';
+  // Vérifier chevauchement
+  var overlap=planningData.conges.some(function(c){ return debut<=c.fin&&fin>=c.debut; });
+  if(overlap){ showToast('Chevauchement avec un congé existant','error'); return; }
+  planningData.conges.push({debut:debut,fin:fin,label:label});
+  planningData.conges.sort(function(a,b){return a.debut.localeCompare(b.debut);});
+  document.getElementById('conge-label').value='';
+  congeRangeStart=null; congeRangeEnd=null;
+  renderCongeCal();
+  renderConges();
+}
+
+function renderConges() {
+  var el=document.getElementById('conges-list'); if(!el) return;
+  if(!planningData.conges.length){
+    el.innerHTML='<div style="font-size:13px;color:var(--ink-light);padding:6px 0">Aucun congé planifié.</div>';
+    return;
+  }
+  el.innerHTML=planningData.conges.map(function(c,i){
+    var d1=new Date(c.debut).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+    var d2=new Date(c.fin).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+    var isSingle=c.debut===c.fin;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0"></div>'
+      +'<div><div style="font-size:13px;font-weight:500">'+c.label+'</div>'
+      +'<div style="font-size:12px;color:var(--ink-light);margin-top:1px">'+(isSingle?d1:d1+' → '+d2)+'</div></div>'
+      +'</div>'
+      +'<button onclick="removeConge('+i+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      +'</div>';
+  }).join('');
+}
+
+function removeConge(i) { planningData.conges.splice(i,1); renderConges(); renderCongeCal(); }
+
+async function loadPlanning() {
+  var res=await sb.from('salon_settings').select('planning').eq('user_id',currentUser.id).maybeSingle();
+  if(res.data&&res.data.planning) {
+    var p=res.data.planning;
+    if(p.jours)  planningData.jours  = p.jours;
+    if(p.heures) planningData.heures = p.heures;
+    if(p.conges) planningData.conges = p.conges;
+  }
+  congeCalMonth=new Date(); congeCalMonth.setDate(1);
+  renderPlanningDays();
+  renderCongeCal();
+  renderConges();
+}
+
+async function savePlanning() {
+  // Sauvegarder l'état actuel des drums dans planningData
+  JOURS_SEMAINE.forEach(function(_,i){
+    if(planningData.jours[i]===false) return;
+    var plages=getPlages(i);
+    plages.forEach(function(p,pi){
+      var dIdD='pd-'+i+'-'+pi+'-d', dIdF='pd-'+i+'-'+pi+'-f';
+      if(drumState[dIdD]) p.debut=getDrumVal(dIdD)||p.debut;
+      if(drumState[dIdF]) p.fin  =getDrumVal(dIdF)||p.fin;
+      // Validation logique
+      if(HEURES.indexOf(p.fin)<=HEURES.indexOf(p.debut)) p.fin=HEURES[Math.min(HEURES.indexOf(p.debut)+4,HEURES.length-1)];
+    });
+    planningData.heures[i]=plages;
+  });
+  var btn=document.getElementById('btn-save-planning');
+  btn.disabled=true; btn.textContent='Enregistrement...';
+  showMsg('planning-ok',false);
+  var res=await sb.from('salon_settings').update({planning:planningData}).eq('user_id',currentUser.id).select();
+  btn.disabled=false; btn.textContent='Enregistrer';
+  if(res.error){showToast('Erreur : '+res.error.message,'error');return;}
+  showMsg('planning-ok',true);
+  setTimeout(function(){showMsg('planning-ok',false);},3000);
 }
 
 function renderConges() {
