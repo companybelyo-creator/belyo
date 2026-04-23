@@ -566,6 +566,614 @@ async function confirmBooking(){
   document.getElementById('success-screen').style.display='block';
   window.scrollTo(0,0);
 }
+</script><!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Réserver — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--cream:#F7F3EE;--cream-dark:#EDE7DC;--ink:#1A1714;--ink-light:#5C5550;--gold:#C4A87A;--gold-light:#E8D9BF;--white:#FFFFFF;--border:rgba(26,23,20,0.1);--radius:12px;--radius-sm:8px;--font-display:'Cormorant Garamond',serif;--font-body:'DM Sans',sans-serif;}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);background:var(--cream);color:var(--ink);min-height:100vh;}
+    a{text-decoration:none;color:inherit;}
+
+    /* APPBAR */
+    .appbar{background:var(--ink);height:64px;position:sticky;top:0;z-index:60;}
+    .appbar-inner{height:100%;max-width:760px;margin:0 auto;padding:0 1.5rem;
+      display:flex;align-items:center;justify-content:space-between;}
+    .appbar-back{display:flex;align-items:center;gap:5px;font-size:13px;
+      color:rgba(255,255,255,.45);background:none;border:none;cursor:pointer;
+      font-family:var(--font-body);text-decoration:none;transition:color .15s;}
+    .appbar-back:hover{color:var(--white);}
+    .appbar-back svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;}
+    .appbar-salon{font-family:var(--font-display);font-size:1.4rem;font-weight:300;
+      color:var(--white);} .appbar-salon em{font-style:italic;color:var(--gold);}
+
+    /* STEPS */
+    .steps-bar{background:var(--white);border-bottom:1px solid var(--border);
+      display:flex;justify-content:center;}
+    .step{display:flex;align-items:center;gap:7px;padding:.85rem 1.4rem;
+      font-size:13px;color:var(--ink-light);border-bottom:2px solid transparent;
+      transition:all .2s;cursor:default;}
+    .step-num{width:20px;height:20px;border-radius:50%;background:var(--cream-dark);
+      color:var(--ink-light);font-size:10px;font-weight:600;display:flex;
+      align-items:center;justify-content:center;flex-shrink:0;}
+    .step.active{color:var(--ink);border-color:var(--gold);}
+    .step.active .step-num{background:var(--ink);color:var(--white);}
+    .step.done .step-num{background:var(--gold);color:var(--ink);}
+
+    /* BODY */
+    .bk-body{max-width:660px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+
+    /* CARD */
+    .card{background:var(--white);border:1px solid var(--border);
+      border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;}
+    .card-head{padding:1.1rem 1.5rem;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:10px;}
+    .card-num{width:26px;height:26px;border-radius:8px;background:var(--ink);
+      color:var(--white);font-size:11px;font-weight:600;display:flex;
+      align-items:center;justify-content:center;flex-shrink:0;}
+    .card-title{font-size:14px;font-weight:500;}
+    .card-body{padding:1.4rem 1.5rem;}
+
+    /* GENRE TABS */
+    .genre-row{display:flex;gap:6px;margin-bottom:1.2rem;}
+    .genre-btn{flex:1;padding:10px;border-radius:var(--radius-sm);
+      border:1.5px solid var(--border);background:var(--cream);
+      font-family:var(--font-body);font-size:14px;font-weight:500;
+      cursor:pointer;transition:all .15s;color:var(--ink-light);}
+    .genre-btn.active{background:var(--ink);color:var(--white);border-color:var(--ink);}
+    .genre-btn:hover:not(.active){border-color:var(--gold);}
+
+    /* SERVICES — liste propre */
+    .service-list{display:flex;flex-direction:column;gap:4px;}
+    .service-item{display:flex;align-items:center;justify-content:space-between;
+      padding:13px 16px;border-radius:var(--radius-sm);border:1.5px solid var(--border);
+      background:var(--cream);cursor:pointer;transition:all .15s;position:relative;}
+    .service-item:hover{border-color:var(--gold);background:var(--white);}
+    .service-item.selected{border-color:var(--ink);background:var(--ink);}
+    .service-item-left{display:flex;align-items:center;gap:10px;}
+    .service-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);flex-shrink:0;transition:background .15s;}
+    .service-item.selected .service-dot{background:var(--gold-light);}
+    .service-item-name{font-size:14px;font-weight:500;color:var(--ink);}
+    .service-item.selected .service-item-name{color:var(--white);}
+    .service-item-dur{font-size:12px;color:var(--ink-light);margin-left:4px;}
+    .service-item.selected .service-item-dur{color:rgba(255,255,255,.45);}
+    .service-item-right{display:flex;align-items:center;gap:10px;}
+    .service-item-prix{font-size:15px;font-weight:500;color:var(--ink);}
+    .service-item.selected .service-item-prix{color:var(--gold-light);}
+    .service-check{width:18px;height:18px;border-radius:50%;background:var(--gold);
+      color:var(--ink);font-size:10px;font-weight:700;display:none;
+      align-items:center;justify-content:center;flex-shrink:0;}
+    .service-item.selected .service-check{display:flex;}
+
+    /* CALENDRIER */
+    .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .cal-nav-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);
+      background:none;cursor:pointer;font-size:16px;color:var(--ink);
+      display:flex;align-items:center;justify-content:center;transition:background .15s;}
+    .cal-nav-btn:hover{background:var(--cream-dark);}
+    .cal-month-label{font-size:15px;font-weight:500;text-transform:capitalize;}
+    .cal-head{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+    .cal-head span{text-align:center;font-size:11px;font-weight:500;color:var(--ink-light);padding:2px;}
+    .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;}
+    .cal-day{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+      margin:0 auto;font-size:13px;border-radius:50%;cursor:pointer;border:none;background:none;
+      font-family:var(--font-body);transition:all .15s;position:relative;}
+    .cal-day:hover:not(.disabled):not(.empty){background:var(--cream-dark);}
+    .cal-day.today{font-weight:700;color:var(--gold);}
+    .cal-day.selected{color:var(--ink);font-weight:700;}
+    .cal-day.selected::after{content:'';position:absolute;bottom:2px;left:50%;
+      transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--gold);}
+    .cal-day.disabled{color:rgba(26,23,20,.2);cursor:not-allowed;}
+    .cal-day.empty{cursor:default;}
+    .slots-label{font-size:11px;font-weight:500;color:var(--ink-light);
+      text-transform:uppercase;letter-spacing:.06em;margin:1.2rem 0 .6rem;}
+    .slots-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+    .slot-btn{padding:9px 4px;border-radius:var(--radius-sm);
+      border:1.5px solid var(--border);background:var(--cream);cursor:pointer;
+      font-family:var(--font-body);font-size:12px;font-weight:500;
+      transition:all .15s;color:var(--ink);text-align:center;}
+    .slot-btn:hover:not(.taken){border-color:var(--gold);background:var(--white);}
+    .slot-btn.selected{background:var(--ink);color:var(--white);border-color:var(--ink);}
+    .slot-btn.taken{color:rgba(26,23,20,.2);cursor:not-allowed;background:transparent;text-decoration:line-through;}
+
+    /* FORMULAIRE */
+    .form-group{margin-bottom:.85rem;}
+    .form-label{display:block;font-size:12px;font-weight:500;color:var(--ink-light);margin-bottom:4px;}
+    .form-input{width:100%;padding:11px 14px;border:1.5px solid var(--border);
+      border-radius:var(--radius-sm);font-family:var(--font-body);font-size:15px;
+      background:var(--cream);color:var(--ink);outline:none;transition:border-color .15s;}
+    .form-input:focus{border-color:var(--gold);}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+    /* RECAP */
+    .recap-row{display:flex;justify-content:space-between;align-items:center;
+      padding:10px 0;border-bottom:1px solid var(--border);font-size:14px;}
+    .recap-row:last-child{border-bottom:none;padding-bottom:0;}
+    .recap-label{color:var(--ink-light);font-size:13px;}
+    .recap-val{font-weight:500;}
+    .recap-prix{font-family:var(--font-display);font-size:1.5rem;color:var(--gold);}
+
+    /* BOUTONS */
+    .btn-next{width:100%;padding:14px;background:var(--ink);color:var(--white);
+      border:none;border-radius:100px;font-family:var(--font-body);font-size:15px;
+      font-weight:500;cursor:pointer;transition:opacity .2s;margin-top:1.2rem;
+      display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn-next:hover{opacity:.88;}
+    .btn-next:disabled{opacity:.35;cursor:not-allowed;}
+    .btn-prev{display:flex;align-items:center;gap:5px;font-size:13px;
+      color:var(--ink-light);background:none;border:none;cursor:pointer;
+      font-family:var(--font-body);margin-bottom:1rem;padding:0;}
+    .btn-prev:hover{color:var(--ink);}
+
+    /* SUCCÈS */
+    .success-screen{display:none;text-align:center;padding:3rem 1rem;}
+    .success-icon{width:60px;height:60px;border-radius:50%;background:var(--gold-light);
+      display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;}
+    .success-icon svg{width:26px;height:26px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;}
+    .success-title{font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:.5rem;}
+    .success-title em{font-style:italic;color:var(--gold);}
+    .success-sub{font-size:14px;color:var(--ink-light);max-width:340px;margin:0 auto 2rem;line-height:1.6;}
+    .success-card{background:var(--white);border:1px solid var(--border);
+      border-radius:var(--radius);padding:1.5rem;max-width:340px;margin:0 auto;text-align:left;}
+
+    /* LOADER */
+    .loader{text-align:center;padding:3rem;color:var(--ink-light);}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);
+      border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      background:var(--ink);color:var(--white);padding:12px 24px;border-radius:100px;
+      font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;}
+    .toast.show{opacity:1;}
+
+    @media(max-width:480px){
+      .slots-grid{grid-template-columns:repeat(4,1fr);}
+      .form-row{grid-template-columns:1fr;}
+      .step span:last-child{display:none;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- APPBAR -->
+<div class="appbar">
+  <div class="appbar-inner">
+    <a href="javascript:history.back()" class="appbar-back">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      Retour
+    </a>
+    <div class="appbar-salon" id="salon-name">Chargement<em>...</em></div>
+  </div>
+</div>
+
+<!-- STEPS -->
+<div class="steps-bar" id="bk-steps">
+  <div class="step active" id="bk-step-1"><div class="step-num">1</div><span>Prestation</span></div>
+  <div class="step" id="bk-step-2"><div class="step-num">2</div><span>Date</span></div>
+  <div class="step" id="bk-step-3"><div class="step-num">3</div><span>Coordonnées</span></div>
+  <div class="step" id="bk-step-4"><div class="step-num">4</div><span>Confirmation</span></div>
+</div>
+
+<div class="bk-body">
+  <div class="loader" id="main-loader"><span class="spinner"></span>Chargement...</div>
+
+  <div id="error-screen" style="display:none;text-align:center;padding:3rem 1rem">
+    <div style="font-size:2rem;margin-bottom:1rem">⚠</div>
+    <h2 style="font-size:1.1rem;margin-bottom:.5rem">Salon introuvable</h2>
+    <p style="color:var(--ink-light);font-size:14px;margin-bottom:1.5rem">Vérifiez le lien fourni.</p>
+    <a href="/client/home.html" style="display:inline-block;background:var(--ink);color:var(--white);padding:10px 24px;border-radius:100px;font-size:13px">Retour</a>
+  </div>
+
+  <div id="booking-flow" style="display:none">
+
+    <!-- ÉTAPE 1 : Prestation -->
+    <div id="view-1">
+      <div class="card">
+        <div class="card-head"><div class="card-num">1</div><div class="card-title">Choisissez votre prestation</div></div>
+        <div class="card-body">
+          <div class="genre-row">
+            <button class="genre-btn active" id="gbtn-homme" onclick="setBookGenre('homme')">Homme</button>
+            <button class="genre-btn" id="gbtn-femme" onclick="setBookGenre('femme')">Femme</button>
+          </div>
+          <div id="service-grid" class="service-list"></div>
+        </div>
+      </div>
+      <button class="btn-next" id="btn-step1" onclick="goStep(2)" disabled>
+        Continuer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- ÉTAPE 2 : Date -->
+    <div id="view-2" style="display:none" data-selected-date="">
+      <button class="btn-prev" onclick="goStep(1)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Retour
+      </button>
+      <div class="card">
+        <div class="card-head"><div class="card-num">2</div><div class="card-title">Choisissez une date</div></div>
+        <div class="card-body">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="calPrevMonth()">&#8249;</button>
+            <span class="cal-month-label" id="cal-month-label">—</span>
+            <button class="cal-nav-btn" onclick="calNextMonth()">&#8250;</button>
+          </div>
+          <div class="cal-head">
+            <span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span>
+          </div>
+          <div class="cal-grid" id="book-cal-grid"></div>
+
+          <div id="slots-section" style="display:none">
+            <div class="slots-label" id="slots-date-label"></div>
+            <div class="loader" id="slots-loader" style="display:none;padding:.8rem"><span class="spinner"></span></div>
+            <div id="slots-grid" class="slots-grid"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-next" id="btn-step2" onclick="goStep(3)" disabled style="display:none">
+        Continuer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- ÉTAPE 3 : Coordonnées -->
+    <div id="view-3" style="display:none">
+      <button class="btn-prev" onclick="goStep(2)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Retour
+      </button>
+      <div class="card">
+        <div class="card-head"><div class="card-num">3</div><div class="card-title">Vos coordonnées</div></div>
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Prénom *</label><input type="text" class="form-input" id="client-prenom" placeholder="Sophie" /></div>
+            <div class="form-group"><label class="form-label">Nom *</label><input type="text" class="form-input" id="client-nom" placeholder="Martin" /></div>
+          </div>
+          <div class="form-group"><label class="form-label">Téléphone</label><input type="tel" class="form-input" id="client-tel" placeholder="06 12 34 56 78" /></div>
+          <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="client-email" placeholder="sophie@email.fr" /></div>
+          <div class="form-group"><label class="form-label">Notes (facultatif)</label><input type="text" class="form-input" id="client-notes" placeholder="Allergie colorant, cheveux courts..." /></div>
+        </div>
+      </div>
+      <button class="btn-next" onclick="goStep(4)">
+        Voir le récapitulatif <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+
+    <!-- ÉTAPE 4 : Confirmation -->
+    <div id="view-4" style="display:none">
+      <button class="btn-prev" onclick="goStep(3)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Retour
+      </button>
+      <div class="card">
+        <div class="card-head"><div class="card-num">4</div><div class="card-title">Récapitulatif</div></div>
+        <div class="card-body">
+          <div class="recap-row"><span class="recap-label">Salon</span><span class="recap-val" id="recap-salon">—</span></div>
+          <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-val" id="recap-service">—</span></div>
+          <div class="recap-row"><span class="recap-label">Date & heure</span><span class="recap-val" id="recap-datetime">—</span></div>
+          <div class="recap-row"><span class="recap-label">Prix estimé</span><span class="recap-prix" id="recap-prix">—</span></div>
+        </div>
+      </div>
+      <button class="btn-next" onclick="confirmBooking()" id="btn-confirm">
+        Confirmer le rendez-vous ✓
+      </button>
+    </div>
+
+    <!-- SUCCÈS -->
+    <div class="success-screen" id="success-screen">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="success-title">RDV <em>confirmé</em></div>
+      <div class="success-sub">Votre rendez-vous a été enregistré. Vous pouvez retrouver votre RDV dans votre espace client.</div>
+      <div class="success-card">
+        <div class="recap-row"><span class="recap-label">Salon</span><span class="recap-val" id="success-salon">—</span></div>
+        <div class="recap-row"><span class="recap-label">Prestation</span><span class="recap-val" id="success-service">—</span></div>
+        <div class="recap-row"><span class="recap-label">Date & heure</span><span class="recap-val" id="success-datetime">—</span></div>
+        <div class="recap-row"><span class="recap-label">Prix</span><span class="recap-prix" id="success-prix">—</span></div>
+      </div>
+      <a href="/client/home.html" style="display:inline-block;margin-top:2rem;background:var(--ink);color:var(--white);padding:12px 28px;border-radius:100px;font-size:14px;font-weight:500">Retour à l'accueil</a>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script>
+var salonId=null,salonNameStr='';
+var prestations={homme:[],femme:[]},prixDuree={homme:{},femme:{}};
+var bookGenre='homme',selectedService=null,selectedDate=null,selectedSlot=null;
+var calMonth=new Date(),existingAppts=[];
+var HEURE_DEBUT=9,HEURE_FIN=19;
+var salonPlanning = null; // planning chargé depuis la DB
+
+// Catalogue prix par défaut
+var CATALOGUE={
+  homme:{
+    'Coupe':{prix:20,duree:30},'Dégradé':{prix:20,duree:30},'Barbe':{prix:10,duree:15},
+    'Coupe + Barbe':{prix:28,duree:45},'Estompage':{prix:18,duree:25},'Soin':{prix:15,duree:20},
+    'Coloration':{prix:35,duree:60},'Rasage':{prix:15,duree:20},'Taille moustache':{prix:8,duree:10},
+    'Permanente homme':{prix:50,duree:75},'Keratine':{prix:80,duree:120}
+  },
+  femme:{
+    'Coupe':{prix:30,duree:45},'Brushing':{prix:25,duree:40},'Coloration':{prix:60,duree:90},
+    'Balayage':{prix:80,duree:120},'Mèches':{prix:70,duree:90},'Soin':{prix:20,duree:30},
+    'Lissage':{prix:80,duree:90},'Permanente':{prix:70,duree:90},'Chignon':{prix:45,duree:60},
+    'Extension':{prix:150,duree:180},'Défrisage':{prix:60,duree:90},'Keratine':{prix:90,duree:120},
+    'Tresse':{prix:40,duree:60},'Coupe enfant':{prix:20,duree:30}
+  }
+};
+
+function getPD(genre, name) {
+  var fromSalon = prixDuree[genre]&&prixDuree[genre][name];
+  var fromCat   = CATALOGUE[genre]&&CATALOGUE[genre][name];
+  return {
+    prix:  (fromSalon&&fromSalon.prix)  || (fromCat&&fromCat.prix)  || 0,
+    duree: (fromSalon&&fromSalon.duree) || (fromCat&&fromCat.duree) || 0
+  };
+}
+
+function showToast(msg,type){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.style.background=type==='error'?'#993C1D':'#1A1714';
+  t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+(async function(){
+  var params=new URLSearchParams(window.location.search);
+  salonId=params.get('salon');
+  if(!salonId){showError();return;}
+  try{
+    var res=await sb.from('salon_settings')
+      .select('prestations,prix_duree,salon_name,salon_address,planning')
+      .eq('user_id',salonId).maybeSingle();
+    if(!res.data){showError();return;}
+    if(res.data.prestations){
+      prestations.homme=res.data.prestations.homme||[];
+      prestations.femme=res.data.prestations.femme||[];
+    }
+    if(res.data.prix_duree) prixDuree=res.data.prix_duree;
+    if(res.data.planning)   salonPlanning=res.data.planning;
+    var name=res.data.salon_name||'Salon';
+    salonNameStr=name;
+    var parts=name.split(' '),first=parts[0],rest=parts.slice(1).join(' ');
+    document.getElementById('salon-name').innerHTML=first+(rest?' <em>'+rest+'</em>':'');
+    document.title='Réserver — '+name;
+    document.getElementById('main-loader').style.display='none';
+    document.getElementById('booking-flow').style.display='block';
+    // Pré-sélection depuis URL
+    var preService=params.get('service'), preGenre=params.get('genre');
+    if(preGenre==='femme') setBookGenre('femme');
+    else renderServices();
+    if(preService){ selectedService=preService; renderServices(); document.getElementById('btn-step1').disabled=false; }
+    calMonth=new Date(); calMonth.setDate(1); renderCal();
+    var sess=await sb.auth.getSession();
+    if(sess.data&&sess.data.session){
+      var u=sess.data.session.user,meta=u.user_metadata||{},nm=(meta.name||'').split(' ');
+      if(nm[0]) document.getElementById('client-prenom').value=nm[0];
+      if(nm[1]) document.getElementById('client-nom').value=nm.slice(1).join(' ');
+      if(meta.phone) document.getElementById('client-tel').value=meta.phone;
+      if(u.email) document.getElementById('client-email').value=u.email;
+    }
+  }catch(e){console.error(e);showError();}
+})();
+
+function showError(){
+  document.getElementById('main-loader').style.display='none';
+  document.getElementById('error-screen').style.display='block';
+  document.getElementById('bk-steps').style.display='none';
+}
+
+function goStep(n){
+  [1,2,3,4].forEach(function(i){
+    document.getElementById('view-'+i).style.display = i===n?'block':'none';
+    var s=document.getElementById('bk-step-'+i);
+    s.classList.toggle('active',i===n);
+    s.classList.toggle('done',i<n);
+  });
+  if(n===4) fillRecap();
+  window.scrollTo(0,0);
+}
+
+// ── ÉTAPE 1 ──
+function setBookGenre(g){
+  bookGenre=g;
+  document.getElementById('gbtn-homme').classList.toggle('active',g==='homme');
+  document.getElementById('gbtn-femme').classList.toggle('active',g==='femme');
+  selectedService=null;
+  document.getElementById('btn-step1').disabled=true;
+  renderServices();
+}
+
+function renderServices(){
+  var el=document.getElementById('service-grid');
+  var list=prestations[bookGenre]||[];
+  window._svcList=list;
+  if(!list.length){
+    el.innerHTML='<p style="color:var(--ink-light);font-size:13px">Aucune prestation configurée.</p>';
+    return;
+  }
+  el.innerHTML=list.map(function(p,i){
+    var pd=getPD(bookGenre,p);
+    var sel=selectedService===p?' selected':'';
+    return '<div class="service-item'+sel+'" onclick="selectService('+i+')">'
+      +'<div class="service-item-left">'
+      +'<div class="service-dot"></div>'
+      +'<span class="service-item-name">'+p+'</span>'
+      +(pd.duree?'<span class="service-item-dur">· '+pd.duree+' min</span>':'')
+      +'</div>'
+      +'<div class="service-item-right">'
+      +(pd.prix?'<span class="service-item-prix">'+pd.prix+' €</span>':'')
+      +'<div class="service-check">✓</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function selectService(i){
+  selectedService=(window._svcList||[])[i];
+  renderServices();
+  document.getElementById('btn-step1').disabled=!selectedService;
+}
+
+// ── ÉTAPE 2 ──
+function calPrevMonth(){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()-1,1);renderCal();}
+function calNextMonth(){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,1);renderCal();}
+
+function isJourFerme(date) {
+  if (!salonPlanning) return false;
+  // Vérifier congés
+  if (salonPlanning.conges && salonPlanning.conges.length) {
+    var iso = date.toISOString().slice(0,10);
+    for (var i=0; i<salonPlanning.conges.length; i++) {
+      var c = salonPlanning.conges[i];
+      if (iso >= c.debut && iso <= c.fin) return true;
+    }
+  }
+  // Vérifier jours de travail (0=Lundi, 6=Dimanche dans notre système)
+  if (salonPlanning.jours) {
+    var dayJS = date.getDay(); // 0=Dim, 1=Lun...6=Sam
+    var dayMap = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5}; // JS → notre index
+    var idx = dayMap[dayJS];
+    if (salonPlanning.jours[idx] === false) return true;
+  }
+  return false;
+}
+
+function getHeuresSalon(date) {
+  if (!salonPlanning) return { debut:HEURE_DEBUT, fin:HEURE_FIN };
+  var dayJS = date.getDay();
+  var dayMap = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5};
+  var idx = dayMap[dayJS];
+  var h = salonPlanning.heures && salonPlanning.heures[idx];
+  if (!h) h = salonPlanning.heures || {};
+  var debut = parseInt((h.debut||'09:00').split(':')[0]);
+  var fin   = parseInt((h.fin  ||'19:00').split(':')[0]);
+  return { debut: debut||9, fin: fin||19 };
+}
+
+function renderCal(){
+  var year=calMonth.getFullYear(),month=calMonth.getMonth();
+  var now=new Date(); now.setHours(0,0,0,0);
+  document.getElementById('cal-month-label').textContent=
+    new Date(year,month,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  var firstDay=new Date(year,month,1).getDay(),offset=firstDay===0?6:firstDay-1;
+  var days=new Date(year,month+1,0).getDate();
+  var selIso=document.getElementById('view-2').dataset.selectedDate||'';
+  var h='';
+  for(var i=0;i<offset;i++) h+='<button class="cal-day empty"></button>';
+  for(var d=1;d<=days;d++){
+    var dd=new Date(year,month,d);
+    var iso=year+'-'+String(month+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var ferme=isJourFerme(dd);
+    var cls='cal-day'+(dd<now||ferme?' disabled':'')+(dd.toDateString()===now.toDateString()?' today':'')+(selIso===iso?' selected':'');
+    var title=ferme?'Fermé':'';
+    h+='<button class="'+cls+'" title="'+title+'"'+(dd>=now&&!ferme?' onclick="selectDay(\''+iso+'\')"':'')+(d===1?' tabindex="0"':'')+'>'+d+'</button>';
+  }
+  document.getElementById('book-cal-grid').innerHTML=h;
+}
+
+async function selectDay(iso){
+  selectedDate=new Date(iso+'T12:00:00'); selectedSlot=null;
+  document.getElementById('view-2').dataset.selectedDate=iso; renderCal();
+  var ss=document.getElementById('slots-section'),btn=document.getElementById('btn-step2');
+  ss.style.display='block'; btn.style.display='block'; btn.disabled=true;
+  document.getElementById('slots-date-label').textContent=
+    selectedDate.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('slots-loader').style.display='block';
+  document.getElementById('slots-grid').innerHTML='';
+  var res=await sb.from('appointments').select('datetime,duration_minutes,status')
+    .eq('user_id',salonId).gte('datetime',iso+'T00:00:00').lte('datetime',iso+'T23:59:59').neq('status','cancelled');
+  existingAppts=res.data||[];
+  document.getElementById('slots-loader').style.display='none';
+  renderSlots();
+}
+
+function renderSlots(){
+  var grid=document.getElementById('slots-grid');
+  var pd=getPD(bookGenre,selectedService);
+  var dureeMin=pd.duree||30,now=new Date();
+  var isToday=selectedDate&&selectedDate.toDateString()===now.toDateString();
+  var h=getHeuresSalon(selectedDate);
+  var hDebut=h.debut, hFin=h.fin;
+  var h='';
+  for(var hh=hDebut;hh<hFin;hh++){
+    for(var mm=0;mm<60;mm+=30){
+      var slotDt=new Date(selectedDate); slotDt.setHours(hh,mm,0,0);
+      if(isToday&&slotDt<=now) continue;
+      var isTaken=existingAppts.some(function(a){
+        var aDt=new Date(a.datetime),aEnd=new Date(aDt.getTime()+((a.duration_minutes||30)*60000));
+        var sEnd=new Date(slotDt.getTime()+(dureeMin*60000));
+        return slotDt<aEnd&&sEnd>aDt;
+      });
+      var slotStr=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+      var isSel=selectedSlot===slotStr;
+      var cls='slot-btn'+(isTaken?' taken':'')+(isSel?' selected':'');
+      h+='<button class="'+cls+'"'+(isTaken?'':' onclick="selectSlot(\''+slotStr+'\')"')+'>'
+        +String(hh).padStart(2,'0')+'h'+(mm?String(mm).padStart(2,'0'):'')+'</button>';
+    }
+  }
+  grid.innerHTML=h||'<p style="color:var(--ink-light);font-size:13px;grid-column:span 5">Aucun créneau disponible</p>';
+}
+
+function selectSlot(s){
+  selectedSlot=s; renderSlots();
+  document.getElementById('btn-step2').disabled=false;
+}
+
+// ── ÉTAPE 4 ──
+function fillRecap(){
+  var pd=getPD(bookGenre,selectedService||'');
+  var dt=selectedDate, sl=selectedSlot||'';
+  var dtStr=dt?dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+sl:'—';
+  document.getElementById('recap-salon').textContent=salonNameStr;
+  document.getElementById('recap-service').textContent=selectedService||'—';
+  document.getElementById('recap-datetime').textContent=dtStr;
+  document.getElementById('recap-prix').textContent=pd.prix?pd.prix+' €':'À définir';
+}
+
+async function confirmBooking(){
+  var prenom=document.getElementById('client-prenom').value.trim();
+  var nom=document.getElementById('client-nom').value.trim();
+  if(!prenom||!nom){showToast('Remplissez vos coordonnées','error');goStep(3);return;}
+  var pd=getPD(bookGenre,selectedService||'');
+  var parts=selectedSlot.split(':');
+  var iso=new Date(selectedDate);
+  iso.setHours(parseInt(parts[0]),parseInt(parts[1]),0,0);
+  var notes=document.getElementById('client-notes').value.trim();
+  var notesFull=[notes,
+    document.getElementById('client-tel').value.trim()?'Tél: '+document.getElementById('client-tel').value.trim():'',
+    document.getElementById('client-email').value.trim()?'Email: '+document.getElementById('client-email').value.trim():''
+  ].filter(Boolean).join(' | ');
+  var btn=document.getElementById('btn-confirm');
+  btn.disabled=true; btn.textContent='Confirmation...';
+  var res=await sb.from('appointments').insert({
+    user_id:salonId, client_name:prenom+' '+nom,
+    service:selectedService, datetime:iso.toISOString(),
+    price:pd.prix||null, duration_minutes:pd.duree||30,
+    notes:notesFull||null, status:'pending', genre:bookGenre
+  });
+  btn.disabled=false; btn.textContent='Confirmer le rendez-vous ✓';
+  if(res.error){showToast('Erreur : '+res.error.message,'error');return;}
+  var dtStr=iso.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+selectedSlot;
+  document.getElementById('success-salon').textContent=salonNameStr;
+  document.getElementById('success-service').textContent=selectedService||'—';
+  document.getElementById('success-datetime').textContent=dtStr;
+  document.getElementById('success-prix').textContent=pd.prix?pd.prix+' €':'—';
+  document.getElementById('bk-steps').style.display='none';
+  [1,2,3,4].forEach(function(i){document.getElementById('view-'+i).style.display='none';});
+  document.getElementById('success-screen').style.display='block';
+  window.scrollTo(0,0);
+}
 </script>
+</body>
+</html>
 </body>
 </html>

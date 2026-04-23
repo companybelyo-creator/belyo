@@ -509,6 +509,112 @@ async function savePrestations() {
   setTimeout(function() { showMsg('prestations-ok', false); }, 3000);
 }
 
+// ===== PLANNING =====
+var JOURS_SEMAINE = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+var planningData = {
+  jours: { 0:true, 1:true, 2:true, 3:true, 4:true, 5:true, 6:false },
+  heures: { debut:'09:00', fin:'19:00' },
+  conges: []
+};
+
+function renderPlanningDays() {
+  var el = document.getElementById('planning-days');
+  if (!el) return;
+  var h = '';
+  JOURS_SEMAINE.forEach(function(j, i) {
+    var actif = planningData.jours[i] !== false;
+    h += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
+      + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:120px">'
+      + '<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
+      + '<span style="font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j+'</span>'
+      + '</label>'
+      + (actif
+        ? '<div style="display:flex;align-items:center;gap:8px;flex:1">'
+          + '<input type="time" value="'+(planningData.heures[i] ? planningData.heures[i].debut : planningData.heures.debut)+'" id="hdebut-'+i+'" class="form-input" style="padding:6px 10px;font-size:13px;width:110px" onchange="updateHeure('+i+',\'debut\',this.value)">'
+          + '<span style="font-size:13px;color:var(--ink-light)">→</span>'
+          + '<input type="time" value="'+(planningData.heures[i] ? planningData.heures[i].fin : planningData.heures.fin)+'" id="hfin-'+i+'" class="form-input" style="padding:6px 10px;font-size:13px;width:110px" onchange="updateHeure('+i+',\'fin\',this.value)">'
+          + '</div>'
+        : '<span style="font-size:13px;color:var(--ink-light);flex:1">Fermé</span>')
+      + '</div>';
+  });
+  el.innerHTML = h;
+}
+
+function toggleJour(i) {
+  planningData.jours[i] = document.getElementById('jour-'+i).checked;
+  if (planningData.jours[i] && !planningData.heures[i]) {
+    planningData.heures[i] = { debut: planningData.heures.debut, fin: planningData.heures.fin };
+  }
+  renderPlanningDays();
+}
+
+function updateHeure(i, type, val) {
+  if (!planningData.heures[i]) planningData.heures[i] = { debut:'09:00', fin:'19:00' };
+  planningData.heures[i][type] = val;
+}
+
+function renderConges() {
+  var el = document.getElementById('conges-list');
+  if (!el) return;
+  if (!planningData.conges.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:8px 0">Aucun congé planifié.</div>';
+    return;
+  }
+  el.innerHTML = planningData.conges.map(function(c, i) {
+    var debut = new Date(c.debut).toLocaleDateString('fr-FR', {day:'numeric',month:'short',year:'numeric'});
+    var fin   = new Date(c.fin).toLocaleDateString('fr-FR', {day:'numeric',month:'short',year:'numeric'});
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
+      + '<div>'
+      + '<div style="font-size:13px;font-weight:500">'+(c.label||'Congé')+'</div>'
+      + '<div style="font-size:12px;color:var(--ink-light);margin-top:2px">'+debut+' → '+fin+'</div>'
+      + '</div>'
+      + '<button onclick="removeConge('+i+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      + '</div>';
+  }).join('');
+}
+
+function addConge() {
+  var debut = document.getElementById('conge-debut').value;
+  var fin   = document.getElementById('conge-fin').value;
+  var label = document.getElementById('conge-label').value.trim();
+  if (!debut || !fin) { showToast('Sélectionnez une période','error'); return; }
+  if (fin < debut)    { showToast('La date de fin doit être après le début','error'); return; }
+  planningData.conges.push({ debut, fin, label: label||'Congé' });
+  planningData.conges.sort(function(a,b){ return a.debut.localeCompare(b.debut); });
+  document.getElementById('conge-debut').value = '';
+  document.getElementById('conge-fin').value   = '';
+  document.getElementById('conge-label').value = '';
+  renderConges();
+}
+
+function removeConge(i) {
+  planningData.conges.splice(i, 1);
+  renderConges();
+}
+
+async function loadPlanning() {
+  var res = await sb.from('salon_settings')
+    .select('planning').eq('user_id', currentUser.id).maybeSingle();
+  if (res.data && res.data.planning) {
+    planningData = Object.assign(planningData, res.data.planning);
+  }
+  renderPlanningDays();
+  renderConges();
+}
+
+async function savePlanning() {
+  var btn = document.getElementById('btn-save-planning');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  showMsg('planning-ok', false);
+  var res = await sb.from('salon_settings')
+    .update({ planning: planningData })
+    .eq('user_id', currentUser.id).select();
+  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  showMsg('planning-ok', true);
+  setTimeout(function() { showMsg('planning-ok', false); }, 3000);
+}
+
 // ===== INIT =====
 (async function() {
   var session = await requireSession();
@@ -519,6 +625,7 @@ async function savePrestations() {
   populateFields(currentUser);
   await loadSubscription();
   await loadPrestations();
+  await loadPlanning();
 
   if (window.location.search.includes('subscribed=1')) {
     showToast('Abonnement active ! Bienvenue sur Belyo.');
