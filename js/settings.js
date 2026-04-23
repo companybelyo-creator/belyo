@@ -554,14 +554,15 @@ function renderPlanningDays() {
 
     // Plages horaires
     if (actif && plages.length) {
-      h += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
+      h += '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">';
       plages.forEach(function(p, pi) {
-        h += '<div style="display:flex;align-items:center;gap:8px">'
-          + '<input type="time" value="'+p.debut+'" class="form-input" style="padding:6px 10px;font-size:13px;width:105px" onchange="updatePlage('+i+','+pi+',\'debut\',this.value)">'
-          + '<span style="font-size:13px;color:var(--ink-light)">→</span>'
-          + '<input type="time" value="'+p.fin+'" class="form-input" style="padding:6px 10px;font-size:13px;width:105px" onchange="updatePlage('+i+','+pi+',\'fin\',this.value)">'
+        h += '<div style="display:flex;align-items:center;gap:6px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px">'
+          + (plages.length > 1 ? '<span style="font-size:11px;color:var(--ink-light);min-width:14px">'+(pi+1)+'.</span>' : '')
+          + '<input type="time" value="'+p.debut+'" class="form-input" style="padding:5px 8px;font-size:13px;width:100px;border:none;background:transparent" onchange="updatePlage('+i+','+pi+',\'debut\',this.value)">'
+          + '<span style="font-size:12px;color:var(--ink-light)">→</span>'
+          + '<input type="time" value="'+p.fin+'" class="form-input" style="padding:5px 8px;font-size:13px;width:100px;border:none;background:transparent" onchange="updatePlage('+i+','+pi+',\'fin\',this.value)">'
           + (plages.length > 1
-              ? '<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;flex-shrink:0;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+              ? '<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;flex-shrink:0;transition:color .15s;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
               : '')
           + '</div>';
       });
