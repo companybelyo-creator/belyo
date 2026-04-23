@@ -513,44 +513,96 @@ async function savePrestations() {
 var JOURS_SEMAINE = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 var planningData = {
   jours: { 0:true, 1:true, 2:true, 3:true, 4:true, 5:true, 6:false },
-  heures: { debut:'09:00', fin:'19:00' },
+  // heures[i] est maintenant un tableau de plages : [{debut:'09:00',fin:'12:30'},{debut:'14:00',fin:'19:00'}]
+  heures: {},
   conges: []
 };
+
+// Plage par défaut pour un jour actif
+function defaultPlages() {
+  return [{ debut:'09:00', fin:'19:00' }];
+}
+
+function getPlages(i) {
+  var h = planningData.heures[i];
+  if (!h) return defaultPlages();
+  // Compatibilité ancien format {debut, fin}
+  if (!Array.isArray(h)) return [h];
+  return h.length ? h : defaultPlages();
+}
 
 function renderPlanningDays() {
   var el = document.getElementById('planning-days');
   if (!el) return;
   var h = '';
   JOURS_SEMAINE.forEach(function(j, i) {
-    var actif = planningData.jours[i] !== false;
-    h += '<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
-      + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:120px">'
+    var actif  = planningData.jours[i] !== false;
+    var plages = actif ? getPlages(i) : [];
+
+    h += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:2px">'
+      // Ligne jour + toggle
+      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:110px">'
       + '<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
       + '<span style="font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j+'</span>'
       + '</label>'
       + (actif
-        ? '<div style="display:flex;align-items:center;gap:8px;flex:1">'
-          + '<input type="time" value="'+(planningData.heures[i] ? planningData.heures[i].debut : planningData.heures.debut)+'" id="hdebut-'+i+'" class="form-input" style="padding:6px 10px;font-size:13px;width:110px" onchange="updateHeure('+i+',\'debut\',this.value)">'
-          + '<span style="font-size:13px;color:var(--ink-light)">→</span>'
-          + '<input type="time" value="'+(planningData.heures[i] ? planningData.heures[i].fin : planningData.heures.fin)+'" id="hfin-'+i+'" class="form-input" style="padding:6px 10px;font-size:13px;width:110px" onchange="updateHeure('+i+',\'fin\',this.value)">'
-          + '</div>'
-        : '<span style="font-size:13px;color:var(--ink-light);flex:1">Fermé</span>')
+          ? '<span style="font-size:12px;color:var(--ink-light)">'+plages.length+' plage'+(plages.length>1?'s':'')+'</span>'
+            + '<button onclick="addPlage('+i+')" style="margin-left:auto;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:none;font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light);transition:all .15s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">+ Plage</button>'
+          : '<span style="font-size:13px;color:var(--ink-light)">Fermé</span>')
       + '</div>';
+
+    // Plages horaires
+    if (actif && plages.length) {
+      h += '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">';
+      plages.forEach(function(p, pi) {
+        h += '<div style="display:flex;align-items:center;gap:8px">'
+          + '<input type="time" value="'+p.debut+'" class="form-input" style="padding:6px 10px;font-size:13px;width:105px" onchange="updatePlage('+i+','+pi+',\'debut\',this.value)">'
+          + '<span style="font-size:13px;color:var(--ink-light)">→</span>'
+          + '<input type="time" value="'+p.fin+'" class="form-input" style="padding:6px 10px;font-size:13px;width:105px" onchange="updatePlage('+i+','+pi+',\'fin\',this.value)">'
+          + (plages.length > 1
+              ? '<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;flex-shrink:0;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+              : '')
+          + '</div>';
+      });
+      h += '</div>';
+    }
+
+    h += '</div>';
   });
   el.innerHTML = h;
 }
 
 function toggleJour(i) {
   planningData.jours[i] = document.getElementById('jour-'+i).checked;
-  if (planningData.jours[i] && !planningData.heures[i]) {
-    planningData.heures[i] = { debut: planningData.heures.debut, fin: planningData.heures.fin };
+  if (planningData.jours[i] && (!planningData.heures[i] || !planningData.heures[i].length)) {
+    planningData.heures[i] = defaultPlages();
   }
   renderPlanningDays();
 }
 
-function updateHeure(i, type, val) {
-  if (!planningData.heures[i]) planningData.heures[i] = { debut:'09:00', fin:'19:00' };
-  planningData.heures[i][type] = val;
+function addPlage(i) {
+  var plages = getPlages(i);
+  // Proposer une plage après la dernière
+  var lastFin = plages[plages.length-1].fin || '19:00';
+  var parts   = lastFin.split(':');
+  var newH    = Math.min(parseInt(parts[0])+2, 22);
+  plages.push({ debut: lastFin, fin: String(newH).padStart(2,'0')+':'+(parts[1]||'00') });
+  planningData.heures[i] = plages;
+  renderPlanningDays();
+}
+
+function removePlage(i, pi) {
+  var plages = getPlages(i);
+  plages.splice(pi, 1);
+  planningData.heures[i] = plages;
+  renderPlanningDays();
+}
+
+function updatePlage(i, pi, type, val) {
+  var plages = getPlages(i);
+  plages[pi][type] = val;
+  planningData.heures[i] = plages;
 }
 
 function renderConges() {
