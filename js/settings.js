@@ -510,25 +510,40 @@ async function savePrestations() {
 }
 
 // ===== PLANNING =====
-var JOURS_SEMAINE = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+var JOURS_SEMAINE = [
+  {label:'Lundi',   short:'Lun'},
+  {label:'Mardi',   short:'Mar'},
+  {label:'Mercredi',short:'Mer'},
+  {label:'Jeudi',   short:'Jeu'},
+  {label:'Vendredi',short:'Ven'},
+  {label:'Samedi',  short:'Sam'},
+  {label:'Dimanche',short:'Dim'},
+];
 var planningData = {
-  jours: { 0:true, 1:true, 2:true, 3:true, 4:true, 5:true, 6:false },
-  // heures[i] est maintenant un tableau de plages : [{debut:'09:00',fin:'12:30'},{debut:'14:00',fin:'19:00'}]
+  jours:  { 0:true, 1:true, 2:true, 3:true, 4:true, 5:true, 6:false },
   heures: {},
   conges: []
 };
 
-// Plage par défaut pour un jour actif
-function defaultPlages() {
-  return [{ debut:'09:00', fin:'19:00' }];
-}
-
+function defaultPlages() { return [{ debut:'09:00', fin:'19:00' }]; }
 function getPlages(i) {
   var h = planningData.heures[i];
   if (!h) return defaultPlages();
-  // Compatibilité ancien format {debut, fin}
   if (!Array.isArray(h)) return [h];
   return h.length ? h : defaultPlages();
+}
+
+// Génère toutes les options h00/h15/h30/h45
+function buildTimeOptions(selected) {
+  var opts = '';
+  for (var hh = 6; hh <= 23; hh++) {
+    [0, 15, 30, 45].forEach(function(mm) {
+      var val = String(hh).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+      var label = String(hh).padStart(2,'0') + 'h' + (mm ? String(mm).padStart(2,'0') : '00');
+      opts += '<option value="'+val+'"'+(selected===val?' selected':'')+'>'+label+'</option>';
+    });
+  }
+  return opts;
 }
 
 function renderPlanningDays() {
@@ -539,44 +554,57 @@ function renderPlanningDays() {
     var actif  = planningData.jours[i] !== false;
     var plages = actif ? getPlages(i) : [];
 
-    h += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:2px">'
-      // Ligne jour + toggle
-      + '<div style="display:flex;align-items:center;gap:12px">'
-      + '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;min-width:110px">'
-      + '<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">'
-      + '<span style="font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j+'</span>'
+    h += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:0;overflow:hidden;margin-bottom:6px">'
+
+      // ── Ligne principale ──
+      + '<div style="display:flex;align-items:center;padding:13px 16px;gap:14px">'
+
+      // Toggle switch
+      + '<label style="position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0;cursor:pointer">'
+      + '<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="opacity:0;width:0;height:0">'
+      + '<span style="position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s" id="sw-track-'+i+'">'
+      + '<span style="position:absolute;width:16px;height:16px;background:var(--white);border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s" id="sw-thumb-'+i+'"></span>'
+      + '</span>'
       + '</label>'
+
+      // Nom du jour
+      + '<span style="font-size:14px;font-weight:500;min-width:90px;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j.label+'</span>'
+
       + (actif
-          ? '<span style="font-size:12px;color:var(--ink-light)">'+plages.length+' plage'+(plages.length>1?'s':'')+'</span>'
-            + '<button onclick="addPlage('+i+')" style="margin-left:auto;padding:4px 12px;border-radius:100px;border:1px solid var(--border);background:none;font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light);transition:all .15s" onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">+ Plage</button>'
-          : '<span style="font-size:13px;color:var(--ink-light)">Fermé</span>')
-      + '</div>';
+          // Plages horaires inline
+          ? '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1">'
+            + plages.map(function(p, pi) {
+                return '<div style="display:flex;align-items:center;gap:6px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:5px 10px">'
+                  + '<select onchange="updatePlage('+i+','+pi+',\'debut\',this.value)" style="border:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--ink);cursor:pointer;outline:none;-webkit-appearance:none;padding:0">'
+                  + buildTimeOptions(p.debut)
+                  + '</select>'
+                  + '<span style="font-size:12px;color:var(--ink-light);padding:0 2px">→</span>'
+                  + '<select onchange="updatePlage('+i+','+pi+',\'fin\',this.value)" style="border:none;background:transparent;font-family:var(--font-body);font-size:13px;color:var(--ink);cursor:pointer;outline:none;-webkit-appearance:none;padding:0">'
+                  + buildTimeOptions(p.fin)
+                  + '</select>'
+                  + (plages.length > 1
+                      ? '<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-light);padding:0 0 0 4px;line-height:1;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+                      : '')
+                  + '</div>';
+              }).join('')
+            + '<button onclick="addPlage('+i+')" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:var(--radius-sm);border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light);transition:all .15s;white-space:nowrap" onmouseover="this.style.borderColor=\'var(--gold)\';this.style.color=\'var(--ink)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--ink-light)\'">+ pause</button>'
+            + '</div>'
+          // Fermé
+          : '<div style="flex:1;display:flex;align-items:center">'
+            + '<span style="font-size:12px;color:var(--ink-light);background:var(--cream);padding:4px 10px;border-radius:100px">Fermé</span>'
+            + '</div>'
+        )
 
-    // Plages horaires
-    if (actif && plages.length) {
-      h += '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">';
-      plages.forEach(function(p, pi) {
-        h += '<div style="display:flex;align-items:center;gap:6px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px">'
-          + (plages.length > 1 ? '<span style="font-size:11px;color:var(--ink-light);min-width:14px">'+(pi+1)+'.</span>' : '')
-          + '<input type="time" value="'+p.debut+'" class="form-input" style="padding:5px 8px;font-size:13px;width:100px;border:none;background:transparent" onchange="updatePlage('+i+','+pi+',\'debut\',this.value)">'
-          + '<span style="font-size:12px;color:var(--ink-light)">→</span>'
-          + '<input type="time" value="'+p.fin+'" class="form-input" style="padding:5px 8px;font-size:13px;width:100px;border:none;background:transparent" onchange="updatePlage('+i+','+pi+',\'fin\',this.value)">'
-          + (plages.length > 1
-              ? '<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;flex-shrink:0;transition:color .15s;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
-              : '')
-          + '</div>';
-      });
-      h += '</div>';
-    }
-
-    h += '</div>';
+      + '</div>' // fin ligne principale
+      + '</div>'; // fin card
   });
   el.innerHTML = h;
 }
 
 function toggleJour(i) {
-  planningData.jours[i] = document.getElementById('jour-'+i).checked;
-  if (planningData.jours[i] && (!planningData.heures[i] || !planningData.heures[i].length)) {
+  var checked = document.getElementById('jour-'+i).checked;
+  planningData.jours[i] = checked;
+  if (checked && (!planningData.heures[i] || !planningData.heures[i].length)) {
     planningData.heures[i] = defaultPlages();
   }
   renderPlanningDays();
@@ -584,11 +612,10 @@ function toggleJour(i) {
 
 function addPlage(i) {
   var plages = getPlages(i);
-  // Proposer une plage après la dernière
   var lastFin = plages[plages.length-1].fin || '19:00';
   var parts   = lastFin.split(':');
   var newH    = Math.min(parseInt(parts[0])+2, 22);
-  plages.push({ debut: lastFin, fin: String(newH).padStart(2,'0')+':'+(parts[1]||'00') });
+  plages.push({ debut: lastFin, fin: String(newH).padStart(2,'0')+':00' });
   planningData.heures[i] = plages;
   renderPlanningDays();
 }
