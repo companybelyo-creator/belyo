@@ -1,7 +1,7 @@
-.settings-layout { display:grid; grid-template-columns:220px 1fr; gap:2rem; align-items:start; }
+.settings-layout { display:grid; grid-template-columns:200px 1fr; gap:2rem; align-items:start; }
     .settings-content { min-width: 0; }
-    .settings-nav { display:flex; flex-direction:column; gap:2px; }
-    .settings-nav-item { padding:10px 14px; border-radius:var(--radius-sm); font-size:14px; color:var(--ink-light); cursor:pointer; transition:background .15s, color .15s; border:none; background:none; text-align:left; font-family:var(--font-body); display:flex; align-items:center; gap:10px; }
+    .settings-nav { display:flex; flex-direction:column; gap:1px; position:sticky; top:0; }
+    .settings-nav-item { padding:9px 12px; border-radius:var(--radius-sm); font-size:13px; color:var(--ink-light); cursor:pointer; transition:background .15s, color .15s; border:none; background:none; text-align:left; font-family:var(--font-body); display:flex; align-items:center; gap:8px; }
     .settings-nav-item:hover { background:var(--cream-dark); color:var(--ink); }
     .settings-nav-item.active { background:var(--ink); color:var(--white); }
     .settings-section { display:none; }
