@@ -523,7 +523,10 @@ var planningData = {
 
 function defaultPlages() { return [{debut:'09:00',fin:'19:00'}]; }
 function getPlages(i) {
-  var h = planningData.heures[i];
+  // Supabase retourne les clés JSON comme strings — on teste les deux
+  var h = planningData.heures[i] !== undefined
+    ? planningData.heures[i]
+    : planningData.heures[String(i)];
   if (!h) return defaultPlages();
   if (!Array.isArray(h)) return [h];
   return h.length ? h : defaultPlages();
@@ -594,7 +597,8 @@ function savePlageInput(i, pi, inputEl, type) {
     if (finEl) finEl.value = p.fin;
   }
 
-  // Persister
+  // Persister avec les deux types de clés
+  planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
 
   // Proposer de copier la journée entière
@@ -608,7 +612,8 @@ function propagateDay(sourceDay) {
   JOURS_SEMAINE.forEach(function(_, i) {
     if (i === sourceDay) return;
     if (planningData.jours[i] === false) return;
-    planningData.heures[i] = JSON.parse(JSON.stringify(srcPlages));
+    planningData.heures[String(i)] = JSON.parse(JSON.stringify(srcPlages));
+    planningData.heures[i] = planningData.heures[String(i)];
   });
   var bar = document.getElementById('propagate-bar');
   if (bar) bar.remove();
@@ -640,7 +645,7 @@ function renderPlanningDays() {
   var el = document.getElementById('planning-days'); if(!el) return;
   var html = '';
   JOURS_SEMAINE.forEach(function(j,i) {
-    var actif  = planningData.jours[i] !== false;
+    var actif = planningData.jours[i] !== false && planningData.jours[String(i)] !== false;
     var plages = actif ? getPlages(i) : [];
     var row = '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden">';
     row += '<div style="display:flex;align-items:center;padding:12px 16px;gap:14px' + (actif ? ';border-bottom:1px solid var(--border)' : '') + '">';
@@ -696,23 +701,29 @@ function renderPlanningDays() {
 }
 
 function toggleJour(i) {
-  planningData.jours[i] = document.getElementById('jour-'+i).checked;
-  if (planningData.jours[i] && (!planningData.heures[i]||!planningData.heures[i].length)) planningData.heures[i] = defaultPlages();
+  planningData.jours[String(i)] = document.getElementById('jour-'+i).checked;
+  planningData.jours[i] = planningData.jours[String(i)];
+  if (planningData.jours[i] && (!planningData.heures[String(i)]||!planningData.heures[String(i)].length)) {
+    planningData.heures[String(i)] = defaultPlages();
+    planningData.heures[i] = planningData.heures[String(i)];
+  }
   renderPlanningDays();
 }
 
 function addPlage(i) {
-  var plages = getPlages(i);
+  var plages = JSON.parse(JSON.stringify(getPlages(i)));
   var lastFin = plages[plages.length-1].fin||'19:00';
   var h = Math.min(parseInt(lastFin.split(':')[0])+2, 23);
   plages.push({debut:lastFin, fin:String(h).padStart(2,'0')+':00'});
+  planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
   renderPlanningDays();
 }
 
 function removePlage(i, pi) {
-  var plages = getPlages(i);
+  var plages = JSON.parse(JSON.stringify(getPlages(i)));
   plages.splice(pi,1);
+  planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
   renderPlanningDays();
 }
@@ -831,9 +842,16 @@ async function savePlanning() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('planning-ok', false);
 
-  // Lire tous les inputs DOM et mettre à jour planningData
+  // Lire tous les inputs DOM — les clés sont des strings en JSON
+  var heuresPayload = {};
+  var joursPayload  = {};
+
   JOURS_SEMAINE.forEach(function(_, i) {
-    if (planningData.jours[i] === false) return;
+    var key   = String(i);
+    var actif = planningData.jours[key] !== false && planningData.jours[i] !== false;
+    joursPayload[key] = actif;
+    if (!actif) return;
+
     var plages = JSON.parse(JSON.stringify(getPlages(i)));
     plages.forEach(function(p, pi) {
       var elD = document.getElementById('tp-'+i+'-'+pi+'-d');
@@ -851,21 +869,18 @@ async function savePlanning() {
         p.fin = String(h).padStart(2,'0')+':'+p.debut.split(':')[1];
       }
     });
-    planningData.heures[i] = plages;
+    heuresPayload[key] = plages;
   });
-
-  // S'assurer que jours est un objet avec des clés numériques
-  var joursClean = {};
-  JOURS_SEMAINE.forEach(function(_, i) {
-    joursClean[i] = planningData.jours[i] !== false;
-  });
-  planningData.jours = joursClean;
 
   var payload = {
-    jours:  planningData.jours,
-    heures: planningData.heures,
-    conges: planningData.conges
+    jours:  joursPayload,
+    heures: heuresPayload,
+    conges: planningData.conges || []
   };
+
+  // Mettre à jour planningData local aussi
+  planningData.jours  = joursPayload;
+  planningData.heures = heuresPayload;
 
   var res = await sb.from('salon_settings')
     .update({ planning: payload })
