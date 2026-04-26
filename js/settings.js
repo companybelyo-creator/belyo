@@ -643,61 +643,99 @@ function showPropagate(sourceDay) {
 
 function renderPlanningDays() {
   var el = document.getElementById('planning-days'); if(!el) return;
-  var html = '';
+  el.innerHTML = '';
   JOURS_SEMAINE.forEach(function(j,i) {
     var actif = planningData.jours[i] !== false && planningData.jours[String(i)] !== false;
     var plages = actif ? getPlages(i) : [];
-    var row = '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden">';
-    row += '<div style="display:flex;align-items:center;padding:12px 16px;gap:14px' + (actif ? ';border-bottom:1px solid var(--border)' : '') + '">';
-    row += '<label style="position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer">';
-    row += '<input type="checkbox" id="jour-' + i + '" ' + (actif ? 'checked' : '') + ' onchange="toggleJour(' + i + ')" style="opacity:0;width:0;height:0">';
-    row += '<span style="position:absolute;inset:0;background:' + (actif ? 'var(--ink)' : 'var(--border)') + ';border-radius:100px;transition:background .2s">';
-    row += '<span style="position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:' + (actif ? '19px' : '3px') + ';transition:left .2s"></span>';
-    row += '</span></label>';
-    row += '<span style="font-size:14px;font-weight:500;min-width:90px;color:' + (actif ? 'var(--ink)' : 'var(--ink-light)') + '">' + j.label + '</span>';
+    var row = document.createElement('div');
+    row.style.cssText = 'background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden';
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;gap:14px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
+
+    // Toggle
+    var label = document.createElement('label');
+    label.style.cssText = 'position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer';
+    var chk = document.createElement('input');
+    chk.type='checkbox'; chk.id='jour-'+i; chk.checked=actif;
+    chk.style.cssText='opacity:0;width:0;height:0';
+    chk.setAttribute('onchange','toggleJour('+i+')');
+    var track = document.createElement('span');
+    track.style.cssText='position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s';
+    var thumb = document.createElement('span');
+    thumb.style.cssText='position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s';
+    track.appendChild(thumb);
+    label.appendChild(chk);
+    label.appendChild(track);
+    header.appendChild(label);
+
+    // Nom du jour
+    var dayName = document.createElement('span');
+    dayName.style.cssText='font-size:14px;font-weight:500;min-width:90px;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.textContent = j.label;
+    header.appendChild(dayName);
+
     if (actif) {
-      row += '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1">';
+      var plagesWrap = document.createElement('div');
+      plagesWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1';
+
       plages.forEach(function(p, pi) {
-        var iStr = String(i), piStr = String(pi);
-        var baseStyle = [
-          'width:58px','padding:5px 8px','border:1.5px solid var(--border)',
-          'border-radius:var(--radius-sm)','font-family:var(--font-body)',
-          'font-size:13px','font-weight:500','background:var(--cream)',
-          'color:var(--ink)','text-align:center','outline:none'
-        ].join(';');
+        var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
+
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;align-items:center;gap:6px';
+
         var inputD = document.createElement('input');
-        inputD.type = 'text'; inputD.id = 'tp-'+iStr+'-'+piStr+'-d';
-        inputD.value = p.debut; inputD.maxLength = 5; inputD.placeholder = '09:00';
+        inputD.type='text'; inputD.value=p.debut; inputD.maxLength=5; inputD.placeholder='09:00';
+        inputD.id='tp-'+i+'-'+pi+'-d';
         inputD.setAttribute('style', baseStyle);
-        inputD.setAttribute('oninput', 'formatTimeInput(this)');
-        inputD.setAttribute('onfocus', 'this.style.borderColor="var(--gold)"');
-        inputD.setAttribute('onblur',  'savePlageInput('+iStr+','+piStr+',this,"debut");this.style.borderColor="var(--border)"');
+        inputD.addEventListener('input',  function(){ formatTimeInput(this); });
+        inputD.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; });
+        inputD.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'debut'); this.style.borderColor='var(--border)'; });
+
+        var sep = document.createElement('span');
+        sep.style.cssText='font-size:12px;color:var(--ink-light)';
+        sep.textContent='–';
+
         var inputF = document.createElement('input');
-        inputF.type = 'text'; inputF.id = 'tp-'+iStr+'-'+piStr+'-f';
-        inputF.value = p.fin; inputF.maxLength = 5; inputF.placeholder = '19:00';
+        inputF.type='text'; inputF.value=p.fin; inputF.maxLength=5; inputF.placeholder='19:00';
+        inputF.id='tp-'+i+'-'+pi+'-f';
         inputF.setAttribute('style', baseStyle);
-        inputF.setAttribute('oninput', 'formatTimeInput(this)');
-        inputF.setAttribute('onfocus', 'this.style.borderColor="var(--gold)"');
-        inputF.setAttribute('onblur',  'savePlageInput('+iStr+','+piStr+',this,"fin");this.style.borderColor="var(--border)"');
-        var sep = '<span style="font-size:12px;color:var(--ink-light)">–</span>';
-        var rmBtn = plages.length > 1
-          ? '<button onclick="removePlage('+iStr+','+piStr+')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0;line-height:1">×</button>'
-          : '';
-        var tmp = document.createElement('div');
-        tmp.appendChild(inputD);
-        tmp.innerHTML = tmp.innerHTML + sep + '<span></span>' + rmBtn;
-        tmp.querySelector('span:last-of-type').replaceWith(inputF);
-        row += '<div style="display:flex;align-items:center;gap:6px">' + tmp.innerHTML + '</div>';
+        inputF.addEventListener('input',  function(){ formatTimeInput(this); });
+        inputF.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; });
+        inputF.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'fin'); this.style.borderColor='var(--border)'; });
+
+        wrap.appendChild(inputD);
+        wrap.appendChild(sep);
+        wrap.appendChild(inputF);
+
+        if (plages.length > 1) {
+          var rm = document.createElement('button');
+          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0;line-height:1';
+          rm.textContent='×';
+          (function(ii,pii){ rm.addEventListener('click', function(){ removePlage(ii,pii); }); })(i,pi);
+          wrap.appendChild(rm);
+        }
+        plagesWrap.appendChild(wrap);
       });
-      row += '<button onclick="addPlage(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)">+ pause</button>';
-      row += '</div>';
+
+      // Bouton pause
+      var pauseBtn = document.createElement('button');
+      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)';
+      pauseBtn.textContent='+ pause';
+      (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
+      plagesWrap.appendChild(pauseBtn);
+      header.appendChild(plagesWrap);
     } else {
-      row += '<span style="font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px">Fermé</span>';
+      var fermé = document.createElement('span');
+      fermé.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px';
+      fermé.textContent='Fermé';
+      header.appendChild(fermé);
     }
-    row += '</div></div>';
-    html += row;
+
+    row.appendChild(header);
+    el.appendChild(row);
   });
-  el.innerHTML = html;
 }
 
 function toggleJour(i) {
