@@ -811,8 +811,29 @@ function removePlage(i, pi) {
 
 
 // ── Calendrier congés ──
-var congeCalMonth = new Date();
-var congeRangeStart = null, congeRangeEnd = null, congeSelecting = false;
+var congeCalMonth  = new Date();
+var congeRangeStart = null, congeRangeEnd = null;
+var congeType = 'jour'; // 'jour' ou 'heure'
+
+function setCongeType(type) {
+  congeType = type;
+  var btnJ = document.getElementById('conge-type-jour');
+  var btnH = document.getElementById('conge-type-heure');
+  var hRow = document.getElementById('conge-hours-row');
+  if (!btnJ || !btnH || !hRow) return;
+  if (type === 'jour') {
+    btnJ.style.background = 'var(--white)'; btnJ.style.color = 'var(--ink)'; btnJ.style.boxShadow = '0 1px 3px rgba(0,0,0,.08)';
+    btnH.style.background = 'transparent'; btnH.style.color = 'var(--ink-light)'; btnH.style.boxShadow = 'none';
+    hRow.style.display = 'none';
+  } else {
+    btnH.style.background = 'var(--white)'; btnH.style.color = 'var(--ink)'; btnH.style.boxShadow = '0 1px 3px rgba(0,0,0,.08)';
+    btnJ.style.background = 'transparent'; btnJ.style.color = 'var(--ink-light)'; btnJ.style.boxShadow = 'none';
+    hRow.style.display = 'flex';
+    // En mode heure, sélection = 1 seul jour
+    congeRangeEnd = null;
+  }
+  renderCongeCal();
+}
 
 function congeCalPrev() { congeCalMonth = new Date(congeCalMonth.getFullYear(),congeCalMonth.getMonth()-1,1); renderCongeCal(); }
 function congeCalNext() { congeCalMonth = new Date(congeCalMonth.getFullYear(),congeCalMonth.getMonth()+1,1); renderCongeCal(); }
@@ -866,17 +887,43 @@ function congeCalClick(iso, e) {
 }
 
 function addConge() {
-  if(!congeRangeStart) { showToast('Sélectionnez au moins une date','error'); return; }
-  var debut=congeRangeStart, fin=congeRangeEnd||congeRangeStart;
-  if(fin<debut){var tmp=fin;fin=debut;debut=tmp;}
-  var label=document.getElementById('conge-label').value.trim()||'Congé';
-  // Vérifier chevauchement
-  var overlap=planningData.conges.some(function(c){ return debut<=c.fin&&fin>=c.debut; });
-  if(overlap){ showToast('Chevauchement avec un congé existant','error'); return; }
-  planningData.conges.push({debut:debut,fin:fin,label:label});
-  planningData.conges.sort(function(a,b){return a.debut.localeCompare(b.debut);});
-  document.getElementById('conge-label').value='';
-  congeRangeStart=null; congeRangeEnd=null;
+  if (!congeRangeStart) { showToast('Sélectionnez au moins une date', 'error'); return; }
+  var debut = congeRangeStart;
+  var fin   = (congeType === 'heure' || !congeRangeEnd) ? congeRangeStart : congeRangeEnd;
+  if (fin < debut) { var tmp=fin; fin=debut; debut=tmp; }
+  var label = document.getElementById('conge-label').value.trim() || 'Congé';
+
+  var entry = { debut:debut, fin:fin, label:label, type:congeType };
+
+  if (congeType === 'heure') {
+    // Mode heure : forcer debut === fin (1 jour), ajouter h_debut et h_fin
+    fin = debut;
+    entry.fin = fin;
+    var hD = document.getElementById('conge-h-debut');
+    var hF = document.getElementById('conge-h-fin');
+    if (!hD || !hF || !hD.value.trim() || !hF.value.trim()) {
+      showToast('Entrez une plage horaire', 'error'); return;
+    }
+    var normD = parseTimeInput(hD.value.trim());
+    var normF = parseTimeInput(hF.value.trim());
+    if (!validateTime(normD) || !validateTime(normF)) { showToast('Heures invalides', 'error'); return; }
+    if (normF <= normD) { showToast('Heure de fin invalide', 'error'); return; }
+    entry.h_debut = normD;
+    entry.h_fin   = normF;
+    hD.value = ''; hF.value = '';
+  } else {
+    // Mode jour : vérifier chevauchement
+    var overlap = planningData.conges.some(function(c) {
+      if (c.type === 'heure') return false; // les congés horaires ne bloquent pas les jours
+      return debut <= c.fin && fin >= c.debut;
+    });
+    if (overlap) { showToast('Chevauchement avec un congé existant', 'error'); return; }
+  }
+
+  planningData.conges.push(entry);
+  planningData.conges.sort(function(a,b){ return a.debut.localeCompare(b.debut); });
+  document.getElementById('conge-label').value = '';
+  congeRangeStart = null; congeRangeEnd = null;
   renderCongeCal();
   renderConges();
 }
