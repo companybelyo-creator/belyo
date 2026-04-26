@@ -590,12 +590,11 @@ function savePlageInput(i, pi, inputEl, type) {
   planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
 
-  // Modification manuelle — effacer le flag propagé
-  delete propagatedDays[i];
-  delete propagatedDays[String(i)];
-
-  lastSavedDay = { dayIdx: i, plages: JSON.parse(JSON.stringify(plages)) };
-  showPropagate(i);
+  // Proposer propagation seulement si modif manuelle (pas sur jour propagé)
+  if (!propagatedDays[i] && !propagatedDays[String(i)]) {
+    lastSavedDay = { dayIdx: i, plages: JSON.parse(JSON.stringify(plages)) };
+    showPropagate(i);
+  }
 }
 
 
@@ -686,7 +685,7 @@ function renderPlanningDays() {
         inputD.id='tp-'+i+'-'+pi+'-d';
         inputD.setAttribute('style', baseStyle);
         inputD.addEventListener('input',  function(){ formatTimeInput(this); });
-        inputD.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; });
+        inputD.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
         inputD.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'debut'); this.style.borderColor='var(--border)'; });
 
         var sep = document.createElement('span');
@@ -698,7 +697,7 @@ function renderPlanningDays() {
         inputF.id='tp-'+i+'-'+pi+'-f';
         inputF.setAttribute('style', baseStyle);
         inputF.addEventListener('input',  function(){ formatTimeInput(this); });
-        inputF.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; });
+        inputF.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
         inputF.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'fin'); this.style.borderColor='var(--border)'; });
 
         wrap.appendChild(inputD);
