@@ -529,141 +529,17 @@ function getPlages(i) {
   return h.length ? h : defaultPlages();
 }
 
-var HOURS_LIST = Array.from({length:18},function(_,i){return String(i+6).padStart(2,'0');});
-var MINS_LIST  = ['00','15','30','45'];
-var ITEM_H     = 36;
-var pickerState = null;
-
-function openTimePicker(field, dayIdx, plageIdx, type) {
-  closePicker();
-  var trigger = document.getElementById(field);
-  if (!trigger) return;
-  var plages = getPlages(dayIdx);
-  var val    = plages[plageIdx][type] || '09:00';
-  var parts  = val.split(':');
-  pickerState = { field:field, dayIdx:dayIdx, plageIdx:plageIdx, type:type, hVal:parts[0], mVal:parts[1] };
-
-  var pop = document.createElement('div');
-  pop.id  = 'time-picker-pop';
-  pop.style.cssText = 'position:fixed;z-index:9999;background:var(--white);border:1px solid var(--border);'
-    +'border-radius:12px;box-shadow:0 8px 32px rgba(26,23,20,.18);width:200px;overflow:hidden;display:flex;flex-direction:column;';
-
-  pop.innerHTML = '<div style="padding:9px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:500;color:var(--ink-light);text-transform:uppercase;letter-spacing:.06em">'
-    +(type==='debut'?'Heure d\'ouverture':'Heure de fermeture')+'</div>'
-    +'<div style="display:flex">'
-    +'<div style="flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border)">'
-    +'<div style="text-align:center;font-size:10px;color:var(--ink-light);padding:5px 0;border-bottom:1px solid var(--border)">Heure</div>'
-    +'<div id="pick-h" style="height:'+(ITEM_H*3)+'px;overflow:hidden;position:relative;cursor:grab">'
-    +'<div id="pick-h-inner" style="display:flex;flex-direction:column"></div>'
-    +'<div style="position:absolute;top:'+ITEM_H+'px;left:0;right:0;height:'+ITEM_H+'px;border-top:1px solid var(--gold-light);border-bottom:1px solid var(--gold-light);pointer-events:none;background:rgba(196,168,122,.07)"></div>'
-    +'</div></div>'
-    +'<div style="flex:1;display:flex;flex-direction:column">'
-    +'<div style="text-align:center;font-size:10px;color:var(--ink-light);padding:5px 0;border-bottom:1px solid var(--border)">Min</div>'
-    +'<div id="pick-m" style="height:'+(ITEM_H*3)+'px;overflow:hidden;position:relative;cursor:grab">'
-    +'<div id="pick-m-inner" style="display:flex;flex-direction:column"></div>'
-    +'<div style="position:absolute;top:'+ITEM_H+'px;left:0;right:0;height:'+ITEM_H+'px;border-top:1px solid var(--gold-light);border-bottom:1px solid var(--gold-light);pointer-events:none;background:rgba(196,168,122,.07)"></div>'
-    +'</div></div>'
-    +'</div>'
-    +'<div style="padding:8px;border-top:1px solid var(--border)">'
-    +'<button onclick="confirmPicker()" style="width:100%;padding:8px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer">Valider</button>'
-    +'</div>';
-
-  document.body.appendChild(pop);
-
-  var rect = trigger.getBoundingClientRect();
-  var top  = rect.bottom + 6, left = rect.left;
-  if (left + 200 > window.innerWidth - 8) left = window.innerWidth - 208;
-  if (top  + 200 > window.innerHeight - 8) top = rect.top - 200 - 6;
-  pop.style.top  = top  + 'px';
-  pop.style.left = left + 'px';
-
-  initCol('pick-h', HOURS_LIST, parts[0], function(v){ pickerState.hVal=v; refreshTrigger(); });
-  initCol('pick-m', MINS_LIST,  parts[1], function(v){ pickerState.mVal=v; refreshTrigger(); });
-
-  setTimeout(function(){ document.addEventListener('mousedown', outsidePicker); }, 50);
+function formatTimeInput(input) {
+  var raw = input.value.replace(/[^0-9]/g,'');
+  if (raw.length >= 3) raw = raw.slice(0,2)+':'+raw.slice(2,4);
+  input.value = raw;
 }
 
-function refreshTrigger() {
-  var el = document.getElementById(pickerState.field);
-  if (el) el.textContent = pickerState.hVal+'h'+pickerState.mVal;
-}
-
-function outsidePicker(e) {
-  var pop = document.getElementById('time-picker-pop');
-  if (pop && !pop.contains(e.target)) closePicker();
-}
-
-function closePicker() {
-  var pop = document.getElementById('time-picker-pop');
-  if (pop) pop.remove();
-  document.removeEventListener('mousedown', outsidePicker);
-}
-
-function confirmPicker() {
-  if (!pickerState) return;
-  var val    = pickerState.hVal+':'+pickerState.mVal;
-  var plages = getPlages(pickerState.dayIdx);
-  plages[pickerState.plageIdx][pickerState.type] = val;
-  // Validation : fin > debut
-  var p = plages[pickerState.plageIdx];
-  var allT = []; HOURS_LIST.forEach(function(h){ MINS_LIST.forEach(function(m){ allT.push(h+':'+m); }); });
-  if (allT.indexOf(p.fin) <= allT.indexOf(p.debut))
-    p.fin = allT[Math.min(allT.indexOf(p.debut)+4, allT.length-1)];
-  planningData.heures[pickerState.dayIdx] = plages;
-  closePicker();
-  renderPlanningDays();
-}
-
-function initCol(colId, list, selected, onChange) {
-  var inner = document.getElementById(colId+'-inner');
-  var wrap  = document.getElementById(colId);
-  var idx   = list.indexOf(selected); if(idx<0) idx=0;
-  var state = {idx:idx, startY:0, startIdx:0, dragging:false};
-
-  function render() {
-    var h='';
-    list.forEach(function(v,k){
-      var sel = k===state.idx;
-      h += '<div style="height:'+ITEM_H+'px;display:flex;align-items:center;justify-content:center;'
-        +'font-size:'+(sel?'17px':'13px')+';font-weight:'+(sel?'600':'400')+';'
-        +'color:'+(sel?'var(--ink)':'rgba(26,23,20,.3)')+';transition:all .08s">'+v+'</div>';
-    });
-    inner.innerHTML = h;
-    inner.style.transform = 'translateY('+(-state.idx*ITEM_H+ITEM_H)+'px)';
-    onChange(list[state.idx]);
-  }
-
-  function onDown(e) {
-    state.dragging=true; state.startY=e.touches?e.touches[0].clientY:e.clientY; state.startIdx=state.idx;
-    wrap.style.cursor='grabbing';
-    function onMove(ev) {
-      if(!state.dragging) return;
-      var y=ev.touches?ev.touches[0].clientY:ev.clientY;
-      var delta=Math.round((state.startY-y)/ITEM_H);
-      var ni=Math.max(0,Math.min(list.length-1,state.startIdx+delta));
-      if(ni!==state.idx){state.idx=ni;render();}
-    }
-    function onUp(){
-      state.dragging=false; wrap.style.cursor='grab';
-      document.removeEventListener('mousemove',onMove);
-      document.removeEventListener('mouseup',onUp);
-      document.removeEventListener('touchmove',onMove);
-      document.removeEventListener('touchend',onUp);
-    }
-    document.addEventListener('mousemove',onMove);
-    document.addEventListener('mouseup',onUp);
-    document.addEventListener('touchmove',onMove,{passive:true});
-    document.addEventListener('touchend',onUp);
-  }
-
-  wrap.addEventListener('wheel',function(e){
-    e.preventDefault();
-    state.idx=Math.max(0,Math.min(list.length-1,state.idx+(e.deltaY>0?1:-1)));
-    render();
-  },{passive:false});
-  wrap.addEventListener('mousedown',onDown);
-  wrap.addEventListener('touchstart',onDown,{passive:true});
-  render();
+function validateTime(val) {
+  var m = val.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return false;
+  var h=parseInt(m[1]), mn=parseInt(m[2]);
+  return h>=0&&h<=23&&mn>=0&&mn<=59;
 }
 
 function renderPlanningDays() {
@@ -672,36 +548,80 @@ function renderPlanningDays() {
   JOURS_SEMAINE.forEach(function(j,i) {
     var actif  = planningData.jours[i] !== false;
     var plages = actif ? getPlages(i) : [];
-    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden">'
-      +'<div style="display:flex;align-items:center;padding:12px 16px;gap:14px'+(actif?';border-bottom:1px solid var(--border)':'')+'">'
-      +'<label style="position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer">'
-      +'<input type="checkbox" id="jour-'+i+'" '+(actif?'checked':'')+' onchange="toggleJour('+i+')" style="opacity:0;width:0;height:0">'
-      +'<span style="position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s">'
-      +'<span style="position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s"></span>'
-      +'</span></label>'
-      +'<span style="font-size:14px;font-weight:500;min-width:90px;color:'+(actif?'var(--ink)':'var(--ink-light)')+'">'+j.label+'</span>'
-      +(actif
-        ?'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1">'
-          +plages.map(function(p,pi){
-            var fId='tp-'+i+'-'+pi+'-d', tId='tp-'+i+'-'+pi+'-f';
-            var dL=p.debut.split(':'), fL=p.fin.split(':');
-            return '<div style="display:flex;align-items:center;gap:4px">'
-              +'<button id="'+fId+'" onclick="openTimePicker(\''+fId+'\','+i+','+pi+',\'debut\')" '
-              +'style="padding:5px 11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--cream);font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;min-width:55px;transition:border-color .15s" '
-              +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+dL[0]+'h'+dL[1]+'</button>'
-              +'<span style="font-size:11px;color:var(--ink-light)">–</span>'
-              +'<button id="'+tId+'" onclick="openTimePicker(\''+tId+'\','+i+','+pi+',\'fin\')" '
-              +'style="padding:5px 11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--cream);font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--ink);cursor:pointer;min-width:55px;transition:border-color .15s" '
-              +'onmouseover="this.style.borderColor=\'var(--gold)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+fL[0]+'h'+fL[1]+'</button>'
-              +(plages.length>1?'<button onclick="removePlage('+i+','+pi+')" style="background:none;border:none;cursor:pointer;font-size:15px;color:var(--ink-light);padding:0 2px;line-height:1;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>':'')
-              +'</div>';
-          }).join('')
-          +'<button onclick="addPlage('+i+')" style="padding:5px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)">+ pause</button>'
-          +'</div>'
-        :'<span style="font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px">Fermé</span>')
-      +'</div></div>';
+    var row = '<div style="background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden">';
+    row += '<div style="display:flex;align-items:center;padding:12px 16px;gap:14px' + (actif ? ';border-bottom:1px solid var(--border)' : '') + '">';
+    row += '<label style="position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer">';
+    row += '<input type="checkbox" id="jour-' + i + '" ' + (actif ? 'checked' : '') + ' onchange="toggleJour(' + i + ')" style="opacity:0;width:0;height:0">';
+    row += '<span style="position:absolute;inset:0;background:' + (actif ? 'var(--ink)' : 'var(--border)') + ';border-radius:100px;transition:background .2s">';
+    row += '<span style="position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:' + (actif ? '19px' : '3px') + ';transition:left .2s"></span>';
+    row += '</span></label>';
+    row += '<span style="font-size:14px;font-weight:500;min-width:90px;color:' + (actif ? 'var(--ink)' : 'var(--ink-light)') + '">' + j.label + '</span>';
+    if (actif) {
+      row += '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1">';
+      plages.forEach(function(p, pi) {
+        var iStr = String(i), piStr = String(pi);
+        var baseStyle = [
+          'width:58px','padding:5px 8px','border:1.5px solid var(--border)',
+          'border-radius:var(--radius-sm)','font-family:var(--font-body)',
+          'font-size:13px','font-weight:500','background:var(--cream)',
+          'color:var(--ink)','text-align:center','outline:none'
+        ].join(';');
+        var inputD = document.createElement('input');
+        inputD.type = 'text'; inputD.id = 'tp-'+iStr+'-'+piStr+'-d';
+        inputD.value = p.debut; inputD.maxLength = 5; inputD.placeholder = '09:00';
+        inputD.setAttribute('style', baseStyle);
+        inputD.setAttribute('oninput', 'formatTimeInput(this)');
+        inputD.setAttribute('onfocus', 'this.style.borderColor="var(--gold)"');
+        inputD.setAttribute('onblur',  'savePlageInput('+iStr+','+piStr+',this,"debut");this.style.borderColor="var(--border)"');
+        var inputF = document.createElement('input');
+        inputF.type = 'text'; inputF.id = 'tp-'+iStr+'-'+piStr+'-f';
+        inputF.value = p.fin; inputF.maxLength = 5; inputF.placeholder = '19:00';
+        inputF.setAttribute('style', baseStyle);
+        inputF.setAttribute('oninput', 'formatTimeInput(this)');
+        inputF.setAttribute('onfocus', 'this.style.borderColor="var(--gold)"');
+        inputF.setAttribute('onblur',  'savePlageInput('+iStr+','+piStr+',this,"fin");this.style.borderColor="var(--border)"');
+        var sep = '<span style="font-size:12px;color:var(--ink-light)">–</span>';
+        var rmBtn = plages.length > 1
+          ? '<button onclick="removePlage('+iStr+','+piStr+')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0;line-height:1">×</button>'
+          : '';
+        var tmp = document.createElement('div');
+        tmp.appendChild(inputD);
+        tmp.innerHTML = tmp.innerHTML + sep + '<span></span>' + rmBtn;
+        tmp.querySelector('span:last-of-type').replaceWith(inputF);
+        row += '<div style="display:flex;align-items:center;gap:6px">' + tmp.innerHTML + '</div>';
+      });
+      row += '<button onclick="addPlage(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)">+ pause</button>';
+      row += '</div>';
+    } else {
+      row += '<span style="font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px">Fermé</span>';
+    }
+    row += '</div></div>';
+    html += row;
   });
   el.innerHTML = html;
+}
+
+function formatTimeInput(input) {
+  var raw = input.value.replace(/[^0-9]/g,'');
+  if (raw.length > 2) input.value = raw.slice(0,2)+':'+raw.slice(2,4);
+  else input.value = raw;
+}
+
+function savePlageInput(i, pi, inputEl, type) {
+  var val = inputEl.value.trim();
+  if (!validateTime(val)) { inputEl.style.borderColor='#993C1D'; return; }
+  inputEl.style.borderColor = 'var(--border)';
+  var plages = getPlages(i);
+  plages[pi][type] = val;
+  var p = plages[pi];
+  if (p.fin <= p.debut) {
+    var parts = p.debut.split(':');
+    var h = Math.min(parseInt(parts[0])+2, 23);
+    p.fin = String(h).padStart(2,'0')+':'+parts[1];
+    var el = document.getElementById('tp-'+i+'-'+pi+'-f');
+    if (el) el.value = p.fin;
+  }
+  planningData.heures[i] = plages;
 }
 
 function toggleJour(i) {
@@ -711,16 +631,19 @@ function toggleJour(i) {
 }
 
 function addPlage(i) {
-  var plages=getPlages(i), lastFin=plages[plages.length-1].fin||'19:00';
-  var allT=[]; HOURS_LIST.forEach(function(h){MINS_LIST.forEach(function(m){allT.push(h+':'+m);});});
-  var idx=allT.indexOf(lastFin);
-  plages.push({debut:allT[Math.min(idx+1,allT.length-1)],fin:allT[Math.min(idx+9,allT.length-1)]});
-  planningData.heures[i]=plages; renderPlanningDays();
+  var plages = getPlages(i);
+  var lastFin = plages[plages.length-1].fin||'19:00';
+  var h = Math.min(parseInt(lastFin.split(':')[0])+2, 23);
+  plages.push({debut:lastFin, fin:String(h).padStart(2,'0')+':00'});
+  planningData.heures[i] = plages;
+  renderPlanningDays();
 }
 
-function removePlage(i,pi){
-  var plages=getPlages(i); plages.splice(pi,1);
-  planningData.heures[i]=plages; renderPlanningDays();
+function removePlage(i, pi) {
+  var plages = getPlages(i);
+  plages.splice(pi,1);
+  planningData.heures[i] = plages;
+  renderPlanningDays();
 }
 
 
