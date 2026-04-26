@@ -564,16 +564,8 @@ function validateTime(val) {
 }
 
 // Journée source à copier (toutes ses plages)
-var lastSavedDay = null; // { dayIdx, plages: [{debut,fin},...] }
-
-function formatTimeInput(input) {
-  var raw = input.value.replace(/[^0-9hH:]/g, '');
-  var digits = raw.replace(/[^0-9]/g, '');
-  if (digits.length >= 3 && raw.indexOf(':') === -1 && raw.toLowerCase().indexOf('h') === -1) {
-    raw = digits.slice(0,2) + ':' + digits.slice(2,4);
-  }
-  input.value = raw;
-}
+var lastSavedDay   = null;
+var propagatedDays = {};
 
 function savePlageInput(i, pi, inputEl, type) {
   var raw = inputEl.value.trim();
@@ -583,11 +575,9 @@ function savePlageInput(i, pi, inputEl, type) {
   inputEl.style.borderColor = 'var(--border)';
   inputEl.value = norm;
 
-  // Récupérer et modifier les plages, puis réaffecter dans planningData
   var plages = JSON.parse(JSON.stringify(getPlages(i)));
   plages[pi][type] = norm;
 
-  // Validation fin > debut
   var p = plages[pi];
   if (p.fin && p.debut && p.fin <= p.debut) {
     var parts = p.debut.split(':');
@@ -597,14 +587,17 @@ function savePlageInput(i, pi, inputEl, type) {
     if (finEl) finEl.value = p.fin;
   }
 
-  // Persister avec les deux types de clés
   planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
 
-  // Proposer de copier la journée entière
+  // Modification manuelle — effacer le flag propagé
+  delete propagatedDays[i];
+  delete propagatedDays[String(i)];
+
   lastSavedDay = { dayIdx: i, plages: JSON.parse(JSON.stringify(plages)) };
   showPropagate(i);
 }
+
 
 function propagateDay(sourceDay) {
   if (!lastSavedDay) return;
@@ -614,6 +607,9 @@ function propagateDay(sourceDay) {
     if (planningData.jours[i] === false) return;
     planningData.heures[String(i)] = JSON.parse(JSON.stringify(srcPlages));
     planningData.heures[i] = planningData.heures[String(i)];
+    // Marquer comme propagé pour ignorer le blur suivant
+    propagatedDays[i] = true;
+    propagatedDays[String(i)] = true;
   });
   var bar = document.getElementById('propagate-bar');
   if (bar) bar.remove();
