@@ -529,17 +529,102 @@ function getPlages(i) {
   return h.length ? h : defaultPlages();
 }
 
+// Normalise n'importe quelle saisie vers HH:MM
+// 9 → 09:00 | 900 → 09:00 | 1430 → 14:30 | 9:3 → 09:30 | 14h30 → 14:30
+function parseTimeInput(raw) {
+  raw = raw.trim().replace(/[hH]/g, ':').replace(/[^0-9:]/g, '');
+  var h, m;
+  if (raw.indexOf(':') !== -1) {
+    var parts = raw.split(':');
+    h = parts[0]; m = (parts[1] || '00').slice(0, 2);
+  } else {
+    if (raw.length <= 2) { h = raw; m = '00'; }
+    else if (raw.length === 3) { h = raw.slice(0,1); m = raw.slice(1,3); }
+    else { h = raw.slice(0,2); m = raw.slice(2,4); }
+  }
+  h = parseInt(h||0); m = parseInt(m||0);
+  // Snap minutes aux quarts les plus proches
+  var snapped = [0,15,30,45].reduce(function(prev,cur){ return Math.abs(cur-m)<Math.abs(prev-m)?cur:prev; });
+  if (h<0) h=0; if (h>23) h=23;
+  return String(h).padStart(2,'0')+':'+String(snapped).padStart(2,'0');
+}
+
 function formatTimeInput(input) {
-  var raw = input.value.replace(/[^0-9]/g,'');
-  if (raw.length >= 3) raw = raw.slice(0,2)+':'+raw.slice(2,4);
+  // Pendant la frappe : juste enlever les caractères invalides et insérer : automatiquement
+  var raw = input.value.replace(/[^0-9hH:]/g,'');
+  var digits = raw.replace(/[^0-9]/g,'');
+  if (digits.length >= 3 && raw.indexOf(':') === -1 && raw.toLowerCase().indexOf('h') === -1) {
+    raw = digits.slice(0,2)+':'+digits.slice(2,4);
+  }
   input.value = raw;
 }
 
 function validateTime(val) {
-  var m = val.match(/^(\d{1,2}):(\d{2})$/);
+  var norm = parseTimeInput(val);
+  var m = norm.match(/^(\d{2}):(\d{2})$/);
   if (!m) return false;
-  var h=parseInt(m[1]), mn=parseInt(m[2]);
-  return h>=0&&h<=23&&mn>=0&&mn<=59;
+  return parseInt(m[1])<=23 && parseInt(m[2])<=59;
+}
+
+// Quand on valide un champ, proposer d'appliquer aux autres jours actifs
+var lastSavedPlage = null; // {debut, fin} de la dernière plage sauvegardée (index 0)
+
+function savePlageInput(i, pi, inputEl, type) {
+  var raw = inputEl.value.trim();
+  if (!raw) return;
+  var norm = parseTimeInput(raw);
+  if (!validateTime(norm)) { inputEl.style.borderColor='#993C1D'; return; }
+  inputEl.style.borderColor = 'var(--border)';
+  inputEl.value = norm; // Afficher la valeur normalisée
+
+  var plages = getPlages(i);
+  plages[pi][type] = norm;
+
+  // Validation fin > debut
+  var p = plages[pi];
+  if (p.fin && p.debut && p.fin <= p.debut) {
+    var parts = p.debut.split(':');
+    var newH = Math.min(parseInt(parts[0])+2, 23);
+    p.fin = String(newH).padStart(2,'0')+':'+parts[1];
+    var finEl = document.getElementById('tp-'+i+'-'+pi+'-f');
+    if (finEl) { finEl.value = p.fin; finEl.style.borderColor='var(--gold-light)'; }
+  }
+  planningData.heures[i] = plages;
+
+  // Proposer de propager si c'est la plage principale (pi=0) et les deux champs sont remplis
+  if (pi === 0 && plages[0].debut && plages[0].fin) {
+    lastSavedPlage = {debut: plages[0].debut, fin: plages[0].fin};
+    showPropagate(i);
+  }
+}
+
+function showPropagate(sourceDay) {
+  var existing = document.getElementById('propagate-bar');
+  if (existing) existing.remove();
+  var bar = document.createElement('div');
+  bar.id = 'propagate-bar';
+  bar.style.cssText = 'margin-top:10px;padding:10px 14px;background:var(--gold-light);border:1px solid var(--gold);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px';
+  bar.innerHTML = '<span>Appliquer <strong>'+lastSavedPlage.debut+'–'+lastSavedPlage.fin+'</strong> à tous les jours actifs ?</span>'
+    + '<div style="display:flex;gap:6px">'
+    + '<button onclick="propagatePlage('+sourceDay+')" style="padding:5px 14px;border-radius:100px;background:var(--ink);color:white;border:none;font-family:var(--font-body);font-size:12px;cursor:pointer">Appliquer</button>'
+    + '<button onclick="document.getElementById(\'propagate-bar\').remove()" style="padding:5px 10px;border-radius:100px;background:none;border:1px solid var(--border);font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light)">Non</button>'
+    + '</div>';
+  var planningDiv = document.getElementById('planning-days');
+  if (planningDiv) planningDiv.after(bar);
+}
+
+function propagatePlage(sourceDay) {
+  if (!lastSavedPlage) return;
+  JOURS_SEMAINE.forEach(function(_, i) {
+    if (i === sourceDay || planningData.jours[i] === false) return;
+    var plages = getPlages(i);
+    plages[0] = {debut: lastSavedPlage.debut, fin: lastSavedPlage.fin};
+    planningData.heures[i] = plages;
+  });
+  var bar = document.getElementById('propagate-bar');
+  if (bar) bar.remove();
+  renderPlanningDays();
+  showToast('Horaires appliqués à tous les jours actifs');
 }
 
 function renderPlanningDays() {
@@ -599,29 +684,6 @@ function renderPlanningDays() {
     html += row;
   });
   el.innerHTML = html;
-}
-
-function formatTimeInput(input) {
-  var raw = input.value.replace(/[^0-9]/g,'');
-  if (raw.length > 2) input.value = raw.slice(0,2)+':'+raw.slice(2,4);
-  else input.value = raw;
-}
-
-function savePlageInput(i, pi, inputEl, type) {
-  var val = inputEl.value.trim();
-  if (!validateTime(val)) { inputEl.style.borderColor='#993C1D'; return; }
-  inputEl.style.borderColor = 'var(--border)';
-  var plages = getPlages(i);
-  plages[pi][type] = val;
-  var p = plages[pi];
-  if (p.fin <= p.debut) {
-    var parts = p.debut.split(':');
-    var h = Math.min(parseInt(parts[0])+2, 23);
-    p.fin = String(h).padStart(2,'0')+':'+parts[1];
-    var el = document.getElementById('tp-'+i+'-'+pi+'-f');
-    if (el) el.value = p.fin;
-  }
-  planningData.heures[i] = plages;
 }
 
 function toggleJour(i) {
