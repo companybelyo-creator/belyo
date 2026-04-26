@@ -827,19 +827,23 @@ async function loadPlanning() {
 }
 
 async function savePlanning() {
-  // Lire les valeurs actuelles des inputs DOM avant de sauvegarder
+  var btn = document.getElementById('btn-save-planning');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  showMsg('planning-ok', false);
+
+  // Lire tous les inputs DOM et mettre à jour planningData
   JOURS_SEMAINE.forEach(function(_, i) {
     if (planningData.jours[i] === false) return;
-    var plages = getPlages(i);
+    var plages = JSON.parse(JSON.stringify(getPlages(i)));
     plages.forEach(function(p, pi) {
       var elD = document.getElementById('tp-'+i+'-'+pi+'-d');
       var elF = document.getElementById('tp-'+i+'-'+pi+'-f');
-      if (elD && elD.value) {
-        var nd = parseTimeInput(elD.value);
+      if (elD && elD.value.trim()) {
+        var nd = parseTimeInput(elD.value.trim());
         if (validateTime(nd)) p.debut = nd;
       }
-      if (elF && elF.value) {
-        var nf = parseTimeInput(elF.value);
+      if (elF && elF.value.trim()) {
+        var nf = parseTimeInput(elF.value.trim());
         if (validateTime(nf)) p.fin = nf;
       }
       if (p.fin <= p.debut) {
@@ -849,13 +853,25 @@ async function savePlanning() {
     });
     planningData.heures[i] = plages;
   });
-  var btn = document.getElementById('btn-save-planning');
-  btn.disabled = true; btn.textContent = 'Enregistrement...';
-  showMsg('planning-ok', false);
+
+  // S'assurer que jours est un objet avec des clés numériques
+  var joursClean = {};
+  JOURS_SEMAINE.forEach(function(_, i) {
+    joursClean[i] = planningData.jours[i] !== false;
+  });
+  planningData.jours = joursClean;
+
+  var payload = {
+    jours:  planningData.jours,
+    heures: planningData.heures,
+    conges: planningData.conges
+  };
+
   var res = await sb.from('salon_settings')
-    .update({ planning: planningData })
+    .update({ planning: payload })
     .eq('user_id', currentUser.id)
     .select();
+
   btn.disabled = false; btn.textContent = 'Enregistrer';
   if (res.error) { showToast('Erreur : '+res.error.message, 'error'); return; }
   showMsg('planning-ok', true);
