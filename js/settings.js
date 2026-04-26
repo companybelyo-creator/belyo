@@ -1134,24 +1134,8 @@ function renderConges() {
   }).join('');
 }
 
-function addConge() {
-  var debut = document.getElementById('conge-debut').value;
-  var fin   = document.getElementById('conge-fin').value;
-  var label = document.getElementById('conge-label').value.trim();
-  if (!debut || !fin) { showToast('Sélectionnez une période','error'); return; }
-  if (fin < debut)    { showToast('La date de fin doit être après le début','error'); return; }
-  planningData.conges.push({ debut, fin, label: label||'Congé' });
-  planningData.conges.sort(function(a,b){ return a.debut.localeCompare(b.debut); });
-  document.getElementById('conge-debut').value = '';
-  document.getElementById('conge-fin').value   = '';
-  document.getElementById('conge-label').value = '';
-  renderConges();
-}
 
-function removeConge(i) {
-  planningData.conges.splice(i, 1);
-  renderConges();
-}
+
 
 async function loadPlanning() {
   var res = await sb.from('salon_settings')
