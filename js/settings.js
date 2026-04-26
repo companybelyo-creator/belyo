@@ -563,6 +563,38 @@ function validateTime(val) {
   return parseInt(m[1])<=23 && parseInt(m[2])<=59;
 }
 
+// Vérifie qu'aucune plage ne chevauche une autre dans la liste
+function validatePlages(plages) {
+  for (var a = 0; a < plages.length; a++) {
+    for (var b = a+1; b < plages.length; b++) {
+      var dA = plages[a].debut, fA = plages[a].fin;
+      var dB = plages[b].debut, fB = plages[b].fin;
+      // Chevauchement si dB < fA ET fB > dA
+      if (dB < fA && fB > dA) return false;
+      if (dA < fB && fA > dB) return false;
+    }
+  }
+  return true;
+}
+
+// Corrige les chevauchements : tronque la plage précédente si besoin
+function fixChevauchements(plages) {
+  // Trier par debut
+  plages.sort(function(a,b){ return a.debut.localeCompare(b.debut); });
+  for (var i = 1; i < plages.length; i++) {
+    if (plages[i].debut < plages[i-1].fin) {
+      // Décaler le debut de cette plage à la fin de la précédente
+      plages[i].debut = plages[i-1].fin;
+      // Si fin <= debut, ajuster fin
+      if (plages[i].fin <= plages[i].debut) {
+        var h = Math.min(parseInt(plages[i].debut.split(':')[0])+2, 23);
+        plages[i].fin = String(h).padStart(2,'0')+':'+plages[i].debut.split(':')[1];
+      }
+    }
+  }
+  return plages;
+}
+
 // Journée source à copier (toutes ses plages)
 var lastSavedDay   = null;
 var propagatedDays = {};
@@ -587,6 +619,19 @@ function savePlageInput(i, pi, inputEl, type) {
     if (finEl) finEl.value = p.fin;
   }
 
+  // Vérifier chevauchements et corriger si besoin
+  if (!validatePlages(plages)) {
+    plages = fixChevauchements(plages);
+    // Mettre à jour les inputs visuellement
+    plages.forEach(function(p, pj) {
+      var elD2 = document.getElementById('tp-'+i+'-'+pj+'-d');
+      var elF2 = document.getElementById('tp-'+i+'-'+pj+'-f');
+      if (elD2) elD2.value = p.debut;
+      if (elF2) elF2.value = p.fin;
+    });
+    showToast('Chevauchement corrigé automatiquement', '');
+  }
+
   planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
 
@@ -604,8 +649,10 @@ function propagateDay(sourceDay) {
   JOURS_SEMAINE.forEach(function(_, i) {
     if (i === sourceDay) return;
     if (planningData.jours[i] === false) return;
-    planningData.heures[String(i)] = JSON.parse(JSON.stringify(srcPlages));
-    planningData.heures[i] = planningData.heures[String(i)];
+    var cp = JSON.parse(JSON.stringify(srcPlages));
+    if (!validatePlages(cp)) cp = fixChevauchements(cp);
+    planningData.heures[String(i)] = cp;
+    planningData.heures[i] = cp;
     // Marquer comme propagé pour ignorer le blur suivant
     propagatedDays[i] = true;
     propagatedDays[String(i)] = true;
@@ -748,6 +795,7 @@ function addPlage(i) {
   var lastFin = plages[plages.length-1].fin||'19:00';
   var h = Math.min(parseInt(lastFin.split(':')[0])+2, 23);
   plages.push({debut:lastFin, fin:String(h).padStart(2,'0')+':00'});
+  if (!validatePlages(plages)) plages = fixChevauchements(plages);
   planningData.heures[String(i)] = plages;
   planningData.heures[i] = plages;
   renderPlanningDays();
