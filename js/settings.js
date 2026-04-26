@@ -580,7 +580,8 @@ function savePlageInput(i, pi, inputEl, type) {
   inputEl.style.borderColor = 'var(--border)';
   inputEl.value = norm;
 
-  var plages = getPlages(i);
+  // Récupérer et modifier les plages, puis réaffecter dans planningData
+  var plages = JSON.parse(JSON.stringify(getPlages(i)));
   plages[pi][type] = norm;
 
   // Validation fin > debut
@@ -590,13 +591,30 @@ function savePlageInput(i, pi, inputEl, type) {
     var newH = Math.min(parseInt(parts[0])+2, 23);
     p.fin = String(newH).padStart(2,'0')+':'+parts[1];
     var finEl = document.getElementById('tp-'+i+'-'+pi+'-f');
-    if (finEl) { finEl.value = p.fin; }
+    if (finEl) finEl.value = p.fin;
   }
+
+  // Persister
   planningData.heures[i] = plages;
 
-  // Proposer de copier la journée entière vers les autres jours
+  // Proposer de copier la journée entière
   lastSavedDay = { dayIdx: i, plages: JSON.parse(JSON.stringify(plages)) };
   showPropagate(i);
+}
+
+function propagateDay(sourceDay) {
+  if (!lastSavedDay) return;
+  var srcPlages = JSON.parse(JSON.stringify(lastSavedDay.plages));
+  JOURS_SEMAINE.forEach(function(_, i) {
+    if (i === sourceDay) return;
+    if (planningData.jours[i] === false) return;
+    planningData.heures[i] = JSON.parse(JSON.stringify(srcPlages));
+  });
+  var bar = document.getElementById('propagate-bar');
+  if (bar) bar.remove();
+  lastSavedDay = null;
+  renderPlanningDays();
+  showToast('Horaires copiés — pensez à enregistrer');
 }
 
 function showPropagate(sourceDay) {
@@ -609,30 +627,13 @@ function showPropagate(sourceDay) {
   bar.id = 'propagate-bar';
   bar.style.cssText = 'margin-top:8px;padding:10px 14px;background:var(--gold-light);border:1px solid var(--gold);'
     +'border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px';
-  bar.innerHTML = '<span>Copier <strong>'+label+'</strong> pour tous les jours actifs ?</span>'
+  bar.innerHTML = '<span>Copier <strong>'+label+'</strong> sur tous les jours actifs ?</span>'
     +'<div style="display:flex;gap:6px">'
     +'<button onclick="propagateDay('+sourceDay+')" style="padding:5px 14px;border-radius:100px;background:var(--ink);color:white;border:none;font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">Appliquer à tous</button>'
     +'<button onclick="document.getElementById(\'propagate-bar\').remove()" style="padding:5px 10px;border-radius:100px;background:none;border:1px solid var(--border);font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light)">Non</button>'
     +'</div>';
   var planningDiv = document.getElementById('planning-days');
   if (planningDiv) planningDiv.after(bar);
-}
-
-function propagateDay(sourceDay) {
-  if (!lastSavedDay) return;
-  // Sauvegarder d'abord l'état actuel des inputs du jour source
-  var srcPlages = JSON.parse(JSON.stringify(lastSavedDay.plages));
-  JOURS_SEMAINE.forEach(function(_, i) {
-    if (i === sourceDay) return;
-    if (planningData.jours[i] === false) return;
-    // Deep copy des plages source
-    planningData.heures[i] = JSON.parse(JSON.stringify(srcPlages));
-  });
-  var bar = document.getElementById('propagate-bar');
-  if (bar) bar.remove();
-  lastSavedDay = null;
-  renderPlanningDays();
-  showToast('Horaires copiés sur tous les jours actifs');
 }
 
 function renderPlanningDays() {
