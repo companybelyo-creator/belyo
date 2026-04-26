@@ -530,44 +530,38 @@ function getPlages(i) {
 }
 
 // Normalise n'importe quelle saisie vers HH:MM
-// 9 → 09:00 | 900 → 09:00 | 1430 → 14:30 | 9:3 → 09:30 | 14h30 → 14:30
 function parseTimeInput(raw) {
-  raw = raw.trim().replace(/[hH]/g, ':').replace(/[^0-9:]/g, '');
+  raw = (raw||'').trim().replace(/[hH]/g,':').replace(/[^0-9:]/g,'');
   var h, m;
   if (raw.indexOf(':') !== -1) {
     var parts = raw.split(':');
-    h = parts[0]; m = (parts[1] || '00').slice(0, 2);
+    h = parts[0]||'0';
+    m = (parts[1]||'0').slice(0,2);
+    // 12:3 → 12:30 (compléter à gauche si 1 chiffre)
+    if (m.length === 1) m = m + '0';
   } else {
-    if (raw.length <= 2) { h = raw; m = '00'; }
+    if (raw.length <= 2) { h = raw||'0'; m = '00'; }
     else if (raw.length === 3) { h = raw.slice(0,1); m = raw.slice(1,3); }
     else { h = raw.slice(0,2); m = raw.slice(2,4); }
   }
-  h = parseInt(h||0); m = parseInt(m||0);
-  // Snap minutes aux quarts les plus proches
-  var snapped = [0,15,30,45].reduce(function(prev,cur){ return Math.abs(cur-m)<Math.abs(prev-m)?cur:prev; });
+  h = parseInt(h)||0; m = parseInt(m)||0;
   if (h<0) h=0; if (h>23) h=23;
+  if (m<0) m=0; if (m>59) m=59;
+  // Snap minutes aux quarts
+  var snapped = [0,15,30,45].reduce(function(prev,cur){
+    return Math.abs(cur-m)<Math.abs(prev-m)?cur:prev;
+  });
   return String(h).padStart(2,'0')+':'+String(snapped).padStart(2,'0');
 }
 
-function formatTimeInput(input) {
-  // Pendant la frappe : juste enlever les caractères invalides et insérer : automatiquement
-  var raw = input.value.replace(/[^0-9hH:]/g,'');
-  var digits = raw.replace(/[^0-9]/g,'');
-  if (digits.length >= 3 && raw.indexOf(':') === -1 && raw.toLowerCase().indexOf('h') === -1) {
-    raw = digits.slice(0,2)+':'+digits.slice(2,4);
-  }
-  input.value = raw;
-}
-
 function validateTime(val) {
-  var norm = parseTimeInput(val);
-  var m = norm.match(/^(\d{2}):(\d{2})$/);
+  var m = parseTimeInput(val).match(/^(\d{2}):(\d{2})$/);
   if (!m) return false;
   return parseInt(m[1])<=23 && parseInt(m[2])<=59;
 }
 
-// Quand on valide un champ, proposer d'appliquer aux autres jours actifs
-var lastSavedPlage = null; // {debut, fin} de la dernière plage sauvegardée (index 0)
+// Journée source à copier (toutes ses plages)
+var lastSavedDay = null; // { dayIdx, plages: [{debut,fin},...] }
 
 function savePlageInput(i, pi, inputEl, type) {
   var raw = inputEl.value.trim();
@@ -575,7 +569,7 @@ function savePlageInput(i, pi, inputEl, type) {
   var norm = parseTimeInput(raw);
   if (!validateTime(norm)) { inputEl.style.borderColor='#993C1D'; return; }
   inputEl.style.borderColor = 'var(--border)';
-  inputEl.value = norm; // Afficher la valeur normalisée
+  inputEl.value = norm;
 
   var plages = getPlages(i);
   plages[pi][type] = norm;
@@ -587,44 +581,49 @@ function savePlageInput(i, pi, inputEl, type) {
     var newH = Math.min(parseInt(parts[0])+2, 23);
     p.fin = String(newH).padStart(2,'0')+':'+parts[1];
     var finEl = document.getElementById('tp-'+i+'-'+pi+'-f');
-    if (finEl) { finEl.value = p.fin; finEl.style.borderColor='var(--gold-light)'; }
+    if (finEl) { finEl.value = p.fin; }
   }
   planningData.heures[i] = plages;
 
-  // Proposer de propager si c'est la plage principale (pi=0) et les deux champs sont remplis
-  if (pi === 0 && plages[0].debut && plages[0].fin) {
-    lastSavedPlage = {debut: plages[0].debut, fin: plages[0].fin};
-    showPropagate(i);
-  }
+  // Proposer de copier la journée entière vers les autres jours
+  lastSavedDay = { dayIdx: i, plages: JSON.parse(JSON.stringify(plages)) };
+  showPropagate(i);
 }
 
 function showPropagate(sourceDay) {
   var existing = document.getElementById('propagate-bar');
   if (existing) existing.remove();
+  if (!lastSavedDay) return;
+  var plages = lastSavedDay.plages;
+  var label  = plages.map(function(p){ return p.debut+'–'+p.fin; }).join(', ');
   var bar = document.createElement('div');
   bar.id = 'propagate-bar';
-  bar.style.cssText = 'margin-top:10px;padding:10px 14px;background:var(--gold-light);border:1px solid var(--gold);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px';
-  bar.innerHTML = '<span>Appliquer <strong>'+lastSavedPlage.debut+'–'+lastSavedPlage.fin+'</strong> à tous les jours actifs ?</span>'
-    + '<div style="display:flex;gap:6px">'
-    + '<button onclick="propagatePlage('+sourceDay+')" style="padding:5px 14px;border-radius:100px;background:var(--ink);color:white;border:none;font-family:var(--font-body);font-size:12px;cursor:pointer">Appliquer</button>'
-    + '<button onclick="document.getElementById(\'propagate-bar\').remove()" style="padding:5px 10px;border-radius:100px;background:none;border:1px solid var(--border);font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light)">Non</button>'
-    + '</div>';
+  bar.style.cssText = 'margin-top:8px;padding:10px 14px;background:var(--gold-light);border:1px solid var(--gold);'
+    +'border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px';
+  bar.innerHTML = '<span>Copier <strong>'+label+'</strong> pour tous les jours actifs ?</span>'
+    +'<div style="display:flex;gap:6px">'
+    +'<button onclick="propagateDay('+sourceDay+')" style="padding:5px 14px;border-radius:100px;background:var(--ink);color:white;border:none;font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">Appliquer à tous</button>'
+    +'<button onclick="document.getElementById(\'propagate-bar\').remove()" style="padding:5px 10px;border-radius:100px;background:none;border:1px solid var(--border);font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink-light)">Non</button>'
+    +'</div>';
   var planningDiv = document.getElementById('planning-days');
   if (planningDiv) planningDiv.after(bar);
 }
 
-function propagatePlage(sourceDay) {
-  if (!lastSavedPlage) return;
+function propagateDay(sourceDay) {
+  if (!lastSavedDay) return;
+  // Sauvegarder d'abord l'état actuel des inputs du jour source
+  var srcPlages = JSON.parse(JSON.stringify(lastSavedDay.plages));
   JOURS_SEMAINE.forEach(function(_, i) {
-    if (i === sourceDay || planningData.jours[i] === false) return;
-    var plages = getPlages(i);
-    plages[0] = {debut: lastSavedPlage.debut, fin: lastSavedPlage.fin};
-    planningData.heures[i] = plages;
+    if (i === sourceDay) return;
+    if (planningData.jours[i] === false) return;
+    // Deep copy des plages source
+    planningData.heures[i] = JSON.parse(JSON.stringify(srcPlages));
   });
   var bar = document.getElementById('propagate-bar');
   if (bar) bar.remove();
+  lastSavedDay = null;
   renderPlanningDays();
-  showToast('Horaires appliqués à tous les jours actifs');
+  showToast('Horaires copiés sur tous les jours actifs');
 }
 
 function renderPlanningDays() {
@@ -818,27 +817,39 @@ async function loadPlanning() {
 }
 
 async function savePlanning() {
-  // Sauvegarder l'état actuel des drums dans planningData
-  JOURS_SEMAINE.forEach(function(_,i){
-    if(planningData.jours[i]===false) return;
-    var plages=getPlages(i);
-    plages.forEach(function(p,pi){
-      var dIdD='pd-'+i+'-'+pi+'-d', dIdF='pd-'+i+'-'+pi+'-f';
-      if(drumState[dIdD]) p.debut=getDrumVal(dIdD)||p.debut;
-      if(drumState[dIdF]) p.fin  =getDrumVal(dIdF)||p.fin;
-      // Validation logique
-      if(HEURES.indexOf(p.fin)<=HEURES.indexOf(p.debut)) p.fin=HEURES[Math.min(HEURES.indexOf(p.debut)+4,HEURES.length-1)];
+  // Lire les valeurs actuelles des inputs DOM avant de sauvegarder
+  JOURS_SEMAINE.forEach(function(_, i) {
+    if (planningData.jours[i] === false) return;
+    var plages = getPlages(i);
+    plages.forEach(function(p, pi) {
+      var elD = document.getElementById('tp-'+i+'-'+pi+'-d');
+      var elF = document.getElementById('tp-'+i+'-'+pi+'-f');
+      if (elD && elD.value) {
+        var nd = parseTimeInput(elD.value);
+        if (validateTime(nd)) p.debut = nd;
+      }
+      if (elF && elF.value) {
+        var nf = parseTimeInput(elF.value);
+        if (validateTime(nf)) p.fin = nf;
+      }
+      if (p.fin <= p.debut) {
+        var h = Math.min(parseInt(p.debut.split(':')[0])+2, 23);
+        p.fin = String(h).padStart(2,'0')+':'+p.debut.split(':')[1];
+      }
     });
-    planningData.heures[i]=plages;
+    planningData.heures[i] = plages;
   });
-  var btn=document.getElementById('btn-save-planning');
-  btn.disabled=true; btn.textContent='Enregistrement...';
-  showMsg('planning-ok',false);
-  var res=await sb.from('salon_settings').update({planning:planningData}).eq('user_id',currentUser.id).select();
-  btn.disabled=false; btn.textContent='Enregistrer';
-  if(res.error){showToast('Erreur : '+res.error.message,'error');return;}
-  showMsg('planning-ok',true);
-  setTimeout(function(){showMsg('planning-ok',false);},3000);
+  var btn = document.getElementById('btn-save-planning');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+  showMsg('planning-ok', false);
+  var res = await sb.from('salon_settings')
+    .update({ planning: planningData })
+    .eq('user_id', currentUser.id)
+    .select();
+  btn.disabled = false; btn.textContent = 'Enregistrer';
+  if (res.error) { showToast('Erreur : '+res.error.message, 'error'); return; }
+  showMsg('planning-ok', true);
+  setTimeout(function(){ showMsg('planning-ok', false); }, 3000);
 }
 
 function renderConges() {
@@ -888,19 +899,6 @@ async function loadPlanning() {
   }
   renderPlanningDays();
   renderConges();
-}
-
-async function savePlanning() {
-  var btn = document.getElementById('btn-save-planning');
-  btn.disabled = true; btn.textContent = 'Enregistrement...';
-  showMsg('planning-ok', false);
-  var res = await sb.from('salon_settings')
-    .update({ planning: planningData })
-    .eq('user_id', currentUser.id).select();
-  btn.disabled = false; btn.textContent = 'Enregistrer';
-  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
-  showMsg('planning-ok', true);
-  setTimeout(function() { showMsg('planning-ok', false); }, 3000);
 }
 
 // ===== INIT =====
