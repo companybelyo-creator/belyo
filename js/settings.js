@@ -823,19 +823,7 @@ function renderConges() {
 
 function removeConge(i) { planningData.conges.splice(i,1); renderConges(); renderCongeCal(); }
 
-async function loadPlanning() {
-  var res=await sb.from('salon_settings').select('planning').eq('user_id',currentUser.id).maybeSingle();
-  if(res.data&&res.data.planning) {
-    var p=res.data.planning;
-    if(p.jours)  planningData.jours  = p.jours;
-    if(p.heures) planningData.heures = p.heures;
-    if(p.conges) planningData.conges = p.conges;
-  }
-  congeCalMonth=new Date(); congeCalMonth.setDate(1);
-  renderPlanningDays();
-  renderCongeCal();
-  renderConges();
-}
+
 
 async function savePlanning() {
   var btn = document.getElementById('btn-save-planning');
@@ -936,9 +924,29 @@ async function loadPlanning() {
   var res = await sb.from('salon_settings')
     .select('planning').eq('user_id', currentUser.id).maybeSingle();
   if (res.data && res.data.planning) {
-    planningData = Object.assign(planningData, res.data.planning);
+    var p = res.data.planning;
+    // Supabase renvoie les clés JSON comme strings ("0","1"...)
+    // On stocke en string ET en number pour compatibilité
+    if (p.jours) {
+      planningData.jours = {};
+      Object.keys(p.jours).forEach(function(k) {
+        planningData.jours[k]        = p.jours[k];
+        planningData.jours[parseInt(k)] = p.jours[k];
+      });
+    }
+    if (p.heures) {
+      planningData.heures = {};
+      Object.keys(p.heures).forEach(function(k) {
+        var val = Array.isArray(p.heures[k]) ? p.heures[k] : [p.heures[k]];
+        planningData.heures[k]        = val;
+        planningData.heures[parseInt(k)] = val;
+      });
+    }
+    if (p.conges) planningData.conges = p.conges;
   }
+  congeCalMonth = new Date(); congeCalMonth.setDate(1);
   renderPlanningDays();
+  renderCongeCal();
   renderConges();
 }
 
