@@ -283,15 +283,14 @@
                 </div>
 
                 <!-- Plage horaire (visible seulement en mode heure) -->
-                <div id="conge-hours-row" style="display:none;align-items:center;gap:8px;margin-bottom:10px">
+                <div id="conge-hours-row" style="display:none;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
                   <span style="font-size:12px;color:var(--ink-light)">De</span>
                   <input type="text" id="conge-h-debut" maxlength="5" placeholder="09:00"
-                    style="width:60px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none"
-                    oninput="formatTimeInput(this)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                    style="width:62px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none" />
                   <span style="font-size:12px;color:var(--ink-light)">à</span>
                   <input type="text" id="conge-h-fin" maxlength="5" placeholder="12:00"
-                    style="width:60px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none"
-                    oninput="formatTimeInput(this)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                    style="width:62px;padding:5px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none" />
+                  <span id="conge-h-hint" style="font-size:11px;color:var(--ink-light)"></span>
                 </div>
 
                 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">

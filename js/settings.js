@@ -815,6 +815,68 @@ var congeCalMonth  = new Date();
 var congeRangeStart = null, congeRangeEnd = null;
 var congeType = 'jour'; // 'jour' ou 'heure'
 
+function initCongeHoursInputs() {
+  var inD = document.getElementById('conge-h-debut');
+  var inF = document.getElementById('conge-h-fin');
+  if (!inD || !inF) return;
+  // Focus
+  inD.addEventListener('focus', function(){ this.style.borderColor='var(--gold)'; });
+  inF.addEventListener('focus', function(){ this.style.borderColor='var(--gold)'; });
+  // Input : formatage automatique
+  inD.addEventListener('input', function(){
+    var raw = this.value.replace(/[^0-9hH:]/g,'');
+    var digits = raw.replace(/[^0-9]/g,'');
+    if (digits.length >= 3 && raw.indexOf(':')===-1 && raw.toLowerCase().indexOf('h')===-1)
+      raw = digits.slice(0,2)+':'+digits.slice(2,4);
+    this.value = raw;
+  });
+  inF.addEventListener('input', function(){
+    var raw = this.value.replace(/[^0-9hH:]/g,'');
+    var digits = raw.replace(/[^0-9]/g,'');
+    if (digits.length >= 3 && raw.indexOf(':')===-1 && raw.toLowerCase().indexOf('h')===-1)
+      raw = digits.slice(0,2)+':'+digits.slice(2,4);
+    this.value = raw;
+  });
+  // Blur : normaliser et valider vs planning du jour
+  inD.addEventListener('blur', function(){
+    this.style.borderColor='var(--border)';
+    if (!this.value.trim()) return;
+    var norm = parseTimeInput(this.value.trim());
+    this.value = validateTime(norm) ? norm : this.value;
+    updateCongeHintHours();
+  });
+  inF.addEventListener('blur', function(){
+    this.style.borderColor='var(--border)';
+    if (!this.value.trim()) return;
+    var norm = parseTimeInput(this.value.trim());
+    this.value = validateTime(norm) ? norm : this.value;
+    updateCongeHintHours();
+  });
+}
+
+function updateCongeHintHours() {
+  var hint = document.getElementById('conge-h-hint');
+  if (!hint || !congeRangeStart) return;
+  // Trouver le jour de la semaine pour congeRangeStart
+  var d = new Date(congeRangeStart+'T12:00:00');
+  var dayJS = d.getDay(); // 0=dim, 1=lun...
+  var dayMap = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+  var idx = dayMap[dayJS];
+  var plages = getPlages(idx);
+  if (!plages.length) { hint.textContent=''; return; }
+  var rangeStr = plages.map(function(p){ return p.debut+'–'+p.fin; }).join(', ');
+  hint.textContent = 'Horaires ce jour : '+rangeStr;
+}
+
+function getPlagesDuJour(iso) {
+  if (!iso) return null;
+  var d = new Date(iso+'T12:00:00');
+  var dayMap = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+  var idx = dayMap[d.getDay()];
+  if (planningData.jours[idx] === false || planningData.jours[String(idx)] === false) return null;
+  return getPlages(idx);
+}
+
 function setCongeType(type) {
   congeType = type;
   var btnJ = document.getElementById('conge-type-jour');
@@ -822,15 +884,25 @@ function setCongeType(type) {
   var hRow = document.getElementById('conge-hours-row');
   if (!btnJ || !btnH || !hRow) return;
   if (type === 'jour') {
-    btnJ.style.background = 'var(--white)'; btnJ.style.color = 'var(--ink)'; btnJ.style.boxShadow = '0 1px 3px rgba(0,0,0,.08)';
-    btnH.style.background = 'transparent'; btnH.style.color = 'var(--ink-light)'; btnH.style.boxShadow = 'none';
+    btnJ.style.cssText += ';background:var(--white);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)';
+    btnH.style.cssText += ';background:transparent;color:var(--ink-light);box-shadow:none';
     hRow.style.display = 'none';
   } else {
-    btnH.style.background = 'var(--white)'; btnH.style.color = 'var(--ink)'; btnH.style.boxShadow = '0 1px 3px rgba(0,0,0,.08)';
-    btnJ.style.background = 'transparent'; btnJ.style.color = 'var(--ink-light)'; btnJ.style.boxShadow = 'none';
+    btnH.style.cssText += ';background:var(--white);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)';
+    btnJ.style.cssText += ';background:transparent;color:var(--ink-light);box-shadow:none';
     hRow.style.display = 'flex';
-    // En mode heure, sélection = 1 seul jour
     congeRangeEnd = null;
+    // Pré-remplir avec les heures du planning si un jour est sélectionné
+    if (congeRangeStart) {
+      var plages = getPlagesDuJour(congeRangeStart);
+      if (plages && plages.length) {
+        var inD = document.getElementById('conge-h-debut');
+        var inF = document.getElementById('conge-h-fin');
+        if (inD && !inD.value) inD.value = plages[0].debut;
+        if (inF && !inF.value) inF.value = plages[plages.length-1].fin;
+        updateCongeHintHours();
+      }
+    }
   }
   renderCongeCal();
 }
@@ -877,11 +949,35 @@ function renderCongeCal() {
 }
 
 function congeCalClick(iso, e) {
-  if(!congeRangeStart||congeRangeEnd) {
+  if (!congeRangeStart||congeRangeEnd) {
     congeRangeStart=iso; congeRangeEnd=null;
+    // En mode heure : pré-remplir avec les heures du planning
+    if (congeType === 'heure') {
+      var plages = getPlagesDuJour(iso);
+      if (plages && plages.length) {
+        var inD = document.getElementById('conge-h-debut');
+        var inF = document.getElementById('conge-h-fin');
+        if (inD) inD.value = plages[0].debut;
+        if (inF) inF.value = plages[plages.length-1].fin;
+      }
+      updateCongeHintHours();
+    }
   } else {
-    if(iso<congeRangeStart) { congeRangeEnd=congeRangeStart; congeRangeStart=iso; }
-    else congeRangeEnd=iso;
+    if (congeType === 'heure') {
+      // Mode heure : un seul jour
+      congeRangeStart=iso; congeRangeEnd=null;
+      var plages = getPlagesDuJour(iso);
+      if (plages && plages.length) {
+        var inD = document.getElementById('conge-h-debut');
+        var inF = document.getElementById('conge-h-fin');
+        if (inD) inD.value = plages[0].debut;
+        if (inF) inF.value = plages[plages.length-1].fin;
+      }
+      updateCongeHintHours();
+    } else {
+      if(iso<congeRangeStart) { congeRangeEnd=congeRangeStart; congeRangeStart=iso; }
+      else congeRangeEnd=iso;
+    }
   }
   renderCongeCal();
 }
@@ -908,6 +1004,15 @@ function addConge() {
     var normF = parseTimeInput(hF.value.trim());
     if (!validateTime(normD) || !validateTime(normF)) { showToast('Heures invalides', 'error'); return; }
     if (normF <= normD) { showToast('Heure de fin invalide', 'error'); return; }
+    // Vérifier que la plage est dans les heures de travail ce jour-là
+    var plagesDuJour = getPlagesDuJour(debut);
+    if (plagesDuJour) {
+      var ouvert = plagesDuJour.some(function(p){ return normD >= p.debut && normF <= p.fin; });
+      if (!ouvert) {
+        var hint = plagesDuJour.map(function(p){ return p.debut+'–'+p.fin; }).join(', ');
+        showToast('Hors des horaires de travail ('+hint+')', 'error'); return;
+      }
+    }
     entry.h_debut = normD;
     entry.h_fin   = normF;
     hD.value = ''; hF.value = '';
@@ -1076,6 +1181,7 @@ async function loadPlanning() {
   renderPlanningDays();
   renderCongeCal();
   renderConges();
+  initCongeHoursInputs();
 }
 
 // ===== INIT =====
