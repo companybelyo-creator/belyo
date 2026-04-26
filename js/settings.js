@@ -563,6 +563,15 @@ function validateTime(val) {
 // Journée source à copier (toutes ses plages)
 var lastSavedDay = null; // { dayIdx, plages: [{debut,fin},...] }
 
+function formatTimeInput(input) {
+  var raw = input.value.replace(/[^0-9hH:]/g, '');
+  var digits = raw.replace(/[^0-9]/g, '');
+  if (digits.length >= 3 && raw.indexOf(':') === -1 && raw.toLowerCase().indexOf('h') === -1) {
+    raw = digits.slice(0,2) + ':' + digits.slice(2,4);
+  }
+  input.value = raw;
+}
+
 function savePlageInput(i, pi, inputEl, type) {
   var raw = inputEl.value.trim();
   if (!raw) return;
