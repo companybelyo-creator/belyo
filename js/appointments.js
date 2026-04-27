@@ -430,13 +430,25 @@ function renderCalendar() {
   var grid = document.getElementById('cal-grid');
   var html = '';
 
+  // Légende
+  var legendHtml = '<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;font-size:11px;flex-wrap:wrap">'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#1A1714;border-left:3px solid var(--gold)"></div>À venir</div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#2D5A3D;border-left:3px solid #5CA87A"></div>Terminé</div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(26,23,20,.07)"></div>Non travaillé</div>'
+    + '</div>';
+  var legendEl = document.getElementById('cal-legend');
+  if (legendEl) legendEl.innerHTML = legendHtml;
+
   var JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   html += '<div class="cal-head" style="border-bottom:1px solid var(--border)"></div>';
   days.forEach(function(d, i) {
     var isToday = d.getTime() === today.getTime();
-    html += '<div class="cal-head' + (isToday ? ' today' : '') + '">'
+    // Vérifier si jour fermé pour griser l'en-tête
+    var dayOff = !isHourWorked(d, 12);
+    html += '<div class="cal-head' + (isToday ? ' today' : '') + '" style="' + (dayOff ? 'opacity:.45;' : '') + '">'
       + '<div class="cal-head-day">' + JOURS[i] + '</div>'
       + '<div class="cal-head-num">' + d.getDate() + '</div>'
+      + (dayOff ? '<div style="font-size:9px;color:var(--ink-light);margin-top:2px">Fermé</div>' : '')
       + '</div>';
   });
 
@@ -445,15 +457,27 @@ function renderCalendar() {
       + (hi > 0 ? '<span class="cal-time-label">' + String(h) + 'h</span>' : '')
       + '</div>';
     days.forEach(function(d, di) {
-      var isToday = d.getTime() === today.getTime();
-      var dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      var isToday  = d.getTime() === today.getTime();
+      var dateStr  = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       var dateHour = dateStr + 'T' + String(h).padStart(2,'0') + ':00';
       var worked   = isHourWorked(d, h);
       var congeH   = isHourCongeHoraire(d, h);
-      var cellBg   = !worked ? 'background:rgba(26,23,20,.04);' : congeH ? 'background:repeating-linear-gradient(45deg,rgba(196,168,122,.07),rgba(196,168,122,.07) 3px,transparent 3px,transparent 8px);' : '';
-      html += '<div class="cal-cell' + (isToday ? ' today-col' : '') + '"'
-        + ' style="height:' + SLOT_H + 'px;' + cellBg + '"'
-        + (worked && !congeH ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
+      // Détecter congé journée
+      var iso      = dateStr;
+      var congeJ   = salonPlanning && salonPlanning.conges && salonPlanning.conges.some(function(c){
+        return c.type !== 'heure' && iso >= c.debut && iso <= c.fin;
+      });
+
+      var cls = 'cal-cell';
+      if (isToday) cls += ' today-col';
+      if (congeJ)      cls += ' conge-full';
+      else if (congeH) cls += ' conge-partiel';
+      else if (!worked) cls += ' off-hours';
+      else             cls += ' worked';
+
+      html += '<div class="' + cls + '"'
+        + ' style="height:' + SLOT_H + 'px"'
+        + (worked && !congeH && !congeJ ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
         + ' data-date="' + dateStr + '" data-h="' + h + '">'
         + '</div>';
     });

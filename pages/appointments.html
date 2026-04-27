@@ -93,7 +93,10 @@
         </div>
       </div>
     </div>
-    <div id="view-calendar" style="display:none"><div class="cal-grid" id="cal-grid"></div></div>
+    <div id="view-calendar" style="display:none">
+      <div id="cal-legend" style="padding:0 0 6px"></div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
   </main>
 </div>
 <div class="modal-overlay" id="modal-overlay">
@@ -162,6 +165,7 @@
             </div>
             <div class="cal-picker-grid" id="cal-picker-grid"></div>
             <div class="cal-picker-time" id="cal-picker-time" style="display:none">
+              <div id="cal-picker-hours-hint" style="display:none;width:100%;font-size:11px;color:var(--ink-light);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)"></div>
               <span class="cal-picker-time-label">Heure</span>
               <select id="cal-picker-hour" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)"></select>
               <span style="font-weight:500;color:var(--ink)">:</span>
@@ -202,5 +206,6 @@
 // end guard-salon
 </script>
 <script src="../js/appointments.js?v=2"></script>
+<script>document.addEventListener("DOMContentLoaded", function(){ if(typeof initPhoneInputs==="function") initPhoneInputs(); });</script>
 </body>
 </html>

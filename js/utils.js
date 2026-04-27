@@ -291,32 +291,41 @@ function calPickerRender() {
 
   monthEl.textContent = new Date(year, month, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
-  // Premier jour du mois (lundi = 0)
-  var firstDay = new Date(year, month, 1).getDay();
-  var offset   = firstDay === 0 ? 6 : firstDay - 1;
+  var firstDay    = new Date(year, month, 1).getDay();
+  var offset      = firstDay === 0 ? 6 : firstDay - 1;
   var daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  var html = '';
-  // Cases vides avant le 1er
-  for (var i = 0; i < offset; i++) {
-    html += '<button type="button" class="cal-picker-day empty"></button>';
+  // Accès au planning depuis appointments.js ou dashboard.js
+  var planning = (typeof salonPlanning !== 'undefined') ? salonPlanning : null;
+  var DAY_MAP  = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+
+  function isDayOff(dayDate) {
+    if (!planning) return false;
+    var iso = dayDate.getFullYear()+'-'+String(dayDate.getMonth()+1).padStart(2,'0')+'-'+String(dayDate.getDate()).padStart(2,'0');
+    if (planning.conges && planning.conges.some(function(c){ return c.type!=='heure'&&iso>=c.debut&&iso<=c.fin; })) return true;
+    var idx = DAY_MAP[dayDate.getDay()];
+    return planning.jours && (planning.jours[idx]===false||planning.jours[String(idx)]===false);
   }
-  // Jours du mois
+
+  var html = '';
+  for (var i = 0; i < offset; i++) html += '<button type="button" class="cal-picker-day empty"></button>';
   for (var d = 1; d <= daysInMonth; d++) {
     var dayDate = new Date(year, month, d);
     var isPast  = dayDate < now;
     var isToday = dayDate.getTime() === now.getTime();
+    var isOff   = !isPast && isDayOff(dayDate);
     var isSel   = calPickerDate && calPickerDate.getFullYear() === year
                   && calPickerDate.getMonth() === month
                   && calPickerDate.getDate() === d;
 
     var cls = 'cal-picker-day';
-    if (isPast)   cls += ' disabled';
-    if (isToday)  cls += ' today';
-    if (isSel)    cls += ' selected';
+    if (isPast || isOff) cls += ' disabled';
+    if (isToday) cls += ' today';
+    if (isSel)   cls += ' selected';
+    if (isOff)   cls += ' day-off';
 
-    var handler = isPast ? '' : ' onclick="event.stopPropagation();calPickerSelectDay(' + year + ',' + month + ',' + d + ')"';
-    html += '<button type="button" class="' + cls + '"' + handler + '>' + d + '</button>';
+    var handler = (isPast||isOff) ? '' : ' onclick="event.stopPropagation();calPickerSelectDay(' + year + ',' + month + ',' + d + ')"';
+    html += '<button type="button" class="' + cls + '" title="' + (isOff?'Fermé':'') + '"' + handler + '>' + d + '</button>';
   }
   grid.innerHTML = html;
 }
@@ -324,34 +333,65 @@ function calPickerRender() {
 function calPickerSelectDay(year, month, day) {
   calPickerDate = new Date(year, month, day);
 
-  // Afficher la sélection heure
   var timeEl = document.getElementById('cal-picker-time');
   if (timeEl) timeEl.style.display = 'flex';
 
-  // Peupler les heures disponibles (8h-19h, bloquer heures passées si aujourd\'hui)
+  // Peupler les heures selon le planning du jour
   var hourEl = document.getElementById('cal-picker-hour');
   if (hourEl) {
     hourEl.innerHTML = '';
     var now     = new Date();
     var isToday = calPickerDate.toDateString() === now.toDateString();
-    for (var h = 8; h <= 19; h++) {
-      var isPast = isToday && h <= now.getHours();
-      if (!isPast) {
-        var opt = document.createElement('option');
-        opt.value = String(h).padStart(2, '0');
-        opt.textContent = String(h).padStart(2, '0') + 'h';
-        hourEl.appendChild(opt);
+    var planning = (typeof salonPlanning !== 'undefined') ? salonPlanning : null;
+    var DAY_MAP  = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+
+    // Récupérer les plages du jour
+    var plages = [];
+    if (planning && planning.heures) {
+      var idx = DAY_MAP[calPickerDate.getDay()];
+      var ph = planning.heures[idx] || planning.heures[String(idx)];
+      if (ph) {
+        if (!Array.isArray(ph)) ph = [ph];
+        plages = ph;
       }
     }
-    // Sélectionner heure suivante par défaut
-    if (isToday) {
-      var next = now.getHours() + 1;
-      hourEl.value = String(Math.min(next, 19)).padStart(2, '0');
+    if (!plages.length) plages = [{debut:'08:00', fin:'20:00'}];
+
+    // Congés horaires ce jour
+    var iso = calPickerDate.getFullYear()+'-'+String(calPickerDate.getMonth()+1).padStart(2,'0')+'-'+String(calPickerDate.getDate()).padStart(2,'0');
+    var congesH = planning && planning.conges ? planning.conges.filter(function(c){ return c.type==='heure'&&c.debut===iso; }) : [];
+
+    var firstOpt = null;
+    plages.forEach(function(plage) {
+      var hD = parseInt((plage.debut||'08:00').split(':')[0]);
+      var hF = parseInt((plage.fin  ||'20:00').split(':')[0]);
+      for (var h = hD; h <= hF; h++) {
+        var isPast   = isToday && h <= now.getHours();
+        var isCongeH = congesH.some(function(c){ return h>=parseInt((c.h_debut||'00').split(':')[0])&&h<parseInt((c.h_fin||'00').split(':')[0]); });
+        if (!isPast && !isCongeH) {
+          var opt = document.createElement('option');
+          opt.value = String(h).padStart(2,'0');
+          opt.textContent = String(h).padStart(2,'0') + 'h';
+          hourEl.appendChild(opt);
+          if (!firstOpt) firstOpt = opt.value;
+        }
+      }
+    });
+
+    // Sélectionner heure par défaut
+    if (isToday) hourEl.value = String(Math.min(now.getHours()+1, parseInt(firstOpt||'9'))).padStart(2,'0');
+    else if (firstOpt) hourEl.value = firstOpt;
+
+    // Afficher les plages dans un hint
+    var hint = document.getElementById('cal-picker-hours-hint');
+    if (hint) {
+      var label = plages.map(function(p){ return p.debut+'–'+p.fin; }).join(' / ');
+      hint.textContent = 'Ouvert : '+label;
+      hint.style.display = 'block';
     }
   }
 
   calPickerRender();
-  // NE PAS appeler updateTime ici — laisser l'utilisateur choisir l'heure
 }
 
 function calPickerUpdateTime(closeAfter) {
