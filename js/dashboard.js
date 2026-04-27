@@ -7,10 +7,11 @@ var PRESTATIONS = {
 };
 
 var PRIX_DUREE = { homme: {}, femme: {} };
+var salonPlanning = null;
 
 async function loadPrestationsFromSettings(userId) {
   var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations, prix_duree')
+    .select('prestations, custom_prestations, prix_duree, planning')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -18,10 +19,59 @@ async function loadPrestationsFromSettings(userId) {
     PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
     PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
   }
-  if (res.data && res.data.prix_duree) {
-    PRIX_DUREE = res.data.prix_duree;
-  }
+  if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
+  if (res.data && res.data.planning)   salonPlanning = res.data.planning;
   updateServiceOptions();
+  renderTodayPlanningBanner();
+}
+
+var DAY_MAP_DASH = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5};
+
+function renderTodayPlanningBanner() {
+  var el = document.getElementById('today-planning-banner');
+  if (!el || !salonPlanning) return;
+  var today = new Date();
+  var iso   = today.toISOString().slice(0, 10);
+  var idx   = DAY_MAP_DASH[today.getDay()];
+
+  // Congé journée ?
+  var congeJour = salonPlanning.conges && salonPlanning.conges.find(function(c) {
+    return c.type !== 'heure' && iso >= c.debut && iso <= c.fin;
+  });
+  if (congeJour) {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:#FAECE7;border:1px solid #F0C4B5;border-radius:var(--radius-sm);font-size:13px;color:#993C1D">'
+      + '🚫 <strong>Congé aujourd\'hui</strong> : ' + (congeJour.label || 'Salon fermé')
+      + '</div>';
+    return;
+  }
+
+  // Jour fermé ?
+  var ferme = salonPlanning.jours && (salonPlanning.jours[idx] === false || salonPlanning.jours[String(idx)] === false);
+  if (ferme) {
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--cream-dark);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--ink-light)">'
+      + '🔒 <strong>Salon fermé</strong> aujourd\'hui'
+      + '</div>';
+    return;
+  }
+
+  // Horaires du jour
+  var heures = salonPlanning.heures;
+  var plages = heures && (heures[idx] || heures[String(idx)]);
+  if (plages) {
+    if (!Array.isArray(plages)) plages = [plages];
+    var label = plages.map(function(p){ return p.debut + ' – ' + p.fin; }).join('  ·  ');
+    // Congés horaires ?
+    var congesH = (salonPlanning.conges || []).filter(function(c){ return c.type === 'heure' && c.debut === iso; });
+    var congeHtml = congesH.length
+      ? '  <span style="color:#993C1D;margin-left:8px">⚠ Fermeture : '+congesH.map(function(c){ return c.h_debut+'–'+c.h_fin; }).join(', ')+'</span>'
+      : '';
+    el.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;color:var(--ink-light)">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>'
+      + '&nbsp;Horaires du jour : <strong style="color:var(--ink);margin-left:4px">' + label + '</strong>' + congeHtml
+      + '</div>';
+  } else {
+    el.innerHTML = '';
+  }
 }
 
 function setGenre(genre) {
@@ -311,6 +361,7 @@ console.log('[Belyo] sb disponible ?', typeof sb);
 
     console.log('[Belyo] Chargement des donnees...');
     await Promise.all([
+      loadPrestationsFromSettings(currentUserId),
       loadKPIs(currentUserId),
       loadTodayAppointments(currentUserId),
       loadRecentClients(currentUserId),

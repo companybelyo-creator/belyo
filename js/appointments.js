@@ -22,9 +22,12 @@ var PRESTATIONS = {
 
 var PRIX_DUREE = { homme: {}, femme: {} };
 
+var salonPlanning = null;
+var DAY_MAP_APT = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5}; // JS→planning index
+
 async function loadPrestationsFromSettings(userId) {
   var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations, prix_duree')
+    .select('prestations, custom_prestations, prix_duree, planning')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -32,10 +35,45 @@ async function loadPrestationsFromSettings(userId) {
     PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
     PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
   }
-  if (res.data && res.data.prix_duree) {
-    PRIX_DUREE = res.data.prix_duree;
-  }
+  if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
+  if (res.data && res.data.planning)   salonPlanning = res.data.planning;
   updateServiceOptions();
+}
+
+function isHourWorked(date, h) {
+  if (!salonPlanning) return true;
+  var iso = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+  // Congé journée entière
+  if (salonPlanning.conges) {
+    for (var ci = 0; ci < salonPlanning.conges.length; ci++) {
+      var c = salonPlanning.conges[ci];
+      if (c.type === 'heure') continue;
+      if (iso >= c.debut && iso <= c.fin) return false;
+    }
+  }
+  var idx = DAY_MAP_APT[date.getDay()];
+  // Jour fermé
+  if (salonPlanning.jours && (salonPlanning.jours[idx] === false || salonPlanning.jours[String(idx)] === false)) return false;
+  // Vérifier plages horaires
+  var heures = salonPlanning.heures;
+  if (!heures) return true;
+  var plages = heures[idx] || heures[String(idx)];
+  if (!plages) return true;
+  if (!Array.isArray(plages)) plages = [plages];
+  return plages.some(function(p) {
+    var dH = parseInt((p.debut||'09:00').split(':')[0]);
+    var fH = parseInt((p.fin||'19:00').split(':')[0]);
+    return h >= dH && h < fH;
+  });
+}
+
+function isHourCongeHoraire(date, h) {
+  if (!salonPlanning || !salonPlanning.conges) return false;
+  var iso = date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+  return salonPlanning.conges.some(function(c) {
+    if (c.type !== 'heure' || c.debut !== iso) return false;
+    return h >= parseInt((c.h_debut||'00:00').split(':')[0]) && h < parseInt((c.h_fin||'00:00').split(':')[0]);
+  });
 }
 
 function setGenre(genre) {
@@ -410,9 +448,12 @@ function renderCalendar() {
       var isToday = d.getTime() === today.getTime();
       var dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       var dateHour = dateStr + 'T' + String(h).padStart(2,'0') + ':00';
+      var worked   = isHourWorked(d, h);
+      var congeH   = isHourCongeHoraire(d, h);
+      var cellBg   = !worked ? 'background:rgba(26,23,20,.04);' : congeH ? 'background:repeating-linear-gradient(45deg,rgba(196,168,122,.07),rgba(196,168,122,.07) 3px,transparent 3px,transparent 8px);' : '';
       html += '<div class="cal-cell' + (isToday ? ' today-col' : '') + '"'
-        + ' style="height:' + SLOT_H + 'px"'
-        + ' onclick="openModalAt(\'' + dateHour + '\')"'
+        + ' style="height:' + SLOT_H + 'px;' + cellBg + '"'
+        + (worked && !congeH ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
         + ' data-date="' + dateStr + '" data-h="' + h + '">'
         + '</div>';
     });

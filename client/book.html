@@ -440,35 +440,42 @@ function isJourFerme(date) {
   if (salonPlanning.conges && salonPlanning.conges.length) {
     for (var i = 0; i < salonPlanning.conges.length; i++) {
       var c = salonPlanning.conges[i];
+      // Congé horaire = pas fermé toute la journée
+      if (c.type === 'heure') continue;
       if (iso >= c.debut && iso <= c.fin) return true;
     }
   }
   if (salonPlanning.jours) {
     var idx = DAY_MAP[date.getDay()];
-    if (salonPlanning.jours[idx] === false) return true;
+    if (salonPlanning.jours[idx] === false || salonPlanning.jours[String(idx)] === false) return true;
   }
   return false;
 }
 
+// Retourne les congés horaires pour un iso donné
+function getCongesHoraires(iso) {
+  if (!salonPlanning || !salonPlanning.conges) return [];
+  return salonPlanning.conges.filter(function(c) {
+    return c.type === 'heure' && c.debut === iso;
+  });
+}
+
+function parseHHMM(str) {
+  var parts = (str || '09:00').split(':');
+  return { h: parseInt(parts[0]) || 0, m: parseInt(parts[1]) || 0 };
+}
+
 function getPlagesSalon(date) {
   if (!salonPlanning || !salonPlanning.heures) {
-    return [{ debut: HEURE_DEBUT, fin: HEURE_FIN }];
+    return [{ debut: HEURE_DEBUT, debutM: 0, fin: HEURE_FIN, finM: 0, debutStr:'09:00', finStr:'19:00' }];
   }
   var idx = DAY_MAP[date.getDay()];
-  var h = salonPlanning.heures[idx];
-  if (!h) return [{ debut: HEURE_DEBUT, fin: HEURE_FIN }];
-  // Ancien format objet {debut, fin}
-  if (!Array.isArray(h)) {
-    return [{
-      debut: parseInt((h.debut || '09:00').split(':')[0]),
-      fin:   parseInt((h.fin   || '19:00').split(':')[0])
-    }];
-  }
-  return h.map(function(p){
-    return {
-      debut: parseInt((p.debut || '09:00').split(':')[0]),
-      fin:   parseInt((p.fin   || '19:00').split(':')[0])
-    };
+  var h = salonPlanning.heures[idx] || salonPlanning.heures[String(idx)];
+  if (!h) return [{ debut: HEURE_DEBUT, debutM: 0, fin: HEURE_FIN, finM: 0, debutStr:'09:00', finStr:'19:00' }];
+  if (!Array.isArray(h)) h = [h];
+  return h.map(function(p) {
+    var d = parseHHMM(p.debut); var f = parseHHMM(p.fin);
+    return { debut: d.h, debutM: d.m, fin: f.h, finM: f.m, debutStr: p.debut||'09:00', finStr: p.fin||'19:00' };
   });
 }
 
