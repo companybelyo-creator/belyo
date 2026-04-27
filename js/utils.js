@@ -366,8 +366,8 @@ function calPickerSelectDay(year, month, day) {
     var mF = parseInt((plage.fin||'20:00').split(':')[1]||0);
     var startMin = hD*60+mD, endMin = hF*60+mF;
 
-    if (plages.length > 1) {
-      html += '<div class="cal-picker-slot-sep">'+plage.debut+' – '+plage.fin+'</div>';
+    if (plages.length > 1 && pi > 0) {
+      html += '<div class="cal-picker-slot-sep"></div>';
     }
     for (var tm = startMin; tm < endMin; tm += 30) {
       var hh = Math.floor(tm/60), mm = tm%60;
