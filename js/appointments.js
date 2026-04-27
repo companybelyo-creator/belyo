@@ -431,10 +431,11 @@ function renderCalendar() {
   var html = '';
 
   // Légende
-  var legendHtml = '<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;font-size:11px;flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#1A1714;border-left:3px solid var(--gold)"></div>À venir</div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#2D5A3D;border-left:3px solid #5CA87A"></div>Terminé</div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(26,23,20,.07)"></div>Non travaillé</div>'
+  var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#3B4FD4;border-left:3px solid #8B9EEE"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:repeating-linear-gradient(0deg,rgba(26,23,20,.06) 0px,rgba(26,23,20,.06) 1px,#fff 1px,#fff 6px)"></div><span>Non travaillé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
     + '</div>';
   var legendEl = document.getElementById('cal-legend');
   if (legendEl) legendEl.innerHTML = legendHtml;
@@ -475,10 +476,21 @@ function renderCalendar() {
       else if (!worked) cls += ' off-hours';
       else             cls += ' worked';
 
+      // Étiquette congé — seulement sur la première heure du jour
+      var congeLabel = '';
+      if (hi === 0) {
+        if (congeJ) {
+          congeLabel = '<div class="cal-conge-label">' + (congeJ.label || 'Congé') + '</div>';
+        } else if (congeH) {
+          congeLabel = '<div class="cal-conge-label">⏱ ' + (congesH[0] && congesH[0].label ? congesH[0].label : 'Fermeture partielle') + '</div>';
+        }
+      }
+
       html += '<div class="' + cls + '"'
         + ' style="height:' + SLOT_H + 'px"'
         + (worked && !congeH && !congeJ ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
         + ' data-date="' + dateStr + '" data-h="' + h + '">'
+        + congeLabel
         + '</div>';
     });
   });
