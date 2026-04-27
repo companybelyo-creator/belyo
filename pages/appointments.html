@@ -165,17 +165,8 @@
             </div>
             <div class="cal-picker-grid" id="cal-picker-grid"></div>
             <div class="cal-picker-time" id="cal-picker-time" style="display:none">
-              <div id="cal-picker-hours-hint" style="display:none;width:100%;font-size:11px;color:var(--ink-light);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border)"></div>
-              <span class="cal-picker-time-label">Heure</span>
-              <select id="cal-picker-hour" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)"></select>
-              <span style="font-weight:500;color:var(--ink)">:</span>
-              <select id="cal-picker-min" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)">
-                <option value="00">00</option>
-                <option value="15">15</option>
-                <option value="30">30</option>
-                <option value="45">45</option>
-              </select>
-              <button type="button" onclick="event.stopPropagation();calPickerConfirm()" style="padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">OK</button>
+              <span class="cal-picker-time-label" id="cal-picker-hours-hint">Choisissez un créneau</span>
+              <div class="cal-picker-slots" id="cal-picker-slots"></div>
             </div>
           </div>
         </div>

@@ -712,7 +712,7 @@ ul { list-style: none; }
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  width: 280px;
+  width: 340px;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -782,31 +782,49 @@ ul { list-style: none; }
 .cal-picker-day.disabled { color: var(--border); cursor: not-allowed; }
 .cal-picker-day.empty { cursor: default; }
 .cal-picker-time {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 .cal-picker-time-label {
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--ink-light);
-  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 8px;
+  display: block;
 }
-.cal-picker-select {
-  flex: 1;
-  padding: 7px 10px;
-  border: 1px solid var(--border);
+.cal-picker-slots {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+.cal-picker-slot {
+  padding: 7px 4px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 14px;
   background: var(--cream);
   color: var(--ink);
   cursor: pointer;
-  outline: none;
+  transition: all .15s;
+  font-family: var(--font-body);
 }
-.cal-picker-select:focus { border-color: var(--gold); }
+.cal-picker-slot:hover { border-color: var(--gold); background: var(--gold-light); }
+.cal-picker-slot.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.cal-picker-slot-sep {
+  grid-column: 1 / -1;
+  font-size: 10px;
+  color: var(--ink-light);
+  padding: 4px 0 2px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.cal-picker-select { display: none; } /* caché — remplacé par la grille */
 
 /* ===== NOTIFICATIONS IN-APP ===== */
 .notif-btn {

@@ -334,64 +334,88 @@ function calPickerSelectDay(year, month, day) {
   calPickerDate = new Date(year, month, day);
 
   var timeEl = document.getElementById('cal-picker-time');
-  if (timeEl) timeEl.style.display = 'flex';
+  if (timeEl) timeEl.style.display = 'block';
 
-  // Peupler les heures selon le planning du jour
-  var hourEl = document.getElementById('cal-picker-hour');
-  if (hourEl) {
-    hourEl.innerHTML = '';
-    var now     = new Date();
-    var isToday = calPickerDate.toDateString() === now.toDateString();
-    var planning = (typeof salonPlanning !== 'undefined') ? salonPlanning : null;
-    var DAY_MAP  = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+  var slotsEl = document.getElementById('cal-picker-slots');
+  var hintEl  = document.getElementById('cal-picker-hours-hint');
+  if (!slotsEl) { calPickerRender(); return; }
 
-    // Récupérer les plages du jour
-    var plages = [];
-    if (planning && planning.heures) {
-      var idx = DAY_MAP[calPickerDate.getDay()];
-      var ph = planning.heures[idx] || planning.heures[String(idx)];
-      if (ph) {
-        if (!Array.isArray(ph)) ph = [ph];
-        plages = ph;
-      }
-    }
-    if (!plages.length) plages = [{debut:'08:00', fin:'20:00'}];
+  var now      = new Date();
+  var isToday  = calPickerDate.toDateString() === now.toDateString();
+  var planning = (typeof salonPlanning !== 'undefined') ? salonPlanning : null;
+  var DAY_MAP  = {0:6,1:0,2:1,3:2,4:3,5:4,6:5};
+  var iso      = year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
 
-    // Congés horaires ce jour
-    var iso = calPickerDate.getFullYear()+'-'+String(calPickerDate.getMonth()+1).padStart(2,'0')+'-'+String(calPickerDate.getDate()).padStart(2,'0');
-    var congesH = planning && planning.conges ? planning.conges.filter(function(c){ return c.type==='heure'&&c.debut===iso; }) : [];
-
-    var firstOpt = null;
-    plages.forEach(function(plage) {
-      var hD = parseInt((plage.debut||'08:00').split(':')[0]);
-      var hF = parseInt((plage.fin  ||'20:00').split(':')[0]);
-      for (var h = hD; h <= hF; h++) {
-        var isPast   = isToday && h <= now.getHours();
-        var isCongeH = congesH.some(function(c){ return h>=parseInt((c.h_debut||'00').split(':')[0])&&h<parseInt((c.h_fin||'00').split(':')[0]); });
-        if (!isPast && !isCongeH) {
-          var opt = document.createElement('option');
-          opt.value = String(h).padStart(2,'0');
-          opt.textContent = String(h).padStart(2,'0') + 'h';
-          hourEl.appendChild(opt);
-          if (!firstOpt) firstOpt = opt.value;
-        }
-      }
-    });
-
-    // Sélectionner heure par défaut
-    if (isToday) hourEl.value = String(Math.min(now.getHours()+1, parseInt(firstOpt||'9'))).padStart(2,'0');
-    else if (firstOpt) hourEl.value = firstOpt;
-
-    // Afficher les plages dans un hint
-    var hint = document.getElementById('cal-picker-hours-hint');
-    if (hint) {
-      var label = plages.map(function(p){ return p.debut+'–'+p.fin; }).join(' / ');
-      hint.textContent = 'Ouvert : '+label;
-      hint.style.display = 'block';
-    }
+  var plages = [{debut:'08:00', fin:'20:00'}];
+  if (planning && planning.heures) {
+    var idx = DAY_MAP[calPickerDate.getDay()];
+    var ph  = planning.heures[idx] || planning.heures[String(idx)];
+    if (ph) { plages = Array.isArray(ph) ? ph : [ph]; }
   }
 
+  var congesH = planning && planning.conges
+    ? planning.conges.filter(function(c){ return c.type==='heure' && c.debut===iso; })
+    : [];
+
+  var html = '';
+  var hasSlots = false;
+  plages.forEach(function(plage, pi) {
+    var hD = parseInt((plage.debut||'08:00').split(':')[0]);
+    var mD = parseInt((plage.debut||'08:00').split(':')[1]||0);
+    var hF = parseInt((plage.fin||'20:00').split(':')[0]);
+    var mF = parseInt((plage.fin||'20:00').split(':')[1]||0);
+    var startMin = hD*60+mD, endMin = hF*60+mF;
+
+    if (plages.length > 1) {
+      html += '<div class="cal-picker-slot-sep">'+plage.debut+' – '+plage.fin+'</div>';
+    }
+    for (var tm = startMin; tm < endMin; tm += 30) {
+      var hh = Math.floor(tm/60), mm = tm%60;
+      var slotStr = String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+      var isPast  = isToday && (hh < now.getHours() || (hh===now.getHours()&&mm<=now.getMinutes()));
+      var blocked = congesH.some(function(c){ return slotStr >= c.h_debut && slotStr < c.h_fin; });
+      if (!isPast && !blocked) {
+        var lbl = String(hh).padStart(2,'0')+'h'+(mm?String(mm).padStart(2,'0'):'');
+        html += '<button type="button" class="cal-picker-slot" data-slot="'+slotStr+'" onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot)">'+lbl+'</button>';
+        hasSlots = true;
+      }
+    }
+  });
+
+  slotsEl.innerHTML = hasSlots
+    ? html
+    : '<div style="font-size:13px;color:var(--ink-light);grid-column:span 5;padding:6px 0">Aucun créneau disponible</div>';
+
+  if (hintEl) {
+    var rangeLabel = plages.map(function(p){ return p.debut+'–'+p.fin; }).join('  ·  ');
+    hintEl.textContent = 'Horaires : '+rangeLabel;
+  }
+
+  calPickerSelectedSlot = null;
   calPickerRender();
+}
+
+var calPickerSelectedSlot = null;
+function calPickerSelectSlot(slotStr) {
+  calPickerSelectedSlot = slotStr;
+  document.querySelectorAll('.cal-picker-slot').forEach(function(btn) {
+    btn.classList.toggle('selected', btn.dataset.slot === slotStr);
+  });
+  var parts = slotStr.split(':');
+  var h = parts[0], m = parts[1];
+  var dt = new Date(calPickerDate);
+  dt.setHours(parseInt(h), parseInt(m), 0, 0);
+  var iso = dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')+'T'+h+':'+m;
+  var hidden = document.getElementById('appt-datetime');
+  if (hidden) hidden.value = iso;
+  var label = document.getElementById('cal-picker-label');
+  if (label) {
+    label.style.color = 'var(--ink)';
+    label.textContent = dt.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'})+' à '+parseInt(h)+'h'+(m!=='00'?m:'');
+  }
+  var popup = document.getElementById('cal-picker-popup');
+  if (popup) { popup.style.display='none'; calPickerOpen=false; }
+  if (typeof checkFormValidity==='function') checkFormValidity();
 }
 
 function calPickerUpdateTime(closeAfter) {
