@@ -432,9 +432,9 @@ function renderCalendar() {
 
   // Légende
   var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#3B4FD4;border-left:3px solid #8B9EEE"></div><span>À venir</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>Terminé</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:repeating-linear-gradient(0deg,rgba(26,23,20,.06) 0px,rgba(26,23,20,.06) 1px,#fff 1px,#fff 6px)"></div><span>Non travaillé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
     + '</div>';
   var legendEl = document.getElementById('cal-legend');
@@ -535,10 +535,17 @@ function renderCalendar() {
       ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + evH + 'px;';
 
       // Contenu selon la hauteur disponible
+      // Formater prénom + initiale nom pour gagner de la place
+      var rawName   = (a.client_name || '').trim();
+      var nameParts = rawName.split(' ');
+      var shortName = nameParts.length > 1
+        ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
+        : rawName;
+
       var html = '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>';
-      html += '<div class="cal-event-name">' + a.client_name + '</div>';
+      html += '<div class="cal-event-name" style="font-size:11.5px;letter-spacing:.01em">' + shortName + '</div>';
       if (evH >= 44) {
-        html += '<div class="cal-event-service">' + a.service + '</div>';
+        html += '<div class="cal-event-service">' + (a.service || '') + '</div>';
       }
       ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showTooltip(e, a); });
