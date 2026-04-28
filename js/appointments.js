@@ -527,7 +527,7 @@ function renderCalendar() {
         if (congeJ) {
           congeLabel = '<div class="cal-conge-label">' + (congeJ.label || 'Congé') + '</div>';
         } else if (congeH) {
-          congeLabel = '<div class="cal-conge-label">⏱ ' + (congesH[0] && congesH[0].label ? congesH[0].label : 'Fermeture partielle') + '</div>';
+          congeLabel = '<div class="cal-conge-label">⏱ Fermeture partielle</div>';
         }
       }
 
@@ -662,74 +662,6 @@ function openModal(presetDatetime) {
   checkFormValidity();
 }
 function openModalAt(datetimeStr) {
-  // Vérifier les contraintes du créneau avant d'ouvrir le modal
-  var slotDate = new Date(datetimeStr);
-  var slotH    = slotDate.getHours();
-  var slotM    = slotDate.getMinutes();
-  var dateStr  = datetimeStr.slice(0, 10);
-
-  // Déterminer la durée du service en cours (par défaut 30 min si pas encore choisi)
-  var serviceName = (document.getElementById('appt-service-select') || {}).value || '';
-  var dureeMin = 30;
-  if (serviceName && PRIX_DUREE) {
-    var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[serviceName];
-    var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[serviceName];
-    var pd  = pdH || pdF;
-    if (pd && pd.duree) dureeMin = pd.duree;
-  }
-
-  var slotStartMin = slotH * 60 + slotM;
-  var slotEndMin   = slotStartMin + dureeMin;
-
-  // 1. Vérifier dépassement des horaires d'ouverture
-  var fermetureMin = null;
-  if (salonPlanning && salonPlanning.heures) {
-    var idx = DAY_MAP_APT[slotDate.getDay()];
-    var plages = salonPlanning.heures[idx] || salonPlanning.heures[String(idx)];
-    if (plages) {
-      if (!Array.isArray(plages)) plages = [plages];
-      // Trouver la plage qui couvre le début du créneau
-      plages.forEach(function(p) {
-        var dH = parseInt((p.debut||'09:00').split(':')[0]);
-        var fH = parseInt((p.fin||'19:00').split(':')[0]);
-        if (slotH >= dH && slotH < fH) fermetureMin = fH * 60;
-      });
-    }
-  }
-  if (fermetureMin === null) fermetureMin = HOUR_END * 60;
-
-  if (slotEndMin > fermetureMin) {
-    var depMin = slotEndMin - fermetureMin;
-    var confirm_msg = "Ce rendez-vous de " + dureeMin + " min dépasse l'horaire de fermeture de " + depMin + " minute" + (depMin > 1 ? "s" : "") + ".\n\nVoulez-vous quand même créer ce rendez-vous en heures supplémentaires ?";
-    if (!confirm(confirm_msg)) return;
-  }
-
-  // 2. Vérifier qu'il y a assez de temps avant le prochain RDV du même jour
-  var dayAppts = allAppts.filter(function(a) {
-    return a.status !== 'cancelled' && a.datetime.slice(0,10) === dateStr;
-  });
-  dayAppts.sort(function(a, b) { return a.datetime < b.datetime ? -1 : 1; });
-
-  var nextAppt = null;
-  dayAppts.forEach(function(a) {
-    var aStart = new Date(a.datetime);
-    var aMin   = aStart.getHours() * 60 + aStart.getMinutes();
-    if (aMin > slotStartMin && (!nextAppt || aMin < nextAppt.min)) {
-      nextAppt = { appt: a, min: aMin };
-    }
-  });
-
-  if (nextAppt && slotEndMin > nextAppt.min) {
-    var gap = nextAppt.min - slotStartMin;
-    if (gap <= 0) {
-      alert('Ce créneau est bloqué : un rendez-vous commence à la même heure.');
-      return;
-    }
-    var nextTime = String(Math.floor(nextAppt.min/60)).padStart(2,'0') + 'h' + String(nextAppt.min%60).padStart(2,'0');
-    var ok = confirm('Le service s\u00e9lectionn\u00e9 (' + dureeMin + ' min) d\u00e9passe le prochain rendez-vous \u00e0 ' + nextTime + '.\nIl ne reste que ' + gap + ' min disponibles.\n\nVoulez-vous quand m\u00eame continuer ?');
-    if (!ok) return;
-  }
-
   openModal(datetimeStr);
 }
 function checkFormValidity() {
@@ -934,6 +866,87 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     return pd && pd.duree ? pd.duree : null;
   })();
   var notesVal = document.getElementById('appt-notes').value.trim() || null;
+
+  // ── Vérification horaires et conflits au submit ──
+  if (datetime) {
+    var _slotDate     = new Date(datetime);
+    var _slotH        = _slotDate.getHours();
+    var _slotM        = _slotDate.getMinutes();
+    var _dateStr      = datetime.slice(0, 10);
+    var _dureeMin     = durationVal || 30;
+    var _slotStartMin = _slotH * 60 + _slotM;
+    var _slotEndMin   = _slotStartMin + _dureeMin;
+
+    // 1. Dépassement fermeture
+    var _fermetureMin = null;
+    if (salonPlanning && salonPlanning.heures) {
+      var _idx    = DAY_MAP_APT[_slotDate.getDay()];
+      var _plages = salonPlanning.heures[_idx] || salonPlanning.heures[String(_idx)];
+      if (_plages) {
+        if (!Array.isArray(_plages)) _plages = [_plages];
+        _plages.forEach(function(p) {
+          var dH = parseInt((p.debut || '09:00').split(':')[0]);
+          var dM = parseInt((p.debut || '09:00').split(':')[1] || 0);
+          var fH = parseInt((p.fin   || '19:00').split(':')[0]);
+          var fM = parseInt((p.fin   || '19:00').split(':')[1] || 0);
+          var plageStart = dH * 60 + dM;
+          var plageEnd   = fH * 60 + fM;
+          if (_slotStartMin >= plageStart && _slotStartMin < plageEnd) {
+            _fermetureMin = plageEnd;
+          }
+        });
+      }
+    }
+    if (_fermetureMin === null) _fermetureMin = HOUR_END * 60;
+
+    if (_slotEndMin > _fermetureMin) {
+      var _depMin  = _slotEndMin - _fermetureMin;
+      var _fHstr   = String(Math.floor(_fermetureMin / 60)).padStart(2, '0');
+      var _fMstr   = String(_fermetureMin % 60).padStart(2, '0');
+      var _endHstr = String(Math.floor(_slotEndMin / 60)).padStart(2, '0');
+      var _endMstr = String(_slotEndMin % 60).padStart(2, '0');
+      var _msg = 'Ce rendez-vous de ' + _dureeMin + ' min se termine à ' + _endHstr + 'h' + _endMstr
+              + ', soit ' + _depMin + ' min après la fermeture (' + _fHstr + 'h' + _fMstr + ').'
+              + '\n\nVoulez-vous quand même créer ce rendez-vous en heures supplémentaires ?';
+      if (!confirm(_msg)) {
+        btn.disabled = false;
+        btn.textContent = editApptId ? 'Enregistrer les modifications' : 'Enregistrer';
+        return;
+      }
+    }
+
+    // 2. Chevauchement avec un RDV existant
+    var _conflict = allAppts.find(function(a) {
+      if (a.status === 'cancelled') return false;
+      if (editApptId && a.id === editApptId) return false;
+      if (a.datetime.slice(0, 10) !== _dateStr) return false;
+      var _aDt    = new Date(a.datetime);
+      var _aStart = _aDt.getHours() * 60 + _aDt.getMinutes();
+      var _aDur   = a.duration_minutes || 30;
+      if (!a.duration_minutes && PRIX_DUREE) {
+        var _pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+        var _pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+        var _pd  = _pdH || _pdF;
+        if (_pd && _pd.duree) _aDur = _pd.duree;
+      }
+      var _aEnd = _aStart + _aDur;
+      return _slotStartMin < _aEnd && _slotEndMin > _aStart;
+    });
+    if (_conflict) {
+      var _cDt    = new Date(_conflict.datetime);
+      var _cTime  = String(_cDt.getHours()).padStart(2,'0') + 'h' + String(_cDt.getMinutes()).padStart(2,'0');
+      var _gapMin = _cDt.getHours() * 60 + _cDt.getMinutes() - _slotStartMin;
+      var _okMsg  = 'Ce créneau chevauche le RDV de ' + _conflict.client_name + ' à ' + _cTime + '.'
+                  + (_gapMin > 0 ? '\nIl ne reste que ' + _gapMin + ' min avant ce RDV.' : '\nLes deux RDV débutent en même temps.')
+                  + '\n\nVoulez-vous quand même continuer ?';
+      if (!confirm(_okMsg)) {
+        btn.disabled = false;
+        btn.textContent = editApptId ? 'Enregistrer les modifications' : 'Enregistrer';
+        return;
+      }
+    }
+  }
+  // ── Fin vérifications ──
 
   var res;
   // Vérifier la limite Starter (100 RDV/mois)
