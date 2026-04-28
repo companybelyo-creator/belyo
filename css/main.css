@@ -554,9 +554,9 @@ ul { list-style: none; }
   padding: 2px 10px;
   border-radius: 100px;
 }
-.badge-done      { background: #EBF5EE; color: #1C3A2E; }
-.badge-pending   { background: #1C3A2E; color: #C8E8D4; font-weight: 500; }
-.badge-cancelled { background: #F3EEEB; color: #8A7F7C; }
+.badge-done      { background: #E6F4ED; color: #1A5C38; }
+.badge-pending   { background: #E8F0FB; color: #1A3A6B; }
+.badge-cancelled { background: #F3EEEB; color: #7A6F6B; }
 
 /* ===== MODAL ===== */
 .modal-overlay {
@@ -815,36 +815,17 @@ ul { list-style: none; }
 }
 .cal-picker-slot:hover { border-color: var(--gold); background: var(--gold-light); }
 .cal-picker-slot.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
-.cal-picker-slot-sep {
-  grid-column: 1 / -1;
-  height: 6px;
-}
-
-/* Créneau occupé par un RDV */
-.cal-picker-slot.slot-booked {
+.cal-picker-slot.slot-unavail {
   background: #F0EDEA;
-  color: rgba(26,23,20,0.3);
+  color: rgba(26,23,20,0.28);
   border-color: var(--border);
   cursor: not-allowed;
   text-decoration: line-through;
-  opacity: 0.6;
+  pointer-events: none;
 }
-.cal-picker-slot.slot-booked:hover { background: #F0EDEA; border-color: var(--border); }
-
-/* Créneau qui dépasse la fermeture */
-.cal-picker-slot.slot-overflow {
-  background: rgba(234,179,8,.08);
-  color: #92620A;
-  border-color: rgba(234,179,8,.4);
-  cursor: pointer;
-}
-.cal-picker-slot.slot-overflow:hover { background: rgba(234,179,8,.15); border-color: rgba(234,179,8,.7); }
-.slot-overflow-icon {
-  font-size: 10px;
-  background: rgba(234,179,8,.3);
-  border-radius: 3px;
-  padding: 0 3px;
-  margin-left: 2px;
+.cal-picker-slot-sep {
+  grid-column: 1 / -1;
+  height: 6px;
 }
 .cal-picker-select { display: none; } /* caché — remplacé par la grille */
 

@@ -357,71 +357,73 @@ function calPickerSelectDay(year, month, day) {
     ? planning.conges.filter(function(c){ return c.type==='heure' && c.debut===iso; })
     : [];
 
-  // --- Récupérer la durée du service sélectionné ---
-  var _serviceDuree = 30; // fallback
+  // Durée du service sélectionné
+  var _dur = 30;
   if (typeof PRIX_DUREE !== 'undefined' && typeof selectedGenre !== 'undefined') {
-    var _svcName = document.getElementById('appt-service-select') ? document.getElementById('appt-service-select').value : '';
+    var _svcEl = document.getElementById('appt-service-select');
+    var _svcName = _svcEl ? _svcEl.value : '';
     if (_svcName) {
-      var _pd = (PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][_svcName]);
-      if (_pd && _pd.duree) _serviceDuree = _pd.duree;
+      var _pdSvc = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][_svcName];
+      if (_pdSvc && _pdSvc.duree) _dur = _pdSvc.duree;
     }
   }
 
-  // --- Construire les créneaux occupés par les RDV existants ---
-  var _bookedRanges = [];
+  // Plages de temps occupées par des RDV existants ce jour
+  var _booked = [];
   if (typeof allAppts !== 'undefined') {
     allAppts.forEach(function(a) {
       if (a.status === 'cancelled') return;
       if (typeof editApptId !== 'undefined' && editApptId && a.id === editApptId) return;
-      if (a.datetime.slice(0,10) !== iso) return;
-      var _aDt    = new Date(a.datetime);
-      var _aStart = _aDt.getHours() * 60 + _aDt.getMinutes();
-      var _aDur   = a.duration_minutes || 30;
+      if (a.datetime.slice(0, 10) !== iso) return;
+      var _aDt = new Date(a.datetime);
+      var _aS  = _aDt.getHours() * 60 + _aDt.getMinutes();
+      var _aD  = a.duration_minutes || 30;
       if (!a.duration_minutes && typeof PRIX_DUREE !== 'undefined') {
-        var _pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
-        var _pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
-        var _pd2 = _pdH || _pdF;
-        if (_pd2 && _pd2.duree) _aDur = _pd2.duree;
+        var _pH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+        var _pF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+        var _p2 = _pH || _pF;
+        if (_p2 && _p2.duree) _aD = _p2.duree;
       }
-      _bookedRanges.push({ start: _aStart, end: _aStart + _aDur });
+      _booked.push({ s: _aS, e: _aS + _aD });
     });
   }
 
   var html = '';
   var hasSlots = false;
   plages.forEach(function(plage, pi) {
-    var hD = parseInt((plage.debut||'08:00').split(':')[0]);
-    var mD = parseInt((plage.debut||'08:00').split(':')[1]||0);
-    var hF = parseInt((plage.fin||'20:00').split(':')[0]);
-    var mF = parseInt((plage.fin||'20:00').split(':')[1]||0);
-    var startMin = hD*60+mD, endMin = hF*60+mF;
+    var hD = parseInt((plage.debut || '08:00').split(':')[0]);
+    var mD = parseInt((plage.debut || '08:00').split(':')[1] || 0);
+    var hF = parseInt((plage.fin   || '20:00').split(':')[0]);
+    var mF = parseInt((plage.fin   || '20:00').split(':')[1] || 0);
+    var startMin = hD * 60 + mD;
+    var endMin   = hF * 60 + mF;
 
-    if (pi > 0) {
-      html += '<div class="cal-picker-slot-sep"></div>';
-    }
+    if (pi > 0) html += '<div class="cal-picker-slot-sep"></div>';
+
     for (var tm = startMin; tm < endMin; tm += 30) {
-      var hh = Math.floor(tm/60), mm = tm%60;
-      var slotStr = String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
-      var isPast  = isToday && (hh < now.getHours() || (hh===now.getHours()&&mm<=now.getMinutes()));
-      var blocked = congesH.some(function(c){ return slotStr >= c.h_debut && slotStr < c.h_fin; });
+      var hh  = Math.floor(tm / 60);
+      var mm  = tm % 60;
+      var lbl = String(hh).padStart(2, '0') + 'h' + (mm ? String(mm).padStart(2, '0') : '');
+      var slotStr    = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+      var slotEndMin = tm + _dur;
 
-      // Créneau occupé par un RDV existant
-      var slotEndMin = tm + _serviceDuree;
-      var isBooked = _bookedRanges.some(function(r) {
-        return tm < r.end && slotEndMin > r.start;
-      });
-
-      // Dépasse la fin de cette plage horaire
+      // Passé ?
+      var isPast = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
+      // Congé horaire ?
+      var isBlocked = congesH.some(function(c) { return slotStr >= c.h_debut && slotStr < c.h_fin; });
+      // RDV existant chevauche ce créneau ?
+      var isBooked = _booked.some(function(r) { return tm < r.e && slotEndMin > r.s; });
+      // Dépasse la fin de la plage ?
       var overflows = slotEndMin > endMin;
 
-      var lbl = String(hh).padStart(2,'0')+'h'+(mm?String(mm).padStart(2,'0'):'');
-
-      if (isPast || blocked || isBooked || overflows) {
-        html += '<button type="button" class="cal-picker-slot slot-booked" disabled>'+lbl+'</button>';
-      } else {
-        html += '<button type="button" class="cal-picker-slot" data-slot="'+slotStr+'" onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot)">'+lbl+'</button>';
-      }
       hasSlots = true;
+      if (isPast || isBlocked || isBooked || overflows) {
+        html += '<button type="button" class="cal-picker-slot slot-unavail" disabled>' + lbl + '</button>';
+      } else {
+        html += '<button type="button" class="cal-picker-slot" data-slot="' + slotStr + '"'
+             + ' onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot)">'
+             + lbl + '</button>';
+      }
     }
   });
 
@@ -429,9 +431,13 @@ function calPickerSelectDay(year, month, day) {
     ? html
     : '<div style="font-size:13px;color:var(--ink-light);grid-column:span 5;padding:6px 0">Aucun créneau disponible</div>';
 
+  // Horaires sur une seule ligne
   if (hintEl) {
-    var rangeLabel = plages.map(function(p){ return p.debut+'–'+p.fin; }).join('  ·  ');
-    hintEl.textContent = 'Horaires : '+rangeLabel;
+    var rangeLabel = plages.map(function(p) { return p.debut + '–' + p.fin; }).join(' · ');
+    hintEl.textContent = 'Horaires : ' + rangeLabel;
+    hintEl.style.whiteSpace = 'nowrap';
+    hintEl.style.overflow = 'hidden';
+    hintEl.style.textOverflow = 'ellipsis';
   }
 
   calPickerSelectedSlot = null;

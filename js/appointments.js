@@ -12,43 +12,6 @@ var currentTab     = 'all';
 var currentView    = 'list';
 var weekOffset     = 0;
 
-// ===== CRÉNEAUX BLOQUÉS PAR RDV EXISTANTS =====
-// Retourne un Set de clés "YYYY-MM-DD:H" bloquées pour un jour donné
-// Une cellule est bloquée si un RDV existant s'y trouve ou la chevauche
-function getBookedSlots() {
-  var booked = new Set();
-  allAppts.forEach(function(a) {
-    if (a.status === 'cancelled') return; // les annulés ne bloquent pas
-    var dt = new Date(a.datetime);
-    var dk = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-    var startH = dt.getHours();
-    var startM = dt.getMinutes();
-
-    // Durée du RDV (en minutes)
-    var dureeMin = a.duration_minutes || 30;
-    if (!a.duration_minutes && PRIX_DUREE) {
-      var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
-      var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
-      var pd  = pdH || pdF;
-      if (pd && pd.duree) dureeMin = pd.duree;
-    }
-
-    // Marquer chaque tranche horaire (de HOUR_START à HOUR_END) touchée par ce RDV
-    var startTotalMin = startH * 60 + startM;
-    var endTotalMin   = startTotalMin + dureeMin;
-
-    for (var h = HOUR_START; h < HOUR_END; h++) {
-      var slotStart = h * 60;
-      var slotEnd   = slotStart + 60;
-      // Chevauchement : le RDV touche cette tranche
-      if (startTotalMin < slotEnd && endTotalMin > slotStart) {
-        booked.add(dk + ':' + h);
-      }
-    }
-  });
-  return booked;
-}
-
 // ===== GENRE + PRESTATION =====
 var selectedGenre = 'homme';
 
@@ -209,10 +172,10 @@ function selectService(name, prix) {
   var priceInput = document.getElementById('appt-price');
   if (priceInput) priceInput.value = prix || '';
   checkFormValidity();
-  // Re-rendre les créneaux si le picker est ouvert (la durée a changé)
+  // Re-rendre les créneaux si le picker est ouvert
   if (typeof calPickerDate !== 'undefined' && calPickerDate) {
-    var _slotsEl = document.getElementById('cal-picker-slots');
-    if (_slotsEl && _slotsEl.children.length > 0) {
+    var _sl = document.getElementById('cal-picker-slots');
+    if (_sl && _sl.children.length > 0) {
       calPickerSelectDay(calPickerDate.getFullYear(), calPickerDate.getMonth(), calPickerDate.getDate());
     }
   }
@@ -292,7 +255,7 @@ function renderClientSuggestions(matches, rawVal) {
       : '';
     return '<div onclick="event.stopPropagation();pickClient(' + i + ')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
-      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + (typeof formatPhone==='function'?formatPhone(c.phone):c.phone) + '</span>' : '')
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + formatPhone(c.phone) + '</span>' : '')
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
@@ -321,7 +284,7 @@ function selectClientById(id) {
   if (badge) badge.style.display = 'none';
   if (label) label.textContent = client.name;
   if (emailEl) emailEl.value = client.email || '';
-  if (phoneEl) phoneEl.value = client.phone || '';
+  if (phoneEl) phoneEl.value = client.phone ? formatPhone(client.phone) : '';
 }
 
 function selectClient(id) { selectClientById(id); }
@@ -339,7 +302,7 @@ function selectClientByData(name, email, phone) {
   if (badge)   badge.style.display = 'inline-block';
   if (label)   label.textContent   = name;
   if (emailEl) emailEl.value = email || '';
-  if (phoneEl) phoneEl.value = phone || '';
+  if (phoneEl) phoneEl.value = phone ? formatPhone(phone) : '';
 }
 
 
@@ -354,7 +317,7 @@ function showClientInfo(client, newName) {
     badge.style.display = 'none';
     label.textContent   = client.name;
     email.value         = client.email || '';
-    phone.value         = client.phone || '';
+    phone.value         = client.phone ? formatPhone(client.phone) : '';
   } else {
     badge.style.display = 'inline-block';
     label.textContent   = newName || 'Nouveau client';
@@ -476,11 +439,10 @@ function renderCalendar() {
 
   // Légende
   var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,#1C3A2E,#24503D);border-left:3px solid #7ECBA0"></div><span>À venir</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#EBF5EE;border-left:3px solid #4CAF78"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(26,23,20,.07),rgba(26,23,20,.07) 3px,rgba(26,23,20,.02) 3px,rgba(26,23,20,.02) 9px)"></div><span>Occupé</span></div>'
     + '</div>';
   var legendEl = document.getElementById('cal-legend');
   if (legendEl) legendEl.innerHTML = legendHtml;
@@ -498,9 +460,6 @@ function renderCalendar() {
       + '</div>';
   });
 
-  // Calculer les créneaux occupés par les RDV existants
-  var bookedSlots = getBookedSlots();
-
   hours.forEach(function(h, hi) {
     html += '<div class="cal-time-col" style="height:' + SLOT_H + 'px;border-top:1px solid var(--border)">'
       + (hi > 0 ? '<span class="cal-time-label">' + String(h) + 'h</span>' : '')
@@ -517,16 +476,12 @@ function renderCalendar() {
         return c.type !== 'heure' && iso >= c.debut && iso <= c.fin;
       });
 
-      // Détecter si créneau occupé par un RDV existant
-      var isBooked = bookedSlots.has(dateStr + ':' + h);
-
       var cls = 'cal-cell';
       if (isToday) cls += ' today-col';
-      if (congeJ)        cls += ' conge-full';
-      else if (congeH)   cls += ' conge-partiel';
-      else if (!worked)  cls += ' off-hours';
-      else if (isBooked) cls += ' booked';
-      else               cls += ' worked';
+      if (congeJ)      cls += ' conge-full';
+      else if (congeH) cls += ' conge-partiel';
+      else if (!worked) cls += ' off-hours';
+      else             cls += ' worked';
 
       // Étiquette congé — seulement sur la première heure du jour
       var congeLabel = '';
@@ -538,11 +493,9 @@ function renderCalendar() {
         }
       }
 
-      var canClick = worked && !congeH && !congeJ && !isBooked;
       html += '<div class="' + cls + '"'
         + ' style="height:' + SLOT_H + 'px"'
-        + (canClick ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
-        + (isBooked ? ' title="Créneau occupé par un rendez-vous"' : '')
+        + (worked && !congeH && !congeJ ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
         + ' data-date="' + dateStr + '" data-h="' + h + '">'
         + congeLabel
         + '</div>';
@@ -558,6 +511,7 @@ function renderCalendar() {
     apptsByDay[k] = [];
   });
   allAppts.forEach(function(a) {
+    if (a.status === 'cancelled') return;
     var dk = a.datetime.slice(0, 10);
     if (apptsByDay[dk] !== undefined) apptsByDay[dk].push(a);
   });
@@ -668,9 +622,7 @@ function openModal(presetDatetime) {
   if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
   checkFormValidity();
 }
-function openModalAt(datetimeStr) {
-  openModal(datetimeStr);
-}
+function openModalAt(datetimeStr) { openModal(datetimeStr); }
 function checkFormValidity() {
   var btn       = document.getElementById('appt-submit');
   if (!btn) return;
@@ -873,71 +825,6 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     return pd && pd.duree ? pd.duree : null;
   })();
   var notesVal = document.getElementById('appt-notes').value.trim() || null;
-
-  // ── Vérification horaires et conflits au submit ──
-  if (datetime) {
-    var _slotDate     = new Date(datetime);
-    var _slotH        = _slotDate.getHours();
-    var _slotM        = _slotDate.getMinutes();
-    var _dateStr      = datetime.slice(0, 10);
-    var _dureeMin     = durationVal || 30;
-    var _slotStartMin = _slotH * 60 + _slotM;
-    var _slotEndMin   = _slotStartMin + _dureeMin;
-
-    // 1. Dépassement fermeture
-    var _fermetureMin = null;
-    if (salonPlanning && salonPlanning.heures) {
-      var _idx    = DAY_MAP_APT[_slotDate.getDay()];
-      var _plages = salonPlanning.heures[_idx] || salonPlanning.heures[String(_idx)];
-      if (_plages) {
-        if (!Array.isArray(_plages)) _plages = [_plages];
-        _plages.forEach(function(p) {
-          var dH = parseInt((p.debut || '09:00').split(':')[0]);
-          var dM = parseInt((p.debut || '09:00').split(':')[1] || 0);
-          var fH = parseInt((p.fin   || '19:00').split(':')[0]);
-          var fM = parseInt((p.fin   || '19:00').split(':')[1] || 0);
-          var plageStart = dH * 60 + dM;
-          var plageEnd   = fH * 60 + fM;
-          if (_slotStartMin >= plageStart && _slotStartMin < plageEnd) {
-            _fermetureMin = plageEnd;
-          }
-        });
-      }
-    }
-    if (_fermetureMin === null) _fermetureMin = HOUR_END * 60;
-
-    // 2. Chevauchement avec un RDV existant
-    var _conflict = allAppts.find(function(a) {
-      if (a.status === 'cancelled') return false;
-      if (editApptId && a.id === editApptId) return false;
-      if (a.datetime.slice(0, 10) !== _dateStr) return false;
-      var _aDt    = new Date(a.datetime);
-      var _aStart = _aDt.getHours() * 60 + _aDt.getMinutes();
-      var _aDur   = a.duration_minutes || 30;
-      if (!a.duration_minutes && PRIX_DUREE) {
-        var _pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
-        var _pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
-        var _pd  = _pdH || _pdF;
-        if (_pd && _pd.duree) _aDur = _pd.duree;
-      }
-      var _aEnd = _aStart + _aDur;
-      return _slotStartMin < _aEnd && _slotEndMin > _aStart;
-    });
-    if (_conflict) {
-      var _cDt    = new Date(_conflict.datetime);
-      var _cTime  = String(_cDt.getHours()).padStart(2,'0') + 'h' + String(_cDt.getMinutes()).padStart(2,'0');
-      var _gapMin = _cDt.getHours() * 60 + _cDt.getMinutes() - _slotStartMin;
-      var _okMsg  = 'Ce créneau chevauche le RDV de ' + _conflict.client_name + ' à ' + _cTime + '.'
-                  + (_gapMin > 0 ? '\nIl ne reste que ' + _gapMin + ' min avant ce RDV.' : '\nLes deux RDV débutent en même temps.')
-                  + '\n\nVoulez-vous quand même continuer ?';
-      if (!confirm(_okMsg)) {
-        btn.disabled = false;
-        btn.textContent = editApptId ? 'Enregistrer les modifications' : 'Enregistrer';
-        return;
-      }
-    }
-  }
-  // ── Fin vérifications ──
 
   var res;
   // Vérifier la limite Starter (100 RDV/mois)
