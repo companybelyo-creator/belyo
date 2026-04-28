@@ -906,22 +906,6 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     }
     if (_fermetureMin === null) _fermetureMin = HOUR_END * 60;
 
-    if (_slotEndMin > _fermetureMin) {
-      var _depMin  = _slotEndMin - _fermetureMin;
-      var _fHstr   = String(Math.floor(_fermetureMin / 60)).padStart(2, '0');
-      var _fMstr   = String(_fermetureMin % 60).padStart(2, '0');
-      var _endHstr = String(Math.floor(_slotEndMin / 60)).padStart(2, '0');
-      var _endMstr = String(_slotEndMin % 60).padStart(2, '0');
-      var _msg = 'Ce rendez-vous de ' + _dureeMin + ' min se termine à ' + _endHstr + 'h' + _endMstr
-              + ', soit ' + _depMin + ' min après la fermeture (' + _fHstr + 'h' + _fMstr + ').'
-              + '\n\nVoulez-vous quand même créer ce rendez-vous en heures supplémentaires ?';
-      if (!confirm(_msg)) {
-        btn.disabled = false;
-        btn.textContent = editApptId ? 'Enregistrer les modifications' : 'Enregistrer';
-        return;
-      }
-    }
-
     // 2. Chevauchement avec un RDV existant
     var _conflict = allAppts.find(function(a) {
       if (a.status === 'cancelled') return false;

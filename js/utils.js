@@ -416,27 +416,12 @@ function calPickerSelectDay(year, month, day) {
 
       var lbl = String(hh).padStart(2,'0')+'h'+(mm?String(mm).padStart(2,'0'):'');
 
-      if (isPast || blocked) {
-        // Masquer complètement
-        continue;
-      } else if (isBooked) {
-        // Grisé : RDV déjà présent sur ce créneau
-        html += '<button type="button" class="cal-picker-slot slot-booked" disabled title="Créneau déjà pris">'+lbl+'</button>';
-        hasSlots = true;
-      } else if (overflows) {
-        // Grisé avec avertissement : la durée dépasse l’horaire
-        var _depM = slotEndMin - endMin;
-        var _fLbl = String(hF).padStart(2,'0')+'h'+(mF?String(mF).padStart(2,'0'):'');
-        html += '<button type="button" class="cal-picker-slot slot-overflow"'
-             + ' title="Dépasse la fermeture (' + _fLbl + ') de ' + _depM + ' min"'
-             + ' data-slot="' + slotStr + '" data-dep="' + _depM + '" data-flbl="' + _fLbl + '"'
-             + ' onclick="event.stopPropagation();calPickerSelectSlotOverflow(this)"'
-             + '>'+lbl+' <span style="font-size:10px;background:rgba(234,179,8,.3);border-radius:3px;padding:0 3px;margin-left:2px">+</span></button>';
-        hasSlots = true;
+      if (isPast || blocked || isBooked || overflows) {
+        html += '<button type="button" class="cal-picker-slot slot-booked" disabled>'+lbl+'</button>';
       } else {
         html += '<button type="button" class="cal-picker-slot" data-slot="'+slotStr+'" onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot)">'+lbl+'</button>';
-        hasSlots = true;
       }
+      hasSlots = true;
     }
   });
 
@@ -474,34 +459,6 @@ function calPickerSelectSlot(slotStr) {
   var popup = document.getElementById('cal-picker-popup');
   if (popup) { popup.style.display='none'; calPickerOpen=false; }
   if (typeof checkFormValidity==='function') checkFormValidity();
-}
-
-function calPickerSelectSlotOverflow(btn) {
-  var slotStr       = btn.dataset.slot;
-  var depMin        = parseInt(btn.dataset.dep);
-  var fermetureLabel = btn.dataset.flbl;
-
-  // Calculer l'heure de fin réelle
-  var parts    = slotStr.split(':');
-  var startMin = parseInt(parts[0]) * 60 + parseInt(parts[1]);
-  var _dur     = 30;
-  if (typeof PRIX_DUREE !== 'undefined' && typeof selectedGenre !== 'undefined') {
-    var _svc = document.getElementById('appt-service-select');
-    if (_svc && _svc.value) {
-      var _pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][_svc.value];
-      if (_pd && _pd.duree) _dur = _pd.duree;
-    }
-  }
-  var endMin  = startMin + _dur;
-  var endH    = String(Math.floor(endMin / 60)).padStart(2, '0');
-  var endM    = String(endMin % 60).padStart(2, '0');
-  var endLbl  = endH + 'h' + (endM !== '00' ? endM : '');
-
-  var msg = 'Ce rendez-vous se terminera à ' + endLbl
-          + ', soit ' + depMin + ' min après la fermeture (' + fermetureLabel + ').'
-          + '\n\nVoulez-vous quand même confirmer ce créneau ?';
-  if (!confirm(msg)) return;
-  calPickerSelectSlot(slotStr);
 }
 
 function calPickerUpdateTime(closeAfter) {
