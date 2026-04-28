@@ -819,6 +819,33 @@ ul { list-style: none; }
   grid-column: 1 / -1;
   height: 6px;
 }
+
+/* Créneau occupé par un RDV */
+.cal-picker-slot.slot-booked {
+  background: #F0EDEA;
+  color: rgba(26,23,20,0.3);
+  border-color: var(--border);
+  cursor: not-allowed;
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+.cal-picker-slot.slot-booked:hover { background: #F0EDEA; border-color: var(--border); }
+
+/* Créneau qui dépasse la fermeture */
+.cal-picker-slot.slot-overflow {
+  background: rgba(234,179,8,.08);
+  color: #92620A;
+  border-color: rgba(234,179,8,.4);
+  cursor: pointer;
+}
+.cal-picker-slot.slot-overflow:hover { background: rgba(234,179,8,.15); border-color: rgba(234,179,8,.7); }
+.slot-overflow-icon {
+  font-size: 10px;
+  background: rgba(234,179,8,.3);
+  border-radius: 3px;
+  padding: 0 3px;
+  margin-left: 2px;
+}
 .cal-picker-select { display: none; } /* caché — remplacé par la grille */
 
 /* ===== NOTIFICATIONS IN-APP ===== */

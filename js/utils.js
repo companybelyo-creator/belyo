@@ -357,6 +357,36 @@ function calPickerSelectDay(year, month, day) {
     ? planning.conges.filter(function(c){ return c.type==='heure' && c.debut===iso; })
     : [];
 
+  // --- Récupérer la durée du service sélectionné ---
+  var _serviceDuree = 30; // fallback
+  if (typeof PRIX_DUREE !== 'undefined' && typeof selectedGenre !== 'undefined') {
+    var _svcName = document.getElementById('appt-service-select') ? document.getElementById('appt-service-select').value : '';
+    if (_svcName) {
+      var _pd = (PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][_svcName]);
+      if (_pd && _pd.duree) _serviceDuree = _pd.duree;
+    }
+  }
+
+  // --- Construire les créneaux occupés par les RDV existants ---
+  var _bookedRanges = [];
+  if (typeof allAppts !== 'undefined') {
+    allAppts.forEach(function(a) {
+      if (a.status === 'cancelled') return;
+      if (typeof editApptId !== 'undefined' && editApptId && a.id === editApptId) return;
+      if (a.datetime.slice(0,10) !== iso) return;
+      var _aDt    = new Date(a.datetime);
+      var _aStart = _aDt.getHours() * 60 + _aDt.getMinutes();
+      var _aDur   = a.duration_minutes || 30;
+      if (!a.duration_minutes && typeof PRIX_DUREE !== 'undefined') {
+        var _pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+        var _pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+        var _pd2 = _pdH || _pdF;
+        if (_pd2 && _pd2.duree) _aDur = _pd2.duree;
+      }
+      _bookedRanges.push({ start: _aStart, end: _aStart + _aDur });
+    });
+  }
+
   var html = '';
   var hasSlots = false;
   plages.forEach(function(plage, pi) {
@@ -366,7 +396,7 @@ function calPickerSelectDay(year, month, day) {
     var mF = parseInt((plage.fin||'20:00').split(':')[1]||0);
     var startMin = hD*60+mD, endMin = hF*60+mF;
 
-    if (plages.length > 1 && pi > 0) {
+    if (pi > 0) {
       html += '<div class="cal-picker-slot-sep"></div>';
     }
     for (var tm = startMin; tm < endMin; tm += 30) {
@@ -374,8 +404,35 @@ function calPickerSelectDay(year, month, day) {
       var slotStr = String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
       var isPast  = isToday && (hh < now.getHours() || (hh===now.getHours()&&mm<=now.getMinutes()));
       var blocked = congesH.some(function(c){ return slotStr >= c.h_debut && slotStr < c.h_fin; });
-      if (!isPast && !blocked) {
-        var lbl = String(hh).padStart(2,'0')+'h'+(mm?String(mm).padStart(2,'0'):'');
+
+      // Créneau occupé par un RDV existant
+      var slotEndMin = tm + _serviceDuree;
+      var isBooked = _bookedRanges.some(function(r) {
+        return tm < r.end && slotEndMin > r.start;
+      });
+
+      // Dépasse la fin de cette plage horaire
+      var overflows = slotEndMin > endMin;
+
+      var lbl = String(hh).padStart(2,'0')+'h'+(mm?String(mm).padStart(2,'0'):'');
+
+      if (isPast || blocked) {
+        // Masquer complètement
+        continue;
+      } else if (isBooked) {
+        // Grisé : RDV déjà présent sur ce créneau
+        html += '<button type="button" class="cal-picker-slot slot-booked" disabled title="Créneau déjà pris">'+lbl+'</button>';
+        hasSlots = true;
+      } else if (overflows) {
+        // Grisé avec avertissement : la durée dépasse l’horaire
+        var _depM = slotEndMin - endMin;
+        var _fLbl = String(hF).padStart(2,'0')+'h'+(mF?String(mF).padStart(2,'0'):'');
+        html += '<button type="button" class="cal-picker-slot slot-overflow"'
+             + ' title="Dépasse la fermeture (' + _fLbl + ') de ' + _depM + ' min"'
+             + ' onclick="event.stopPropagation();calPickerSelectSlotOverflow(this.dataset.slot,' + _depM + ',\'' + _fLbl + '\')"'
+             + ' data-slot="'+slotStr+'">'+lbl+' <span class=\'slot-overflow-icon\'>+</span></button>';
+        hasSlots = true;
+      } else {
         html += '<button type="button" class="cal-picker-slot" data-slot="'+slotStr+'" onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot)">'+lbl+'</button>';
         hasSlots = true;
       }
@@ -416,6 +473,13 @@ function calPickerSelectSlot(slotStr) {
   var popup = document.getElementById('cal-picker-popup');
   if (popup) { popup.style.display='none'; calPickerOpen=false; }
   if (typeof checkFormValidity==='function') checkFormValidity();
+}
+
+function calPickerSelectSlotOverflow(slotStr, depMin, fermetureLabel) {
+  var msg = 'Ce créneau se termine ' + depMin + ' min après la fermeture (' + fermetureLabel + ').'
+          + '\n\nVoulez-vous quand même créer ce rendez-vous en heures supplémentaires ?';
+  if (!confirm(msg)) return;
+  calPickerSelectSlot(slotStr);
 }
 
 function calPickerUpdateTime(closeAfter) {
