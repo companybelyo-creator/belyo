@@ -817,8 +817,8 @@ ul { list-style: none; }
 .cal-picker-slot.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
 .cal-picker-slot.slot-unavail {
   background: #F0EDEA;
-  color: rgba(26,23,20,0.28);
-  border-color: var(--border);
+  color: rgba(26,23,20,.28);
+  border-color: #E0DBD8;
   cursor: not-allowed;
   text-decoration: line-through;
   pointer-events: none;

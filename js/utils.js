@@ -357,18 +357,18 @@ function calPickerSelectDay(year, month, day) {
     ? planning.conges.filter(function(c){ return c.type==='heure' && c.debut===iso; })
     : [];
 
-  // Durée du service sélectionné
-  var _dur = 30;
+  // Duree du service selectionne
+  var _dur = 0;
   if (typeof PRIX_DUREE !== 'undefined' && typeof selectedGenre !== 'undefined') {
     var _svcEl = document.getElementById('appt-service-select');
-    var _svcName = _svcEl ? _svcEl.value : '';
-    if (_svcName) {
-      var _pdSvc = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][_svcName];
-      if (_pdSvc && _pdSvc.duree) _dur = _pdSvc.duree;
+    var _svc   = _svcEl ? _svcEl.value : '';
+    if (_svc) {
+      var _pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][_svc];
+      if (_pd && _pd.duree) _dur = _pd.duree;
     }
   }
 
-  // Plages de temps occupées par des RDV existants ce jour
+  // RDV existants du jour
   var _booked = [];
   if (typeof allAppts !== 'undefined') {
     allAppts.forEach(function(a) {
@@ -388,39 +388,37 @@ function calPickerSelectDay(year, month, day) {
     });
   }
 
-  var html = '';
+  var html     = '';
   var hasSlots = false;
+
   plages.forEach(function(plage, pi) {
-    var hD = parseInt((plage.debut || '08:00').split(':')[0]);
-    var mD = parseInt((plage.debut || '08:00').split(':')[1] || 0);
-    var hF = parseInt((plage.fin   || '20:00').split(':')[0]);
-    var mF = parseInt((plage.fin   || '20:00').split(':')[1] || 0);
+    var hD       = parseInt((plage.debut || '08:00').split(':')[0]);
+    var mD       = parseInt((plage.debut || '08:00').split(':')[1] || 0);
+    var hF       = parseInt((plage.fin   || '20:00').split(':')[0]);
+    var mF       = parseInt((plage.fin   || '20:00').split(':')[1] || 0);
     var startMin = hD * 60 + mD;
     var endMin   = hF * 60 + mF;
 
     if (pi > 0) html += '<div class="cal-picker-slot-sep"></div>';
 
     for (var tm = startMin; tm < endMin; tm += 30) {
-      var hh  = Math.floor(tm / 60);
-      var mm  = tm % 60;
-      var lbl = String(hh).padStart(2, '0') + 'h' + (mm ? String(mm).padStart(2, '0') : '');
-      var slotStr    = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
-      var slotEndMin = tm + _dur;
+      var hh      = Math.floor(tm / 60);
+      var mm      = tm % 60;
+      var slotStr = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+      var lbl     = String(hh).padStart(2, '0') + 'h' + (mm ? String(mm).padStart(2, '0') : '');
+      var slotEnd = tm + (_dur > 0 ? _dur : 30);
 
-      // Passé ?
-      var isPast = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
-      // Congé horaire ?
+      var isPast    = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
       var isBlocked = congesH.some(function(c) { return slotStr >= c.h_debut && slotStr < c.h_fin; });
-      // RDV existant chevauche ce créneau ?
-      var isBooked = _booked.some(function(r) { return tm < r.e && slotEndMin > r.s; });
-      // Dépasse la fin de la plage ?
-      var overflows = slotEndMin > endMin;
+      var isBooked  = _booked.some(function(r) { return tm < r.e && slotEnd > r.s; });
+      var overflows = _dur > 0 && slotEnd > endMin;
 
       hasSlots = true;
       if (isPast || isBlocked || isBooked || overflows) {
         html += '<button type="button" class="cal-picker-slot slot-unavail" disabled>' + lbl + '</button>';
       } else {
-        html += '<button type="button" class="cal-picker-slot" data-slot="' + slotStr + '"'
+        html += '<button type="button" class="cal-picker-slot"'
+             + ' data-slot="' + slotStr + '"'
              + ' onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot)">'
              + lbl + '</button>';
       }
@@ -431,13 +429,9 @@ function calPickerSelectDay(year, month, day) {
     ? html
     : '<div style="font-size:13px;color:var(--ink-light);grid-column:span 5;padding:6px 0">Aucun créneau disponible</div>';
 
-  // Horaires sur une seule ligne
   if (hintEl) {
-    var rangeLabel = plages.map(function(p) { return p.debut + '–' + p.fin; }).join(' · ');
-    hintEl.textContent = 'Horaires : ' + rangeLabel;
-    hintEl.style.whiteSpace = 'nowrap';
-    hintEl.style.overflow = 'hidden';
-    hintEl.style.textOverflow = 'ellipsis';
+    hintEl.textContent   = 'Horaires : ' + plages.map(function(p) { return p.debut + '–' + p.fin; }).join(' · ');
+    hintEl.style.cssText = 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block';
   }
 
   calPickerSelectedSlot = null;

@@ -172,7 +172,6 @@ function selectService(name, prix) {
   var priceInput = document.getElementById('appt-price');
   if (priceInput) priceInput.value = prix || '';
   checkFormValidity();
-  // Re-rendre les créneaux si le picker est ouvert
   if (typeof calPickerDate !== 'undefined' && calPickerDate) {
     var _sl = document.getElementById('cal-picker-slots');
     if (_sl && _sl.children.length > 0) {
@@ -255,7 +254,7 @@ function renderClientSuggestions(matches, rawVal) {
       : '';
     return '<div onclick="event.stopPropagation();pickClient(' + i + ')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
-      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + formatPhone(c.phone) + '</span>' : '')
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
@@ -284,7 +283,7 @@ function selectClientById(id) {
   if (badge) badge.style.display = 'none';
   if (label) label.textContent = client.name;
   if (emailEl) emailEl.value = client.email || '';
-  if (phoneEl) phoneEl.value = client.phone ? formatPhone(client.phone) : '';
+  if (phoneEl) phoneEl.value = client.phone || '';
 }
 
 function selectClient(id) { selectClientById(id); }
@@ -302,7 +301,7 @@ function selectClientByData(name, email, phone) {
   if (badge)   badge.style.display = 'inline-block';
   if (label)   label.textContent   = name;
   if (emailEl) emailEl.value = email || '';
-  if (phoneEl) phoneEl.value = phone ? formatPhone(phone) : '';
+  if (phoneEl) phoneEl.value = phone || '';
 }
 
 
@@ -317,7 +316,7 @@ function showClientInfo(client, newName) {
     badge.style.display = 'none';
     label.textContent   = client.name;
     email.value         = client.email || '';
-    phone.value         = client.phone ? formatPhone(client.phone) : '';
+    phone.value         = client.phone || '';
   } else {
     badge.style.display = 'inline-block';
     label.textContent   = newName || 'Nouveau client';
