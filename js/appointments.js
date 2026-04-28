@@ -12,6 +12,43 @@ var currentTab     = 'all';
 var currentView    = 'list';
 var weekOffset     = 0;
 
+// ===== CRÉNEAUX BLOQUÉS PAR RDV EXISTANTS =====
+// Retourne un Set de clés "YYYY-MM-DD:H" bloquées pour un jour donné
+// Une cellule est bloquée si un RDV existant s'y trouve ou la chevauche
+function getBookedSlots() {
+  var booked = new Set();
+  allAppts.forEach(function(a) {
+    if (a.status === 'cancelled') return; // les annulés ne bloquent pas
+    var dt = new Date(a.datetime);
+    var dk = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+    var startH = dt.getHours();
+    var startM = dt.getMinutes();
+
+    // Durée du RDV (en minutes)
+    var dureeMin = a.duration_minutes || 30;
+    if (!a.duration_minutes && PRIX_DUREE) {
+      var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+      var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+      var pd  = pdH || pdF;
+      if (pd && pd.duree) dureeMin = pd.duree;
+    }
+
+    // Marquer chaque tranche horaire (de HOUR_START à HOUR_END) touchée par ce RDV
+    var startTotalMin = startH * 60 + startM;
+    var endTotalMin   = startTotalMin + dureeMin;
+
+    for (var h = HOUR_START; h < HOUR_END; h++) {
+      var slotStart = h * 60;
+      var slotEnd   = slotStart + 60;
+      // Chevauchement : le RDV touche cette tranche
+      if (startTotalMin < slotEnd && endTotalMin > slotStart) {
+        booked.add(dk + ':' + h);
+      }
+    }
+  });
+  return booked;
+}
+
 // ===== GENRE + PRESTATION =====
 var selectedGenre = 'homme';
 
@@ -436,6 +473,7 @@ function renderCalendar() {
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(26,23,20,.07),rgba(26,23,20,.07) 3px,rgba(26,23,20,.02) 3px,rgba(26,23,20,.02) 9px)"></div><span>Occupé</span></div>'
     + '</div>';
   var legendEl = document.getElementById('cal-legend');
   if (legendEl) legendEl.innerHTML = legendHtml;
@@ -453,6 +491,9 @@ function renderCalendar() {
       + '</div>';
   });
 
+  // Calculer les créneaux occupés par les RDV existants
+  var bookedSlots = getBookedSlots();
+
   hours.forEach(function(h, hi) {
     html += '<div class="cal-time-col" style="height:' + SLOT_H + 'px;border-top:1px solid var(--border)">'
       + (hi > 0 ? '<span class="cal-time-label">' + String(h) + 'h</span>' : '')
@@ -469,12 +510,16 @@ function renderCalendar() {
         return c.type !== 'heure' && iso >= c.debut && iso <= c.fin;
       });
 
+      // Détecter si créneau occupé par un RDV existant
+      var isBooked = bookedSlots.has(dateStr + ':' + h);
+
       var cls = 'cal-cell';
       if (isToday) cls += ' today-col';
-      if (congeJ)      cls += ' conge-full';
-      else if (congeH) cls += ' conge-partiel';
-      else if (!worked) cls += ' off-hours';
-      else             cls += ' worked';
+      if (congeJ)        cls += ' conge-full';
+      else if (congeH)   cls += ' conge-partiel';
+      else if (!worked)  cls += ' off-hours';
+      else if (isBooked) cls += ' booked';
+      else               cls += ' worked';
 
       // Étiquette congé — seulement sur la première heure du jour
       var congeLabel = '';
@@ -486,9 +531,11 @@ function renderCalendar() {
         }
       }
 
+      var canClick = worked && !congeH && !congeJ && !isBooked;
       html += '<div class="' + cls + '"'
         + ' style="height:' + SLOT_H + 'px"'
-        + (worked && !congeH && !congeJ ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
+        + (canClick ? ' onclick="openModalAt(\'' + dateHour + '\')"' : '')
+        + (isBooked ? ' title="Créneau occupé par un rendez-vous"' : '')
         + ' data-date="' + dateStr + '" data-h="' + h + '">'
         + congeLabel
         + '</div>';
@@ -614,7 +661,77 @@ function openModal(presetDatetime) {
   if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
   checkFormValidity();
 }
-function openModalAt(datetimeStr) { openModal(datetimeStr); }
+function openModalAt(datetimeStr) {
+  // Vérifier les contraintes du créneau avant d'ouvrir le modal
+  var slotDate = new Date(datetimeStr);
+  var slotH    = slotDate.getHours();
+  var slotM    = slotDate.getMinutes();
+  var dateStr  = datetimeStr.slice(0, 10);
+
+  // Déterminer la durée du service en cours (par défaut 30 min si pas encore choisi)
+  var serviceName = (document.getElementById('appt-service-select') || {}).value || '';
+  var dureeMin = 30;
+  if (serviceName && PRIX_DUREE) {
+    var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[serviceName];
+    var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[serviceName];
+    var pd  = pdH || pdF;
+    if (pd && pd.duree) dureeMin = pd.duree;
+  }
+
+  var slotStartMin = slotH * 60 + slotM;
+  var slotEndMin   = slotStartMin + dureeMin;
+
+  // 1. Vérifier dépassement des horaires d'ouverture
+  var fermetureMin = null;
+  if (salonPlanning && salonPlanning.heures) {
+    var idx = DAY_MAP_APT[slotDate.getDay()];
+    var plages = salonPlanning.heures[idx] || salonPlanning.heures[String(idx)];
+    if (plages) {
+      if (!Array.isArray(plages)) plages = [plages];
+      // Trouver la plage qui couvre le début du créneau
+      plages.forEach(function(p) {
+        var dH = parseInt((p.debut||'09:00').split(':')[0]);
+        var fH = parseInt((p.fin||'19:00').split(':')[0]);
+        if (slotH >= dH && slotH < fH) fermetureMin = fH * 60;
+      });
+    }
+  }
+  if (fermetureMin === null) fermetureMin = HOUR_END * 60;
+
+  if (slotEndMin > fermetureMin) {
+    var depMin = slotEndMin - fermetureMin;
+    var confirm_msg = "Ce rendez-vous de " + dureeMin + " min dépasse l'horaire de fermeture de " + depMin + " minute" + (depMin > 1 ? "s" : "") + ".\n\nVoulez-vous quand même créer ce rendez-vous en heures supplémentaires ?";
+    if (!confirm(confirm_msg)) return;
+  }
+
+  // 2. Vérifier qu'il y a assez de temps avant le prochain RDV du même jour
+  var dayAppts = allAppts.filter(function(a) {
+    return a.status !== 'cancelled' && a.datetime.slice(0,10) === dateStr;
+  });
+  dayAppts.sort(function(a, b) { return a.datetime < b.datetime ? -1 : 1; });
+
+  var nextAppt = null;
+  dayAppts.forEach(function(a) {
+    var aStart = new Date(a.datetime);
+    var aMin   = aStart.getHours() * 60 + aStart.getMinutes();
+    if (aMin > slotStartMin && (!nextAppt || aMin < nextAppt.min)) {
+      nextAppt = { appt: a, min: aMin };
+    }
+  });
+
+  if (nextAppt && slotEndMin > nextAppt.min) {
+    var gap = nextAppt.min - slotStartMin;
+    if (gap <= 0) {
+      alert('Ce créneau est bloqué : un rendez-vous commence à la même heure.');
+      return;
+    }
+    var nextTime = String(Math.floor(nextAppt.min/60)).padStart(2,'0') + 'h' + String(nextAppt.min%60).padStart(2,'0');
+    var ok = confirm('Le service s\u00e9lectionn\u00e9 (' + dureeMin + ' min) d\u00e9passe le prochain rendez-vous \u00e0 ' + nextTime + '.\nIl ne reste que ' + gap + ' min disponibles.\n\nVoulez-vous quand m\u00eame continuer ?');
+    if (!ok) return;
+  }
+
+  openModal(datetimeStr);
+}
 function checkFormValidity() {
   var btn       = document.getElementById('appt-submit');
   if (!btn) return;

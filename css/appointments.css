@@ -152,6 +152,22 @@
 .cal-event-service { font-size: 10px; opacity: .7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
+
+/* Cellule occupée par un RDV existant */
+.cal-cell.booked {
+  background: repeating-linear-gradient(135deg, rgba(26,23,20,.045), rgba(26,23,20,.045) 3px, rgba(26,23,20,.015) 3px, rgba(26,23,20,.015) 9px);
+  cursor: not-allowed;
+}
+.cal-cell.booked:hover { background: repeating-linear-gradient(135deg, rgba(26,23,20,.065), rgba(26,23,20,.065) 3px, rgba(26,23,20,.02) 3px, rgba(26,23,20,.02) 9px); }
+
+/* Tooltip heure indispo */
+.cal-cell.booked::after {
+  content: attr(data-tip);
+  display: none;
+}
+
+/* Légende supplémentaire — booked */
+.cal-legend-booked { display:flex;align-items:center;gap:5px; }
 .now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E53935; }
 .cal-picker-day.day-off { color: rgba(26,23,20,.2); background: rgba(26,23,20,.03); cursor: not-allowed; }
 .cal-picker-day.day-off:hover { background: rgba(26,23,20,.03); }
