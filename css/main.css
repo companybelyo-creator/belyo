@@ -554,9 +554,9 @@ ul { list-style: none; }
   padding: 2px 10px;
   border-radius: 100px;
 }
-.badge-done { background: #d1fae5; color: #065f46; }
-.badge-pending { background: #fef3c7; color: #92400e; }
-.badge-cancelled { background: #fee2e2; color: #991b1b; }
+.badge-done      { background: #EBF5EE; color: #1C3A2E; }
+.badge-pending   { background: #1C3A2E; color: #C8E8D4; font-weight: 500; }
+.badge-cancelled { background: #F3EEEB; color: #8A7F7C; }
 
 /* ===== MODAL ===== */
 .modal-overlay {

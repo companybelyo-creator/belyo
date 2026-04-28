@@ -209,6 +209,13 @@ function selectService(name, prix) {
   var priceInput = document.getElementById('appt-price');
   if (priceInput) priceInput.value = prix || '';
   checkFormValidity();
+  // Re-rendre les créneaux si le picker est ouvert (la durée a changé)
+  if (typeof calPickerDate !== 'undefined' && calPickerDate) {
+    var _slotsEl = document.getElementById('cal-picker-slots');
+    if (_slotsEl && _slotsEl.children.length > 0) {
+      calPickerSelectDay(calPickerDate.getFullYear(), calPickerDate.getMonth(), calPickerDate.getDate());
+    }
+  }
 }
 
 // Fermer si clic ailleurs
@@ -285,7 +292,7 @@ function renderClientSuggestions(matches, rawVal) {
       : '';
     return '<div onclick="event.stopPropagation();pickClient(' + i + ')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
-      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + (typeof formatPhone==='function'?formatPhone(c.phone):c.phone) + '</span>' : '')
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
@@ -469,8 +476,8 @@ function renderCalendar() {
 
   // Légende
   var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>À venir</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:linear-gradient(135deg,#1C3A2E,#24503D);border-left:3px solid #7ECBA0"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#EBF5EE;border-left:3px solid #4CAF78"></div><span>Terminé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:repeating-linear-gradient(135deg,rgba(26,23,20,.07),rgba(26,23,20,.07) 3px,rgba(26,23,20,.02) 3px,rgba(26,23,20,.02) 9px)"></div><span>Occupé</span></div>'

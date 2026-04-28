@@ -140,12 +140,22 @@
 }
 .cal-event:hover { opacity: .92; box-shadow: 0 3px 10px rgba(26,23,20,.22); }
 
-/* À venir — vert foncé */
-.cal-event.status-pending   { background: #276749; color: #E8F5ED; border-left: 3px solid #6EC99A; }
-/* Terminé — vert clair */
-.cal-event.status-done      { background: #E8F5ED; color: #276749; border-left: 3px solid #276749; }
+/* À venir — ardoise profonde avec accent ivoire */
+.cal-event.status-pending {
+  background: linear-gradient(135deg, #1C3A2E 0%, #24503D 100%);
+  color: #E8F2EC;
+  border-left: 3px solid #7ECBA0;
+  box-shadow: 0 2px 8px rgba(28,58,46,.25);
+}
+/* Terminé — vert sauge délicat */
+.cal-event.status-done {
+  background: #EBF5EE;
+  color: #1C3A2E;
+  border-left: 3px solid #4CAF78;
+  box-shadow: none;
+}
 /* Annulé — gris neutre */
-.cal-event.status-cancelled { background: #EDEBE9; color: #8A7F7C; border-left: 3px solid #BEB5B2; opacity: .6; }
+.cal-event.status-cancelled { background: #EDEBE9; color: #8A7F7C; border-left: 3px solid #BEB5B2; opacity: .55; box-shadow: none; }
 
 .cal-event-time    { font-weight: 600; font-size: 10px; opacity: .75; margin-bottom: 2px; }
 .cal-event-name    { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
