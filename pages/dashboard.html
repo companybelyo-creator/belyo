@@ -7,8 +7,8 @@
   <link rel="icon" href="data:,">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../css/main.css" />
-  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="./main.css?v=3" />
+  <link rel="stylesheet" href="./dashboard.css?v=3" />
 </head>
 <body>
 <div class="app-layout">
@@ -212,8 +212,8 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../js/supabase.js"></script>
-<script src="../js/utils.js"></script>
+<script src="./supabase.js"></script>
+<script src="./utils.js?v=3"></script>
 <script>
 (async function() {
   var s = await sb.auth.getSession();
@@ -223,7 +223,7 @@
   await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
 })();
 </script>
-<script src="../js/dashboard.js"></script>
+<script src="./dashboard.js?v=3"></script>
 <script>document.addEventListener('DOMContentLoaded', function(){ if(typeof initPhoneInputs==='function') initPhoneInputs(); });</script>
 </body>
 </html>
