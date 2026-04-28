@@ -90,6 +90,7 @@
 .empty-state { text-align: center; padding: 3rem; color: var(--ink-light); }
 
 /* ===== CALENDRIER ===== */
+#view-calendar { max-height: calc(100vh - 200px); overflow-y: auto; }
 .cal-grid { display: grid; grid-template-columns: 52px repeat(7,1fr); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--white); }
 .cal-head { background: var(--cream); padding: 10px 6px; text-align: center; font-size: 12px; font-weight: 500; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
 .cal-head:last-child { border-right: none; }

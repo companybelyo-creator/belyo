@@ -438,8 +438,8 @@ function renderCalendar() {
 
   // Légende
   var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>À venir</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#1E3A5F;border-left:3px solid #5BA3F5"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E6F4ED;border-left:3px solid #3DAA6E"></div><span>Terminé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
     + '</div>';
