@@ -237,7 +237,7 @@
 /* ===== SALON TWO-COL ===== */
 .salon-two-col {
   display: grid;
-  grid-template-columns: 1fr 200px;
+  grid-template-columns: 1fr 280px;
   gap: 2rem;
   align-items: start;
 }
@@ -281,3 +281,26 @@
   margin-bottom: 0;
 }
 @media (max-width: 700px) { .securite-two-col { grid-template-columns: 1fr; } }
+
+/* ===== SECURITE RIGHT COL ===== */
+.securite-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ===== COMPTE TWO-COL ===== */
+.compte-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.compte-profile-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  padding: .5rem 0;
+}
+@media (max-width: 700px) { .compte-two-col { grid-template-columns: 1fr; } }
