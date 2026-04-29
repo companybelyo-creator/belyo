@@ -254,7 +254,7 @@ function renderClientSuggestions(matches, rawVal) {
       : '';
     return '<div onclick="event.stopPropagation();pickClient(' + i + ')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
       + '<strong style="color:var(--ink)">' + c.name + '</strong>' + tag
-      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + formatPhone(c.phone) + '</span>' : '')
       + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
       + '</div>';
   }).join('');
@@ -283,7 +283,7 @@ function selectClientById(id) {
   if (badge) badge.style.display = 'none';
   if (label) label.textContent = client.name;
   if (emailEl) emailEl.value = client.email || '';
-  if (phoneEl) phoneEl.value = client.phone || '';
+  if (phoneEl) phoneEl.value = client.phone ? formatPhone(client.phone) : '';
 }
 
 function selectClient(id) { selectClientById(id); }
@@ -301,7 +301,7 @@ function selectClientByData(name, email, phone) {
   if (badge)   badge.style.display = 'inline-block';
   if (label)   label.textContent   = name;
   if (emailEl) emailEl.value = email || '';
-  if (phoneEl) phoneEl.value = phone || '';
+  if (phoneEl) phoneEl.value = phone ? formatPhone(phone) : '';
 }
 
 
@@ -316,7 +316,7 @@ function showClientInfo(client, newName) {
     badge.style.display = 'none';
     label.textContent   = client.name;
     email.value         = client.email || '';
-    phone.value         = client.phone || '';
+    phone.value         = client.phone ? formatPhone(client.phone) : '';
   } else {
     badge.style.display = 'inline-block';
     label.textContent   = newName || 'Nouveau client';
@@ -438,8 +438,8 @@ function renderCalendar() {
 
   // Légende
   var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#1E3A5F;border-left:3px solid #5BA3F5"></div><span>À venir</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E6F4ED;border-left:3px solid #3DAA6E"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
     + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
     + '</div>';

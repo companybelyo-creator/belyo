@@ -260,15 +260,15 @@ var calPickerOpen    = false;
 
 function toggleCalPicker() {
   var popup = document.getElementById('cal-picker-popup');
+  var wrap  = document.getElementById('cal-picker-wrap');
   if (!popup) return;
   calPickerOpen = !calPickerOpen;
   popup.style.display = calPickerOpen ? 'block' : 'none';
+  if (wrap) wrap.classList.toggle('cal-picker-open', calPickerOpen);
   if (calPickerOpen) {
     if (!calPickerDate) calPickerMonth = new Date();
     calPickerRender();
-    // Scroller le modal pour afficher le popup si besoin
     setTimeout(function() {
-      var wrap = document.getElementById('cal-picker-wrap');
       if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
   }
