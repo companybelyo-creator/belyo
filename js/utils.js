@@ -258,35 +258,20 @@ var calPickerDate    = null; // Date sélectionnée
 var calPickerMonth   = new Date(); // Mois affiché
 var calPickerOpen    = false;
 
-function repositionPopup() {
-  var popup   = document.getElementById('cal-picker-popup');
-  var trigger = document.getElementById('cal-picker-trigger');
-  if (!popup || !trigger) return;
-  var rect    = trigger.getBoundingClientRect();
-  var popupH  = popup.offsetHeight;
-  var spaceB  = window.innerHeight - rect.bottom - 8;
-  var top;
-  if (spaceB >= popupH) {
-    top = rect.bottom + 6;
-  } else {
-    top = rect.top - popupH - 6;
-  }
-  top = Math.max(8, Math.min(top, window.innerHeight - popupH - 8));
-  var left = rect.left;
-  if (left + 340 > window.innerWidth - 8) left = window.innerWidth - 348;
-  popup.style.top  = top + 'px';
-  popup.style.left = Math.max(8, left) + 'px';
-}
-
 function toggleCalPicker() {
   var popup = document.getElementById('cal-picker-popup');
   if (!popup) return;
   calPickerOpen = !calPickerOpen;
-  if (!calPickerOpen) { popup.style.display = 'none'; return; }
-  popup.style.display = 'block';
-  if (!calPickerDate) calPickerMonth = new Date();
-  calPickerRender();
-  setTimeout(repositionPopup, 0);
+  popup.style.display = calPickerOpen ? 'block' : 'none';
+  if (calPickerOpen) {
+    if (!calPickerDate) calPickerMonth = new Date();
+    calPickerRender();
+    // Scroller le modal pour afficher le popup si besoin
+    setTimeout(function() {
+      var wrap = document.getElementById('cal-picker-wrap');
+      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 50);
+  }
 }
 
 function calPickerPrevMonth() {
@@ -456,7 +441,6 @@ function calPickerSelectDay(year, month, day) {
 
   calPickerSelectedSlot = null;
   calPickerRender();
-  setTimeout(repositionPopup, 0);
 }
 
 var calPickerSelectedSlot = null;
