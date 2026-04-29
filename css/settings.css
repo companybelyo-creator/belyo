@@ -237,9 +237,8 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   CONTAINER QUERY — base sur .settings-content
-   Les breakpoints réagissent à l'espace réel dispo,
-   sidebar comprise ou non.
+   CONTAINER QUERY sur .settings-content
+   Les breakpoints réagissent à l'espace réel disponible.
 ════════════════════════════════════════════════════════════ */
 .settings-content {
   container-type: inline-size;
@@ -247,7 +246,9 @@
 }
 
 /* ────────────────────────────────────────────────────────────
-   SALON — formulaire gauche + photo droite (grande)
+   SALON — formulaire gauche + photo droite
+   Photo fixée à 320px, ne se réduit JAMAIS en dessous.
+   En dessous de 600px de contenu → empilement.
 ──────────────────────────────────────────────────────────── */
 .salon-two-col {
   display: grid;
@@ -256,11 +257,11 @@
   align-items: start;
 }
 .salon-fields { display: flex; flex-direction: column; }
-.salon-image-col { display: flex; flex-direction: column; }
+.salon-image-col { display: flex; flex-direction: column; min-width: 320px; }
 
 .salon-img-upload {
   width: 100%;
-  min-height: 240px;
+  min-height: 230px;
   border: 1.5px dashed var(--border);
   border-radius: var(--radius);
   background: var(--cream);
@@ -285,14 +286,17 @@
 .salon-img-placeholder svg { opacity: .4; margin-bottom: .3rem; }
 .salon-img-hint { font-size: 11px; color: var(--ink-light); margin-top: .6rem; text-align: center; }
 
-@container settings (max-width: 560px) {
+/* Empilement uniquement quand le conteneur est vraiment petit */
+@container settings (max-width: 600px) {
   .salon-two-col { grid-template-columns: 1fr; gap: 1.5rem; }
-  .salon-image-col { order: -1; }
+  .salon-image-col { order: -1; min-width: 0; }
   .salon-img-upload { min-height: 180px; }
 }
 
 /* ────────────────────────────────────────────────────────────
-   COMPTE — une carte, séparateur vertical gauche/droite
+   COMPTE — une carte, séparateur vertical
+   Gauche fixée à 210px, droite prend le reste.
+   Empilement uniquement sous 480px de conteneur.
 ──────────────────────────────────────────────────────────── */
 .compte-inner {
   display: grid;
@@ -307,7 +311,7 @@
   gap: 1.2rem;
   padding: 1rem 2.5rem 1rem 0;
   text-align: center;
-  min-width: 0;
+  min-width: 210px;
 }
 .compte-identity {
   display: flex;
@@ -319,20 +323,20 @@
 .compte-right {
   display: flex;
   flex-direction: column;
-  gap: 0;
   padding: 1rem 0 1rem 2.5rem;
   min-width: 0;
 }
 
 @container settings (max-width: 480px) {
   .compte-inner { grid-template-columns: 1fr; }
-  .compte-left { padding: 0 0 2rem; border-bottom: 1px solid var(--border); }
+  .compte-left { padding: 0 0 2rem; border-bottom: 1px solid var(--border); min-width: 0; }
   .compte-divider { display: none; }
   .compte-right { padding: 2rem 0 0; }
 }
 
 /* ────────────────────────────────────────────────────────────
-   SÉCURITÉ — une carte, 2 colonnes égales, air généreux
+   SÉCURITÉ — une carte, 2 colonnes 1fr/1fr
+   Chaque colonne a un min de 260px avant d'empiler.
 ──────────────────────────────────────────────────────────── */
 .securite-inner {
   display: grid;
@@ -344,7 +348,7 @@
   flex-direction: column;
   gap: 1.2rem;
   padding: 1rem 2.5rem 1rem 0;
-  min-width: 0;
+  min-width: 260px;
 }
 .securite-col:last-child { padding: 1rem 0 1rem 2.5rem; }
 
@@ -356,40 +360,31 @@
   margin-bottom: .2rem;
 }
 .securite-divider { width: 1px; background: var(--border); align-self: stretch; }
-
-/* Pousse le bouton "Changer le mot de passe" tout en bas */
 .securite-col .btn-save { margin-top: auto; align-self: flex-start; }
 
-@container settings (max-width: 480px) {
+/* Empilement quand le conteneur ne peut plus tenir 2 × 260px */
+@container settings (max-width: 560px) {
   .securite-inner { grid-template-columns: 1fr; }
-  .securite-col { padding: 0 0 2rem; }
+  .securite-col { padding: 0 0 2rem; min-width: 0; }
   .securite-col:last-child { padding: 2rem 0 0; border-top: 1px solid var(--border); }
   .securite-divider { display: none; }
   .securite-col .btn-save { margin-top: 1rem; }
 }
 
 /* ────────────────────────────────────────────────────────────
-   OVERRIDES — plus d'air dans les cartes des paramètres
+   OVERRIDES — air interne des cartes et formulaires
 ──────────────────────────────────────────────────────────── */
-/* Carte principale plus aérée */
-.settings-card { padding: 2.2rem 2.2rem; }
+.settings-card { padding: 2.2rem; }
 
-/* Espacement entre champs de formulaire */
 .securite-col .form-group,
 .compte-right .form-group,
 .salon-fields .form-group { margin-bottom: 1.4rem; }
 
-/* Label légèrement plus espacé */
 .securite-col .form-label,
 .compte-right .form-label,
 .salon-fields .form-label { margin-bottom: .45rem; display: block; }
 
-/* Info-rows dans la colonne droite sécurité */
-.securite-col .info-row {
-  padding: .75rem 0;
-  font-size: 14px;
-}
+.securite-col .info-row { padding: .75rem 0; font-size: 14px; }
 
-/* Zone dangereuse : plus d'air interne */
-.danger-zone { padding: 1.4rem 1.4rem; }
+.danger-zone { padding: 1.4rem; }
 .danger-desc { margin-bottom: 1.2rem; line-height: 1.6; }
