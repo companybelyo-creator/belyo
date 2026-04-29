@@ -467,3 +467,52 @@
 @container settings (max-width: 480px) {
   .plan-cards-col { grid-template-columns: 1fr; }
 }
+
+/* ────────────────────────────────────────────────────────────
+   PLANNING — jours/horaires gauche + congés droite
+──────────────────────────────────────────────────────────── */
+.planning-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  align-items: start;
+  gap: 0;
+}
+.planning-col {
+  display: flex;
+  flex-direction: column;
+  padding: .25rem 2.5rem .25rem 0;
+  min-width: 0;
+}
+.planning-col:last-child { padding: .25rem 0 .25rem 2.5rem; }
+.planning-col-title {
+  font-weight: 500;
+  font-size: 15px;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.2rem;
+}
+.planning-divider {
+  width: 1px;
+  background: var(--border);
+  align-self: stretch;
+}
+
+@container settings (max-width: 680px) {
+  .planning-two-col { grid-template-columns: 1fr; }
+  .planning-col { padding: 0 0 2rem; }
+  .planning-col:last-child { padding: 2rem 0 0; border-top: 1px solid var(--border); }
+  .planning-divider { display: none; }
+}
+
+/* ────────────────────────────────────────────────────────────
+   ABONNEMENT — fix colonnes trop petites
+──────────────────────────────────────────────────────────── */
+/* Cartes plans : empile en 1 colonne si trop serrées */
+@container settings (max-width: 560px) {
+  .plan-cards-col { grid-template-columns: 1fr; }
+}
+/* Layout global : plan actuel passe sous les cartes */
+@container settings (max-width: 540px) {
+  .plan-layout { grid-template-columns: 1fr; }
+  .plan-current-col { order: -1; }
+}
