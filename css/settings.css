@@ -237,13 +237,17 @@
 }
 
 /* ═══════════════════════════════════════════════════
-   SALON — formulaire gauche + photo droite (grande)
-   Breakpoint aligné sur la disparition de la sidebar (900px)
+   CONTAINER QUERY — base sur .settings-content
+   → les breakpoints réagissent à l'espace RÉEL dispo,
+     pas à la fenêtre. Sidebar présente ou non, peu importe.
 ══════════════════════════════════════════════════════ */
+.settings-content { container-type: inline-size; container-name: settings; }
+
+/* ─── SALON ──────────────────────────────────────── */
 .salon-two-col {
   display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 2.5rem;
+  grid-template-columns: 1fr 300px;
+  gap: 2rem;
   align-items: start;
 }
 .salon-fields { display: flex; flex-direction: column; }
@@ -251,7 +255,7 @@
 
 .salon-img-upload {
   width: 100%;
-  min-height: 240px;
+  min-height: 220px;
   border: 1.5px dashed var(--border);
   border-radius: var(--radius);
   background: var(--cream);
@@ -276,26 +280,17 @@
 .salon-img-placeholder svg { opacity: .45; margin-bottom: .25rem; }
 .salon-img-hint { font-size: 11px; color: var(--ink-light); margin-top: .5rem; text-align: center; }
 
-/* Quand la sidebar disparaît (900px) → on réduit la photo */
-@media (max-width: 900px) {
-  .salon-two-col { grid-template-columns: 1fr 240px; gap: 1.5rem; }
-}
-/* En dessous de 600px → colonne unique, photo d'abord */
-@media (max-width: 600px) {
-  .salon-two-col {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-  }
+/* conteneur < 560px → photo en haut, pleine largeur */
+@container settings (max-width: 560px) {
+  .salon-two-col { grid-template-columns: 1fr; }
   .salon-image-col { order: -1; }
-  .salon-img-upload { min-height: 180px; }
+  .salon-img-upload { min-height: 170px; }
 }
 
-/* ═══════════════════════════════════════════════════
-   COMPTE — une carte, séparateur vertical gauche/droite
-══════════════════════════════════════════════════════ */
+/* ─── COMPTE ─────────────────────────────────────── */
 .compte-inner {
   display: grid;
-  grid-template-columns: 200px 1px 1fr;
+  grid-template-columns: 190px 1px 1fr;
   align-items: stretch;
   min-height: 160px;
 }
@@ -307,35 +302,20 @@
   gap: 1rem;
   padding: .5rem 2rem .5rem 0;
   text-align: center;
+  min-width: 0;
 }
-.compte-identity {
-  display: flex;
-  flex-direction: column;
-  gap: .25rem;
-}
-.compte-divider {
-  width: 1px;
-  background: var(--border);
-  align-self: stretch;
-}
-.compte-right {
-  display: flex;
-  flex-direction: column;
-  padding: .5rem 0 .5rem 2rem;
-}
+.compte-identity { display: flex; flex-direction: column; gap: .25rem; word-break: break-word; }
+.compte-divider { width: 1px; background: var(--border); align-self: stretch; }
+.compte-right { display: flex; flex-direction: column; padding: .5rem 0 .5rem 2rem; min-width: 0; }
 
-/* Quand la sidebar disparaît (900px) → déjà ok, plus de place */
-/* En dessous de 600px → colonne unique */
-@media (max-width: 600px) {
+@container settings (max-width: 480px) {
   .compte-inner { grid-template-columns: 1fr; }
   .compte-left { padding: 0 0 1.5rem; border-bottom: 1px solid var(--border); }
   .compte-divider { display: none; }
   .compte-right { padding: 1.5rem 0 0; }
 }
 
-/* ═══════════════════════════════════════════════════
-   SÉCURITÉ — une carte, séparateur vertical, même taille
-══════════════════════════════════════════════════════ */
+/* ─── SÉCURITÉ ───────────────────────────────────── */
 .securite-inner {
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
@@ -347,6 +327,7 @@
   flex-direction: column;
   gap: .9rem;
   padding: .25rem 2rem .25rem 0;
+  min-width: 0;
 }
 .securite-col:last-child { padding: .25rem 0 .25rem 2rem; }
 .securite-col-title {
@@ -356,15 +337,9 @@
   border-bottom: 1px solid var(--border);
   margin-bottom: .5rem;
 }
-.securite-divider {
-  width: 1px;
-  background: var(--border);
-  align-self: stretch;
-}
+.securite-divider { width: 1px; background: var(--border); align-self: stretch; }
 
-/* Quand la sidebar disparaît (900px) → déjà ok */
-/* En dessous de 600px → colonne unique */
-@media (max-width: 600px) {
+@container settings (max-width: 480px) {
   .securite-inner { grid-template-columns: 1fr; }
   .securite-col { padding: 0 0 1.5rem; }
   .securite-col:last-child { padding: 1.5rem 0 0; border-top: 1px solid var(--border); }
