@@ -711,7 +711,7 @@ ul { list-style: none; }
 .cal-picker-popup {
   position: fixed;
   width: 340px;
-  max-height: 80vh;
+  max-height: 82vh;
   overflow-y: auto;
   background: var(--white);
   border: 1px solid var(--border);
@@ -815,6 +815,14 @@ ul { list-style: none; }
 }
 .cal-picker-slot:hover { border-color: var(--gold); background: var(--gold-light); }
 .cal-picker-slot.selected { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.cal-picker-slot.slot-unavail {
+  background: #F0EDEA;
+  color: rgba(26,23,20,.28);
+  border-color: #E0DBD8;
+  cursor: not-allowed;
+  text-decoration: line-through;
+  pointer-events: none;
+}
 .cal-picker-slot.slot-unavail {
   background: #F0EDEA;
   color: rgba(26,23,20,.28);
