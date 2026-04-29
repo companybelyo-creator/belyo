@@ -236,18 +236,23 @@
   .prest-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
 }
 
-/* ═══════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════
    CONTAINER QUERY — base sur .settings-content
-   → les breakpoints réagissent à l'espace RÉEL dispo,
-     pas à la fenêtre. Sidebar présente ou non, peu importe.
-══════════════════════════════════════════════════════ */
-.settings-content { container-type: inline-size; container-name: settings; }
+   Les breakpoints réagissent à l'espace réel dispo,
+   sidebar comprise ou non.
+════════════════════════════════════════════════════════════ */
+.settings-content {
+  container-type: inline-size;
+  container-name: settings;
+}
 
-/* ─── SALON ──────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────
+   SALON — formulaire gauche + photo droite (grande)
+──────────────────────────────────────────────────────────── */
 .salon-two-col {
   display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 2rem;
+  grid-template-columns: 1fr 320px;
+  gap: 2.5rem;
   align-items: start;
 }
 .salon-fields { display: flex; flex-direction: column; }
@@ -255,7 +260,7 @@
 
 .salon-img-upload {
   width: 100%;
-  min-height: 220px;
+  min-height: 240px;
   border: 1.5px dashed var(--border);
   border-radius: var(--radius);
   background: var(--cream);
@@ -272,76 +277,119 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .5rem;
+  gap: .6rem;
   color: var(--ink-light);
   text-align: center;
-  padding: 2rem;
+  padding: 2.5rem;
 }
-.salon-img-placeholder svg { opacity: .45; margin-bottom: .25rem; }
-.salon-img-hint { font-size: 11px; color: var(--ink-light); margin-top: .5rem; text-align: center; }
+.salon-img-placeholder svg { opacity: .4; margin-bottom: .3rem; }
+.salon-img-hint { font-size: 11px; color: var(--ink-light); margin-top: .6rem; text-align: center; }
 
-/* conteneur < 560px → photo en haut, pleine largeur */
 @container settings (max-width: 560px) {
-  .salon-two-col { grid-template-columns: 1fr; }
+  .salon-two-col { grid-template-columns: 1fr; gap: 1.5rem; }
   .salon-image-col { order: -1; }
-  .salon-img-upload { min-height: 170px; }
+  .salon-img-upload { min-height: 180px; }
 }
 
-/* ─── COMPTE ─────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────
+   COMPTE — une carte, séparateur vertical gauche/droite
+──────────────────────────────────────────────────────────── */
 .compte-inner {
   display: grid;
-  grid-template-columns: 190px 1px 1fr;
+  grid-template-columns: 210px 1px 1fr;
   align-items: stretch;
-  min-height: 160px;
 }
 .compte-left {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  padding: .5rem 2rem .5rem 0;
+  gap: 1.2rem;
+  padding: 1rem 2.5rem 1rem 0;
   text-align: center;
   min-width: 0;
 }
-.compte-identity { display: flex; flex-direction: column; gap: .25rem; word-break: break-word; }
+.compte-identity {
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  word-break: break-word;
+}
 .compte-divider { width: 1px; background: var(--border); align-self: stretch; }
-.compte-right { display: flex; flex-direction: column; padding: .5rem 0 .5rem 2rem; min-width: 0; }
+.compte-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem 0 1rem 2.5rem;
+  min-width: 0;
+}
 
 @container settings (max-width: 480px) {
   .compte-inner { grid-template-columns: 1fr; }
-  .compte-left { padding: 0 0 1.5rem; border-bottom: 1px solid var(--border); }
+  .compte-left { padding: 0 0 2rem; border-bottom: 1px solid var(--border); }
   .compte-divider { display: none; }
-  .compte-right { padding: 1.5rem 0 0; }
+  .compte-right { padding: 2rem 0 0; }
 }
 
-/* ─── SÉCURITÉ ───────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────
+   SÉCURITÉ — une carte, 2 colonnes égales, air généreux
+──────────────────────────────────────────────────────────── */
 .securite-inner {
   display: grid;
   grid-template-columns: 1fr 1px 1fr;
   align-items: stretch;
-  min-height: 200px;
 }
 .securite-col {
   display: flex;
   flex-direction: column;
-  gap: .9rem;
-  padding: .25rem 2rem .25rem 0;
+  gap: 1.2rem;
+  padding: 1rem 2.5rem 1rem 0;
   min-width: 0;
 }
-.securite-col:last-child { padding: .25rem 0 .25rem 2rem; }
+.securite-col:last-child { padding: 1rem 0 1rem 2.5rem; }
+
 .securite-col-title {
   font-weight: 500;
   font-size: 15px;
-  padding-bottom: 1rem;
+  padding-bottom: 1.1rem;
   border-bottom: 1px solid var(--border);
-  margin-bottom: .5rem;
+  margin-bottom: .2rem;
 }
 .securite-divider { width: 1px; background: var(--border); align-self: stretch; }
 
+/* Pousse le bouton "Changer le mot de passe" tout en bas */
+.securite-col .btn-save { margin-top: auto; align-self: flex-start; }
+
 @container settings (max-width: 480px) {
   .securite-inner { grid-template-columns: 1fr; }
-  .securite-col { padding: 0 0 1.5rem; }
-  .securite-col:last-child { padding: 1.5rem 0 0; border-top: 1px solid var(--border); }
+  .securite-col { padding: 0 0 2rem; }
+  .securite-col:last-child { padding: 2rem 0 0; border-top: 1px solid var(--border); }
   .securite-divider { display: none; }
+  .securite-col .btn-save { margin-top: 1rem; }
 }
+
+/* ────────────────────────────────────────────────────────────
+   OVERRIDES — plus d'air dans les cartes des paramètres
+──────────────────────────────────────────────────────────── */
+/* Carte principale plus aérée */
+.settings-card { padding: 2.2rem 2.2rem; }
+
+/* Espacement entre champs de formulaire */
+.securite-col .form-group,
+.compte-right .form-group,
+.salon-fields .form-group { margin-bottom: 1.4rem; }
+
+/* Label légèrement plus espacé */
+.securite-col .form-label,
+.compte-right .form-label,
+.salon-fields .form-label { margin-bottom: .45rem; display: block; }
+
+/* Info-rows dans la colonne droite sécurité */
+.securite-col .info-row {
+  padding: .75rem 0;
+  font-size: 14px;
+}
+
+/* Zone dangereuse : plus d'air interne */
+.danger-zone { padding: 1.4rem 1.4rem; }
+.danger-desc { margin-bottom: 1.2rem; line-height: 1.6; }
