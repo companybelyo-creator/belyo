@@ -408,3 +408,62 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ────────────────────────────────────────────────────────────
+   ABONNEMENT — plans gauche + plan actuel droite
+──────────────────────────────────────────────────────────── */
+.plan-layout {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 2rem;
+  align-items: start;
+}
+.plan-cards-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.plan-option {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.plan-option-pro { border: 2px solid var(--gold); }
+
+.btn-plan-starter {
+  width: 100%; padding: 10px; border-radius: 100px;
+  border: 1px solid var(--border); background: transparent;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: background .15s, color .15s;
+  margin-top: auto;
+}
+.btn-plan-starter:hover { background: var(--cream-dark); }
+
+.btn-plan-pro {
+  width: 100%; padding: 10px; border-radius: 100px;
+  border: none; background: var(--gold); color: #fff;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: opacity .15s;
+  margin-top: auto;
+}
+.btn-plan-pro:hover { opacity: .85; }
+
+.plan-current-col { display: flex; flex-direction: column; }
+.plan-current-box {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+  display: flex;
+  flex-direction: column;
+}
+
+@container settings (max-width: 640px) {
+  .plan-layout { grid-template-columns: 1fr; }
+  .plan-current-col { order: -1; }
+}
+@container settings (max-width: 480px) {
+  .plan-cards-col { grid-template-columns: 1fr; }
+}

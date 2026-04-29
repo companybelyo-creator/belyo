@@ -231,23 +231,31 @@ async function loadSubscription() {
   var planDesc  = document.getElementById('current-plan-desc');
   var planPrice = document.getElementById('current-plan-price');
 
+  var btnS = document.getElementById('btn-starter');
+  var btnP = document.getElementById('btn-pro');
+
   if (!sub || sub.status === 'trialing') {
     var created   = new Date(currentUser.created_at);
     var trialEnd  = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
     var isExpired = new Date() > trialEnd;
-    if (planName)  planName.textContent  = isExpired ? 'Essai expire' : 'Essai gratuit';
-    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expire' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
+    if (planName)  planName.textContent  = isExpired ? 'Essai expiré' : 'Essai gratuit';
+    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expiré' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
     if (planPrice) planPrice.textContent = 'Gratuit';
+    if (btnS) { btnS.textContent = 'Choisir Starter'; btnS.disabled = false; }
+    if (btnP) { btnP.textContent = 'Choisir Pro';     btnP.disabled = false; }
   } else if (sub.status === 'active') {
     var labels = { starter: 'Plan Starter', pro: 'Plan Pro' };
     var prices = { starter: '29\u20ac/mois', pro: '59\u20ac/mois' };
     if (planName)  planName.textContent  = labels[sub.plan] || sub.plan;
     if (planDesc)  planDesc.textContent  = 'Renouvellement le ' + formatDate(sub.current_period_end);
     if (planPrice) planPrice.textContent = prices[sub.plan] || '\u2014';
-    var btnS = document.getElementById('btn-starter');
-    var btnP = document.getElementById('btn-pro');
-    if (sub.plan === 'starter' && btnS) { btnS.textContent = 'Plan actuel'; btnS.disabled = true; }
-    if (sub.plan === 'pro'     && btnP) { btnP.textContent = 'Plan actuel'; btnP.disabled = true; }
+    if (sub.plan === 'starter') {
+      if (btnS) { btnS.textContent = 'Plan actuel';        btnS.disabled = true; }
+      if (btnP) { btnP.textContent = 'Passer Pro';         btnP.disabled = false; }
+    } else if (sub.plan === 'pro') {
+      if (btnS) { btnS.textContent = 'Revenir à Starter';  btnS.disabled = false; }
+      if (btnP) { btnP.textContent = 'Plan actuel';        btnP.disabled = true; }
+    }
   } else if (sub.status === 'cancelled') {
     if (planName)  planName.textContent  = 'Abonnement annule';
     if (planDesc)  planDesc.textContent  = 'Acces jusqu\u2019au ' + formatDate(sub.current_period_end);

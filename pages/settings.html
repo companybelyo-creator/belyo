@@ -199,47 +199,43 @@
 
         <!-- ABONNEMENT -->
         <div class="settings-section" id="section-abonnement">
-      <!-- Lien réservation publique (injecté par JS) -->
-      <div id="book-link-block" style="margin-bottom:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)">
-        <div style="font-size:13px;font-weight:500;margin-bottom:.3rem">Votre lien de réservation</div>
-        <div style="font-size:12px;color:var(--ink-light)">Chargement...</div>
-      </div>
           <div class="section-title">Mon <em>abonnement</em></div>
           <p class="section-sub">Gérez votre plan et vos informations de facturation.</p>
           <div class="settings-card">
-            <div class="settings-card-title">Plan actuel</div>
-            <div class="plan-card">
-              <div>
-                <div class="plan-badge" id="current-plan-name">Essai gratuit</div>
-                <div class="plan-desc" id="current-plan-desc">—</div>
-              </div>
-              <div class="plan-price" id="current-plan-price">Gratuit</div>
-            </div>
-          </div>
-          <div class="settings-card">
             <div class="settings-card-title">Choisir un plan</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-              <div style="border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;">
-                <div class="plan-name" style="font-size:14px;margin-bottom:.5rem">Starter</div>
-                <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:1rem">29<span style="font-size:1rem;opacity:.6">€/mois</span></div>
-                <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem">
-                  <li>· 100 RDV/mois</li><li>· Clients illimités</li>
-                  <li>· CA et statistiques</li><li>· Rappels email</li>
-                </ul>
-                <button id="btn-starter" data-label="Choisir Starter" onclick="subscribe('starter')" style="width:100%;padding:10px;border-radius:100px;border:1px solid var(--border);background:transparent;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;">Choisir Starter</button>
+            <div class="plan-layout">
+              <!-- Cartes plans -->
+              <div class="plan-cards-col">
+                <div class="plan-option" id="plan-card-starter">
+                  <div class="plan-name" style="font-size:14px;margin-bottom:.5rem">Starter</div>
+                  <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:1rem">29<span style="font-size:1rem;opacity:.6">€/mois</span></div>
+                  <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.4rem">
+                    <li>· 100 RDV/mois</li><li>· Clients illimités</li>
+                    <li>· CA et statistiques</li><li>· Rappels email</li>
+                  </ul>
+                  <button id="btn-starter" onclick="subscribe('starter')" class="btn-plan-starter">Choisir Starter</button>
+                </div>
+                <div class="plan-option plan-option-pro" id="plan-card-pro">
+                  <div class="plan-name" style="font-size:14px;margin-bottom:.5rem">Pro</div>
+                  <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:1rem">59<span style="font-size:1rem;opacity:.6">€/mois</span></div>
+                  <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.4rem">
+                    <li>· RDV illimités</li><li>· Rappels SMS</li>
+                    <li>· Rapports avancés</li><li>· Support prioritaire</li>
+                  </ul>
+                  <button id="btn-pro" onclick="subscribe('pro')" class="btn-plan-pro">Choisir Pro</button>
+                </div>
               </div>
-              <div style="border:2px solid var(--gold);border-radius:var(--radius);padding:1.5rem;position:relative;">
-                <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:#fff;font-size:11px;font-weight:500;padding:3px 12px;border-radius:100px;">Recommandé</div>
-                <div class="plan-name" style="font-size:14px;margin-bottom:.5rem">Pro</div>
-                <div style="font-family:var(--font-display);font-size:2rem;font-weight:300;margin-bottom:1rem">59<span style="font-size:1rem;opacity:.6">€/mois</span></div>
-                <ul style="font-size:13px;color:var(--ink-light);display:flex;flex-direction:column;gap:.4rem;margin-bottom:1.2rem">
-                  <li>· RDV illimités</li><li>· Rappels SMS</li>
-                  <li>· Rapports avancés</li><li>· Support prioritaire</li>
-                </ul>
-                <button id="btn-pro" data-label="Choisir Pro" onclick="subscribe('pro')" style="width:100%;padding:10px;border-radius:100px;border:none;background:var(--gold);color:#fff;font-family:var(--font-body);font-size:13px;font-weight:500;cursor:pointer;">Choisir Pro</button>
+              <!-- Plan actuel à droite -->
+              <div class="plan-current-col">
+                <div class="plan-current-box">
+                  <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-light);margin-bottom:.8rem">Plan actuel</div>
+                  <div class="plan-badge" id="current-plan-name" style="margin-bottom:.5rem">Essai gratuit</div>
+                  <div class="plan-price" id="current-plan-price" style="margin-bottom:.4rem">Gratuit</div>
+                  <div class="plan-desc" id="current-plan-desc">—</div>
+                </div>
               </div>
             </div>
-            <div style="font-size:12px;color:var(--ink-light);text-align:center;">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
+            <div style="font-size:12px;color:var(--ink-light);text-align:center;margin-top:1.5rem">Paiement sécurisé par Stripe · Résiliable à tout moment</div>
           </div>
         </div>
 
@@ -376,52 +372,7 @@
   </main>
 </div>
 
-<!-- Section lien réservation publique (injectée via JS dans la nav) -->
-<script>
-// Ajouter le lien de réservation publique dans les paramètres Abonnement
-document.addEventListener('DOMContentLoaded', async function() {
-  var res = await sb.auth.getSession();
-  if (!res.data.session) return;
-  var uid = res.data.session.user.id;
-  var bookUrl = window.location.origin + '/book?salon=' + uid;
 
-  // Injecter dans la section abonnement si elle existe
-  var linkBlock = document.getElementById('book-link-block');
-  if (linkBlock) {
-    linkBlock.innerHTML = '';
-    linkBlock.style.cssText = 'margin-bottom:1.5rem;padding:1rem;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)';
-    // Construire le bloc via DOM pour éviter les conflits de quotes
-    var d1 = document.createElement('div');
-    d1.style.cssText = 'font-size:13px;font-weight:500;margin-bottom:.5rem';
-    d1.textContent = 'Votre lien de r\u00e9servation publique';
-
-    var d2 = document.createElement('div');
-    d2.style.cssText = 'font-size:12px;color:var(--ink-light);margin-bottom:.8rem';
-    d2.textContent = 'Partagez ce lien avec vos clients pour qu\u2019ils puissent r\u00e9server en ligne.';
-
-    var inp = document.createElement('input');
-    inp.type = 'text'; inp.value = bookUrl; inp.readOnly = true;
-    inp.style.cssText = 'flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;background:var(--white);font-family:var(--font-body)';
-
-    var btnCopy = document.createElement('button');
-    btnCopy.textContent = 'Copier';
-    btnCopy.style.cssText = 'padding:8px 16px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-size:12px;cursor:pointer;font-family:var(--font-body);white-space:nowrap';
-    btnCopy.onclick = function() { navigator.clipboard.writeText(bookUrl).then(function() { showToast('Lien copi\u00e9 !'); }); };
-
-    var btnTest = document.createElement('a');
-    btnTest.href = bookUrl; btnTest.target = '_blank'; btnTest.textContent = 'Tester \u2192';
-    btnTest.style.cssText = 'padding:8px 14px;border:1px solid var(--border);border-radius:100px;font-size:12px;color:var(--ink-light);white-space:nowrap;text-decoration:none';
-
-    var row = document.createElement('div');
-    row.style.cssText = 'display:flex;gap:8px;align-items:center';
-    row.appendChild(inp); row.appendChild(btnCopy); row.appendChild(btnTest);
-
-    linkBlock.appendChild(d1);
-    linkBlock.appendChild(d2);
-    linkBlock.appendChild(row);
-  }
-});
-</script>
 
 <div class="toast" id="toast"></div>
 
