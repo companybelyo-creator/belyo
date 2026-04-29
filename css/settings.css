@@ -234,3 +234,50 @@
 @media (max-width: 600px) {
   .prest-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
 }
+/* ===== SALON TWO-COL ===== */
+.salon-two-col {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 2rem;
+  align-items: start;
+}
+.salon-fields { display: flex; flex-direction: column; gap: 0; }
+.salon-image-col { display: flex; flex-direction: column; }
+.salon-img-upload {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--cream);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color .15s, background .15s;
+  position: relative;
+}
+.salon-img-upload:hover { border-color: var(--gold); background: var(--gold-light); }
+.salon-img-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+  color: var(--ink-light);
+  font-size: 12px;
+  text-align: center;
+  padding: 1rem;
+}
+.salon-img-placeholder svg { opacity: .5; }
+.salon-img-hint { font-size: 11px; color: var(--ink-light); margin-top: .5rem; text-align: center; }
+@media (max-width: 700px) { .salon-two-col { grid-template-columns: 1fr; } }
+
+/* ===== SECURITE TWO-COL ===== */
+.securite-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  margin-bottom: 0;
+}
+@media (max-width: 700px) { .securite-two-col { grid-template-columns: 1fr; } }
