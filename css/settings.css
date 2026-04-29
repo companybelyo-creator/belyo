@@ -363,7 +363,7 @@
 .securite-col .btn-save { margin-top: auto; align-self: flex-start; }
 
 /* Empilement quand le conteneur ne peut plus tenir 2 × 260px */
-@container settings (max-width: 560px) {
+@container settings (max-width: 720px) {
   .securite-inner { grid-template-columns: 1fr; }
   .securite-col { padding: 0 0 2rem; min-width: 0; }
   .securite-col:last-child { padding: 2rem 0 0; border-top: 1px solid var(--border); }
@@ -388,3 +388,23 @@
 
 .danger-zone { padding: 1.4rem; }
 .danger-desc { margin-bottom: 1.2rem; line-height: 1.6; }
+
+/* ────────────────────────────────────────────────────────────
+   FORM-ROW dans le salon : empile Téléphone/Ville
+   quand les champs sont trop serrés (< 300px chacun)
+──────────────────────────────────────────────────────────── */
+@container settings (max-width: 700px) {
+  .salon-fields .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+   FORM-ROW dans le compte : empile Prénom/Nom
+   quand la colonne droite est trop étroite
+──────────────────────────────────────────────────────────── */
+@container settings (max-width: 640px) {
+  .compte-right .form-row {
+    grid-template-columns: 1fr;
+  }
+}
