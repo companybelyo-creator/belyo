@@ -231,23 +231,31 @@ async function loadSubscription() {
   var planDesc  = document.getElementById('current-plan-desc');
   var planPrice = document.getElementById('current-plan-price');
 
+  var btnS = document.getElementById('btn-starter');
+  var btnP = document.getElementById('btn-pro');
+
   if (!sub || sub.status === 'trialing') {
     var created   = new Date(currentUser.created_at);
     var trialEnd  = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
     var isExpired = new Date() > trialEnd;
-    if (planName)  planName.textContent  = isExpired ? 'Essai expire' : 'Essai gratuit';
-    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expire' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
+    if (planName)  planName.textContent  = isExpired ? 'Essai expiré' : 'Essai gratuit';
+    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expiré' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
     if (planPrice) planPrice.textContent = 'Gratuit';
+    if (btnS) { btnS.textContent = 'Choisir Starter'; btnS.disabled = false; }
+    if (btnP) { btnP.textContent = 'Choisir Pro';     btnP.disabled = false; }
   } else if (sub.status === 'active') {
     var labels = { starter: 'Plan Starter', pro: 'Plan Pro' };
     var prices = { starter: '29\u20ac/mois', pro: '59\u20ac/mois' };
     if (planName)  planName.textContent  = labels[sub.plan] || sub.plan;
     if (planDesc)  planDesc.textContent  = 'Renouvellement le ' + formatDate(sub.current_period_end);
     if (planPrice) planPrice.textContent = prices[sub.plan] || '\u2014';
-    var btnS = document.getElementById('btn-starter');
-    var btnP = document.getElementById('btn-pro');
-    if (sub.plan === 'starter' && btnS) { btnS.textContent = 'Plan actuel'; btnS.disabled = true; }
-    if (sub.plan === 'pro'     && btnP) { btnP.textContent = 'Plan actuel'; btnP.disabled = true; }
+    if (sub.plan === 'starter') {
+      if (btnS) { btnS.textContent = 'Plan actuel';        btnS.disabled = true; }
+      if (btnP) { btnP.textContent = 'Passer Pro';         btnP.disabled = false; }
+    } else if (sub.plan === 'pro') {
+      if (btnS) { btnS.textContent = 'Revenir à Starter';  btnS.disabled = false; }
+      if (btnP) { btnP.textContent = 'Plan actuel';        btnP.disabled = true; }
+    }
   } else if (sub.status === 'cancelled') {
     if (planName)  planName.textContent  = 'Abonnement annule';
     if (planDesc)  planDesc.textContent  = 'Acces jusqu\u2019au ' + formatDate(sub.current_period_end);
@@ -305,26 +313,10 @@ var currentGenre      = 'homme';
 
 function switchGenre(genre) {
   currentGenre = genre;
-  // Tabs
   document.getElementById('switch-homme').classList.toggle('active', genre === 'homme');
   document.getElementById('switch-femme').classList.toggle('active', genre === 'femme');
-  // Tabs aussi avec nouvelle classe
-  var tabs = document.querySelectorAll('.prest-tab');
-  tabs.forEach(function(t) { t.classList.remove('active'); });
-  var activeTab = document.getElementById('switch-' + genre);
-  if (activeTab) activeTab.classList.add('active');
-  // Panels
-  document.getElementById('panel-homme').style.display = genre === 'homme' ? '' : 'none';
-  document.getElementById('panel-femme').style.display = genre === 'femme' ? '' : 'none';
-  // Inputs & boutons ajout
-  var ih = document.getElementById('new-prestation-homme');
-  var ifm = document.getElementById('new-prestation-femme');
-  var bh = document.getElementById('prest-add-btn-homme');
-  var bf = document.getElementById('prest-add-btn-femme');
-  if (ih)  ih.style.display  = genre === 'homme' ? '' : 'none';
-  if (ifm) ifm.style.display = genre === 'femme' ? '' : 'none';
-  if (bh)  bh.style.display  = genre === 'homme' ? '' : 'none';
-  if (bf)  bf.style.display  = genre === 'femme' ? '' : 'none';
+  document.getElementById('panel-homme').style.display = genre === 'homme' ? 'block' : 'none';
+  document.getElementById('panel-femme').style.display = genre === 'femme' ? 'block' : 'none';
 }
 
 async function loadPrestations() {
@@ -396,48 +388,37 @@ function renderPrestations(genre) {
   var all    = getAllForGenre(genre);
   container._all = all;
 
-  var rows = all.map(function(p, idx) {
+  container.innerHTML = '<div class="prest-grid">' + all.map(function(p, idx) {
     var isActive = active.indexOf(p.name) !== -1;
     var isCustom = (customPrestations[genre] || []).some(function(c) { return c.name === p.name; });
     var pd       = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
     var g        = genre;
 
-    var row = '<div class="prest-row' + (isActive ? ' prest-row-active' : '') + '">';
-
-    // Toggle + Nom
-    row += '<div class="prow-name" onclick="togglePrestation(\'' + g + '\',' + idx + ')" style="cursor:pointer">';
-    row += '<span class="prest-toggle' + (isActive ? ' on' : '') + '"><span class="prest-toggle-knob"></span></span>';
-    row += '<span class="prow-label">' + p.name + '</span>';
-    row += '</div>';
-
-    // Prix
-    row += '<div class="prow-prix">';
-    row += '<div class="prow-input-wrap">';
-    row += '<input type="number" min="0" step="1" value="' + (pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
-    row += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'prix\',this.value)" />';
-    row += '<span>€</span></div></div>';
-
-    // Durée
-    row += '<div class="prow-duree">';
-    row += '<div class="prow-input-wrap">';
-    row += '<input type="number" min="5" step="5" value="' + (pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
-    row += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'duree\',this.value)" />';
-    row += '<span>min</span></div></div>';
-
-    // Supprimer (custom seulement)
-    row += '<div class="prow-action">';
+    var card = '<div class="prest-card' + (isActive ? ' active' : '') + '" style="position:relative">';
     if (isCustom) {
-      row += '<button onclick="removeCustom(\'' + g + '\',' + idx + ')" class="prow-del" title="Supprimer">';
-      row += '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>';
-      row += '</button>';
+      card += '<button onclick="removeCustom(' + "'" + g + "'," + idx + ')" class="prest-del" style="position:absolute;top:8px;right:8px">\u00d7</button>';
     }
-    row += '</div>';
-
-    row += '</div>';
-    return row;
-  }).join('');
-
-  container.innerHTML = rows || '<div class="prest-empty">Aucune prestation pour cette catégorie.</div>';
+    card += '<div class="prest-card-head" onclick="togglePrestation(' + "'" + g + "'," + idx + ')" style="cursor:pointer">';
+    card += '<span class="prest-checkbox' + (isActive ? ' checked' : '') + '">' + (isActive ? '\u2713' : '') + '</span>';
+    card += '<span class="prest-name">' + p.name + '</span>';
+    card += '</div>';
+    card += '<div class="prest-fields">';
+    card += '<div class="prest-field">';
+    card += '<label class="prest-field-label">Prix</label>';
+    card += '<div class="prest-field-wrap">';
+    card += '<input type="number" min="0" step="1" value="' + (pd.prix !== undefined && pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
+    card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'prix\',this.value)" />';
+    card += '<span>€</span></div></div>';
+    card += '<div class="prest-field">';
+    card += '<label class="prest-field-label">Durée</label>';
+    card += '<div class="prest-field-wrap">';
+    card += '<input type="number" min="5" step="5" value="' + (pd.duree !== undefined && pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
+    card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'duree\',this.value)" />';
+    card += '<span>min</span></div></div>';
+    card += '</div>';
+    card += '</div>';
+    return card;
+  }).join('') + '</div>';
 }
 
 function updatePrixDuree(genre, idx, field, value) {
@@ -719,9 +700,8 @@ function renderPlanningDays() {
     var row = document.createElement('div');
     row.style.cssText = 'background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden';
 
-    // ── Ligne du haut : toggle + nom du jour + badge Fermé ──────────────────
     var header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;padding:10px 14px;gap:12px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
+    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;gap:14px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
 
     // Toggle
     var label = document.createElement('label');
@@ -741,29 +721,19 @@ function renderPlanningDays() {
 
     // Nom du jour
     var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.style.cssText='font-size:14px;font-weight:500;min-width:90px;color:'+(actif?'var(--ink)':'var(--ink-light)');
     dayName.textContent = j.label;
     header.appendChild(dayName);
 
-    if (!actif) {
-      var ferme = document.createElement('span');
-      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
-      ferme.textContent='Fermé';
-      header.appendChild(ferme);
-    }
-
-    row.appendChild(header);
-
-    // ── Body : plages horaires empilées + bouton pause ────────────────────────
     if (actif) {
-      var body = document.createElement('div');
-      body.style.cssText = 'padding:10px 14px;display:flex;flex-direction:column;gap:6px';
-
-      var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
+      var plagesWrap = document.createElement('div');
+      plagesWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1';
 
       plages.forEach(function(p, pi) {
+        var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
+
         var wrap = document.createElement('div');
-        wrap.style.cssText = 'display:flex;align-items:center;gap:8px';
+        wrap.style.cssText = 'display:flex;align-items:center;gap:6px';
 
         var inputD = document.createElement('input');
         inputD.type='text'; inputD.value=p.debut; inputD.maxLength=5; inputD.placeholder='09:00';
@@ -791,24 +761,29 @@ function renderPlanningDays() {
 
         if (plages.length > 1) {
           var rm = document.createElement('button');
-          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;line-height:1;margin-left:auto';
+          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0;line-height:1';
           rm.textContent='×';
           (function(ii,pii){ rm.addEventListener('click', function(){ removePlage(ii,pii); }); })(i,pi);
           wrap.appendChild(rm);
         }
-        body.appendChild(wrap);
+        plagesWrap.appendChild(wrap);
       });
 
-      // Bouton + pause
+      // Bouton pause
       var pauseBtn = document.createElement('button');
-      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);align-self:flex-start;margin-top:2px';
+      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)';
       pauseBtn.textContent='+ pause';
       (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-      body.appendChild(pauseBtn);
-
-      row.appendChild(body);
+      plagesWrap.appendChild(pauseBtn);
+      header.appendChild(plagesWrap);
+    } else {
+      var fermé = document.createElement('span');
+      fermé.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px';
+      fermé.textContent='Fermé';
+      header.appendChild(fermé);
     }
 
+    row.appendChild(header);
     el.appendChild(row);
   });
 }
