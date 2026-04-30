@@ -414,21 +414,24 @@
 ──────────────────────────────────────────────────────────── */
 .plan-layout {
   display: grid;
-  grid-template-columns: 1fr 200px;
+  /* Cartes plans prennent l'espace dispo, plan actuel fixé à 190px */
+  grid-template-columns: 1fr 190px;
   gap: 2rem;
   align-items: start;
 }
 .plan-cards-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Chaque carte a un min de 180px — en dessous elles s'empilent */
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
   gap: 1rem;
 }
 .plan-option {
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.5rem;
+  padding: 1.6rem;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 .plan-option-pro { border: 2px solid var(--gold); }
 
@@ -460,11 +463,13 @@
   flex-direction: column;
 }
 
-@container settings (max-width: 640px) {
+/* Plan actuel passe sous les cartes quand les cartes sont trop serrées */
+@container settings (max-width: 700px) {
   .plan-layout { grid-template-columns: 1fr; }
   .plan-current-col { order: -1; }
 }
-@container settings (max-width: 480px) {
+/* Les deux cartes s'empilent quand il n'y a vraiment plus de place */
+@container settings (max-width: 420px) {
   .plan-cards-col { grid-template-columns: 1fr; }
 }
 
@@ -508,11 +513,3 @@
    ABONNEMENT — fix colonnes trop petites
 ──────────────────────────────────────────────────────────── */
 /* Cartes plans : empile en 1 colonne si trop serrées */
-@container settings (max-width: 560px) {
-  .plan-cards-col { grid-template-columns: 1fr; }
-}
-/* Layout global : plan actuel passe sous les cartes */
-@container settings (max-width: 540px) {
-  .plan-layout { grid-template-columns: 1fr; }
-  .plan-current-col { order: -1; }
-}
