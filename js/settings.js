@@ -1,3 +1,59 @@
+// ===== ICÔNES PAR PRESTATION =====
+var PREST_ICONS = {
+  // Coupe / coiffage
+  'Coupe':             'scissors',
+  'Dégradé':          'gradient',
+  'Estompage':         'gradient',
+  'Coupe + Barbe':     'scissors-barbe',
+  'Coupe enfant':      'child',
+  'Brushing':          'dryer',
+  'Chignon':           'chignon',
+  'Tresse':            'tresse',
+  'Extension':         'extension',
+  // Barbe
+  'Barbe':             'barbe',
+  'Rasage':            'rasoir',
+  'Taille moustache':  'moustache',
+  // Couleur / chimique
+  'Coloration':        'couleur',
+  'Balayage':          'couleur',
+  'Mèches':           'meches',
+  'Meches homme':      'meches',
+  'Permanente':        'permanente',
+  'Permanente homme':  'permanente',
+  'Lissage':           'lissage',
+  'Défrisage':        'lissage',
+  'Keratine':          'lissage',
+  // Soins
+  'Soin':              'soin',
+  'default':           'default',
+};
+
+var PREST_SVG = {
+  scissors: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+  gradient: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20 L8 4 L12 14 L16 8 L20 20 Z"/><line x1="4" y1="20" x2="20" y2="20"/></svg>',
+  'scissors-barbe': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/><path d="M16 10 Q20 12 16 14" stroke-width="1.5"/></svg>',
+  child: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-1a7 7 0 0 1 14 0v1"/><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><line x1="19" y1="4" x2="8" y2="15.5"/></svg>',
+  dryer: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6C14 6 18 7 20 11C22 15 20 20 20 20H9C7 20 5 18 5 16V11C5 8.8 6.8 7 9 7L14 6Z"/><path d="M9 7V5C9 4 10 3 11 3H13C14 3 14 4 14 5V6"/><path d="M5 13H3C2.4 13 2 12.6 2 12V11C2 10.4 2.4 10 3 10H5"/><circle cx="11" cy="14" r="1.5" fill="currentColor" opacity=".4"/></svg>',
+  chignon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18C6 15 8 12 12 12C16 12 18 15 18 18"/><path d="M12 12C12 12 10 8 12 5C14 8 12 12 12 12"/><path d="M8 7 Q12 3 16 7"/><circle cx="12" cy="18" r="3"/></svg>',
+  tresse: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3 C9 3 7 7 9 10 C11 13 9 17 9 20"/><path d="M15 3 C15 3 17 7 15 10 C13 13 15 17 15 20"/><path d="M9 6.5 C10.5 7.5 13.5 7.5 15 6.5"/><path d="M9 13 C10.5 14 13.5 14 15 13"/><path d="M9 10 C10.5 9 13.5 9 15 10"/></svg>',
+  extension: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 L8 14 Q8 18 12 21 Q16 18 16 14 L16 3"/><line x1="5" y1="7" x2="19" y2="7"/><line x1="8" y1="3" x2="16" y2="3"/></svg>',
+  barbe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9C5 5.7 8.1 3 12 3C15.9 3 19 5.7 19 9"/><path d="M5 9C5 14 7 18 12 21C17 18 19 14 19 9"/><path d="M9 9 Q12 11 15 9"/><path d="M7 12 Q12 15 17 12"/></svg>',
+  rasoir: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="5" rx="2"/><path d="M8 7 L6 22 L18 22 L16 7"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>',
+  moustache: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 C3 12 5 8 8 10 C9.5 11 10.5 11 12 10 C13.5 11 14.5 11 16 10 C19 8 21 12 21 12"/><path d="M3 12 C3 15 6 17 9 15 C10 14.5 11 14 12 14 C13 14 14 14.5 15 15 C18 17 21 15 21 12"/></svg>',
+  couleur: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 4-5 11-5 11S7 11 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="2"/><path d="M17 17c2.2 0 4 1.3 4 3s-1.8 3-4 3"/><path d="M17 17c0 1.7-1.5 3-3.5 3"/><path d="M13 20c-1.5 0-2.5-.8-2.5-2"/><path d="M10.5 18l6 0" opacity=".5" stroke-width="1"/></svg>',
+  meches: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3 L6 15 Q6 20 12 21"/><path d="M12 3 L12 18"/><path d="M18 3 L18 15 Q18 20 12 21"/><line x1="3" y1="8" x2="21" y2="8" stroke-width="1" opacity=".4"/></svg>',
+  permanente: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 C7 3 4 6 4 10 C4 14 7 17 12 17 C17 17 20 14 20 10 C20 6 17 3 12 3"/><path d="M12 17 L12 21"/><path d="M9 21 L15 21"/><path d="M8 10 Q10 7 12 10 Q14 13 16 10"/></svg>',
+  lissage: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 L20 6"/><path d="M4 12 L20 12"/><path d="M4 18 L20 18"/><rect x="7" y="4" width="10" height="16" rx="3" fill="var(--cream)" stroke="currentColor"/></svg>',
+  soin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.7C5.4 17.5 3 13.3 3 10a9 9 0 0 1 18 0c0 3.3-2.4 7.5-9 11.7z"/><path d="M12 11 L12 7"/><path d="M10 9 L14 9"/></svg>',
+  default: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14 Q10 17 12 14 Q14 11 16 14"/><path d="M9 9.5 L9.01 9.5"/><path d="M15 9.5 L15.01 9.5"/></svg>',
+};
+
+function getPrestIcon(name) {
+  var key = PREST_ICONS[name] || 'default';
+  return PREST_SVG[key] || PREST_SVG['default'];
+}
+
 // ===== SLUG =====
 async function loadSlug(userId) {
   var res = await sb.from('salon_settings').select('slug').eq('user_id', userId).maybeSingle();
@@ -231,31 +287,23 @@ async function loadSubscription() {
   var planDesc  = document.getElementById('current-plan-desc');
   var planPrice = document.getElementById('current-plan-price');
 
-  var btnS = document.getElementById('btn-starter');
-  var btnP = document.getElementById('btn-pro');
-
   if (!sub || sub.status === 'trialing') {
     var created   = new Date(currentUser.created_at);
     var trialEnd  = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
     var isExpired = new Date() > trialEnd;
-    if (planName)  planName.textContent  = isExpired ? 'Essai expiré' : 'Essai gratuit';
-    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expiré' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
+    if (planName)  planName.textContent  = isExpired ? 'Essai expire' : 'Essai gratuit';
+    if (planDesc)  planDesc.textContent  = isExpired ? 'Votre essai a expire' : ('Jusqu\u2019au ' + formatDate(trialEnd.toISOString()));
     if (planPrice) planPrice.textContent = 'Gratuit';
-    if (btnS) { btnS.textContent = 'Choisir Starter'; btnS.disabled = false; }
-    if (btnP) { btnP.textContent = 'Choisir Pro';     btnP.disabled = false; }
   } else if (sub.status === 'active') {
     var labels = { starter: 'Plan Starter', pro: 'Plan Pro' };
     var prices = { starter: '29\u20ac/mois', pro: '59\u20ac/mois' };
     if (planName)  planName.textContent  = labels[sub.plan] || sub.plan;
     if (planDesc)  planDesc.textContent  = 'Renouvellement le ' + formatDate(sub.current_period_end);
     if (planPrice) planPrice.textContent = prices[sub.plan] || '\u2014';
-    if (sub.plan === 'starter') {
-      if (btnS) { btnS.textContent = 'Plan actuel';        btnS.disabled = true; }
-      if (btnP) { btnP.textContent = 'Passer Pro';         btnP.disabled = false; }
-    } else if (sub.plan === 'pro') {
-      if (btnS) { btnS.textContent = 'Revenir à Starter';  btnS.disabled = false; }
-      if (btnP) { btnP.textContent = 'Plan actuel';        btnP.disabled = true; }
-    }
+    var btnS = document.getElementById('btn-starter');
+    var btnP = document.getElementById('btn-pro');
+    if (sub.plan === 'starter' && btnS) { btnS.textContent = 'Plan actuel'; btnS.disabled = true; }
+    if (sub.plan === 'pro'     && btnP) { btnP.textContent = 'Plan actuel'; btnP.disabled = true; }
   } else if (sub.status === 'cancelled') {
     if (planName)  planName.textContent  = 'Abonnement annule';
     if (planDesc)  planDesc.textContent  = 'Acces jusqu\u2019au ' + formatDate(sub.current_period_end);
@@ -313,10 +361,26 @@ var currentGenre      = 'homme';
 
 function switchGenre(genre) {
   currentGenre = genre;
+  // Tabs
   document.getElementById('switch-homme').classList.toggle('active', genre === 'homme');
   document.getElementById('switch-femme').classList.toggle('active', genre === 'femme');
-  document.getElementById('panel-homme').style.display = genre === 'homme' ? 'block' : 'none';
-  document.getElementById('panel-femme').style.display = genre === 'femme' ? 'block' : 'none';
+  // Tabs aussi avec nouvelle classe
+  var tabs = document.querySelectorAll('.prest-tab');
+  tabs.forEach(function(t) { t.classList.remove('active'); });
+  var activeTab = document.getElementById('switch-' + genre);
+  if (activeTab) activeTab.classList.add('active');
+  // Panels
+  document.getElementById('panel-homme').style.display = genre === 'homme' ? '' : 'none';
+  document.getElementById('panel-femme').style.display = genre === 'femme' ? '' : 'none';
+  // Inputs & boutons ajout
+  var ih = document.getElementById('new-prestation-homme');
+  var ifm = document.getElementById('new-prestation-femme');
+  var bh = document.getElementById('prest-add-btn-homme');
+  var bf = document.getElementById('prest-add-btn-femme');
+  if (ih)  ih.style.display  = genre === 'homme' ? '' : 'none';
+  if (ifm) ifm.style.display = genre === 'femme' ? '' : 'none';
+  if (bh)  bh.style.display  = genre === 'homme' ? '' : 'none';
+  if (bf)  bf.style.display  = genre === 'femme' ? '' : 'none';
 }
 
 async function loadPrestations() {
@@ -380,6 +444,7 @@ function getAllForGenre(genre) {
   return base.concat(customOnly);
 }
 
+
 function renderPrestations(genre) {
   var container = document.getElementById('prestations-' + genre);
   if (!container) return;
@@ -388,37 +453,58 @@ function renderPrestations(genre) {
   var all    = getAllForGenre(genre);
   container._all = all;
 
-  container.innerHTML = '<div class="prest-grid">' + all.map(function(p, idx) {
+  var cards = all.map(function(p, idx) {
     var isActive = active.indexOf(p.name) !== -1;
     var isCustom = (customPrestations[genre] || []).some(function(c) { return c.name === p.name; });
     var pd       = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
     var g        = genre;
+    var icon     = getPrestIcon(p.name);
 
-    var card = '<div class="prest-card' + (isActive ? ' active' : '') + '" style="position:relative">';
+    var card = '<div class="pcard' + (isActive ? ' pcard-on' : '') + '">';
+
+    // Zone icône
+    card += '<div class="pcard-visual" onclick="togglePrestation(\'' + g + '\',' + idx + ')">';
+    card += '<div class="pcard-icon">' + icon + '</div>';
     if (isCustom) {
-      card += '<button onclick="removeCustom(' + "'" + g + "'," + idx + ')" class="prest-del" style="position:absolute;top:8px;right:8px">\u00d7</button>';
+      card += '<button onclick="event.stopPropagation();removeCustom(\'' + g + '\',' + idx + ')" class="pcard-del" title="Supprimer">';
+      card += '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+      card += '</button>';
     }
-    card += '<div class="prest-card-head" onclick="togglePrestation(' + "'" + g + "'," + idx + ')" style="cursor:pointer">';
-    card += '<span class="prest-checkbox' + (isActive ? ' checked' : '') + '">' + (isActive ? '\u2713' : '') + '</span>';
-    card += '<span class="prest-name">' + p.name + '</span>';
+    // Badge actif
+    card += '<div class="pcard-toggle-wrap">';
+    card += '<span class="pcard-toggle' + (isActive ? ' on' : '') + '"><span class="pcard-knob"></span></span>';
     card += '</div>';
-    card += '<div class="prest-fields">';
-    card += '<div class="prest-field">';
-    card += '<label class="prest-field-label">Prix</label>';
-    card += '<div class="prest-field-wrap">';
-    card += '<input type="number" min="0" step="1" value="' + (pd.prix !== undefined && pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
+    card += '</div>';
+
+    // Nom
+    card += '<div class="pcard-body">';
+    card += '<div class="pcard-name">' + p.name + '</div>';
+
+    // Prix + Durée
+    card += '<div class="pcard-fields">';
+    card += '<div class="pcard-field">';
+    card += '<span class="pcard-field-label">Prix</span>';
+    card += '<div class="pcard-field-input">';
+    card += '<input type="number" min="0" step="1" value="' + (pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
     card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'prix\',this.value)" />';
-    card += '<span>€</span></div></div>';
-    card += '<div class="prest-field">';
-    card += '<label class="prest-field-label">Durée</label>';
-    card += '<div class="prest-field-wrap">';
-    card += '<input type="number" min="5" step="5" value="' + (pd.duree !== undefined && pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
+    card += '<span>€</span>';
+    card += '</div></div>';
+
+    card += '<div class="pcard-field">';
+    card += '<span class="pcard-field-label">Durée</span>';
+    card += '<div class="pcard-field-input">';
+    card += '<input type="number" min="5" step="5" value="' + (pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
     card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'duree\',this.value)" />';
-    card += '<span>min</span></div></div>';
+    card += '<span>min</span>';
+    card += '</div></div>';
     card += '</div>';
-    card += '</div>';
+
+    card += '</div>'; // pcard-body
+    card += '</div>'; // pcard
     return card;
-  }).join('') + '</div>';
+  }).join('');
+
+  container.innerHTML = '<div class="pcard-grid">' + (cards || '<div class="prest-empty">Aucune prestation.</div>') + '</div>';
 }
 
 function updatePrixDuree(genre, idx, field, value) {
@@ -700,8 +786,9 @@ function renderPlanningDays() {
     var row = document.createElement('div');
     row.style.cssText = 'background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden';
 
+    // ── Ligne du haut : toggle + nom du jour + badge Fermé ──────────────────
     var header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;padding:12px 16px;gap:14px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
+    header.style.cssText = 'display:flex;align-items:center;padding:10px 14px;gap:12px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
 
     // Toggle
     var label = document.createElement('label');
@@ -721,19 +808,29 @@ function renderPlanningDays() {
 
     // Nom du jour
     var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;min-width:90px;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.style.cssText='font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)');
     dayName.textContent = j.label;
     header.appendChild(dayName);
 
+    if (!actif) {
+      var ferme = document.createElement('span');
+      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
+      ferme.textContent='Fermé';
+      header.appendChild(ferme);
+    }
+
+    row.appendChild(header);
+
+    // ── Body : plages horaires empilées + bouton pause ────────────────────────
     if (actif) {
-      var plagesWrap = document.createElement('div');
-      plagesWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex:1';
+      var body = document.createElement('div');
+      body.style.cssText = 'padding:10px 14px;display:flex;flex-direction:column;gap:6px';
+
+      var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
 
       plages.forEach(function(p, pi) {
-        var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
-
         var wrap = document.createElement('div');
-        wrap.style.cssText = 'display:flex;align-items:center;gap:6px';
+        wrap.style.cssText = 'display:flex;align-items:center;gap:8px';
 
         var inputD = document.createElement('input');
         inputD.type='text'; inputD.value=p.debut; inputD.maxLength=5; inputD.placeholder='09:00';
@@ -761,29 +858,24 @@ function renderPlanningDays() {
 
         if (plages.length > 1) {
           var rm = document.createElement('button');
-          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0;line-height:1';
+          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;line-height:1;margin-left:auto';
           rm.textContent='×';
           (function(ii,pii){ rm.addEventListener('click', function(){ removePlage(ii,pii); }); })(i,pi);
           wrap.appendChild(rm);
         }
-        plagesWrap.appendChild(wrap);
+        body.appendChild(wrap);
       });
 
-      // Bouton pause
+      // Bouton + pause
       var pauseBtn = document.createElement('button');
-      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light)';
+      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);align-self:flex-start;margin-top:2px';
       pauseBtn.textContent='+ pause';
       (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-      plagesWrap.appendChild(pauseBtn);
-      header.appendChild(plagesWrap);
-    } else {
-      var fermé = document.createElement('span');
-      fermé.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px';
-      fermé.textContent='Fermé';
-      header.appendChild(fermé);
+      body.appendChild(pauseBtn);
+
+      row.appendChild(body);
     }
 
-    row.appendChild(header);
     el.appendChild(row);
   });
 }

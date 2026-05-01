@@ -242,36 +242,44 @@
         <!-- PRESTATIONS -->
         <div class="settings-section" id="section-prestations">
           <div class="section-title">Mes <em>prestations</em></div>
-          <p class="section-sub">Cochez les prestations proposées et ajustez prix et durée.</p>
+          <p class="section-sub">Activez vos prestations et ajustez prix et durée.</p>
 
-          <div style="display:flex;gap:8px;margin-bottom:1.5rem">
-            <button class="genre-switch active" id="switch-homme" onclick="switchGenre('homme')">Homme</button>
-            <button class="genre-switch" id="switch-femme" onclick="switchGenre('femme')">Femme</button>
-          </div>
-
-          <div id="panel-homme">
-            <div id="prestations-homme"></div>
-            <div style="display:flex;gap:8px;margin-top:1rem">
-              <input type="text" class="form-input" id="new-prestation-homme" placeholder="Nouvelle prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('homme')}" />
-              <button onclick="addPrestation('homme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap">+ Ajouter</button>
+          <div class="settings-card" style="padding:0;overflow:hidden">
+            <!-- Header : switch genre + ajout -->
+            <div class="prest-header">
+              <div class="prest-genre-tabs">
+                <button class="prest-tab active" id="switch-homme" onclick="switchGenre('homme')">Homme</button>
+                <button class="prest-tab" id="switch-femme" onclick="switchGenre('femme')">Femme</button>
+              </div>
+              <div class="prest-add-row">
+                <input type="text" class="form-input prest-add-input" id="new-prestation-homme" placeholder="Nouvelle prestation..." onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('homme')}" />
+                <input type="text" class="form-input prest-add-input" id="new-prestation-femme" placeholder="Nouvelle prestation..." style="display:none" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('femme')}" />
+                <button class="prest-add-btn" id="prest-add-btn-homme" onclick="addPrestation('homme')">+ Ajouter</button>
+                <button class="prest-add-btn" id="prest-add-btn-femme" onclick="addPrestation('femme')" style="display:none">+ Ajouter</button>
+              </div>
             </div>
-          </div>
 
-          <div id="panel-femme" style="display:none">
-            <div id="prestations-femme"></div>
-            <div style="display:flex;gap:8px;margin-top:1rem">
-              <input type="text" class="form-input" id="new-prestation-femme" placeholder="Nouvelle prestation..." style="flex:1;padding:9px 14px;font-size:13px" onkeydown="if(event.key==='Enter'){event.preventDefault();addPrestation('femme')}" />
-              <button onclick="addPrestation('femme')" style="padding:9px 16px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap">+ Ajouter</button>
+            <!-- Colonnes header -->
+            <div class="prest-table-head">
+              <span class="pth-name">Prestation</span>
+              <span class="pth-prix">Prix</span>
+              <span class="pth-duree">Durée</span>
+              <span class="pth-action"></span>
             </div>
-          </div>
 
-          <div style="margin-top:1.5rem;display:flex;align-items:center;gap:1rem">
-            <button onclick="savePrestations()" class="btn-save" id="btn-save-prestations">Enregistrer</button>
-            <div class="success-msg" id="prestations-ok" style="margin:0">Prestations enregistrées !</div>
+            <!-- Listes -->
+            <div id="panel-homme"><div id="prestations-homme"></div></div>
+            <div id="panel-femme" style="display:none"><div id="prestations-femme"></div></div>
+
+            <!-- Footer -->
+            <div class="prest-footer">
+              <button onclick="savePrestations()" class="btn-save" id="btn-save-prestations">Enregistrer</button>
+              <div class="success-msg" id="prestations-ok" style="margin:0">Prestations enregistrées !</div>
+            </div>
           </div>
         </div>
 
-        <!-- SECTION PLANNING -->
+                <!-- SECTION PLANNING -->
         <div class="settings-section" id="section-planning">
           <div class="section-title">Mon <em>planning</em></div>
           <p class="section-sub">Définissez vos jours et horaires de travail, et bloquez vos congés.</p>
