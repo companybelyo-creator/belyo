@@ -823,7 +823,7 @@ function renderPlanningDays() {
 
     if (!actif) {
       var ferme = document.createElement('span');
-      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
+      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px';
       ferme.textContent='Fermé';
       wrap.appendChild(ferme);
     } else {

@@ -362,17 +362,17 @@
 ──────────────────────────────────────────────────────────── */
 .planning-two-col {
   display: grid;
-  grid-template-columns: 1fr 1px 1fr;
+  grid-template-columns: 55fr 1px 45fr;
   align-items: start;
   gap: 0;
 }
 .planning-col {
   display: flex;
   flex-direction: column;
-  padding: .25rem 2.5rem .25rem 0;
+  padding: .25rem 2rem .25rem 0;
   min-width: 0;
 }
-.planning-col:last-child { padding: .25rem 0 .25rem 2.5rem; }
+.planning-col:last-child { padding: .25rem 0 .25rem 2rem; }
 .planning-col-title {
   font-weight: 500;
   font-size: 15px;
@@ -386,7 +386,7 @@
   align-self: stretch;
 }
 
-@container settings (max-width: 1100px) {
+@container settings (max-width: 820px) {
   .planning-two-col { grid-template-columns: 1fr; }
   .planning-col { padding: 0 0 2rem; }
   .planning-col:last-child { padding: 2rem 0 0; border-top: 1px solid var(--border); }
