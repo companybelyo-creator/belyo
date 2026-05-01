@@ -399,222 +399,9 @@
 /* Cartes plans : empile en 1 colonne si trop serrées */
 
 /* ════════════════════════════════════════════════════════════
-   PRESTATIONS — redesign tableau propre
+   PRESTATIONS — cartes avec photos
 ════════════════════════════════════════════════════════════ */
 
-/* Header : tabs genre + input ajout */
-.prest-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  padding: 1.4rem 2rem;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-.prest-genre-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--cream);
-  border-radius: 100px;
-  padding: 3px;
-}
-.prest-tab {
-  padding: 7px 22px;
-  border-radius: 100px;
-  border: none;
-  background: transparent;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-light);
-  cursor: pointer;
-  transition: all .15s;
-}
-.prest-tab.active {
-  background: var(--ink);
-  color: var(--white);
-}
-.prest-add-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.prest-add-input {
-  width: 220px;
-  padding: 8px 14px !important;
-  font-size: 13px !important;
-}
-.prest-add-btn {
-  padding: 9px 18px;
-  border-radius: 100px;
-  border: none;
-  background: var(--ink);
-  color: var(--white);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background .15s;
-}
-.prest-add-btn:hover { background: #2d2926; }
-
-/* Colonnes header du tableau */
-.prest-table-head {
-  display: grid;
-  grid-template-columns: 1fr 110px 110px 40px;
-  align-items: center;
-  padding: .6rem 2rem;
-  background: var(--cream);
-  border-bottom: 1px solid var(--border);
-}
-.prest-table-head span {
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--ink-light);
-}
-.pth-prix, .pth-duree { text-align: center; }
-
-/* Ligne prestation */
-.prest-row {
-  display: grid;
-  grid-template-columns: 1fr 110px 110px 40px;
-  align-items: center;
-  padding: .85rem 2rem;
-  border-bottom: 1px solid var(--border);
-  transition: background .12s;
-  opacity: .45;
-}
-.prest-row:last-child { border-bottom: none; }
-.prest-row:hover { background: var(--cream); }
-.prest-row-active { opacity: 1; }
-
-/* Nom + toggle */
-.prow-name {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  user-select: none;
-}
-.prow-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-/* Toggle switch */
-.prest-toggle {
-  width: 36px;
-  height: 20px;
-  border-radius: 100px;
-  background: var(--border);
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  flex-shrink: 0;
-  transition: background .2s;
-  cursor: pointer;
-}
-.prest-toggle.on { background: var(--ink); }
-.prest-toggle-knob {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--white);
-  transition: transform .2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
-}
-.prest-toggle.on .prest-toggle-knob { transform: translateX(16px); }
-
-/* Cellules prix / durée */
-.prow-prix, .prow-duree {
-  display: flex;
-  justify-content: center;
-}
-.prow-input-wrap {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--cream);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 5px 10px;
-  width: 90px;
-  transition: border-color .15s;
-}
-.prow-input-wrap:focus-within { border-color: var(--gold); background: var(--white); }
-.prow-input-wrap input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--ink);
-  outline: none;
-  min-width: 0;
-  text-align: right;
-  -webkit-appearance: none;
-  -moz-appearance: textfield;
-}
-.prow-input-wrap input::-webkit-outer-spin-button,
-.prow-input-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.prow-input-wrap span {
-  font-size: 12px;
-  color: var(--ink-light);
-  flex-shrink: 0;
-}
-
-/* Bouton supprimer */
-.prow-action { display: flex; justify-content: center; }
-.prow-del {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--ink-light);
-  opacity: .4;
-  padding: 4px;
-  border-radius: 4px;
-  transition: opacity .15s, color .15s;
-  display: flex;
-  align-items: center;
-}
-.prow-del:hover { opacity: 1; color: #c0392b; }
-
-/* Vide */
-.prest-empty {
-  padding: 2.5rem 2rem;
-  text-align: center;
-  font-size: 13px;
-  color: var(--ink-light);
-}
-
-/* Footer */
-.prest-footer {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.4rem 2rem;
-  border-top: 1px solid var(--border);
-  background: var(--cream);
-}
-
-@container settings (max-width: 560px) {
-  .prest-header { flex-direction: column; align-items: flex-start; }
-  .prest-add-row { width: 100%; }
-  .prest-add-input { flex: 1; width: auto; }
-  .prest-table-head { grid-template-columns: 1fr 90px 90px 36px; padding: .5rem 1rem; }
-  .prest-row { grid-template-columns: 1fr 90px 90px 36px; padding: .75rem 1rem; }
-  .prow-input-wrap { width: 72px; padding: 5px 7px; }
-}
-
-/* ════════════════════════════════════════════════════════════
-   PRESTATIONS — cards avec icônes
-════════════════════════════════════════════════════════════ */
-
-/* Header */
 .prest-header {
   display: flex;
   align-items: center;
@@ -633,16 +420,10 @@
   padding: 3px;
 }
 .prest-tab {
-  padding: 7px 22px;
-  border-radius: 100px;
-  border: none;
-  background: transparent;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-light);
-  cursor: pointer;
-  transition: all .2s;
+  padding: 7px 22px; border-radius: 100px; border: none;
+  background: transparent; font-family: var(--font-body);
+  font-size: 13px; font-weight: 500; color: var(--ink-light);
+  cursor: pointer; transition: all .2s;
 }
 .prest-tab.active { background: var(--ink); color: var(--white); }
 .prest-add-row { display: flex; align-items: center; gap: 8px; }
@@ -655,118 +436,109 @@
 }
 .prest-add-btn:hover { background: #2d2926; }
 
-/* Grille de cartes */
+/* Grille */
 .pcard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 1px;
-  background: var(--border);
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0;
 }
 
 /* Carte */
 .pcard {
-  background: var(--white);
   display: flex;
   flex-direction: column;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
   transition: background .15s;
-  opacity: .5;
+  opacity: .45;
   position: relative;
 }
-.pcard:hover { background: var(--cream); }
+.pcard:last-child { border-right: none; }
 .pcard-on { opacity: 1; }
 
-/* Zone visuelle (icône) */
+/* Zone photo */
 .pcard-visual {
   position: relative;
-  background: var(--cream);
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  aspect-ratio: 4/3;
   overflow: hidden;
-  transition: background .15s;
-  border-bottom: 1px solid var(--border);
-}
-.pcard-on .pcard-visual { background: var(--gold-light); }
-.pcard:hover .pcard-visual { background: var(--cream-dark); }
-.pcard-on:hover .pcard-visual { background: var(--gold-light); filter: brightness(.96); }
-
-.pcard-icon {
-  width: 44px;
-  height: 44px;
-  color: var(--ink-light);
-  opacity: .55;
-  transition: opacity .15s, color .15s;
-}
-.pcard-on .pcard-icon { color: var(--gold); opacity: 1; }
-.pcard-icon svg { width: 100%; height: 100%; }
-
-/* Toggle en bas à droite de la zone visuelle */
-.pcard-toggle-wrap {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-}
-.pcard-toggle {
-  width: 32px; height: 18px;
-  border-radius: 100px;
-  background: rgba(26,23,20,.15);
-  display: flex; align-items: center; padding: 2px;
-  transition: background .2s;
   cursor: pointer;
+  background: var(--cream-dark);
 }
-.pcard-toggle.on { background: var(--gold); }
-.pcard-knob {
-  width: 14px; height: 14px; border-radius: 50%;
-  background: var(--white);
-  transition: transform .2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+.pcard-visual img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .35s ease;
+  filter: grayscale(30%);
 }
-.pcard-toggle.on .pcard-knob { transform: translateX(14px); }
+.pcard-on .pcard-visual img { filter: grayscale(0%); }
+.pcard:hover .pcard-visual img { transform: scale(1.05); }
+
+/* Overlay sombre en bas pour lisibilité du toggle */
+.pcard-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(26,23,20,.45) 100%);
+  pointer-events: none;
+}
+.pcard-on .pcard-overlay {
+  background: linear-gradient(to bottom, transparent 40%, rgba(26,23,20,.3) 100%);
+}
 
 /* Bouton supprimer custom */
 .pcard-del {
-  position: absolute; top: 7px; right: 7px;
+  position: absolute; top: 8px; right: 8px;
   width: 22px; height: 22px; border-radius: 50%;
-  border: none; background: var(--white);
-  box-shadow: 0 1px 4px rgba(0,0,0,.12);
+  border: none; background: rgba(255,255,255,.9);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; color: var(--ink-light);
-  opacity: .7; transition: opacity .15s, color .15s;
+  opacity: 0; transition: opacity .15s, color .15s;
+  z-index: 2;
 }
-.pcard-del:hover { opacity: 1; color: var(--danger); }
+.pcard:hover .pcard-del { opacity: 1; }
+.pcard-del:hover { color: var(--danger) !important; }
 
-/* Corps */
+/* Toggle en bas à droite de la photo */
+.pcard-toggle-wrap {
+  position: absolute; bottom: 8px; right: 8px; z-index: 2;
+}
+.pcard-toggle {
+  width: 34px; height: 19px; border-radius: 100px;
+  background: rgba(255,255,255,.35);
+  border: 1.5px solid rgba(255,255,255,.6);
+  display: flex; align-items: center; padding: 2px;
+  transition: background .2s, border-color .2s;
+  cursor: pointer;
+}
+.pcard-toggle.on { background: var(--gold); border-color: var(--gold); }
+.pcard-knob {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: var(--white);
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.pcard-toggle.on .pcard-knob { transform: translateX(15px); }
+
+/* Corps texte */
 .pcard-body {
-  padding: .9rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: .6rem;
-  flex: 1;
+  padding: .85rem 1rem 1rem;
+  display: flex; flex-direction: column; gap: .55rem;
+  flex: 1; background: var(--white);
 }
 .pcard-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ink);
-  line-height: 1.3;
+  font-size: 13px; font-weight: 600; color: var(--ink); line-height: 1.3;
 }
-
-/* Champs prix / durée */
 .pcard-fields { display: flex; flex-direction: column; gap: 5px; }
 .pcard-field { display: flex; flex-direction: column; gap: 2px; }
 .pcard-field-label {
-  font-size: 10px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--ink-light);
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--ink-light);
 }
 .pcard-field-input {
   display: flex; align-items: center; gap: 4px;
   background: var(--cream); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 4px 8px;
-  transition: border-color .15s;
+  border-radius: var(--radius-sm); padding: 5px 9px;
+  transition: border-color .15s, background .15s;
 }
 .pcard-field-input:focus-within { border-color: var(--gold); background: var(--white); }
 .pcard-field-input input {
@@ -785,14 +557,12 @@
   padding: 1.4rem 2rem;
   border-top: 1px solid var(--border);
 }
-
 .prest-empty {
-  padding: 2.5rem; text-align: center;
+  padding: 3rem; text-align: center;
   font-size: 13px; color: var(--ink-light);
   grid-column: 1/-1;
 }
 
-/* Responsive */
 @container settings (max-width: 560px) {
   .prest-header { flex-direction: column; align-items: flex-start; }
   .prest-add-row { width: 100%; }
