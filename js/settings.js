@@ -811,31 +811,33 @@ function renderPlanningDays() {
     var wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 12px';
 
-    // Toggle + nom — toujours sur la même ligne entre eux, flex-shrink:0
+    // Toggle + nom — toujours solidaires
     var left = document.createElement('div');
     left.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0';
     left.appendChild(makeToggle());
     var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;width:60px;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.style.cssText='font-size:14px;font-weight:500;width:64px;color:'+(actif?'var(--ink)':'var(--ink-light)');
     dayName.textContent = j.label;
     left.appendChild(dayName);
-    wrap.appendChild(left);
 
     if (!actif) {
+      // Fermé collé juste après le nom, dans le même groupe left
       var ferme = document.createElement('span');
       ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px';
       ferme.textContent='Fermé';
-      wrap.appendChild(ferme);
-    } else {
+      left.appendChild(ferme);
+    }
+
+    wrap.appendChild(left);
+
+    if (actif) {
       // Zone horaires : flex-wrap permet de passer à la ligne si pas assez de place
       var hoursZone = document.createElement('div');
       hoursZone.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:6px;flex:1;min-width:0';
 
       plages.forEach(function(p, pi) {
-        // Groupe plage : inputs + croix — reste solidaire (nowrap)
         var grp = document.createElement('div');
         grp.style.cssText = 'display:flex;align-items:center;gap:5px;flex-shrink:0';
-
         grp.appendChild(makeTimeInput(p, pi, 'debut'));
         grp.appendChild(makeSep());
         grp.appendChild(makeTimeInput(p, pi, 'fin'));
@@ -844,7 +846,6 @@ function renderPlanningDays() {
         }
         hoursZone.appendChild(grp);
 
-        // Séparateur visuel entre 2 plages
         if (pi < plages.length - 1) {
           var divider = document.createElement('span');
           divider.style.cssText='font-size:11px;color:var(--ink-light);flex-shrink:0';
@@ -853,7 +854,6 @@ function renderPlanningDays() {
         }
       });
 
-      // + pause après les plages, seulement si 1 plage
       if (plages.length < 2) {
         var pauseBtn = document.createElement('button');
         pauseBtn.style.cssText='padding:3px 9px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);white-space:nowrap;flex-shrink:0';

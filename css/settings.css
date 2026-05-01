@@ -386,7 +386,7 @@
   align-self: stretch;
 }
 
-@container settings (max-width: 820px) {
+@container settings (max-width: 560px) {
   .planning-two-col { grid-template-columns: 1fr; }
   .planning-col { padding: 0 0 2rem; }
   .planning-col:last-child { padding: 2rem 0 0; border-top: 1px solid var(--border); }
