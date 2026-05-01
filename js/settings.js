@@ -1,38 +1,3 @@
-// ===== IMAGES PAR PRESTATION (Unsplash) =====
-var PREST_IMAGES = {
-  // Homme
-  'Coupe':             'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop',
-  'Dégradé':          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&q=80&fit=crop',
-  'Barbe':             'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&q=80&fit=crop',
-  'Coupe + Barbe':     'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop&crop=faces,center',
-  'Estompage':         'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&q=80&fit=crop&crop=top',
-  'Rasage':            'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop&crop=faces',
-  'Taille moustache':  'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&q=80&fit=crop&crop=top',
-  'Meches homme':      'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&q=80&fit=crop',
-  'Permanente homme':  'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&fit=crop',
-  'Keratine':          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&fit=crop&crop=right',
-  'Soin':              'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80&fit=crop',
-  'Coloration':        'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=400&q=80&fit=crop',
-  // Femme
-  'Coupe':             'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400&q=80&fit=crop',
-  'Brushing':          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&fit=crop',
-  'Balayage':          'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=400&q=80&fit=crop&crop=left',
-  'Mèches':           'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&q=80&fit=crop&crop=center',
-  'Lissage':           'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&fit=crop&crop=bottom',
-  'Permanente':        'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&q=80&fit=crop',
-  'Chignon':           'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&q=80&fit=crop&crop=top',
-  'Extension':         'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400&q=80&fit=crop&crop=bottom',
-  'Défrisage':        'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&fit=crop&crop=left',
-  'Tresse':            'https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&q=80&fit=crop&crop=right',
-  'Coupe enfant':      'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop&crop=center',
-  '_default':          'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400&q=80&fit=crop',
-};
-
-function getPrestImage(name) {
-  return PREST_IMAGES[name] || PREST_IMAGES['_default'];
-}
-
-
 // ===== SLUG =====
 async function loadSlug(userId) {
   var res = await sb.from('salon_settings').select('slug').eq('user_id', userId).maybeSingle();
@@ -340,26 +305,10 @@ var currentGenre      = 'homme';
 
 function switchGenre(genre) {
   currentGenre = genre;
-  // Tabs
   document.getElementById('switch-homme').classList.toggle('active', genre === 'homme');
   document.getElementById('switch-femme').classList.toggle('active', genre === 'femme');
-  // Tabs aussi avec nouvelle classe
-  var tabs = document.querySelectorAll('.prest-tab');
-  tabs.forEach(function(t) { t.classList.remove('active'); });
-  var activeTab = document.getElementById('switch-' + genre);
-  if (activeTab) activeTab.classList.add('active');
-  // Panels
-  document.getElementById('panel-homme').style.display = genre === 'homme' ? '' : 'none';
-  document.getElementById('panel-femme').style.display = genre === 'femme' ? '' : 'none';
-  // Inputs & boutons ajout
-  var ih = document.getElementById('new-prestation-homme');
-  var ifm = document.getElementById('new-prestation-femme');
-  var bh = document.getElementById('prest-add-btn-homme');
-  var bf = document.getElementById('prest-add-btn-femme');
-  if (ih)  ih.style.display  = genre === 'homme' ? '' : 'none';
-  if (ifm) ifm.style.display = genre === 'femme' ? '' : 'none';
-  if (bh)  bh.style.display  = genre === 'homme' ? '' : 'none';
-  if (bf)  bf.style.display  = genre === 'femme' ? '' : 'none';
+  document.getElementById('panel-homme').style.display = genre === 'homme' ? 'block' : 'none';
+  document.getElementById('panel-femme').style.display = genre === 'femme' ? 'block' : 'none';
 }
 
 async function loadPrestations() {
@@ -423,8 +372,6 @@ function getAllForGenre(genre) {
   return base.concat(customOnly);
 }
 
-
-
 function renderPrestations(genre) {
   var container = document.getElementById('prestations-' + genre);
   if (!container) return;
@@ -433,55 +380,37 @@ function renderPrestations(genre) {
   var all    = getAllForGenre(genre);
   container._all = all;
 
-  var cards = all.map(function(p, idx) {
+  container.innerHTML = '<div class="prest-grid">' + all.map(function(p, idx) {
     var isActive = active.indexOf(p.name) !== -1;
     var isCustom = (customPrestations[genre] || []).some(function(c) { return c.name === p.name; });
     var pd       = (prixDuree[genre] && prixDuree[genre][p.name]) || { prix: p.prix || '', duree: p.duree || '' };
     var g        = genre;
-    var img      = getPrestImage(p.name);
 
-    var card = '<div class="pcard' + (isActive ? ' pcard-on' : '') + '">';
-
-    // Zone photo
-    card += '<div class="pcard-visual" onclick="togglePrestation(\'' + g + '\',' + idx + ')">';
-    card += '<div class="pcard-fallback">' + p.name.charAt(0).toUpperCase() + '</div>';
-    card += '<img src="' + img + '" alt="' + p.name + '" loading="lazy" onerror="this.style.display=\'none\'" />';
-    card += '<div class="pcard-overlay"></div>';
+    var card = '<div class="prest-card' + (isActive ? ' active' : '') + '" style="position:relative">';
     if (isCustom) {
-      card += '<button onclick="event.stopPropagation();removeCustom(\'' + g + '\',' + idx + ')" class="pcard-del" title="Supprimer">';
-      card += '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
-      card += '</button>';
+      card += '<button onclick="removeCustom(' + "'" + g + "'," + idx + ')" class="prest-del" style="position:absolute;top:8px;right:8px">\u00d7</button>';
     }
-    card += '<div class="pcard-toggle-wrap">';
-    card += '<span class="pcard-toggle' + (isActive ? ' on' : '') + '"><span class="pcard-knob"></span></span>';
+    card += '<div class="prest-card-head" onclick="togglePrestation(' + "'" + g + "'," + idx + ')" style="cursor:pointer">';
+    card += '<span class="prest-checkbox' + (isActive ? ' checked' : '') + '">' + (isActive ? '\u2713' : '') + '</span>';
+    card += '<span class="prest-name">' + p.name + '</span>';
     card += '</div>';
-    card += '</div>';
-
-    // Corps
-    card += '<div class="pcard-body">';
-    card += '<div class="pcard-name">' + p.name + '</div>';
-    card += '<div class="pcard-fields">';
-
-    card += '<div class="pcard-field">';
-    card += '<span class="pcard-field-label">Prix</span>';
-    card += '<div class="pcard-field-input">';
-    card += '<input type="number" min="0" step="1" value="' + (pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
+    card += '<div class="prest-fields">';
+    card += '<div class="prest-field">';
+    card += '<label class="prest-field-label">Prix</label>';
+    card += '<div class="prest-field-wrap">';
+    card += '<input type="number" min="0" step="1" value="' + (pd.prix !== undefined && pd.prix !== '' ? pd.prix : '') + '" placeholder="0"';
     card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'prix\',this.value)" />';
     card += '<span>€</span></div></div>';
-
-    card += '<div class="pcard-field">';
-    card += '<span class="pcard-field-label">Durée</span>';
-    card += '<div class="pcard-field-input">';
-    card += '<input type="number" min="5" step="5" value="' + (pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
+    card += '<div class="prest-field">';
+    card += '<label class="prest-field-label">Durée</label>';
+    card += '<div class="prest-field-wrap">';
+    card += '<input type="number" min="5" step="5" value="' + (pd.duree !== undefined && pd.duree !== '' ? pd.duree : '') + '" placeholder="30"';
     card += ' oninput="updatePrixDuree(\'' + g + '\',' + idx + ',\'duree\',this.value)" />';
     card += '<span>min</span></div></div>';
     card += '</div>';
     card += '</div>';
-    card += '</div>';
     return card;
-  }).join('');
-
-  container.innerHTML = '<div class="pcard-grid">' + (cards || '<div class="prest-empty">Aucune prestation.</div>') + '</div>';
+  }).join('') + '</div>';
 }
 
 function updatePrixDuree(genre, idx, field, value) {
@@ -757,102 +686,98 @@ function showPropagate(sourceDay) {
 function renderPlanningDays() {
   var el = document.getElementById('planning-days'); if(!el) return;
   el.innerHTML = '';
-  JOURS_SEMAINE.forEach(function(j,i) {
-    var actif = planningData.jours[i] !== false && planningData.jours[String(i)] !== false;
+
+  JOURS_SEMAINE.forEach(function(j, i) {
+    var actif  = planningData.jours[i] !== false && planningData.jours[String(i)] !== false;
     var plages = actif ? getPlages(i) : [];
+
     var row = document.createElement('div');
-    row.style.cssText = 'background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden';
+    row.className = 'pday-row' + (actif ? ' pday-on' : '');
 
-    // ── Ligne du haut : toggle + nom du jour + badge Fermé ──────────────────
-    var header = document.createElement('div');
-    header.style.cssText = 'display:flex;align-items:center;padding:10px 14px;gap:12px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
+    /* ── Ligne principale : toggle + nom + horaires ── */
+    var line = document.createElement('div');
+    line.className = 'pday-line';
 
-    // Toggle
-    var label = document.createElement('label');
-    label.style.cssText = 'position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer';
+    /* Toggle */
+    var toggleLabel = document.createElement('label');
+    toggleLabel.className = 'pday-toggle';
     var chk = document.createElement('input');
-    chk.type='checkbox'; chk.id='jour-'+i; chk.checked=actif;
-    chk.style.cssText='opacity:0;width:0;height:0';
-    chk.setAttribute('onchange','toggleJour('+i+')');
+    chk.type = 'checkbox'; chk.id = 'jour-' + i; chk.checked = actif;
+    chk.style.cssText = 'opacity:0;width:0;height:0;position:absolute';
+    chk.setAttribute('onchange', 'toggleJour(' + i + ')');
     var track = document.createElement('span');
-    track.style.cssText='position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s';
+    track.className = 'pday-track';
     var thumb = document.createElement('span');
-    thumb.style.cssText='position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s';
+    thumb.className = 'pday-thumb';
     track.appendChild(thumb);
-    label.appendChild(chk);
-    label.appendChild(track);
-    header.appendChild(label);
+    toggleLabel.appendChild(chk);
+    toggleLabel.appendChild(track);
+    line.appendChild(toggleLabel);
 
-    // Nom du jour
-    var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)');
-    dayName.textContent = j.label;
-    header.appendChild(dayName);
+    /* Nom du jour */
+    var name = document.createElement('span');
+    name.className = 'pday-name';
+    name.textContent = j.label;
+    line.appendChild(name);
 
-    if (!actif) {
-      var ferme = document.createElement('span');
-      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
-      ferme.textContent='Fermé';
-      header.appendChild(ferme);
-    }
+    /* Horaires ou Fermé */
+    var slots = document.createElement('div');
+    slots.className = 'pday-slots';
 
-    row.appendChild(header);
-
-    // ── Body : plages horaires empilées + bouton pause ────────────────────────
     if (actif) {
-      var body = document.createElement('div');
-      body.style.cssText = 'padding:10px 14px;display:flex;flex-direction:column;gap:6px';
-
-      var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
-
       plages.forEach(function(p, pi) {
-        var wrap = document.createElement('div');
-        wrap.style.cssText = 'display:flex;align-items:center;gap:8px';
+        var slotWrap = document.createElement('div');
+        slotWrap.className = 'pday-slot';
 
         var inputD = document.createElement('input');
         inputD.type='text'; inputD.value=p.debut; inputD.maxLength=5; inputD.placeholder='09:00';
+        inputD.className = 'pday-time-input';
         inputD.id='tp-'+i+'-'+pi+'-d';
-        inputD.setAttribute('style', baseStyle);
         inputD.addEventListener('input',  function(){ formatTimeInput(this); });
-        inputD.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
-        inputD.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'debut'); this.style.borderColor='var(--border)'; });
+        inputD.addEventListener('focus',  function(){ this.classList.add('focused'); delete propagatedDays[i]; delete propagatedDays[String(i)]; });
+        inputD.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'debut'); this.classList.remove('focused'); });
 
         var sep = document.createElement('span');
-        sep.style.cssText='font-size:12px;color:var(--ink-light)';
-        sep.textContent='–';
+        sep.className = 'pday-sep';
+        sep.textContent = '–';
 
         var inputF = document.createElement('input');
         inputF.type='text'; inputF.value=p.fin; inputF.maxLength=5; inputF.placeholder='19:00';
+        inputF.className = 'pday-time-input';
         inputF.id='tp-'+i+'-'+pi+'-f';
-        inputF.setAttribute('style', baseStyle);
         inputF.addEventListener('input',  function(){ formatTimeInput(this); });
-        inputF.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
-        inputF.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'fin'); this.style.borderColor='var(--border)'; });
+        inputF.addEventListener('focus',  function(){ this.classList.add('focused'); delete propagatedDays[i]; delete propagatedDays[String(i)]; });
+        inputF.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'fin'); this.classList.remove('focused'); });
 
-        wrap.appendChild(inputD);
-        wrap.appendChild(sep);
-        wrap.appendChild(inputF);
+        slotWrap.appendChild(inputD);
+        slotWrap.appendChild(sep);
+        slotWrap.appendChild(inputF);
 
         if (plages.length > 1) {
           var rm = document.createElement('button');
-          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;line-height:1;margin-left:auto';
-          rm.textContent='×';
+          rm.className = 'pday-rm';
+          rm.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
           (function(ii,pii){ rm.addEventListener('click', function(){ removePlage(ii,pii); }); })(i,pi);
-          wrap.appendChild(rm);
+          slotWrap.appendChild(rm);
         }
-        body.appendChild(wrap);
+        slots.appendChild(slotWrap);
       });
 
-      // Bouton + pause
+      /* Bouton + pause */
       var pauseBtn = document.createElement('button');
-      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);align-self:flex-start;margin-top:2px';
-      pauseBtn.textContent='+ pause';
+      pauseBtn.className = 'pday-pause-btn';
+      pauseBtn.textContent = '+ pause';
       (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-      body.appendChild(pauseBtn);
-
-      row.appendChild(body);
+      slots.appendChild(pauseBtn);
+    } else {
+      var badge = document.createElement('span');
+      badge.className = 'pday-closed';
+      badge.textContent = 'Fermé';
+      slots.appendChild(badge);
     }
 
+    line.appendChild(slots);
+    row.appendChild(line);
     el.appendChild(row);
   });
 }
