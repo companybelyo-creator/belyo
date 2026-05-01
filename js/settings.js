@@ -4,8 +4,8 @@ var PREST_IMAGES = {
   'Coupe':             'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop',
   'Dégradé':          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&q=80&fit=crop',
   'Barbe':             'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&q=80&fit=crop',
-  'Coupe + Barbe':     'https://images.unsplash.com/photo-1560343787-a15c71d29fa4?w=400&q=80&fit=crop',
-  'Estompage':         'https://images.unsplash.com/photo-1593702288056-f5a42b5a4e8d?w=400&q=80&fit=crop',
+  'Coupe + Barbe':     'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop&crop=faces,center',
+  'Estompage':         'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&q=80&fit=crop&crop=top',
   'Rasage':            'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop&crop=faces',
   'Taille moustache':  'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&q=80&fit=crop&crop=top',
   'Meches homme':      'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&q=80&fit=crop',
@@ -444,6 +444,7 @@ function renderPrestations(genre) {
 
     // Zone photo
     card += '<div class="pcard-visual" onclick="togglePrestation(\'' + g + '\',' + idx + ')">';
+    card += '<div class="pcard-fallback">' + p.name.charAt(0).toUpperCase() + '</div>';
     card += '<img src="' + img + '" alt="' + p.name + '" loading="lazy" onerror="this.style.display=\'none\'" />';
     card += '<div class="pcard-overlay"></div>';
     if (isCustom) {
