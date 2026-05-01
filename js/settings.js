@@ -763,12 +763,15 @@ function renderPlanningDays() {
         slots.appendChild(slotWrap);
       });
 
-      /* Bouton + pause */
+      /* Bouton + pause — sur sa propre ligne si 1 seule plage */
+      var pauseWrap = document.createElement('div');
+      pauseWrap.className = 'pday-pause-wrap' + (plages.length === 1 ? ' pday-pause-newline' : '');
       var pauseBtn = document.createElement('button');
       pauseBtn.className = 'pday-pause-btn';
       pauseBtn.textContent = '+ pause';
       (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-      slots.appendChild(pauseBtn);
+      pauseWrap.appendChild(pauseBtn);
+      slots.appendChild(pauseWrap);
     } else {
       var badge = document.createElement('span');
       badge.className = 'pday-closed';

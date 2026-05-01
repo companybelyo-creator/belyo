@@ -735,3 +735,11 @@
   padding: 2px 9px; border-radius: 100px;
   letter-spacing: .03em;
 }
+
+/* + pause : toujours en dessous si 1 seule plage */
+.pday-pause-wrap { display: contents; }
+.pday-pause-newline {
+  display: flex;
+  width: 100%;
+  flex-basis: 100%;
+}
