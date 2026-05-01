@@ -607,38 +607,37 @@
 .pcard-visual .pcard-del { z-index: 4; }
 
 /* ════════════════════════════════════════════════════════════
-   PLANNING DAYS — compact, 1 ligne par jour, plages inline
+   PLANNING DAYS — redesign compact et lisible
 ════════════════════════════════════════════════════════════ */
+
+/* Ligne par jour */
 .pday-row {
   display: flex;
-  align-items: center;
-  gap: 0;
+  flex-direction: column;
   border-bottom: 1px solid var(--border);
-  padding: .5rem 0;
-  min-height: 0;
 }
 .pday-row:last-child { border-bottom: none; }
 
-/* Ligne = toute la row en flex horizontal */
 .pday-line {
-  display: flex;
+  display: grid;
+  grid-template-columns: 36px 100px 1fr;
   align-items: center;
   gap: 0;
-  width: 100%;
-  flex-wrap: wrap;
-  row-gap: 4px;
+  padding: .75rem 0;
+  min-height: 52px;
 }
 
 /* Toggle */
 .pday-toggle {
   position: relative;
-  width: 34px; height: 19px;
+  width: 36px;
+  height: 20px;
   flex-shrink: 0;
   cursor: pointer;
-  margin-right: 10px;
 }
 .pday-track {
-  position: absolute; inset: 0;
+  position: absolute;
+  inset: 0;
   background: var(--border);
   border-radius: 100px;
   transition: background .2s;
@@ -646,51 +645,48 @@
 .pday-on .pday-track { background: var(--ink); }
 .pday-thumb {
   position: absolute;
-  width: 13px; height: 13px;
-  background: white; border-radius: 50%;
+  width: 14px; height: 14px;
+  background: white;
+  border-radius: 50%;
   top: 3px; left: 3px;
   transition: left .2s;
-  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
 }
-.pday-on .pday-thumb { left: 18px; }
+.pday-on .pday-thumb { left: 19px; }
 
 /* Nom */
 .pday-name {
   font-size: 13px;
   font-weight: 500;
   color: var(--ink-light);
-  width: 82px;
-  flex-shrink: 0;
+  padding-left: 14px;
 }
 .pday-on .pday-name { color: var(--ink); }
 
-/* Zone horaires : inline, séparateur vertical, plages collées */
+/* Zone horaires */
 .pday-slots {
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
+  padding-left: 1rem;
   border-left: 1px solid var(--border);
-  padding-left: 14px;
-  flex: 1;
-  row-gap: 4px;
 }
 
-/* Plage : début – fin sur une ligne */
+/* Plage horaire (une ligne = début – fin) */
 .pday-slot {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 /* Input heure */
 .pday-time-input {
-  width: 52px;
-  padding: 4px 6px;
+  width: 56px;
+  padding: 5px 8px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   background: var(--cream);
   color: var(--ink);
@@ -698,23 +694,31 @@
   outline: none;
   transition: border-color .15s, background .15s;
 }
-.pday-time-input:focus { border-color: var(--gold); background: var(--white); }
-
-.pday-sep { font-size: 11px; color: var(--ink-light); user-select: none; }
-
-/* Bouton × */
-.pday-rm {
-  background: none; border: none; cursor: pointer;
-  color: var(--ink-light); opacity: .35; padding: 1px;
-  display: flex; align-items: center;
-  transition: opacity .15s, color .15s;
-  border-radius: 3px;
+.pday-time-input.focused,
+.pday-time-input:focus {
+  border-color: var(--gold);
+  background: var(--white);
 }
-.pday-rm:hover { opacity: 1; color: #c0392b; }
 
-/* + pause */
+.pday-sep {
+  font-size: 12px;
+  color: var(--ink-light);
+  user-select: none;
+}
+
+/* Bouton supprimer plage */
+.pday-rm {
+  background: none; border: none;
+  cursor: pointer; color: var(--ink-light);
+  opacity: .4; padding: 2px;
+  display: flex; align-items: center;
+  border-radius: 3px; transition: opacity .15s, color .15s;
+}
+.pday-rm:hover { opacity: 1; color: var(--danger, #c0392b); }
+
+/* Bouton + pause */
 .pday-pause-btn {
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 100px;
   border: 1px dashed var(--border);
   background: none;
@@ -722,24 +726,18 @@
   font-size: 11px;
   cursor: pointer;
   color: var(--ink-light);
-  white-space: nowrap;
+  align-self: flex-start;
   transition: border-color .15s, color .15s;
-  line-height: 1.6;
 }
-.pday-pause-btn:hover { border-color: var(--ink); color: var(--ink); }
+.pday-pause-btn:hover { border-color: var(--ink-light); color: var(--ink); }
 
 /* Badge Fermé */
 .pday-closed {
-  font-size: 11px; font-weight: 500;
-  color: var(--ink-light); background: var(--cream);
-  padding: 2px 9px; border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-light);
+  background: var(--cream);
+  padding: 3px 10px;
+  border-radius: 100px;
   letter-spacing: .03em;
-}
-
-/* + pause : toujours en dessous si 1 seule plage */
-.pday-pause-wrap { display: contents; }
-.pday-pause-newline {
-  display: flex;
-  width: 100%;
-  flex-basis: 100%;
 }
