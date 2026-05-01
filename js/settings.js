@@ -807,14 +807,14 @@ function renderPlanningDays() {
       return label;
     }
 
-    // ── Ligne 1 : toggle + nom + plage[0] + (×si 2plages) + (+pause si 1plage) ─
+    // ── Ligne unique : toggle + nom + toutes plages côte à côte ────────────
     var line1 = document.createElement('div');
-    line1.style.cssText = 'display:flex;align-items:center;padding:9px 12px;gap:8px;flex-wrap:nowrap';
+    line1.style.cssText = 'display:flex;align-items:center;padding:9px 12px;gap:6px;flex-wrap:nowrap';
 
     line1.appendChild(makeToggle());
 
     var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;min-width:52px;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.style.cssText='font-size:14px;font-weight:500;min-width:56px;flex-shrink:0;color:'+(actif?'var(--ink)':'var(--ink-light)');
     dayName.textContent = j.label;
     line1.appendChild(dayName);
 
@@ -823,21 +823,24 @@ function renderPlanningDays() {
       ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
       ferme.textContent='Fermé';
       line1.appendChild(ferme);
-    } else if (plages.length > 0) {
-      // Plage 0 inline dans ligne 1
-      line1.appendChild(makeTimeInput(plages[0], 0, 'debut'));
-      line1.appendChild(makeSep());
-      line1.appendChild(makeTimeInput(plages[0], 0, 'fin'));
+    } else {
+      plages.forEach(function(p, pi) {
+        if (pi > 0) {
+          var divider = document.createElement('span');
+          divider.style.cssText='width:1px;height:16px;background:var(--border);flex-shrink:0;margin:0 2px';
+          line1.appendChild(divider);
+        }
+        line1.appendChild(makeTimeInput(p, pi, 'debut'));
+        line1.appendChild(makeSep());
+        line1.appendChild(makeTimeInput(p, pi, 'fin'));
+        if (plages.length > 1) {
+          line1.appendChild(makeRemoveBtn(i, pi));
+        }
+      });
 
-      // Si 2 plages : croix collée sur plage 0 (pour supprimer la 1ère), puis + pause à la fin
-      if (plages.length > 1) {
-        line1.appendChild(makeRemoveBtn(i, 0));
-      }
-
-      // + pause seulement si 1 seule plage (pour en ajouter une 2e)
-      if (plages.length === 1) {
+      if (plages.length < 2) {
         var pauseBtn = document.createElement('button');
-        pauseBtn.style.cssText='padding:3px 9px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);margin-left:4px;white-space:nowrap';
+        pauseBtn.style.cssText='padding:3px 9px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);margin-left:2px;white-space:nowrap;flex-shrink:0';
         pauseBtn.textContent='+ pause';
         (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
         line1.appendChild(pauseBtn);
@@ -845,19 +848,6 @@ function renderPlanningDays() {
     }
 
     row.appendChild(line1);
-
-    // ── Ligne 2 (si plages[1] existe) : plage[1] + × + vide à gauche ───────
-    if (actif && plages.length > 1) {
-      var line2 = document.createElement('div');
-      line2.style.cssText = 'display:flex;align-items:center;padding:4px 12px 9px;gap:8px;padding-left:'+(12+36+8+52+8)+'px'; // aligné sous les horaires
-
-      line2.appendChild(makeTimeInput(plages[1], 1, 'debut'));
-      line2.appendChild(makeSep());
-      line2.appendChild(makeTimeInput(plages[1], 1, 'fin'));
-      line2.appendChild(makeRemoveBtn(i, 1));
-
-      row.appendChild(line2);
-    }
 
     el.appendChild(row);
   });
