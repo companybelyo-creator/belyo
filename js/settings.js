@@ -807,47 +807,65 @@ function renderPlanningDays() {
       return label;
     }
 
-    // ── Ligne unique : toggle + nom + toutes plages côte à côte ────────────
-    var line1 = document.createElement('div');
-    line1.style.cssText = 'display:flex;align-items:center;padding:9px 12px;gap:6px;flex-wrap:nowrap';
+    // ── Wrapper principal : flex-wrap pour responsive ────────────────────────
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 12px';
 
-    line1.appendChild(makeToggle());
-
+    // Toggle + nom — toujours sur la même ligne entre eux, flex-shrink:0
+    var left = document.createElement('div');
+    left.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0';
+    left.appendChild(makeToggle());
     var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;min-width:56px;flex-shrink:0;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.style.cssText='font-size:14px;font-weight:500;width:60px;color:'+(actif?'var(--ink)':'var(--ink-light)');
     dayName.textContent = j.label;
-    line1.appendChild(dayName);
+    left.appendChild(dayName);
+    wrap.appendChild(left);
 
     if (!actif) {
       var ferme = document.createElement('span');
       ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
       ferme.textContent='Fermé';
-      line1.appendChild(ferme);
+      wrap.appendChild(ferme);
     } else {
+      // Zone horaires : flex-wrap permet de passer à la ligne si pas assez de place
+      var hoursZone = document.createElement('div');
+      hoursZone.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:6px;flex:1;min-width:0';
+
       plages.forEach(function(p, pi) {
-        if (pi > 0) {
-          var divider = document.createElement('span');
-          divider.style.cssText='width:1px;height:16px;background:var(--border);flex-shrink:0;margin:0 2px';
-          line1.appendChild(divider);
-        }
-        line1.appendChild(makeTimeInput(p, pi, 'debut'));
-        line1.appendChild(makeSep());
-        line1.appendChild(makeTimeInput(p, pi, 'fin'));
+        // Groupe plage : inputs + croix — reste solidaire (nowrap)
+        var grp = document.createElement('div');
+        grp.style.cssText = 'display:flex;align-items:center;gap:5px;flex-shrink:0';
+
+        grp.appendChild(makeTimeInput(p, pi, 'debut'));
+        grp.appendChild(makeSep());
+        grp.appendChild(makeTimeInput(p, pi, 'fin'));
         if (plages.length > 1) {
-          line1.appendChild(makeRemoveBtn(i, pi));
+          grp.appendChild(makeRemoveBtn(i, pi));
+        }
+        hoursZone.appendChild(grp);
+
+        // Séparateur visuel entre 2 plages
+        if (pi < plages.length - 1) {
+          var divider = document.createElement('span');
+          divider.style.cssText='font-size:11px;color:var(--ink-light);flex-shrink:0';
+          divider.textContent='·';
+          hoursZone.appendChild(divider);
         }
       });
 
+      // + pause après les plages, seulement si 1 plage
       if (plages.length < 2) {
         var pauseBtn = document.createElement('button');
-        pauseBtn.style.cssText='padding:3px 9px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);margin-left:2px;white-space:nowrap;flex-shrink:0';
+        pauseBtn.style.cssText='padding:3px 9px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);white-space:nowrap;flex-shrink:0';
         pauseBtn.textContent='+ pause';
         (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-        line1.appendChild(pauseBtn);
+        hoursZone.appendChild(pauseBtn);
       }
+
+      wrap.appendChild(hoursZone);
     }
 
-    row.appendChild(line1);
+    row.appendChild(wrap);
 
     el.appendChild(row);
   });
