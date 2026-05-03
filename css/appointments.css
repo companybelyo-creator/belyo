@@ -417,15 +417,8 @@
   text-transform: uppercase;
 }
 .cal-col-closed {
-  background: repeating-linear-gradient(
-    135deg,
-    #EDEAE6,
-    #EDEAE6 5px,
-    #E6E2DD 5px,
-    #E6E2DD 10px
-  );
+  background: #EDEAE6;
   cursor: default;
-  border-right: 1px solid var(--border);
 }
 
 /* ===== PANEL DETAIL RDV ===== */

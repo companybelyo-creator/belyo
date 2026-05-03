@@ -536,9 +536,6 @@ function renderCalendar() {
       + '</div>';
   });
 
-  // Suivre si une colonne ferm\u00e9e a deja ete inseree
-  var closedColInserted = days.map(function() { return false; });
-
   hours.forEach(function(h, hi) {
     html += '<div class="cal-time-col" style="height:' + SLOT_H + 'px;border-top:1px solid var(--border)">'
       + (hi > 0 ? '<span class="cal-time-label">' + String(h) + 'h</span>' : '')
@@ -548,12 +545,9 @@ function renderCalendar() {
       var dateStr  = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       var dateHour = dateStr + 'T' + String(h).padStart(2,'0') + ':00';
 
+      // Jour entierement ferme : cellule grise simple
       if (fullClosedDays[di]) {
-        if (!closedColInserted[di]) {
-          closedColInserted[di] = true;
-          var totalH = SLOT_H * hours.length;
-          html += '<div class="cal-cell cal-col-closed" style="height:' + totalH + 'px;grid-row:span ' + hours.length + '"></div>';
-        }
+        html += '<div class="cal-cell cal-col-closed" data-closed-col="' + di + '" data-hi="' + hi + '" style="height:' + SLOT_H + 'px"></div>';
         return;
       }
 
