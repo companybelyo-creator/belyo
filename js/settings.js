@@ -1,7 +1,7 @@
 // ===== IMAGES PAR PRESTATION (Unsplash) =====
 var PREST_IMAGES = {
   // Homme
-  'Coupe':             'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop',
+  'Coupe Homme':        'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop',
   'Dégradé':          'https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&q=80&fit=crop',
   'Barbe':             'https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&q=80&fit=crop',
   'Coupe + Barbe':     'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&q=80&fit=crop&crop=faces,center',
@@ -14,7 +14,7 @@ var PREST_IMAGES = {
   'Soin':              'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=400&q=80&fit=crop',
   'Coloration':        'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=400&q=80&fit=crop',
   // Femme
-  'Coupe':             'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400&q=80&fit=crop',
+  'Coupe Femme':        'https://images.unsplash.com/photo-1560869713-7d0a29430803?w=400&q=80&fit=crop',
   'Brushing':          'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80&fit=crop',
   'Balayage':          'https://images.unsplash.com/photo-1620331311520-246422fd82f9?w=400&q=80&fit=crop&crop=left',
   'Mèches':           'https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=400&q=80&fit=crop&crop=center',
@@ -301,7 +301,7 @@ async function loadSubscription() {
 // Catalogue de base avec prix et durée par défaut
 var ALL_PRESTATIONS = {
   homme: [
-    { name: 'Coupe',            prix: 20, duree: 30,  active: true  },
+    { name: 'Coupe Homme',       prix: 20, duree: 30,  active: true  },
     { name: 'Dégradé',         prix: 20, duree: 30,  active: true  },
     { name: 'Barbe',            prix: 10, duree: 15,  active: true  },
     { name: 'Coupe + Barbe',    prix: 28, duree: 45,  active: true  },
@@ -315,7 +315,7 @@ var ALL_PRESTATIONS = {
     { name: 'Taille moustache', prix: 8,  duree: 10,  active: false },
   ],
   femme: [
-    { name: 'Coupe',            prix: 30, duree: 45,  active: true  },
+    { name: 'Coupe Femme',       prix: 30, duree: 45,  active: true  },
     { name: 'Brushing',         prix: 25, duree: 40,  active: true  },
     { name: 'Coloration',       prix: 60, duree: 90,  active: true  },
     { name: 'Balayage',         prix: 80, duree: 120, active: true  },
@@ -763,109 +763,95 @@ function renderPlanningDays() {
     var row = document.createElement('div');
     row.style.cssText = 'background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;overflow:hidden';
 
-    var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
+    // ── Ligne du haut : toggle + nom du jour + badge Fermé ──────────────────
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;padding:10px 14px;gap:12px' + (actif ? ';border-bottom:1px solid var(--border)' : '');
 
-    function makeTimeInput(p, pi, type) {
-      var inp = document.createElement('input');
-      inp.type='text'; inp.value=(type==='debut'?p.debut:p.fin); inp.maxLength=5;
-      inp.placeholder=(type==='debut'?'09:00':'19:00');
-      inp.id='tp-'+i+'-'+pi+'-'+(type==='debut'?'d':'f');
-      inp.setAttribute('style', baseStyle);
-      inp.addEventListener('input',  function(){ formatTimeInput(this); });
-      inp.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
-      inp.addEventListener('blur',   function(){ savePlageInput(i,pi,this,type); this.style.borderColor='var(--border)'; });
-      return inp;
-    }
+    // Toggle
+    var label = document.createElement('label');
+    label.style.cssText = 'position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer';
+    var chk = document.createElement('input');
+    chk.type='checkbox'; chk.id='jour-'+i; chk.checked=actif;
+    chk.style.cssText='opacity:0;width:0;height:0';
+    chk.setAttribute('onchange','toggleJour('+i+')');
+    var track = document.createElement('span');
+    track.style.cssText='position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s';
+    var thumb = document.createElement('span');
+    thumb.style.cssText='position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s';
+    track.appendChild(thumb);
+    label.appendChild(chk);
+    label.appendChild(track);
+    header.appendChild(label);
 
-    function makeSep() {
-      var sep = document.createElement('span');
-      sep.style.cssText='font-size:12px;color:var(--ink-light)';
-      sep.textContent='–'; return sep;
-    }
-
-    function makeRemoveBtn(ii, pii) {
-      var rm = document.createElement('button');
-      rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0;line-height:1;flex-shrink:0';
-      rm.textContent='×';
-      rm.addEventListener('click', function(){ removePlage(ii,pii); });
-      return rm;
-    }
-
-    // ── Toggle ──────────────────────────────────────────────────────────────
-    function makeToggle() {
-      var label = document.createElement('label');
-      label.style.cssText = 'position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;cursor:pointer';
-      var chk = document.createElement('input');
-      chk.type='checkbox'; chk.id='jour-'+i; chk.checked=actif;
-      chk.style.cssText='opacity:0;width:0;height:0';
-      chk.setAttribute('onchange','toggleJour('+i+')');
-      var track = document.createElement('span');
-      track.style.cssText='position:absolute;inset:0;background:'+(actif?'var(--ink)':'var(--border)')+';border-radius:100px;transition:background .2s';
-      var thumb = document.createElement('span');
-      thumb.style.cssText='position:absolute;width:14px;height:14px;background:white;border-radius:50%;top:3px;left:'+(actif?'19px':'3px')+';transition:left .2s';
-      track.appendChild(thumb); label.appendChild(chk); label.appendChild(track);
-      return label;
-    }
-
-    // ── Wrapper principal : flex-wrap pour responsive ────────────────────────
-    var wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 12px';
-
-    // Toggle + nom — toujours solidaires
-    var left = document.createElement('div');
-    left.style.cssText = 'display:flex;align-items:center;gap:8px;flex-shrink:0';
-    left.appendChild(makeToggle());
+    // Nom du jour
     var dayName = document.createElement('span');
-    dayName.style.cssText='font-size:14px;font-weight:500;width:64px;color:'+(actif?'var(--ink)':'var(--ink-light)');
+    dayName.style.cssText='font-size:14px;font-weight:500;color:'+(actif?'var(--ink)':'var(--ink-light)');
     dayName.textContent = j.label;
-    left.appendChild(dayName);
+    header.appendChild(dayName);
 
     if (!actif) {
-      // Fermé collé juste après le nom, dans le même groupe left
       var ferme = document.createElement('span');
-      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px';
+      ferme.style.cssText='font-size:12px;color:var(--ink-light);background:var(--cream);padding:3px 9px;border-radius:100px;margin-left:auto';
       ferme.textContent='Fermé';
-      left.appendChild(ferme);
+      header.appendChild(ferme);
     }
 
-    wrap.appendChild(left);
+    row.appendChild(header);
 
+    // ── Body : plages horaires empilées + bouton pause ────────────────────────
     if (actif) {
-      // Zone horaires : flex-wrap permet de passer à la ligne si pas assez de place
-      var hoursZone = document.createElement('div');
-      hoursZone.style.cssText = 'display:flex;align-items:center;flex-wrap:wrap;gap:6px;flex:1;min-width:0';
+      var body = document.createElement('div');
+      body.style.cssText = 'padding:10px 14px;display:flex;flex-direction:column;gap:6px';
+
+      var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
 
       plages.forEach(function(p, pi) {
-        var grp = document.createElement('div');
-        grp.style.cssText = 'display:flex;align-items:center;gap:5px;flex-shrink:0';
-        grp.appendChild(makeTimeInput(p, pi, 'debut'));
-        grp.appendChild(makeSep());
-        grp.appendChild(makeTimeInput(p, pi, 'fin'));
-        if (plages.length > 1) {
-          grp.appendChild(makeRemoveBtn(i, pi));
-        }
-        hoursZone.appendChild(grp);
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex;align-items:center;gap:8px';
 
-        if (pi < plages.length - 1) {
-          var divider = document.createElement('span');
-          divider.style.cssText='font-size:11px;color:var(--ink-light);flex-shrink:0';
-          divider.textContent='·';
-          hoursZone.appendChild(divider);
+        var inputD = document.createElement('input');
+        inputD.type='text'; inputD.value=p.debut; inputD.maxLength=5; inputD.placeholder='09:00';
+        inputD.id='tp-'+i+'-'+pi+'-d';
+        inputD.setAttribute('style', baseStyle);
+        inputD.addEventListener('input',  function(){ formatTimeInput(this); });
+        inputD.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
+        inputD.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'debut'); this.style.borderColor='var(--border)'; });
+
+        var sep = document.createElement('span');
+        sep.style.cssText='font-size:12px;color:var(--ink-light)';
+        sep.textContent='–';
+
+        var inputF = document.createElement('input');
+        inputF.type='text'; inputF.value=p.fin; inputF.maxLength=5; inputF.placeholder='19:00';
+        inputF.id='tp-'+i+'-'+pi+'-f';
+        inputF.setAttribute('style', baseStyle);
+        inputF.addEventListener('input',  function(){ formatTimeInput(this); });
+        inputF.addEventListener('focus',  function(){ this.style.borderColor='var(--gold)'; delete propagatedDays[i]; delete propagatedDays[String(i)]; });
+        inputF.addEventListener('blur',   function(){ savePlageInput(i,pi,this,'fin'); this.style.borderColor='var(--border)'; });
+
+        wrap.appendChild(inputD);
+        wrap.appendChild(sep);
+        wrap.appendChild(inputF);
+
+        if (plages.length > 1) {
+          var rm = document.createElement('button');
+          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;line-height:1;margin-left:auto';
+          rm.textContent='×';
+          (function(ii,pii){ rm.addEventListener('click', function(){ removePlage(ii,pii); }); })(i,pi);
+          wrap.appendChild(rm);
         }
+        body.appendChild(wrap);
       });
 
-      if (plages.length < 2) {
-        var pauseBtn = document.createElement('button');
-        pauseBtn.style.cssText='padding:3px 9px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);white-space:nowrap;flex-shrink:0';
-        pauseBtn.textContent='+ pause';
-        (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-        hoursZone.appendChild(pauseBtn);
-      }
+      // Bouton + pause
+      var pauseBtn = document.createElement('button');
+      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);align-self:flex-start;margin-top:2px';
+      pauseBtn.textContent='+ pause';
+      (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
+      body.appendChild(pauseBtn);
 
-      wrap.appendChild(hoursZone);
+      row.appendChild(body);
     }
-
-    row.appendChild(wrap);
 
     el.appendChild(row);
   });

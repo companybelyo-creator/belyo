@@ -163,7 +163,13 @@
    Ratio : 3 : 2 : 1  → 6 parts totales */
 .dash-row-3 {
   display: grid;
-  grid-template-columns: 3fr 2fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+/* Colonne droite du bas : sous-grille 2/3 + 1/3 */
+.dash-row-3-right {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
   gap: 1rem;
 }
 
@@ -195,7 +201,7 @@
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 2rem 1rem; gap: .6rem;
 }
-.dash-empty-img { width: 90px; height: 90px; object-fit: contain; opacity: .9; }
+.dash-empty-img { width: 140px; height: 140px; object-fit: contain; opacity: .9; }
 .dash-empty-text { font-size: 13px; color: var(--ink-light); text-align: center; }
 .dash-btn-empty {
   background: var(--ink); color: var(--white);
@@ -315,8 +321,8 @@
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1200px) {
   .dash-kpi-grid { grid-template-columns: repeat(2, 1fr); }
-  .dash-row-3 { grid-template-columns: 1fr 1fr; }
-  .dash-row-3 .dash-card:last-child { grid-column: 1 / -1; }
+  .dash-row-3 { grid-template-columns: 1fr; }
+  .dash-row-3-right { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 900px) {
   .dash-row-2 { grid-template-columns: 1fr; }

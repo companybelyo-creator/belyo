@@ -2,8 +2,8 @@
 var selectedGenre = 'homme';
 
 var PRESTATIONS = {
-  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin', 'Autre'],
-  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
+  homme: ['Coupe Homme', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin', 'Autre'],
+  femme: ['Coupe Femme', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
 };
 
 var PRIX_DUREE = { homme: {}, femme: {} };
@@ -58,14 +58,14 @@ function updateServiceOptions() {
   }).join('');
 
   // Première prestation par défaut
-  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
+  var defaultOpt = options.find(function(p) { return p.toLowerCase().startsWith('coupe'); }) || options[0];
   if (defaultOpt && defaultOpt !== 'Autre') {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
     var prix = pd && pd.prix ? pd.prix : 0;
     if (!prix) {
       var defs = {
-        homme: { 'Coupe':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
-        femme:  { 'Coupe':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
+        homme: { 'Coupe Homme':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
+        femme:  { 'Coupe Femme':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
       };
       prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
     }
@@ -84,8 +84,8 @@ function selectServiceByIndex(idx) {
     prix = pd.prix;
   } else {
     var defaults = {
-      homme: { 'Coupe': 20, 'Dégradé': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
-      femme: { 'Coupe': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Mèches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
+      homme: { 'Coupe Homme': 20, 'Dégradé': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
+      femme: { 'Coupe Femme': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Mèches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
     };
     prix = (defaults[selectedGenre] && defaults[selectedGenre][name]) || 0;
   }
