@@ -35,24 +35,47 @@ function buildAllCollabs() {
 }
 
 function renderCalFilters() {
-  var svcEl  = document.getElementById('cal-filter-service');
-  var colEl  = document.getElementById('cal-filter-collab');
-  if (!svcEl || !colEl) return;
+  var list = document.getElementById('cal-svc-list');
+  var label = document.getElementById('cal-svc-label');
+  if (!list) return;
 
   var svcs = buildAllServices();
-  svcEl.innerHTML = '<option value="">Services</option>'
-    + svcs.map(function(s) {
-        return '<option value="' + s + '"' + (calFilterService === s ? ' selected' : '') + '>' + s + '</option>';
-      }).join('');
-  svcEl.value = calFilterService;
+  var items = [{ val: '', label: 'Tous les services' }].concat(svcs.map(function(s) { return { val: s, label: s }; }));
 
-  var cols = buildAllCollabs();
-  colEl.innerHTML = '<option value="">Collaborateurs</option>'
-    + cols.map(function(c) {
-        return '<option value="' + c + '"' + (calFilterCollab === c ? ' selected' : '') + '>' + c + '</option>';
-      }).join('');
-  colEl.value = calFilterCollab;
+  list.innerHTML = items.map(function(item) {
+    var isActive = calFilterService === item.val;
+    return '<div onclick="pickSvcFilter(\'' + item.val.replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);'
+      + (isActive ? 'background:var(--ink);color:var(--white);' : 'color:var(--ink);')
+      + 'transition:background .1s" onmouseover="if(!this.classList.contains(\'active-svc\')){this.style.background=\''
+      + (isActive ? 'var(--ink)' : 'var(--cream)') + '\'}" onmouseout="this.style.background=\''
+      + (isActive ? 'var(--ink)' : 'transparent') + '\'">'
+      + item.label + '</div>';
+  }).join('');
+
+  if (label) label.textContent = calFilterService || 'Services';
+  var btn = document.getElementById('cal-svc-btn');
+  if (btn) btn.classList.toggle('active', !!calFilterService);
 }
+
+function toggleSvcDropdown(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('cal-svc-dropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function pickSvcFilter(val) {
+  calFilterService = val;
+  var dd = document.getElementById('cal-svc-dropdown');
+  if (dd) dd.style.display = 'none';
+  renderCalendar();
+}
+
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('cal-svc-dropdown');
+  var wrap = document.getElementById('cal-filters');
+  if (dd && wrap && !wrap.contains(e.target)) dd.style.display = 'none';
+});
 
 // ===== GENRE + PRESTATION =====
 var selectedGenre = 'homme';
