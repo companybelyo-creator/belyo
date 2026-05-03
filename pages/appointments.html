@@ -41,6 +41,20 @@
         <button class="week-nav-btn" onclick="shiftWeek(1)">›</button>
         <button class="tab" onclick="goToday()" style="padding:6px 14px;font-size:12px;">Aujourd'hui</button>
       </div>
+      <div id="cal-filters" style="display:none;align-items:center;gap:8px;margin-left:auto">
+        <div class="cal-quick-filter-wrap">
+          <select id="cal-filter-service" class="cal-quick-filter" onchange="setCalFilter('service',this.value)">
+            <option value="">Services</option>
+          </select>
+          <span class="cal-quick-filter-arrow">▾</span>
+        </div>
+        <div class="cal-quick-filter-wrap">
+          <select id="cal-filter-collab" class="cal-quick-filter" onchange="setCalFilter('collab',this.value)">
+            <option value="">Collaborateurs</option>
+          </select>
+          <span class="cal-quick-filter-arrow">▾</span>
+        </div>
+      </div>
       <div id="list-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <div class="cal-picker-wrap" id="cal-filter-wrap" style="position:relative">
           <div class="cal-picker-trigger" id="cal-filter-trigger" onclick="toggleFilterPicker()" style="padding:7px 14px;min-width:140px">

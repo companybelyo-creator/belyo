@@ -12,6 +12,48 @@ var currentTab     = 'all';
 var currentView    = 'list';
 var weekOffset     = 0;
 
+// ===== FILTRES CALENDRIER =====
+var calFilterService = '';
+var calFilterCollab  = '';
+
+function setCalFilter(type, val) {
+  if (type === 'service') calFilterService = val;
+  if (type === 'collab')  calFilterCollab  = val;
+  renderCalendar();
+}
+
+function buildAllServices() {
+  var svcs = {};
+  allAppts.forEach(function(a) { if (a.service) svcs[a.service] = true; });
+  return Object.keys(svcs).sort();
+}
+
+function buildAllCollabs() {
+  var cols = {};
+  allAppts.forEach(function(a) { if (a.collaborateur) cols[a.collaborateur] = true; });
+  return Object.keys(cols).sort();
+}
+
+function renderCalFilters() {
+  var svcEl  = document.getElementById('cal-filter-service');
+  var colEl  = document.getElementById('cal-filter-collab');
+  if (!svcEl || !colEl) return;
+
+  var svcs = buildAllServices();
+  svcEl.innerHTML = '<option value="">Services</option>'
+    + svcs.map(function(s) {
+        return '<option value="' + s + '"' + (calFilterService === s ? ' selected' : '') + '>' + s + '</option>';
+      }).join('');
+  svcEl.value = calFilterService;
+
+  var cols = buildAllCollabs();
+  colEl.innerHTML = '<option value="">Collaborateurs</option>'
+    + cols.map(function(c) {
+        return '<option value="' + c + '"' + (calFilterCollab === c ? ' selected' : '') + '>' + c + '</option>';
+      }).join('');
+  colEl.value = calFilterCollab;
+}
+
 // ===== GENRE + PRESTATION =====
 var selectedGenre = 'homme';
 
@@ -361,6 +403,8 @@ function setView(v) {
   document.getElementById('view-calendar').style.display = v === 'calendar' ? 'block' : 'none';
   document.getElementById('week-nav').style.display      = v === 'calendar' ? 'flex'  : 'none';
   document.getElementById('list-filters').style.display  = v === 'list'     ? 'flex'  : 'none';
+  var cf = document.getElementById('cal-filters');
+  if (cf) cf.style.display = v === 'calendar' ? 'flex' : 'none';
   document.getElementById('vbtn-list').classList.toggle('active', v === 'list');
   document.getElementById('vbtn-calendar').classList.toggle('active', v === 'calendar');
   if (v === 'calendar') renderCalendar();
@@ -446,6 +490,8 @@ function renderCalendar() {
   var legendEl = document.getElementById('cal-legend');
   if (legendEl) legendEl.innerHTML = legendHtml;
 
+  renderCalFilters();
+
   var JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   html += '<div class="cal-head" style="border-bottom:1px solid var(--border)"></div>';
   days.forEach(function(d, i) {
@@ -519,6 +565,10 @@ function renderCalendar() {
     var dk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     var dayAppts = (apptsByDay[dk] || []).filter(function(a) { return a.status !== 'cancelled'; });
 
+    // Appliquer filtres
+    if (calFilterService) dayAppts = dayAppts.filter(function(a) { return a.service === calFilterService; });
+    if (calFilterCollab)  dayAppts = dayAppts.filter(function(a) { return a.collaborateur === calFilterCollab; });
+
     // Calculer durée effective de chaque RDV
     function getDuree(a) {
       var dureeMin = a.duration_minutes || 30;
@@ -531,28 +581,29 @@ function renderCalendar() {
       return dureeMin;
     }
 
-    // Calculer fin en minutes depuis minuit
+    // Minutes depuis minuit
     function startMin(a) {
       var dt = new Date(a.datetime);
       return dt.getHours() * 60 + dt.getMinutes();
     }
 
-    // Détecter les chaînes consécutives (fin d'un = début du suivant, même statut)
-    var chains = {};
-    dayAppts.forEach(function(a, idx) {
-      var endMin = startMin(a) + getDuree(a);
-      dayAppts.forEach(function(b, jdx) {
-        if (idx === jdx) return;
-        if (Math.abs(startMin(b) - endMin) <= 2 && a.status === b.status) {
-          chains[a.id] = chains[a.id] || {};
-          chains[a.id].next = b.id;
-          chains[b.id] = chains[b.id] || {};
-          chains[b.id].prev = a.id;
-        }
-      });
-    });
+    // Trier par heure
+    var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    dayAppts.forEach(function(a) {
+    // Construire les chaînes : prev/next basé sur tri temporel strict
+    var prevMap = {}; // id → id du précédent
+    var nextMap = {}; // id → id du suivant
+    for (var ci = 0; ci < sorted.length - 1; ci++) {
+      var cur  = sorted[ci];
+      var nxt  = sorted[ci + 1];
+      var curEnd = startMin(cur) + getDuree(cur);
+      if (Math.abs(startMin(nxt) - curEnd) <= 2 && cur.status === nxt.status) {
+        nextMap[cur.id] = nxt.id;
+        prevMap[nxt.id] = cur.id;
+      }
+    }
+
+    sorted.forEach(function(a) {
       var dt = new Date(a.datetime);
       var aH = dt.getHours();
       var aM = dt.getMinutes();
@@ -567,9 +618,8 @@ function renderCalendar() {
       var evH = Math.max(36, (dureeMin / 60) * SLOT_H);
 
       var ev = document.createElement('div');
-      var chain = chains[a.id] || {};
-      var hasNext = !!chain.next;
-      var hasPrev = !!chain.prev;
+      var hasNext = !!nextMap[a.id];
+      var hasPrev = !!prevMap[a.id];
 
       ev.className = 'cal-event status-' + (a.status || 'pending')
         + (hasNext ? ' chain-top' : '')
