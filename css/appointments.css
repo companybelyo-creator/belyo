@@ -256,27 +256,42 @@
 }
 
 /* RDV consécutifs reliés */
+/* Premier d'une chaîne */
 .cal-event.chain-top {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom: none;
   padding-bottom: 3px;
-  z-index: 3;
 }
-.cal-event.chain-bottom {
+/* Milieu d'une chaîne (a un précédent ET un suivant) */
+.cal-event.chain-top.chain-bottom {
+  border-radius: 0;
+  border-top: none;
+  border-bottom: none;
+  padding-top: 4px;
+  padding-bottom: 3px;
+  margin-top: -1px;
+}
+/* Dernier d'une chaîne */
+.cal-event.chain-bottom:not(.chain-top) {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  border-top: 1.5px dashed rgba(255,255,255,.5);
+  border-top: none;
   margin-top: -1px;
   padding-top: 4px;
-  z-index: 2;
 }
-.cal-event.status-pending.chain-bottom {
-  border-top-color: rgba(43,127,255,.25);
+/* Séparateur visuel entre les blocs : ligne pointillée sur le bord gauche coloré */
+.cal-event.chain-top::after,
+.cal-event.chain-top.chain-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 3px;
+  height: 1px;
+  background: rgba(255,255,255,.55);
 }
-.cal-event.status-done.chain-bottom {
-  border-top-color: rgba(38,169,108,.25);
-}
+.cal-event.status-pending.chain-top::after { background: rgba(43,127,255,.35); }
+.cal-event.status-done.chain-top::after    { background: rgba(38,169,108,.35); }
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E53935; }
