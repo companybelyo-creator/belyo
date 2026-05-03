@@ -56,7 +56,8 @@
     <!-- KPIs -->
     <div class="dash-kpi-grid">
 
-      <div class="dash-kpi-card">
+      <div class="dash-kpi-card dash-kpi-card--1">
+        <div class="dash-kpi-accent" style="background:#A38B74"></div>
         <div class="dash-kpi-top">
           <div class="dash-kpi-icon dash-kpi-icon--gold">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -67,7 +68,8 @@
         <div class="dash-kpi-sub"><span id="kpi-today-sub" class="dash-kpi-note">—</span></div>
       </div>
 
-      <div class="dash-kpi-card">
+      <div class="dash-kpi-card dash-kpi-card--2">
+        <div class="dash-kpi-accent" style="background:#4EA685"></div>
         <div class="dash-kpi-top">
           <div class="dash-kpi-icon dash-kpi-icon--green">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -86,7 +88,8 @@
         </div>
       </div>
 
-      <div class="dash-kpi-card">
+      <div class="dash-kpi-card dash-kpi-card--3">
+        <div class="dash-kpi-accent" style="background:#7D7CBD"></div>
         <div class="dash-kpi-top">
           <div class="dash-kpi-icon dash-kpi-icon--purple">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -100,7 +103,8 @@
         </div>
       </div>
 
-      <div class="dash-kpi-card">
+      <div class="dash-kpi-card dash-kpi-card--4">
+        <div class="dash-kpi-accent" style="background:#C5A267"></div>
         <div class="dash-kpi-top">
           <div class="dash-kpi-icon dash-kpi-icon--blue">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -124,7 +128,7 @@
         <div class="dash-card-body" id="today-appts-wrap">
           <div class="appt-timeline" id="today-appts">
             <div class="dash-empty-state">
-              <img src="../img/calendrier_1.png" alt="Aucun RDV" class="dash-empty-img" />
+              <img src="../assets/img/calendrier_1.png" alt="Aucun RDV" class="dash-empty-img" />
               <p class="dash-empty-text">Aucun rendez-vous aujourd'hui</p>
               <button class="dash-btn-empty" onclick="openModal()">+ Créer votre premier RDV</button>
             </div>
@@ -139,7 +143,7 @@
         <div class="dash-card-body" id="next-appt-wrap">
           <div id="next-appt">
             <div class="dash-empty-state">
-              <img src="../img/calendrier_2.png" alt="Aucun prochain RDV" class="dash-empty-img" />
+              <img src="../assets/img/calendrier_2.png" alt="Aucun prochain RDV" class="dash-empty-img" />
               <p class="dash-empty-text">Aucun prochain RDV</p>
               <button class="dash-btn-empty" onclick="openModal()">+ Planifier une visite</button>
             </div>
@@ -338,7 +342,7 @@ loadTodayAppointments = async function(userId) {
   var el = document.getElementById('today-appts');
   if (!res.data || res.data.length === 0) {
     el.innerHTML = '<div class="dash-empty-state">'
-      + '<img src="../img/calendrier_1.png" alt="" class="dash-empty-img"/>'
+      + '<img src="../assets/img/calendrier_1.png" alt="" class="dash-empty-img"/>'
       + '<p class="dash-empty-text">Aucun rendez-vous aujourd\'hui</p>'
       + '<button class="dash-btn-empty" onclick="openModal()">+ Créer votre premier RDV</button>'
       + '</div>';
@@ -381,7 +385,7 @@ loadNextAppt = async function(userId) {
   if (!el) return;
   if (!res.data || res.data.length === 0) {
     el.innerHTML = '<div class="dash-empty-state">'
-      + '<img src="../img/calendrier_2.png" alt="" class="dash-empty-img"/>'
+      + '<img src="../assets/img/calendrier_2.png" alt="" class="dash-empty-img"/>'
       + '<p class="dash-empty-text">Aucun prochain RDV</p>'
       + '<button class="dash-btn-empty" onclick="openModal()">+ Planifier une visite</button>'
       + '</div>';

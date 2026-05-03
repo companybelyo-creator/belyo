@@ -17,7 +17,6 @@
 }
 .dash-title em { font-style: italic; color: var(--ink); }
 .dash-subtitle { font-size: 13px; color: var(--ink-light); margin-top: 2px; }
-
 .dash-topbar-right { display: flex; align-items: center; gap: 10px; }
 
 .dash-search {
@@ -68,23 +67,41 @@
   gap: 1rem;
   margin-bottom: 1.2rem;
 }
+
+/* Card avec barre colorée à gauche */
 .dash-kpi-card {
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1.2rem 1.4rem 1rem;
+  position: relative;
+  overflow: hidden;
 }
+
+/* Barre de couleur verticale à gauche */
+.dash-kpi-accent {
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px;
+  height: 100%;
+  border-radius: 14px 0 0 14px;
+}
+
 .dash-kpi-top {
   display: flex; align-items: center; gap: 8px; margin-bottom: .9rem;
 }
+
+/* Icônes avec coins très arrondis et nouvelles couleurs de fond */
 .dash-kpi-icon {
-  width: 28px; height: 28px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
-.dash-kpi-icon--gold   { background: #F5EDD8; color: #C4A87A; }
-.dash-kpi-icon--green  { background: #DCF0E7; color: #1D9E75; }
-.dash-kpi-icon--purple { background: #E8E5F6; color: #534AB7; }
-.dash-kpi-icon--blue   { background: #DDE8F8; color: #3468C0; }
+.dash-kpi-icon--gold   { background: #F4EFEA; color: #A38B74; }
+.dash-kpi-icon--green  { background: #E8F5F0; color: #4EA685; }
+.dash-kpi-icon--purple { background: #EFEEF9; color: #7D7CBD; }
+.dash-kpi-icon--blue   { background: #F9F4E9; color: #C5A267; }
 
 .dash-kpi-label { font-size: 12px; color: var(--ink-light); font-weight: 400; }
 .dash-kpi-val {
@@ -113,12 +130,22 @@
 }
 
 /* ===== ROWS ===== */
+
+/* Rangée du milieu : 2 cartes égales */
 .dash-row-2 {
-  display: grid; grid-template-columns: 1.6fr 1fr;
-  gap: 1rem; margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
+
+/* Rangée du bas : 1er = moitié, 2e = 2/3 du reste, 3e = reste */
+/* Total = 1. Moitié = 0.5. Reste = 0.5. 2/3 du reste = 0.333. Dernier = 0.167 */
+/* Ratio : 3 : 2 : 1 */
 .dash-row-3 {
-  display: grid; grid-template-columns: 1fr 1fr 0.65fr; gap: 1rem;
+  display: grid;
+  grid-template-columns: 3fr 2fr 1fr;
+  gap: 1rem;
 }
 
 /* ===== CARDS ===== */
