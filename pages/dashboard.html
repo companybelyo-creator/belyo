@@ -438,6 +438,74 @@ async function loadTopServices(userId) {
   }).join('');
 }
 
+// ===== OVERRIDE loadKPIs — gestion CA sans historique =====
+var _origLoadKPIs = loadKPIs;
+loadKPIs = async function(userId) {
+  var now        = new Date();
+  var today      = now.toISOString().split('T')[0];
+  var startMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  var startLastM = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+  var endLastM   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+
+  // RDV aujourd'hui
+  var r1 = await sb.from('appointments').select('id, status')
+    .eq('user_id', userId)
+    .gte('datetime', today + 'T00:00:00')
+    .lte('datetime', today + 'T23:59:59');
+  var todayAppts = r1.data || [];
+  document.getElementById('kpi-today').textContent = todayAppts.length;
+  var done = todayAppts.filter(function(a){ return a.status==='done'; }).length;
+  var sub1 = document.getElementById('kpi-today-sub');
+  if (sub1) sub1.textContent = done > 0 ? done + ' terminé' + (done>1?'s':'') : 'Aucun terminé';
+
+  // CA ce mois (tous statuts sauf cancelled)
+  var r2 = await sb.from('appointments').select('price, status')
+    .eq('user_id', userId)
+    .neq('status', 'cancelled')
+    .gte('datetime', startMonth);
+  var ca = (r2.data||[]).reduce(function(s,a){ return s+(parseFloat(a.price)||0); }, 0);
+  document.getElementById('kpi-month').textContent = Math.round(ca) + '€';
+
+  // CA mois dernier
+  var r2b = await sb.from('appointments').select('price')
+    .eq('user_id', userId)
+    .neq('status', 'cancelled')
+    .gte('datetime', startLastM).lte('datetime', endLastM);
+  var caLast = (r2b.data||[]).reduce(function(s,a){ return s+(parseFloat(a.price)||0); }, 0);
+
+  var trendEl = document.getElementById('kpi-month-trend');
+  var subEl   = document.getElementById('kpi-month-sub');
+
+  if (trendEl) {
+    if (caLast > 0) {
+      // Cas normal : on a un historique
+      var diff = Math.round((ca - caLast) / caLast * 100);
+      trendEl.textContent = (diff >= 0 ? '+' : '') + diff + '%';
+      trendEl.className = 'dash-kpi-trend ' + (diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-flat');
+      if (subEl) subEl.textContent = 'vs mois dernier';
+    } else if (ca > 0) {
+      // Pas d'historique mais du CA ce mois → premier mois actif 🎉
+      trendEl.textContent = '1er mois';
+      trendEl.className = 'dash-kpi-trend trend-new';
+      if (subEl) subEl.textContent = 'Lancement !';
+    } else {
+      // Aucune donnée du tout
+      trendEl.textContent = '';
+      trendEl.className = 'dash-kpi-trend';
+      if (subEl) subEl.textContent = 'Aucun RDV ce mois';
+    }
+  }
+
+  // Total clients
+  var r3 = await sb.from('clients').select('id', { count:'exact', head:true }).eq('user_id', userId);
+  document.getElementById('kpi-clients').textContent = r3.count != null ? r3.count : 0;
+
+  // RDV ce mois
+  var r4 = await sb.from('appointments').select('id', { count:'exact', head:true })
+    .eq('user_id', userId).gte('datetime', startMonth);
+  document.getElementById('kpi-month-appts').textContent = r4.count != null ? r4.count : 0;
+};
+
 // Override loadTodayAppointments to use new empty state
 var _origLoadToday = loadTodayAppointments;
 loadTodayAppointments = async function(userId) {

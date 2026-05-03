@@ -141,6 +141,7 @@
 .trend-up   { background: #E1F5EE; color: #0F6E56; }
 .trend-down { background: #FAECE7; color: #993C1D; }
 .trend-flat { background: var(--cream-dark); color: var(--ink-light); }
+.trend-new  { background: #FDF3DC; color: #96700A; }
 .dash-badge-new {
   font-size: 11px; background: #E1F5EE; color: #0F6E56;
   padding: 1px 7px; border-radius: 100px; font-weight: 600;
