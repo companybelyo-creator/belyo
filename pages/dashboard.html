@@ -78,9 +78,11 @@
         </div>
         <div class="dash-kpi-val-row">
           <div class="dash-kpi-val" id="kpi-month">—</div>
-          <svg class="dash-sparkline" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <polyline points="0,22 13,18 26,20 39,12 52,16 65,8 80,10" stroke="#C4A87A" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
+          <span class="dash-sparkline-wrap" title="Évolution quotidienne du CA sur le mois en cours">
+            <svg class="dash-sparkline" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="0,22 13,18 26,20 39,12 52,16 65,8 80,10" stroke="#3D8B6F" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
         </div>
         <div class="dash-kpi-sub">
           <span class="dash-kpi-trend" id="kpi-month-trend"></span>
@@ -412,6 +414,38 @@ loadNextAppt = async function(userId) {
     + '<a href="appointments.html" style="display:block;text-align:center;margin-top:1rem;font-size:12px;color:var(--ink-light)">Voir tous les RDV →</a>';
 };
 
+// Override activity colors
+var _origLoadActivity = typeof loadActivity !== 'undefined' ? loadActivity : null;
+
+// ===== ACTIVITÉ RÉCENTE OVERRIDE =====
+window.loadActivity = async function(userId) {
+  var res = await sb.from('appointments').select('client_name, service, datetime, status, price')
+    .eq('user_id', userId)
+    .order('datetime', { ascending: false })
+    .limit(8);
+
+  var el = document.getElementById('activity-list');
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div class="dash-loading">Aucune activité</div>';
+    return;
+  }
+
+  var colors = { done:'#4EA685', pending:'#C4A87A', cancelled:'#D85A30' };
+  var labels = { done:'RDV terminé', pending:'RDV prévu', cancelled:'RDV annulé' };
+
+  el.innerHTML = res.data.map(function(a) {
+    var dt    = new Date(a.datetime);
+    var color = colors[a.status] || '#888';
+    var label = labels[a.status] || a.status;
+    var timeStr = dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) + ' ' + formatTime(a.datetime);
+    return '<div class="activity-item">'
+      + '<div class="activity-dot" style="background:' + color + '"></div>'
+      + '<div class="activity-text"><strong>' + a.client_name + '</strong> — ' + (a.service||'—') + (a.price?' (' + Math.round(parseFloat(a.price)) + '€)':'') + '<br><span style="font-size:11px;color:var(--ink-light)">' + label + '</span></div>'
+      + '<div class="activity-time">' + timeStr + '</div>'
+      + '</div>';
+  }).join('');
+};
+
 // Hook into init to also load top services
 document.addEventListener('DOMContentLoaded', function() {
   if(typeof initPhoneInputs==='function') initPhoneInputs();
@@ -457,8 +491,8 @@ async function loadRecentClientsWithSpark(userId) {
       + '<div class="client-mini-name">' + c.name + '</div>'
       + '<div class="client-mini-sub">' + (c.last_visit ? 'Dernière visite : ' + formatDate(c.last_visit) : 'Nouveau client') + '</div>'
       + '</div>'
-      + '<svg class="dash-sparkline" viewBox="0 0 78 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">'
-      + '<polyline points="' + sparkPts + '" stroke="#C4A87A" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<svg class="dash-sparkline" viewBox="0 0 78 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0" title="Fréquence de visite sur les 6 derniers mois">'
+      + '<polyline points="' + sparkPts + '" stroke="#8C735B" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
       + '</svg>'
       + '<div class="client-mini-visits">' + visits + ' visite' + (visits>1?'s':'') + '</div>'
       + '</div>';
