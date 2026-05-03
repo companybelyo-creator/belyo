@@ -79,8 +79,8 @@
         <div class="dash-kpi-val-row">
           <div class="dash-kpi-val" id="kpi-month">—</div>
           <span class="dash-sparkline-wrap" title="Évolution quotidienne du CA sur le mois en cours">
-            <svg class="dash-sparkline" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polyline points="0,22 13,18 26,20 39,12 52,16 65,8 80,10" stroke="#3D8B6F" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg id="ca-sparkline-svg" class="dash-sparkline" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg" overflow="visible">
+              <polyline points="0,24 13,24 26,24 39,24 52,24 65,24 80,24" stroke="#3D8B6F" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </span>
         </div>
@@ -460,13 +460,105 @@ var _origInit = window.onload;
     if (typeof currentUserId === 'string' && currentUserId) {
       clearInterval(interval);
       loadTopServices(currentUserId);
-      // Also patch recent clients to add sparkline
       loadRecentClientsWithSpark(currentUserId);
+      loadCaSparkline(currentUserId);
     }
   }, 300);
 })();
 
-// Recent clients with sparkline
+// ===== SPARKLINE CA : vrais calculs depuis Supabase =====
+// Charge les RDV "done" du mois en cours, regroupe par jour, génère la courbe
+async function loadCaSparkline(userId) {
+  var now       = new Date();
+  var year      = now.getFullYear();
+  var month     = now.getMonth();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var startMonth = new Date(year, month, 1).toISOString();
+  var endMonth   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+
+  var res = await sb.from('appointments')
+    .select('datetime, price')
+    .eq('user_id', userId)
+    .eq('status', 'done')
+    .gte('datetime', startMonth)
+    .lte('datetime', endMonth);
+
+  // Agréger par jour
+  var byDay = {};
+  for (var d = 1; d <= daysInMonth; d++) byDay[d] = 0;
+  (res.data || []).forEach(function(a) {
+    var day = new Date(a.datetime).getDate();
+    byDay[day] = (byDay[day] || 0) + (parseFloat(a.price) || 0);
+  });
+
+  // Prendre un point tous les ~4 jours pour avoir 7-8 points
+  var step = Math.max(1, Math.floor(daysInMonth / 7));
+  var vals = [];
+  for (var d = 1; d <= daysInMonth; d += step) vals.push(byDay[d] || 0);
+  // S'assurer qu'on a le dernier jour
+  if (vals.length < 2) vals = [0, 0];
+
+  var svgEl = document.getElementById('ca-sparkline-svg');
+  if (!svgEl) return;
+  svgEl.setAttribute('viewBox', '0 0 78 28');
+  svgEl.innerHTML = buildSparklineSVG(vals, '#3D8B6F', 'sg-ca');
+}
+
+// ===== SPARKLINE CLIENTS : visites par mois sur 6 mois =====
+async function loadClientSparkline(userId, clientId, svgEl) {
+  var now   = new Date();
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+                  end:   new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString() });
+  }
+
+  var startAll = months[0].start;
+  var endAll   = months[months.length - 1].end;
+
+  var res = await sb.from('appointments')
+    .select('datetime')
+    .eq('user_id', userId)
+    .ilike('client_name', '%') // get all, filter below
+    .gte('datetime', startAll)
+    .lte('datetime', endAll);
+
+  // Filter by client id if available — otherwise count all with matching name
+  // We count visits per month
+  var monthCounts = months.map(function(m) {
+    return (res.data || []).filter(function(a) {
+      return a.datetime >= m.start && a.datetime <= m.end;
+    }).length;
+  });
+
+  return monthCounts;
+}
+
+function buildSparklineSVG(vals, stroke, gradId) {
+  var H = 28, W = 78, pad = 4;
+  if (!vals || vals.length < 2) vals = [0, 0];
+  var maxVal = Math.max.apply(null, vals);
+
+  var pts = vals.map(function(v, i) {
+    var x = Math.round(i * (W / (vals.length - 1)));
+    var y = maxVal === 0 ? H - pad : Math.round(pad + (1 - v / maxVal) * (H - 2 * pad));
+    return x + ',' + y;
+  });
+
+  var line  = pts.join(' ');
+  var lastX = Math.round((vals.length - 1) * (W / (vals.length - 1)));
+  var area  = line + ' ' + lastX + ',' + (H - pad) + ' 0,' + (H - pad);
+
+  return '<defs><linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.3"/>'
+    + '<stop offset="100%" stop-color="' + stroke + '" stop-opacity="0.03"/>'
+    + '</linearGradient></defs>'
+    + '<polygon points="' + area + '" fill="url(#' + gradId + ')"/>'
+    + '<polyline points="' + line + '" stroke="' + stroke + '" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>';
+}
+
+// ===== RECENT CLIENTS avec vraies sparklines =====
 async function loadRecentClientsWithSpark(userId) {
   var res = await sb.from('clients').select('*')
     .eq('user_id', userId)
@@ -478,14 +570,46 @@ async function loadRecentClientsWithSpark(userId) {
     el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun client</div>';
     return;
   }
+
+  // Pour chaque client, charger ses visites des 6 derniers mois
+  var now = new Date();
+  var sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1).toISOString();
+
+  // Charger tous les RDV des 6 derniers mois en une seule requête
+  var apptRes = await sb.from('appointments')
+    .select('client_name, datetime')
+    .eq('user_id', userId)
+    .gte('datetime', sixMonthsAgo)
+    .order('datetime', { ascending: true });
+
+  var allAppts = apptRes.data || [];
+
+  // Construire les mois (6 derniers)
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      start: new Date(d.getFullYear(), d.getMonth(), 1),
+      end:   new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59)
+    });
+  }
+
   el.innerHTML = res.data.map(function(c) {
-    var parts = (c.name||'').trim().split(' ');
-    var av    = (parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+    var parts  = (c.name||'').trim().split(' ');
+    var av     = ((parts[0]||'?')[0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
     var visits = c.visit_count || 0;
-    // Mini sparkline SVG (simulated based on visit count)
-    var pts = [22, 20, 18, 16, 14, 12, 10].slice(0, Math.max(visits, 2)).reverse();
-    while (pts.length < 7) pts.unshift(pts[0] + 2);
-    var sparkPts = pts.map(function(y, i) { return (i*13) + ',' + y; }).join(' ');
+
+    // Compter les visites par mois pour ce client (insensible à la casse)
+    var cName = (c.name||'').trim().toLowerCase();
+    var monthCounts = months.map(function(m) {
+      return allAppts.filter(function(a) {
+        var aDate = new Date(a.datetime);
+        return (a.client_name||'').trim().toLowerCase() === cName
+          && aDate >= m.start && aDate <= m.end;
+      }).length;
+    });
+
+    var svg = buildSparklineSVG(monthCounts, '#8C735B', 'sg-c-' + (c.id||Math.random()).toString().replace('.',''));
 
     return '<div class="client-mini-row">'
       + '<div class="client-mini-avatar">' + av + '</div>'
@@ -493,8 +617,8 @@ async function loadRecentClientsWithSpark(userId) {
       + '<div class="client-mini-name">' + c.name + '</div>'
       + '<div class="client-mini-sub">' + (c.last_visit ? 'Dernière visite : ' + formatDate(c.last_visit) : 'Nouveau client') + '</div>'
       + '</div>'
-      + '<svg class="dash-sparkline" viewBox="0 0 78 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0" title="Fréquence de visite sur les 6 derniers mois">'
-      + '<polyline points="' + sparkPts + '" stroke="#8C735B" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<svg class="dash-sparkline" viewBox="0 0 78 28" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;overflow:visible" title="Fréquence de visite sur les 6 derniers mois">'
+      + svg
       + '</svg>'
       + '<div class="client-mini-visits">' + visits + ' visite' + (visits>1?'s':'') + '</div>'
       + '</div>';
