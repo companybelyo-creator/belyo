@@ -298,7 +298,10 @@
   await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
 })();
 </script>
+<script src="../js/dashboard.js"></script>
 <script>
+// ===== OVERRIDE loadRecentClients (après chargement dashboard.js) =====
+// Redéfinit la fonction pour y ajouter les sparklines et vrais visit_count
 // ===== OVERRIDES déclarés avant dashboard.js pour intercepter ses appels =====
 
 // Override loadRecentClients — remplace la version de dashboard.js
@@ -332,7 +335,7 @@ window.loadRecentClients = async function(userId) {
   var allApptsFull = await sb.from('appointments')
     .select('client_name')
     .eq('user_id', userId)
-    .eq('status', 'done');
+;
   var visitCounts = {};
   (allApptsFull.data || []).forEach(function(a) {
     var n = (a.client_name||'').trim().toLowerCase();
@@ -402,9 +405,7 @@ window.loadRecentClients = async function(userId) {
       + '</div>';
   }).join('');
 };
-</script>
-<script src="../js/dashboard.js"></script>
-<script>
+
 // ===== TOP SERVICES =====
 async function loadTopServices(userId) {
   var res = await sb.from('appointments')
