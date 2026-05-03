@@ -530,7 +530,7 @@ window.loadActivity = async function(userId) {
   var res = await sb.from('appointments').select('client_name, service, datetime, status, price')
     .eq('user_id', userId)
     .order('datetime', { ascending: false })
-    .limit(8);
+    .limit(5);
 
   var el = document.getElementById('activity-list');
   if (!res.data || res.data.length === 0) {
