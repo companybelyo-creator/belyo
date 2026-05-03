@@ -313,7 +313,7 @@ window.loadRecentClients = async function(userId) {
   var res = await sb.from('clients').select('*')
     .eq('user_id', userId)
     .order('last_visit', { ascending: false, nullsFirst: false })
-    .limit(3);
+    .limit(5);
 
   if (!res.data || res.data.length === 0) {
     el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun client</div>';
@@ -425,7 +425,7 @@ async function loadTopServices(userId) {
   });
 
   var total = res.data.length;
-  var sorted = Object.entries(counts).sort(function(a,b){ return b[1]-a[1]; }).slice(0,3);
+  var sorted = Object.entries(counts).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
   var maxCount = sorted[0] ? sorted[0][1] : 1;
 
   el.innerHTML = sorted.map(function(entry) {
