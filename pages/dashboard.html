@@ -313,7 +313,7 @@ window.loadRecentClients = async function(userId) {
   var res = await sb.from('clients').select('*')
     .eq('user_id', userId)
     .order('last_visit', { ascending: false, nullsFirst: false })
-    .limit(5);
+    .limit(3);
 
   if (!res.data || res.data.length === 0) {
     el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun client</div>';
@@ -331,11 +331,10 @@ window.loadRecentClients = async function(userId) {
     .order('datetime', { ascending: true });
   var allAppts = apptRes.data || [];
 
-  // Requête pour le vrai nombre total de visites par client
+  // Vrai nombre total de visites par client (tous statuts)
   var allApptsFull = await sb.from('appointments')
     .select('client_name')
-    .eq('user_id', userId)
-;
+    .eq('user_id', userId);
   var visitCounts = {};
   (allApptsFull.data || []).forEach(function(a) {
     var n = (a.client_name||'').trim().toLowerCase();
@@ -409,9 +408,8 @@ window.loadRecentClients = async function(userId) {
 // ===== TOP SERVICES =====
 async function loadTopServices(userId) {
   var res = await sb.from('appointments')
-    .select('service, price')
-    .eq('user_id', userId)
-    .eq('status', 'done');
+    .select('service')
+    .eq('user_id', userId);
 
   var el = document.getElementById('top-services-list');
   if (!el) return;
@@ -427,13 +425,15 @@ async function loadTopServices(userId) {
   });
 
   var total = res.data.length;
-  var sorted = Object.entries(counts).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var sorted = Object.entries(counts).sort(function(a,b){ return b[1]-a[1]; }).slice(0,3);
+  var maxCount = sorted[0] ? sorted[0][1] : 1;
 
   el.innerHTML = sorted.map(function(entry) {
     var pct = Math.round(entry[1] / total * 100);
+    var barPct = Math.round(entry[1] / maxCount * 100);
     return '<div class="top-service-row">'
       + '<div class="top-service-info"><span class="top-service-name">' + entry[0] + '</span><span class="top-service-pct">(' + pct + '%)</span></div>'
-      + '<div class="top-service-bar-wrap"><div class="top-service-bar" style="width:' + pct + '%"></div></div>'
+      + '<div class="top-service-bar-wrap"><div class="top-service-bar" style="width:' + barPct + '%"></div></div>'
       + '</div>';
   }).join('');
 }
