@@ -344,7 +344,7 @@ document.addEventListener('click', function(e) {
 
 var HOUR_START = 8;
 var HOUR_END   = 20;
-var SLOT_H     = 52;
+var SLOT_H     = 68;
 
 function getMondayOf(date) {
   var d = new Date(date);
@@ -437,11 +437,11 @@ function renderCalendar() {
   var html = '';
 
   // Légende
-  var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:10px;font-size:11px;color:var(--ink-light);flex-wrap:wrap">'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#276749;border-left:3px solid #6EC99A"></div><span>À venir</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5ED;border:1px solid #276749;border-left:3px solid #276749"></div><span>Terminé</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:#F0EDEA"></div><span>Non travaillé</span></div>'
-    + '<div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15)"></div><span>Congé</span></div>'
+  var legendHtml = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;font-size:11.5px;color:var(--ink-light);flex-wrap:wrap">'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:3px;background:#E0EDFF;border-left:3px solid #2B7FFF"></div><span>À venir</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:3px;background:#E8F5EF;border-left:3px solid #26A96C"></div><span>Terminé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:3px;background:#F3F0ED"></div><span>Non travaillé</span></div>'
+    + '<div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:3px;background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.4)"></div><span>Congé</span></div>'
     + '</div>';
   var legendEl = document.getElementById('cal-legend');
   if (legendEl) legendEl.innerHTML = legendHtml;
@@ -550,10 +550,8 @@ function renderCalendar() {
         : rawName;
 
       var html = '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>';
-      html += '<div class="cal-event-name" style="font-size:11.5px;letter-spacing:.01em">' + shortName + '</div>';
-      if (evH >= 44) {
-        html += '<div class="cal-event-service">' + (a.service || '') + '</div>';
-      }
+      html += '<div class="cal-event-name">' + shortName + '</div>';
+      html += '<div class="cal-event-service">' + (a.service || '') + '</div>';
       ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showTooltip(e, a); });
       ev.addEventListener('mouseleave', hideTooltip);
