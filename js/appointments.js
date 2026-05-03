@@ -516,17 +516,28 @@ function renderCalendar() {
   renderCalFilters();
 
   var JOURS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+  // Detecter les jours entierement fermes
+  var fullClosedDays = days.map(function(d) {
+    for (var hh = HOUR_START; hh <= HOUR_END; hh++) {
+      if (isHourWorked(d, hh)) return false;
+    }
+    return true;
+  });
+
   html += '<div class="cal-head" style="border-bottom:1px solid var(--border)"></div>';
   days.forEach(function(d, i) {
-    var isToday = d.getTime() === today.getTime();
-    // Vérifier si jour fermé pour griser l'en-tête
-    var dayOff = !isHourWorked(d, 12);
-    html += '<div class="cal-head' + (isToday ? ' today' : '') + '" style="' + (dayOff ? 'opacity:.45;' : '') + '">'
+    var isToday  = d.getTime() === today.getTime();
+    var isClosed = fullClosedDays[i];
+    html += '<div class="cal-head' + (isToday ? ' today' : '') + (isClosed ? ' day-closed' : '') + '">'
       + '<div class="cal-head-day">' + JOURS[i] + '</div>'
       + '<div class="cal-head-num">' + d.getDate() + '</div>'
-      + (dayOff ? '<div style="font-size:9px;color:var(--ink-light);margin-top:2px">Fermé</div>' : '')
+      + (isClosed ? '<div class="cal-head-closed-label">Ferm\u00e9</div>' : '')
       + '</div>';
   });
+
+  // Suivre si une colonne ferm\u00e9e a deja ete inseree
+  var closedColInserted = days.map(function() { return false; });
 
   hours.forEach(function(h, hi) {
     html += '<div class="cal-time-col" style="height:' + SLOT_H + 'px;border-top:1px solid var(--border)">'
@@ -536,29 +547,34 @@ function renderCalendar() {
       var isToday  = d.getTime() === today.getTime();
       var dateStr  = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
       var dateHour = dateStr + 'T' + String(h).padStart(2,'0') + ':00';
-      var worked   = isHourWorked(d, h);
-      var congeH   = isHourCongeHoraire(d, h);
-      // Détecter congé journée
-      var iso      = dateStr;
-      var congeJ   = salonPlanning && salonPlanning.conges && salonPlanning.conges.some(function(c){
+
+      if (fullClosedDays[di]) {
+        if (!closedColInserted[di]) {
+          closedColInserted[di] = true;
+          var totalH = SLOT_H * hours.length;
+          html += '<div class="cal-cell cal-col-closed" style="height:' + totalH + 'px;grid-row:span ' + hours.length + '"></div>';
+        }
+        return;
+      }
+
+      var worked = isHourWorked(d, h);
+      var congeH = isHourCongeHoraire(d, h);
+      var iso    = dateStr;
+      var congeJ = salonPlanning && salonPlanning.conges && salonPlanning.conges.some(function(c){
         return c.type !== 'heure' && iso >= c.debut && iso <= c.fin;
       });
 
       var cls = 'cal-cell';
       if (isToday) cls += ' today-col';
-      if (congeJ)      cls += ' conge-full';
-      else if (congeH) cls += ' conge-partiel';
+      if (congeJ)       cls += ' conge-full';
+      else if (congeH)  cls += ' conge-partiel';
       else if (!worked) cls += ' off-hours';
-      else             cls += ' worked';
+      else              cls += ' worked';
 
-      // Étiquette congé — seulement sur la première heure du jour
       var congeLabel = '';
       if (hi === 0) {
-        if (congeJ) {
-          congeLabel = '<div class="cal-conge-label">' + (congeJ.label || 'Congé') + '</div>';
-        } else if (congeH) {
-          congeLabel = '<div class="cal-conge-label">⏱ Fermeture partielle</div>';
-        }
+        if (congeJ) congeLabel = '<div class="cal-conge-label">' + (congeJ.label || 'Cong\u00e9') + '</div>';
+        else if (congeH) congeLabel = '<div class="cal-conge-label">&#9201; Fermeture partielle</div>';
       }
 
       html += '<div class="' + cls + '"'
@@ -665,8 +681,7 @@ function renderCalendar() {
         + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
         + '</div>';
       ev.innerHTML = html;
-      ev.addEventListener('click', function(e) { e.stopPropagation(); showTooltip(e, a); });
-      ev.addEventListener('mouseleave', hideTooltip);
+      ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
       cell.appendChild(ev);
     });
   });
@@ -689,20 +704,38 @@ function renderCalendar() {
   }
 }
 
-function showTooltip(e, a) {
-  var tip = document.getElementById('cal-tooltip');
-  tip.innerHTML = '<div class="cal-tooltip-name">' + a.client_name + '</div>'
-    + '<div class="cal-tooltip-row">🕐 ' + formatTime(a.datetime) + '</div>'
-    + '<div class="cal-tooltip-row">✂️ ' + a.service + '</div>'
-    + (a.price ? '<div class="cal-tooltip-row">💶 ' + parseFloat(a.price).toFixed(0) + '€</div>' : '')
-    + (a.notes ? '<div class="cal-tooltip-row">📝 ' + a.notes + '</div>' : '')
-    + '<div class="cal-tooltip-row" style="margin-top:6px">' + statusBadge(a.status) + '</div>';
-  tip.style.left = (e.clientX + 12) + 'px';
-  tip.style.top  = (e.clientY - 20) + 'px';
-  tip.classList.add('show');
+function showApptDetail(a) {
+  var panel = document.getElementById('appt-detail-panel');
+  if (!panel) return;
+  var statusLabels = { pending: 'A venir', done: 'Termine', cancelled: 'Annule' };
+  var statusColors = { pending: '#2B7FFF', done: '#26A96C', cancelled: '#C0392B' };
+  var st = a.status || 'pending';
+  var dt = new Date(a.datetime);
+  var dateStr = dt.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('appt-detail-name').textContent    = a.client_name || '';
+  document.getElementById('appt-detail-service').textContent = a.service || '\u2014';
+  document.getElementById('appt-detail-date').textContent    = dateStr;
+  document.getElementById('appt-detail-time').textContent    = formatTime(a.datetime);
+  document.getElementById('appt-detail-price').textContent   = a.price ? parseFloat(a.price).toFixed(0) + ' \u20ac' : '\u2014';
+  document.getElementById('appt-detail-notes').textContent   = a.notes || '\u2014';
+  var badge = document.getElementById('appt-detail-status');
+  badge.textContent         = statusLabels[st] || st;
+  badge.style.background    = (statusColors[st] || '#888') + '18';
+  badge.style.color         = statusColors[st] || '#888';
+  var btnEdit   = document.getElementById('appt-detail-edit');
+  var btnDone   = document.getElementById('appt-detail-done');
+  var btnCancel = document.getElementById('appt-detail-cancel');
+  if (btnEdit)   { btnEdit.onclick   = function() { closeApptDetail(); openEditModal(a.id); }; }
+  if (btnDone)   { btnDone.style.display   = st === 'pending' ? 'inline-flex' : 'none'; btnDone.onclick   = function() { updateStatus(a.id, 'done');      closeApptDetail(); }; }
+  if (btnCancel) { btnCancel.style.display = st === 'pending' ? 'inline-flex' : 'none'; btnCancel.onclick = function() { updateStatus(a.id, 'cancelled'); closeApptDetail(); }; }
+  panel.classList.add('open');
+  document.getElementById('appt-detail-overlay').style.display = 'block';
 }
-function hideTooltip() { document.getElementById('cal-tooltip').classList.remove('show'); }
-document.addEventListener('click', hideTooltip);
+function closeApptDetail() {
+  var panel = document.getElementById('appt-detail-panel');
+  if (panel) panel.classList.remove('open');
+  document.getElementById('appt-detail-overlay').style.display = 'none';
+}
 
 function openModal(presetDatetime) {
   var dt = presetDatetime || null;

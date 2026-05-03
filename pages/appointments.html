@@ -192,6 +192,45 @@
 </div>
 <div class="cal-tooltip" id="cal-tooltip"></div>
 <div class="toast" id="toast"></div>
+
+<!-- Panel détail RDV -->
+<div id="appt-detail-overlay" style="display:none;position:fixed;inset:0;z-index:498;background:transparent" onclick="closeApptDetail()"></div>
+<div id="appt-detail-panel" class="appt-detail-panel">
+  <div class="adp-header">
+    <div>
+      <div id="appt-detail-name" class="adp-name"></div>
+      <span id="appt-detail-status" class="adp-status-badge"></span>
+    </div>
+    <button class="adp-close" onclick="closeApptDetail()">×</button>
+  </div>
+  <div class="adp-body">
+    <div class="adp-row">
+      <span class="adp-label">Prestation</span>
+      <span id="appt-detail-service" class="adp-value adp-value-strong"></span>
+    </div>
+    <div class="adp-row">
+      <span class="adp-label">Date</span>
+      <span id="appt-detail-date" class="adp-value"></span>
+    </div>
+    <div class="adp-row">
+      <span class="adp-label">Heure</span>
+      <span id="appt-detail-time" class="adp-value"></span>
+    </div>
+    <div class="adp-row">
+      <span class="adp-label">Prix</span>
+      <span id="appt-detail-price" class="adp-value"></span>
+    </div>
+    <div class="adp-row">
+      <span class="adp-label">Notes</span>
+      <span id="appt-detail-notes" class="adp-value adp-notes"></span>
+    </div>
+  </div>
+  <div class="adp-actions">
+    <button id="appt-detail-edit" class="adp-btn adp-btn-primary">Modifier</button>
+    <button id="appt-detail-done" class="adp-btn adp-btn-success" style="display:none">Marquer terminé</button>
+    <button id="appt-detail-cancel" class="adp-btn adp-btn-danger" style="display:none">Annuler</button>
+  </div>
+</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js?v=2"></script>

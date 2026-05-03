@@ -399,3 +399,139 @@
 .row-selected { background: var(--gold-light) !important; }
 .table thead th:first-child { width: 36px; padding: 10px 12px; }
 .table tbody td:first-child { padding: 10px 12px; }
+/* ===== JOURNEES FERMEES ===== */
+.cal-head.day-closed {
+  opacity: 1;
+  background: #EDEAE6;
+}
+.cal-head.day-closed .cal-head-day,
+.cal-head.day-closed .cal-head-num {
+  opacity: .38;
+}
+.cal-head-closed-label {
+  font-size: 9px;
+  color: var(--ink-light);
+  opacity: .55;
+  margin-top: 2px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.cal-col-closed {
+  background: repeating-linear-gradient(
+    135deg,
+    #EDEAE6,
+    #EDEAE6 5px,
+    #E6E2DD 5px,
+    #E6E2DD 10px
+  );
+  cursor: default;
+  border-right: 1px solid var(--border);
+}
+
+/* ===== PANEL DETAIL RDV ===== */
+.appt-detail-panel {
+  position: fixed;
+  bottom: 0;
+  right: 2rem;
+  width: 320px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  box-shadow: 0 -4px 32px rgba(26,23,20,.12);
+  z-index: 499;
+  transform: translateY(100%);
+  transition: transform .25s cubic-bezier(.4,0,.2,1);
+  font-family: var(--font-body);
+}
+.appt-detail-panel.open {
+  transform: translateY(0);
+}
+.adp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.adp-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 300;
+  color: var(--ink);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+.adp-status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+.adp-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--ink-light);
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.adp-close:hover { color: var(--ink); }
+.adp-body {
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+.adp-label {
+  font-size: 12px;
+  color: var(--ink-light);
+  flex-shrink: 0;
+  min-width: 70px;
+}
+.adp-value {
+  font-size: 13px;
+  color: var(--ink);
+  text-align: right;
+}
+.adp-value-strong { font-weight: 500; }
+.adp-notes {
+  color: var(--ink-light);
+  font-style: italic;
+  font-size: 12px;
+}
+.adp-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px 18px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.adp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all .15s;
+}
+.adp-btn-primary { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.adp-btn-primary:hover { background: #2d2926; }
+.adp-btn-success { background: transparent; color: #26A96C; border-color: #26A96C; }
+.adp-btn-success:hover { background: #E8F5EF; }
+.adp-btn-danger  { background: transparent; color: var(--danger); border-color: var(--danger); }
+.adp-btn-danger:hover  { background: #fdf0ef; }
