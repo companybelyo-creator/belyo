@@ -517,7 +517,42 @@ function renderCalendar() {
 
   days.forEach(function(d, di) {
     var dk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    (apptsByDay[dk] || []).forEach(function(a) {
+    var dayAppts = (apptsByDay[dk] || []).filter(function(a) { return a.status !== 'cancelled'; });
+
+    // Calculer durée effective de chaque RDV
+    function getDuree(a) {
+      var dureeMin = a.duration_minutes || 30;
+      if (!a.duration_minutes && PRIX_DUREE && a.service) {
+        var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+        var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+        var pd  = pdH || pdF;
+        if (pd && pd.duree) dureeMin = pd.duree;
+      }
+      return dureeMin;
+    }
+
+    // Calculer fin en minutes depuis minuit
+    function startMin(a) {
+      var dt = new Date(a.datetime);
+      return dt.getHours() * 60 + dt.getMinutes();
+    }
+
+    // Détecter les chaînes consécutives (fin d'un = début du suivant, même statut)
+    var chains = {};
+    dayAppts.forEach(function(a, idx) {
+      var endMin = startMin(a) + getDuree(a);
+      dayAppts.forEach(function(b, jdx) {
+        if (idx === jdx) return;
+        if (Math.abs(startMin(b) - endMin) <= 2 && a.status === b.status) {
+          chains[a.id] = chains[a.id] || {};
+          chains[a.id].next = b.id;
+          chains[b.id] = chains[b.id] || {};
+          chains[b.id].prev = a.id;
+        }
+      });
+    });
+
+    dayAppts.forEach(function(a) {
       var dt = new Date(a.datetime);
       var aH = dt.getHours();
       var aM = dt.getMinutes();
@@ -528,30 +563,34 @@ function renderCalendar() {
       var cell = cells[rowIndex * 7 + di];
       if (!cell) return;
 
-      var dureeMin = a.duration_minutes || 30;
-      if (!a.duration_minutes && PRIX_DUREE && a.service) {
-        var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
-        var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
-        var pd  = pdH || pdF;
-        if (pd && pd.duree) dureeMin = pd.duree;
-      }
+      var dureeMin = getDuree(a);
       var evH = Math.max(36, (dureeMin / 60) * SLOT_H);
 
       var ev = document.createElement('div');
-      ev.className = 'cal-event status-' + (a.status || 'pending');
+      var chain = chains[a.id] || {};
+      var hasNext = !!chain.next;
+      var hasPrev = !!chain.prev;
+
+      ev.className = 'cal-event status-' + (a.status || 'pending')
+        + (hasNext ? ' chain-top' : '')
+        + (hasPrev ? ' chain-bottom' : '');
       ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + evH + 'px;';
 
-      // Contenu selon la hauteur disponible
-      // Formater prénom + initiale nom pour gagner de la place
+      // Nom court
       var rawName   = (a.client_name || '').trim();
       var nameParts = rawName.split(' ');
       var shortName = nameParts.length > 1
         ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
         : rawName;
 
-      var html = '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>';
-      html += '<div class="cal-event-name">' + shortName + '</div>';
-      html += '<div class="cal-event-service">' + (a.service || '') + '</div>';
+      // Layout : heure + nom à gauche, prestation à droite
+      var html = '<div class="cal-event-row">'
+        + '<div class="cal-event-left">'
+        + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
+        + '<div class="cal-event-name">' + shortName + '</div>'
+        + '</div>'
+        + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
+        + '</div>';
       ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showTooltip(e, a); });
       ev.addEventListener('mouseleave', hideTooltip);

@@ -211,12 +211,27 @@
 /* Annule - masque */
 .cal-event.status-cancelled { display: none; }
 
+.cal-event-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 4px;
+  height: 100%;
+  min-width: 0;
+}
+.cal-event-left {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
 .cal-event-time {
   font-weight: 600;
   font-size: 10px;
   opacity: .65;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
   letter-spacing: .02em;
+  white-space: nowrap;
 }
 .cal-event-name {
   font-weight: 600;
@@ -226,14 +241,42 @@
   text-overflow: ellipsis;
   letter-spacing: .01em;
 }
-.cal-event-service {
-  font-size: 10.5px;
-  font-weight: 400;
-  opacity: .75;
+.cal-event-service { display: none; }
+.cal-event-svc-badge {
+  font-size: 9.5px;
+  font-weight: 500;
+  opacity: .72;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
+  text-align: right;
+  flex-shrink: 0;
+  max-width: 46%;
+  padding-top: 1px;
+  line-height: 1.3;
+}
+
+/* RDV consécutifs reliés */
+.cal-event.chain-top {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+  padding-bottom: 3px;
+  z-index: 3;
+}
+.cal-event.chain-bottom {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: 1.5px dashed rgba(255,255,255,.5);
+  margin-top: -1px;
+  padding-top: 4px;
+  z-index: 2;
+}
+.cal-event.status-pending.chain-bottom {
+  border-top-color: rgba(43,127,255,.25);
+}
+.cal-event.status-done.chain-bottom {
+  border-top-color: rgba(38,169,108,.25);
 }
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
