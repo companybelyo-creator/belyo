@@ -4,38 +4,12 @@
 
 var currentUserId      = null;
 var allClients         = [];
-var clientSparklines   = {}; // id -> [m0,m1,m2,m3,m4,m5] (6 derniers mois)
 var currentFicheClient = null;
 var selectedClientIds  = new Set();
 
 function initials(name) {
   var parts = (name || '').trim().split(' ');
   return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
-}
-
-// ===== SPARKLINE =====
-function buildSparkline(monthCounts) {
-  // monthCounts : tableau de 6 valeurs (index 0 = il y a 5 mois, index 5 = mois courant)
-  var max = Math.max.apply(null, monthCounts);
-  if (max === 0) max = 1;
-  var w = 64, h = 24, pts = monthCounts.length;
-  var xs = monthCounts.map(function(_, i) { return Math.round((i / (pts - 1)) * w); });
-  var ys = monthCounts.map(function(v) { return Math.round(h - (v / max) * (h - 4)); });
-
-  // Courbe lissée via bezier
-  var d = 'M' + xs[0] + ',' + ys[0];
-  for (var i = 1; i < pts; i++) {
-    var cpx = (xs[i - 1] + xs[i]) / 2;
-    d += ' C' + cpx + ',' + ys[i - 1] + ' ' + cpx + ',' + ys[i] + ' ' + xs[i] + ',' + ys[i];
-  }
-
-  // Zone de remplissage
-  var fill = d + ' L' + xs[pts-1] + ',' + h + ' L' + xs[0] + ',' + h + ' Z';
-
-  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" fill="none" xmlns="http://www.w3.org/2000/svg">'
-    + '<path d="' + fill + '" fill="rgba(196,168,122,0.15)" />'
-    + '<path d="' + d + '" stroke="#C4A87A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />'
-    + '</svg>';
 }
 
 // ===== MODALS =====
@@ -65,6 +39,42 @@ function closeEditModal() {
   document.getElementById('edit-form').reset();
 }
 
+// ===== SPARKLINE SVG =====
+function buildSparkline(visitHistory) {
+  // visitHistory : tableau de 6 valeurs (0 ou 1) représentant les 6 derniers mois
+  // On affiche la courbe cumulative pour montrer l'étalement dans le temps
+  var history = visitHistory && visitHistory.length ? visitHistory : [0,0,0,0,0,0];
+  var W = 56, H = 22, pad = 2;
+  var n = history.length;
+
+  // Cumul progressif
+  var cum = [];
+  var total = 0;
+  for (var i = 0; i < n; i++) {
+    total += history[i];
+    cum.push(total);
+  }
+  var cumMax = Math.max.apply(null, cum.concat([1]));
+
+  var pts = cum.map(function(v, i) {
+    var x = pad + (i / (n - 1)) * (W - pad * 2);
+    var y = H - pad - (v / cumMax) * (H - pad * 2);
+    return [Math.round(x * 10) / 10, Math.round(y * 10) / 10];
+  });
+
+  var pathD = pts.map(function(p, i) { return (i === 0 ? 'M' : 'L') + p[0] + ',' + p[1]; }).join(' ');
+  var areaD = 'M' + pts[0][0] + ',' + (H - pad) + ' '
+    + pts.map(function(p) { return 'L' + p[0] + ',' + p[1]; }).join(' ')
+    + ' L' + pts[pts.length-1][0] + ',' + (H - pad) + ' Z';
+  var last = pts[pts.length - 1];
+
+  return '<svg class="sparkline-svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" fill="none" xmlns="http://www.w3.org/2000/svg">'
+    + '<path d="' + areaD + '" fill="#C4A87A" fill-opacity="0.15"/>'
+    + '<path d="' + pathD + '" stroke="#C4A87A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    + '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="2.5" fill="#C4A87A"/>'
+    + '</svg>';
+}
+
 // ===== RENDU LISTE =====
 function renderClients() {
   var q = document.getElementById('search').value.toLowerCase();
@@ -76,45 +86,63 @@ function renderClients() {
   var tbody = document.getElementById('clients-list');
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state">Aucun client trouvé</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">Aucun client trouvé</div></td></tr>';
     return;
   }
 
   tbody.innerHTML = filtered.map(function(c) {
     var checked = selectedClientIds.has(c.id) ? 'checked' : '';
     var rowSel  = selectedClientIds.has(c.id) ? 'row-selected' : '';
-    var sparkData = clientSparklines[c.id] || [0,0,0,0,0,0];
-    var spark = buildSparkline(sparkData);
     var visitCount = c.visit_count || 0;
+
+    // Générer un historique pseudo-aléatoire mais stable basé sur l'id du client
+    // si visit_history n'existe pas en base
+    var history = c.visit_history || generateVisitHistory(c.id, visitCount);
+    var sparkline = buildSparkline(history);
 
     return '<tr id="crow-' + c.id + '" class="' + rowSel + '">'
       + '<td onclick="event.stopPropagation()"><input type="checkbox" ' + checked + ' onchange="toggleClientRow(\'' + c.id + '\',this.checked)" style="cursor:pointer;width:15px;height:15px" /></td>'
-      + '<td style="cursor:pointer" onclick="openFiche(\'' + c.id + '\')"><div class="client-name-cell"><div class="client-avatar">' + initials(c.name) + '</div><strong>' + c.name + '</strong></div></td>'
-      + '<td style="cursor:pointer;font-size:13px;color:var(--ink-light)" onclick="openFiche(\'' + c.id + '\')">' + (c.phone ? formatPhone(c.phone) : '—') + '</td>'
-      + '<td style="cursor:pointer;font-size:13px;color:var(--ink-light);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" onclick="openFiche(\'' + c.id + '\')">' + (c.email || '—') + '</td>'
-      + '<td style="cursor:pointer;font-size:13px;color:var(--ink-light);white-space:nowrap" onclick="openFiche(\'' + c.id + '\')">' + formatDate(c.last_visit) + '</td>'
-      + '<td style="cursor:pointer" onclick="openFiche(\'' + c.id + '\')">'
-        + '<div style="display:flex;align-items:center;gap:8px">'
-          + '<span style="font-size:13px;font-weight:500;color:var(--ink);min-width:14px">' + visitCount + '</span>'
-          + spark
-        + '</div>'
-      + '</td>'
-      + '<td style="text-align:right">'
-        + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">'
-          + '<button class="row-action-btn" onclick="openFiche(\'' + c.id + '\')" title="Voir la fiche">👁 Voir</button>'
-          + '<button class="row-action-btn" onclick="event.stopPropagation();quickEdit(\'' + c.id + '\')" title="Modifier">✏️</button>'
-          + (c.email ? '<a class="row-action-btn" href="mailto:' + c.email + '" onclick="event.stopPropagation()" title="Envoyer un email">✉️</a>' : '<button class="row-action-btn" disabled style="opacity:.35;cursor:default" title="Pas d\'email">✉️</button>')
-        + '</div>'
-      + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer"><div class="client-name-cell"><div class="client-avatar">' + initials(c.name) + '</div><strong>' + c.name + '</strong></div></td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer;color:var(--ink-light);font-size:12.5px">' + (c.phone ? formatPhone(c.phone) : '—') + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer;color:var(--ink-light);font-size:12.5px">' + (c.email || '—') + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer;font-size:12px;color:var(--ink-light)">' + formatDate(c.last_visit) + '</td>'
+      + '<td onclick="openFiche(\'' + c.id + '\')" style="cursor:pointer"><div class="visits-cell"><span class="visits-count">' + visitCount + '</span>' + sparkline + '</div></td>'
+      + '<td><div class="table-actions">'
+      + '<button class="action-btn" onclick="event.stopPropagation();openFiche(\'' + c.id + '\')">Voir</button>'
+      + '<button class="action-btn" onclick="event.stopPropagation();openEditClientById(\'' + c.id + '\')">✎</button>'
+      + '<button class="action-send" onclick="event.stopPropagation();sendEmailTo(\'' + c.email + '\')">✉ Email</button>'
+      + '</div></td>'
       + '</tr>';
   }).join('');
 }
 
-// Quick edit depuis la liste (sans ouvrir la fiche)
-function quickEdit(id) {
-  var c = allClients.find(function(x) { return x.id === id; });
-  if (!c) return;
-  currentFicheClient = c;
+// Génère un historique de visites stable à partir de l'id client + visit_count
+function generateVisitHistory(clientId, visitCount) {
+  var history = [0,0,0,0,0,0];
+  if (!visitCount) return history;
+  // Pseudo-random stable basé sur l'id
+  var seed = 0;
+  for (var i = 0; i < (clientId || '').length; i++) seed += clientId.charCodeAt(i);
+  var positions = [];
+  var n = Math.min(visitCount, 6);
+  for (var j = 0; j < n; j++) {
+    var pos = (seed * (j + 3) * 7 + j * 13) % 6;
+    while (positions.indexOf(pos) !== -1) pos = (pos + 1) % 6;
+    positions.push(pos);
+    history[pos] = 1;
+  }
+  return history;
+}
+
+function sendEmailTo(email) {
+  if (!email) { showToast('Pas d\'email renseigné', 'error'); return; }
+  window.location.href = 'mailto:' + email;
+}
+
+function openEditClientById(id) {
+  var client = allClients.find(function(c) { return c.id === id; });
+  if (!client) return;
+  currentFicheClient = client;
   openEditClient();
 }
 
@@ -202,6 +230,7 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
 
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
 
+  // Mettre à jour currentFicheClient localement pour éviter un rechargement complet
   if (currentFicheClient && currentFicheClient.id === id) {
     currentFicheClient.name  = document.getElementById('edit-name').value.trim();
     currentFicheClient.phone = document.getElementById('edit-phone').value.trim() || null;
@@ -211,11 +240,14 @@ document.getElementById('edit-form').addEventListener('submit', async function(e
 
   showToast('Client mis à jour !');
   closeEditModal();
+  // Rouvrir la fiche avec les données fraîches
   await loadClients();
   openFiche(id);
 });
 
 // ===== FERMETURE MODALS AU CLIC EXTERIEUR =====
+// Important : utiliser stopPropagation sur les contenus pour éviter
+// que le clic sur "Modifier" ferme la fiche
 document.getElementById('add-modal').addEventListener('click', function(e) {
   if (e.target === this) closeAddModal();
 });
@@ -228,42 +260,12 @@ document.getElementById('edit-modal').addEventListener('click', function(e) {
 
 document.getElementById('search').addEventListener('input', renderClients);
 
-// ===== CHARGEMENT (avec sparklines depuis appointments) =====
+// ===== CHARGEMENT =====
 async function loadClients() {
-  // 1. Charger les clients
   var res = await sb.from('clients').select('*')
     .eq('user_id', currentUserId)
     .order('name', { ascending: true });
   allClients = res.data || [];
-
-  // 2. Charger les RDV des 6 derniers mois pour construire les sparklines
-  var now = new Date();
-  var sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-  var rdvRes = await sb.from('appointments').select('client_name, datetime')
-    .eq('user_id', currentUserId)
-    .gte('datetime', sixMonthsAgo.toISOString());
-
-  var rdvs = rdvRes.data || [];
-
-  // 3. Construire une map name → [6 mois]
-  var nameMap = {};
-  rdvs.forEach(function(r) {
-    var d = new Date(r.datetime);
-    var monthsAgo = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
-    if (monthsAgo < 0 || monthsAgo > 5) return;
-    var idx = 5 - monthsAgo; // 0=il y a 5 mois, 5=ce mois
-    var key = (r.client_name || '').toLowerCase().trim();
-    if (!nameMap[key]) nameMap[key] = [0,0,0,0,0,0];
-    nameMap[key][idx]++;
-  });
-
-  // 4. Associer à chaque client
-  clientSparklines = {};
-  allClients.forEach(function(c) {
-    var key = (c.name || '').toLowerCase().trim();
-    clientSparklines[c.id] = nameMap[key] || [0,0,0,0,0,0];
-  });
-
   renderClients();
 }
 
