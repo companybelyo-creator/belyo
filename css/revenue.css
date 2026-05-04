@@ -49,8 +49,8 @@
 .ret-dot-new { background:#C4A87A; }
 .ret-dot-exist { background:linear-gradient(135deg,#4EA685,#3B82F6); }
 .ret-label { font-size:11px; color:var(--ink-light); flex:1; }
-.ret-bar-track { width:70px; height:5px; background:var(--cream-dark); border-radius:100px; overflow:hidden; flex-shrink:0; }
-.ret-bar { height:5px; border-radius:100px; transition:width .7s ease; }
+.ret-bar-track { width:70px; height:5px; background:var(--cream-dark); border-radius:0; overflow:hidden; flex-shrink:0; }
+.ret-bar { height:5px; border-radius:0; transition:width .7s ease; }
 .ret-bar-new { background:#C4A87A; }
 .ret-bar-exist { background:linear-gradient(90deg,#4EA685,#3B82F6); }
 .ret-pct { font-size:12px; font-weight:500; color:var(--ink); min-width:32px; text-align:right; }

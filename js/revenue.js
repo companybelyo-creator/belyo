@@ -248,52 +248,49 @@ function renderRetentionGauge(data) {
   var rate     = total > 0 ? Math.round(returned/total*100) : 0;
   var newPct   = total > 0 ? Math.round(newC/total*100) : 0;
 
-  // Update text labels
   var elNew   = document.getElementById('retention-new-pct');
   var elExist = document.getElementById('retention-exist-pct');
   if (elNew)   elNew.textContent   = newPct + '%';
   if (elExist) elExist.textContent = rate + '%';
 
-  // Update bars
   var barNew   = document.getElementById('retention-bar-new');
   var barExist = document.getElementById('retention-bar-exist');
   if (barNew)   barNew.style.width   = newPct + '%';
   if (barExist) barExist.style.width = rate + '%';
 
-  // SVG arc gauge (demi-cercle)
-  var svg    = document.getElementById('retention-svg');
-  var track  = document.getElementById('ret-track');
-  var fill   = document.getElementById('ret-fill');
-  var label  = document.getElementById('ret-label-val');
-  if (!svg || !track || !fill || !label) return;
+  var track = document.getElementById('ret-track');
+  var fill  = document.getElementById('ret-fill');
+  var label = document.getElementById('ret-label-val');
+  if (!track || !fill || !label) return;
 
-  // Paramètres arc : cx=100, cy=105, r=72, de 180° à 0° (sens horaire)
+  // Demi-cercle : centre (100,105), rayon 72
+  // De 180° (gauche) à 0° (droite) dans le repère SVG standard
+  // Mais SVG : angle 0° = droite, sens horaire
+  // On veut : départ = gauche (180°), fin = droite (0°), arc du dessus
   var cx = 100, cy = 105, r = 72;
 
-  function polarToXY(angleDeg) {
-    var rad = (angleDeg * Math.PI) / 180;
-    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
-  }
+  // Arc de 180° à 0° (sens anti-horaire dans SVG = arc du haut)
+  // Équivalent : M (cx-r, cy) A r r 0 0 1 (cx+r, cy)
+  var x0 = cx - r; // 28, 105  — extrémité gauche
+  var x1 = cx + r; // 172, 105 — extrémité droite
 
-  // Track : de 180° à 0° (demi-cercle du bas vers le haut)
-  var tStart = polarToXY(180);
-  var tEnd   = polarToXY(0);
-  track.setAttribute('d', 'M '+tStart.x+' '+tStart.y+' A '+r+' '+r+' 0 0 1 '+tEnd.x+' '+tEnd.y);
+  track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
 
-  // Fill : de 180° vers la droite, proportionnel au taux
-  // 180° = début gauche, 0° = fin droite → span = 180°
-  var fillAngle = 180 - (rate / 100) * 180;
-  var fEnd = polarToXY(fillAngle);
-  var largeArc = rate > 50 ? 1 : 0;
-  if (rate === 0) {
+  // Fill proportionnel au taux : on interpole l'angle de 180° à 0°
+  // angle en degrés = 180 - rate/100 * 180
+  // converti en coordonnées : x = cx + r*cos(angle_rad), y = cy + r*sin(angle_rad)
+  // Mais en SVG cos/sin standard (0° = droite, 180° = gauche)
+  if (rate <= 0) {
     fill.setAttribute('d', '');
-  } else if (rate === 100) {
-    fill.setAttribute('d', 'M '+tStart.x+' '+tStart.y+' A '+r+' '+r+' 0 0 1 '+tEnd.x+' '+tEnd.y);
   } else {
-    fill.setAttribute('d', 'M '+tStart.x+' '+tStart.y+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fEnd.x+' '+fEnd.y);
+    var angleDeg = 180 - (rate / 100) * 180; // va de 180 (gauche) vers 0 (droite)
+    var angleRad = angleDeg * Math.PI / 180;
+    var fx = cx + r * Math.cos(angleRad);
+    var fy = cy + r * Math.sin(angleRad);
+    var largeArc = rate > 50 ? 1 : 0;
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
   }
 
-  // Label central
   label.textContent = rate + '%';
 }
 
