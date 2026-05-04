@@ -67,6 +67,40 @@
 .fiche-rdv-item { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px; }
 .fiche-rdv-item:last-child { border-bottom:none; }
 
+/* ── Email modal ── */
+.email-to-badge {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  background:var(--cream);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px 12px;
+  margin-bottom:1rem;
+  font-size:13px;
+}
+.email-to-label {
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--ink-light);
+  font-weight:500;
+  flex-shrink:0;
+}
+.email-to-value {
+  color:var(--ink);
+  font-weight:500;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.form-textarea {
+  resize:vertical;
+  min-height:140px;
+  line-height:1.6;
+  font-family:var(--font-body);
+}
+
 @media (max-width:600px) {
   .card-body { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   .table { min-width:560px; }

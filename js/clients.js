@@ -110,7 +110,7 @@ function renderClients() {
       + '<td><div class="table-actions">'
       + '<button class="action-btn" onclick="event.stopPropagation();openFiche(\'' + c.id + '\')">Voir</button>'
       + '<button class="action-btn" onclick="event.stopPropagation();openEditClientById(\'' + c.id + '\')">✎</button>'
-      + '<button class="action-send" onclick="event.stopPropagation();sendEmailTo(\'' + c.email + '\')">✉ Email</button>'
+      + '<button class="action-send" onclick="event.stopPropagation();sendEmailTo(\'' + (c.email||'') + '\',\'' + c.name.replace(/'/g,"\\'") + '\')">✉ Email</button>'
       + '</div></td>'
       + '</tr>';
   }).join('');
@@ -134,10 +134,40 @@ function generateVisitHistory(clientId, visitCount) {
   return history;
 }
 
-function sendEmailTo(email) {
+// ===== MODAL EMAIL =====
+var currentEmailTarget = null;
+
+function sendEmailTo(email, name) {
   if (!email) { showToast('Pas d\'email renseigné', 'error'); return; }
-  window.location.href = 'mailto:' + email;
+  currentEmailTarget = { email: email, name: name };
+  var badge = document.getElementById('email-to-display');
+  badge.innerHTML = '<span class="email-to-label">À :</span><span class="email-to-value">' + (name || email) + ' &lt;' + email + '&gt;</span>';
+  document.getElementById('email-subject').value = '';
+  document.getElementById('email-body').value = '';
+  document.getElementById('email-modal').classList.add('open');
+  setTimeout(function() { document.getElementById('email-subject').focus(); }, 120);
 }
+
+function closeEmailModal() {
+  document.getElementById('email-modal').classList.remove('open');
+  currentEmailTarget = null;
+}
+
+function submitEmail() {
+  if (!currentEmailTarget) return;
+  var subject = document.getElementById('email-subject').value.trim();
+  var body    = document.getElementById('email-body').value.trim();
+  if (!subject) { document.getElementById('email-subject').focus(); showToast('Objet requis', 'error'); return; }
+  var mailto = 'mailto:' + currentEmailTarget.email
+    + '?subject=' + encodeURIComponent(subject)
+    + '&body='    + encodeURIComponent(body);
+  window.location.href = mailto;
+  closeEmailModal();
+}
+
+document.getElementById('email-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeEmailModal();
+});
 
 function openEditClientById(id) {
   var client = allClients.find(function(c) { return c.id === id; });
