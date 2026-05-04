@@ -106,38 +106,34 @@
         </div>
         <!-- Jauge SVG -->
         <div class="gauge-wrap">
-          <svg id="retention-svg" viewBox="0 0 200 125" xmlns="http://www.w3.org/2000/svg">
+          <svg id="retention-svg" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <linearGradient id="ret-grad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" style="stop-color:#4EA685"/>
                 <stop offset="100%" style="stop-color:#3B82F6"/>
               </linearGradient>
             </defs>
-            <!-- Track -->
-            <path id="ret-track" d="" fill="none" stroke="#E8E4DE" stroke-width="13" stroke-linecap="round"/>
-            <!-- Fill -->
-            <path id="ret-fill" d="" fill="none" stroke="url(#ret-grad)" stroke-width="13" stroke-linecap="butt"/>
-            <!-- Label -->
-            <text x="100" y="102" text-anchor="middle"
-              font-family="'DM Sans', sans-serif" font-size="9" fill="#8A817C">Taux :</text>
-            <text x="100" y="120" text-anchor="middle" id="ret-label-val"
-              font-family="'Cormorant Garamond', serif" font-size="26" font-weight="300" fill="#1A1714">—</text>
+            <!-- Track fond -->
+            <path id="ret-track" d="" fill="none" stroke="#E8E4DE" stroke-width="16" stroke-linecap="butt"/>
+            <!-- Arc coloré -->
+            <path id="ret-fill"  d="" fill="none" stroke="url(#ret-grad)" stroke-width="16" stroke-linecap="butt"/>
+            <!-- Texte centré -->
+            <text x="100" y="95" text-anchor="middle"
+              font-family="'DM Sans', sans-serif" font-size="10" fill="#8A817C" id="ret-label-taux">Taux : —</text>
           </svg>
         </div>
         <!-- Barres segmentation -->
         <div class="retention-bars">
           <div class="ret-row">
-            <div class="ret-dot ret-dot-new"></div>
             <span class="ret-label">Nouveaux clients</span>
-            <div class="ret-bar-track"><div class="ret-bar ret-bar-new" id="retention-bar-new" style="width:0%"></div></div>
             <span class="ret-pct" id="retention-new-pct">—</span>
           </div>
+          <div class="ret-bar-track"><div class="ret-bar ret-bar-new" id="retention-bar-new" style="width:0%"></div></div>
           <div class="ret-row">
-            <div class="ret-dot ret-dot-exist"></div>
             <span class="ret-label">Clients existants</span>
-            <div class="ret-bar-track"><div class="ret-bar ret-bar-exist" id="retention-bar-exist" style="width:0%"></div></div>
             <span class="ret-pct" id="retention-exist-pct">—</span>
           </div>
+          <div class="ret-bar-track"><div class="ret-bar ret-bar-exist" id="retention-bar-exist" style="width:0%"></div></div>
         </div>
       </div>
     </div>

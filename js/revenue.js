@@ -240,6 +240,7 @@ function renderWeekdayChart(data) {
 
 // ===== GAUGE RÉTENTION =====
 function renderRetentionGauge(data) {
+  // Calcul : clients revenus 2x+ = "existants", reste = "nouveaux"
   var visits = {};
   data.forEach(function(a) { visits[a.client_name] = (visits[a.client_name]||0)+1; });
   var total    = Object.keys(visits).length;
@@ -248,27 +249,31 @@ function renderRetentionGauge(data) {
   var rate     = total > 0 ? Math.round(returned/total*100) : 0;
   var newPct   = total > 0 ? Math.round(newC/total*100) : 0;
 
+  // Labels texte
   var elNew   = document.getElementById('retention-new-pct');
   var elExist = document.getElementById('retention-exist-pct');
   if (elNew)   elNew.textContent   = newPct + '%';
   if (elExist) elExist.textContent = rate + '%';
 
+  // Barres horizontales
   var barNew   = document.getElementById('retention-bar-new');
   var barExist = document.getElementById('retention-bar-exist');
   if (barNew)   barNew.style.width   = newPct + '%';
   if (barExist) barExist.style.width = rate + '%';
 
+  // Label SVG "Taux : X%"
+  var labelTaux = document.getElementById('ret-label-taux');
+  if (labelTaux) labelTaux.textContent = 'Taux : ' + rate + '%';
+
+  // Arc SVG demi-cercle
+  // Centre cx=100, cy=105, rayon r=72
+  // Départ gauche : (cx-r, cy) → arc vers la droite en passant par le haut → sweep-flag=1
+  // Point intermédiaire pour le fill : angle trig 180°→0°, avec y SVG inversé (cy - r*sin)
   var track = document.getElementById('ret-track');
   var fill  = document.getElementById('ret-fill');
-  var label = document.getElementById('ret-label-val');
-  if (!track || !fill || !label) return;
+  if (!track || !fill) return;
 
-  // Demi-cercle : centre (100,108), rayon 70
-  // Le demi-cercle va de gauche (cx-r, cy) à droite (cx+r, cy) en passant par le HAUT
-  // Dans SVG : y croît vers le bas → le haut du cercle = cy - r
-  // sweep-flag=1 (sens horaire) + arc du haut = correct
-  var cx = 100, cy = 108, r = 70;
-
+  var cx = 100, cy = 105, r = 72;
   var x0 = cx - r;
   var x1 = cx + r;
 
@@ -279,16 +284,13 @@ function renderRetentionGauge(data) {
   } else if (rate >= 100) {
     fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
   } else {
-    // angle trig standard : départ=180° (gauche), progression vers 0° (droite)
     var angleDeg = 180 - (rate / 100) * 180;
     var angleRad = angleDeg * Math.PI / 180;
-    var fx = cx + r * Math.cos(angleRad);
-    var fy = cy - r * Math.sin(angleRad); // SOUSTRACTION : SVG y inversé → sin positif = vers le haut
+    var fx = (cx + r * Math.cos(angleRad)).toFixed(2);
+    var fy = (cy - r * Math.sin(angleRad)).toFixed(2);
     var largeArc = rate > 50 ? 1 : 0;
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx.toFixed(2)+' '+fy.toFixed(2));
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
   }
-
-  label.textContent = rate + '%';
 }
 
 // ===== STATS AVANCÉES =====
