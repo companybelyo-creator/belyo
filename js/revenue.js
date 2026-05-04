@@ -248,49 +248,53 @@ function renderRetentionGauge(data) {
   var rate     = total > 0 ? Math.round(returned/total*100) : 0;
   var newPct   = total > 0 ? Math.round(newC/total*100) : 0;
 
-  var el = document.getElementById('retention-rate-val');
-  if (el) el.textContent = rate + '%';
-  var elNew = document.getElementById('retention-new-pct');
-  if (elNew) elNew.textContent = newPct + '%';
+  // Update text labels
+  var elNew   = document.getElementById('retention-new-pct');
   var elExist = document.getElementById('retention-exist-pct');
+  if (elNew)   elNew.textContent   = newPct + '%';
   if (elExist) elExist.textContent = rate + '%';
 
-  // Bar widths
-  var barNew = document.getElementById('retention-bar-new');
-  if (barNew) barNew.style.width = newPct + '%';
+  // Update bars
+  var barNew   = document.getElementById('retention-bar-new');
   var barExist = document.getElementById('retention-bar-exist');
+  if (barNew)   barNew.style.width   = newPct + '%';
   if (barExist) barExist.style.width = rate + '%';
 
-  // SVG gauge arc
-  var canvas = document.getElementById('retention-gauge');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var W = canvas.width, H = canvas.height;
-  ctx.clearRect(0,0,W,H);
+  // SVG arc gauge (demi-cercle)
+  var svg    = document.getElementById('retention-svg');
+  var track  = document.getElementById('ret-track');
+  var fill   = document.getElementById('ret-fill');
+  var label  = document.getElementById('ret-label-val');
+  if (!svg || !track || !fill || !label) return;
 
-  var cx = W/2, cy = H*0.82, r = W*0.4;
-  var startA = Math.PI, endA = 0;
+  // Paramètres arc : cx=100, cy=105, r=72, de 180° à 0° (sens horaire)
+  var cx = 100, cy = 105, r = 72;
 
-  // Track background
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startA, endA);
-  ctx.strokeStyle = '#E8E4DE';
-  ctx.lineWidth = 14;
-  ctx.lineCap = 'round';
-  ctx.stroke();
+  function polarToXY(angleDeg) {
+    var rad = (angleDeg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
 
-  // Gradient arc
-  var grad = ctx.createLinearGradient(cx-r,0,cx+r,0);
-  grad.addColorStop(0, '#4EA685');
-  grad.addColorStop(1, '#3B82F6');
+  // Track : de 180° à 0° (demi-cercle du bas vers le haut)
+  var tStart = polarToXY(180);
+  var tEnd   = polarToXY(0);
+  track.setAttribute('d', 'M '+tStart.x+' '+tStart.y+' A '+r+' '+r+' 0 0 1 '+tEnd.x+' '+tEnd.y);
 
-  var fillEnd = startA + (endA - startA) * (rate/100);
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, startA, fillEnd);
-  ctx.strokeStyle = grad;
-  ctx.lineWidth = 14;
-  ctx.lineCap = 'round';
-  ctx.stroke();
+  // Fill : de 180° vers la droite, proportionnel au taux
+  // 180° = début gauche, 0° = fin droite → span = 180°
+  var fillAngle = 180 - (rate / 100) * 180;
+  var fEnd = polarToXY(fillAngle);
+  var largeArc = rate > 50 ? 1 : 0;
+  if (rate === 0) {
+    fill.setAttribute('d', '');
+  } else if (rate === 100) {
+    fill.setAttribute('d', 'M '+tStart.x+' '+tStart.y+' A '+r+' '+r+' 0 0 1 '+tEnd.x+' '+tEnd.y);
+  } else {
+    fill.setAttribute('d', 'M '+tStart.x+' '+tStart.y+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fEnd.x+' '+fEnd.y);
+  }
+
+  // Label central
+  label.textContent = rate + '%';
 }
 
 // ===== STATS AVANCÉES =====
