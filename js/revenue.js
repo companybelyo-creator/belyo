@@ -9,6 +9,8 @@ var weekdayChart  = null;
 var hourChart     = null;
 var clientsChart  = null;
 var genreChart    = null;
+var caServiceChart = null;
+var panierChart   = null;
 
 // Couleurs Chart.js
 var CHART_COLORS = {
@@ -459,6 +461,97 @@ async function renderStatsAvancees(data, now) {
         scales:{
           y:{beginAtZero:true,grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.text,font:{size:11},precision:0},border:{display:false}},
           x:{grid:{display:false},ticks:{color:CHART_COLORS.text,font:{size:11}},border:{display:false}}
+        }
+      }
+    });
+  }
+
+  // ---- TOP PRESTATIONS (barres horizontales) ----
+  var svcCount = {}, svcCA = {};
+  data.forEach(function(a) {
+    var svc = a.service || 'Autre';
+    svcCount[svc] = (svcCount[svc]||0) + 1;
+    svcCA[svc]    = (svcCA[svc]||0) + (parseFloat(a.price)||0);
+  });
+  var sortedSvc = Object.entries(svcCount).sort(function(a,b){ return b[1]-a[1]; }).slice(0,7);
+  var maxSvcCount = sortedSvc[0] ? sortedSvc[0][1] : 1;
+
+  var hbarList = document.getElementById('pro-top-services-list');
+  if (hbarList) {
+    hbarList.innerHTML = sortedSvc.map(function(s) {
+      var pct = Math.round(s[1]/maxSvcCount*100);
+      return '<div class="pro-hbar-item">'
+        + '<div class="pro-hbar-head">'
+        + '<span class="pro-hbar-label">'+s[0]+'</span>'
+        + '<span class="pro-hbar-val">'+s[1]+' RDV</span>'
+        + '</div>'
+        + '<div class="pro-hbar-track"><div class="pro-hbar-fill" style="width:'+pct+'%"></div></div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // ---- CA PAR PRESTATION (barres verticales) ----
+  var sortedCA = Object.entries(svcCA).sort(function(a,b){ return b[1]-a[1]; }).slice(0,6);
+  if (caServiceChart) caServiceChart.destroy();
+  var ctxCS = document.getElementById('ca-service-chart');
+  if (ctxCS) {
+    caServiceChart = new Chart(ctxCS.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sortedCA.map(function(s){ return s[0].length>14 ? s[0].slice(0,13)+'…' : s[0]; }),
+        datasets: [{
+          data: sortedCA.map(function(s){ return Math.round(s[1]); }),
+          backgroundColor: CHART_COLORS.teal,
+          borderRadius: 4, borderSkipped: false,
+          barPercentage: 0.5, categoryPercentage: 0.6,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){ return c.raw+'€'; }}} },
+        scales:{
+          y:{beginAtZero:true, grid:{color:CHART_COLORS.grid}, ticks:{color:CHART_COLORS.text, font:{size:10}, callback:function(v){ return v+'€'; }}, border:{display:false}},
+          x:{grid:{display:false}, ticks:{color:CHART_COLORS.text, font:{size:10}}, border:{display:false}}
+        }
+      }
+    });
+  }
+
+  // ---- PANIER MOYEN PAR MOIS (ligne) ----
+  var panierByMonth = {};
+  var countByMonth  = {};
+  months.forEach(function(m){ panierByMonth[m]=0; countByMonth[m]=0; });
+  data.forEach(function(a){
+    var mk = a.datetime.slice(0,7);
+    if (panierByMonth[mk] !== undefined) {
+      panierByMonth[mk] += (parseFloat(a.price)||0);
+      countByMonth[mk]++;
+    }
+  });
+  var panierVals = months.map(function(m){ return countByMonth[m]>0 ? Math.round(panierByMonth[m]/countByMonth[m]) : 0; });
+
+  if (panierChart) panierChart.destroy();
+  var ctxP = document.getElementById('panier-chart');
+  if (ctxP) {
+    panierChart = new Chart(ctxP.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: months.map(monthLabel),
+        datasets: [{
+          data: panierVals,
+          borderColor: CHART_COLORS.gold,
+          backgroundColor: 'rgba(196,168,122,0.08)',
+          tension: 0.35, fill: true,
+          pointRadius: 5, pointBackgroundColor: CHART_COLORS.gold,
+          pointBorderColor: '#fff', pointBorderWidth: 2,
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){ return c.raw+'€ / RDV'; }}} },
+        scales:{
+          y:{beginAtZero:true, grid:{color:CHART_COLORS.grid}, ticks:{color:CHART_COLORS.text, font:{size:11}, callback:function(v){ return v+'€'; }}, border:{display:false}},
+          x:{grid:{display:false}, ticks:{color:CHART_COLORS.text, font:{size:11}}, border:{display:false}}
         }
       }
     });
