@@ -263,32 +263,29 @@ function renderRetentionGauge(data) {
   var label = document.getElementById('ret-label-val');
   if (!track || !fill || !label) return;
 
-  // Demi-cercle : centre (100,105), rayon 72
-  // De 180° (gauche) à 0° (droite) dans le repère SVG standard
-  // Mais SVG : angle 0° = droite, sens horaire
-  // On veut : départ = gauche (180°), fin = droite (0°), arc du dessus
-  var cx = 100, cy = 105, r = 72;
+  // Demi-cercle : centre (100,108), rayon 70
+  // Le demi-cercle va de gauche (cx-r, cy) à droite (cx+r, cy) en passant par le HAUT
+  // Dans SVG : y croît vers le bas → le haut du cercle = cy - r
+  // sweep-flag=1 (sens horaire) + arc du haut = correct
+  var cx = 100, cy = 108, r = 70;
 
-  // Arc de 180° à 0° (sens anti-horaire dans SVG = arc du haut)
-  // Équivalent : M (cx-r, cy) A r r 0 0 1 (cx+r, cy)
-  var x0 = cx - r; // 28, 105  — extrémité gauche
-  var x1 = cx + r; // 172, 105 — extrémité droite
+  var x0 = cx - r;
+  var x1 = cx + r;
 
   track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
 
-  // Fill proportionnel au taux : on interpole l'angle de 180° à 0°
-  // angle en degrés = 180 - rate/100 * 180
-  // converti en coordonnées : x = cx + r*cos(angle_rad), y = cy + r*sin(angle_rad)
-  // Mais en SVG cos/sin standard (0° = droite, 180° = gauche)
   if (rate <= 0) {
     fill.setAttribute('d', '');
+  } else if (rate >= 100) {
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
   } else {
-    var angleDeg = 180 - (rate / 100) * 180; // va de 180 (gauche) vers 0 (droite)
+    // angle trig standard : départ=180° (gauche), progression vers 0° (droite)
+    var angleDeg = 180 - (rate / 100) * 180;
     var angleRad = angleDeg * Math.PI / 180;
     var fx = cx + r * Math.cos(angleRad);
-    var fy = cy + r * Math.sin(angleRad);
+    var fy = cy - r * Math.sin(angleRad); // SOUSTRACTION : SVG y inversé → sin positif = vers le haut
     var largeArc = rate > 50 ? 1 : 0;
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx.toFixed(2)+' '+fy.toFixed(2));
   }
 
   label.textContent = rate + '%';
