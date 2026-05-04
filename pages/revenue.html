@@ -84,8 +84,8 @@
       </div>
     </div>
 
-    <!-- Top clients + RDV par jour -->
-    <div class="chart-grid-eq">
+    <!-- Top clients + RDV par jour + Taux de rétention -->
+    <div class="chart-grid-3">
       <div class="chart-card">
         <div class="chart-head">
           <div class="chart-title">Top clients</div>
@@ -99,6 +99,27 @@
           <div class="chart-sub">jours les plus actifs</div>
         </div>
         <div class="chart-wrap sm"><canvas id="weekday-chart"></canvas></div>
+      </div>
+      <div class="chart-card retention-card">
+        <div class="chart-head">
+          <div class="chart-title">Taux de Rétention</div>
+        </div>
+        <div class="gauge-wrap">
+          <canvas id="retention-gauge" width="180" height="110"></canvas>
+          <div class="gauge-label" id="retention-rate-val">—</div>
+        </div>
+        <div class="retention-bars">
+          <div class="ret-row">
+            <span class="ret-label">Nouveaux clients</span>
+            <div class="ret-bar-track"><div class="ret-bar ret-bar-new" id="retention-bar-new" style="width:0%"></div></div>
+            <span class="ret-pct" id="retention-new-pct">—</span>
+          </div>
+          <div class="ret-row">
+            <span class="ret-label">Clients existants</span>
+            <div class="ret-bar-track"><div class="ret-bar ret-bar-exist" id="retention-bar-exist" style="width:0%"></div></div>
+            <span class="ret-pct" id="retention-exist-pct">—</span>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -70,6 +70,7 @@ async function loadData() {
   renderTopServices(data);
   renderTopClients(data);
   renderWeekdayChart(data);
+  renderRetentionGauge(data);
   renderStatsAvancees(data, now);
 }
 
@@ -136,6 +137,8 @@ function renderCAChart(data, now) {
         }),
         borderRadius: 6,
         borderSkipped: false,
+        barPercentage: 0.45,
+        categoryPercentage: 0.6,
       }]
     },
     options: chartDefaults({
@@ -220,6 +223,8 @@ function renderWeekdayChart(data) {
         backgroundColor: ordered.map(function(v){ return v===maxD ? CHART_COLORS.ink : CHART_COLORS.gold; }),
         borderRadius: 4,
         borderSkipped: false,
+        barPercentage: 0.35,
+        categoryPercentage: 0.5,
       }]
     },
     options: {
@@ -231,6 +236,61 @@ function renderWeekdayChart(data) {
       }
     }
   });
+}
+
+// ===== GAUGE RÉTENTION =====
+function renderRetentionGauge(data) {
+  var visits = {};
+  data.forEach(function(a) { visits[a.client_name] = (visits[a.client_name]||0)+1; });
+  var total    = Object.keys(visits).length;
+  var returned = Object.values(visits).filter(function(v){ return v>=2; }).length;
+  var newC     = total - returned;
+  var rate     = total > 0 ? Math.round(returned/total*100) : 0;
+  var newPct   = total > 0 ? Math.round(newC/total*100) : 0;
+
+  var el = document.getElementById('retention-rate-val');
+  if (el) el.textContent = rate + '%';
+  var elNew = document.getElementById('retention-new-pct');
+  if (elNew) elNew.textContent = newPct + '%';
+  var elExist = document.getElementById('retention-exist-pct');
+  if (elExist) elExist.textContent = rate + '%';
+
+  // Bar widths
+  var barNew = document.getElementById('retention-bar-new');
+  if (barNew) barNew.style.width = newPct + '%';
+  var barExist = document.getElementById('retention-bar-exist');
+  if (barExist) barExist.style.width = rate + '%';
+
+  // SVG gauge arc
+  var canvas = document.getElementById('retention-gauge');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  var cx = W/2, cy = H*0.82, r = W*0.4;
+  var startA = Math.PI, endA = 0;
+
+  // Track background
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startA, endA);
+  ctx.strokeStyle = '#E8E4DE';
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // Gradient arc
+  var grad = ctx.createLinearGradient(cx-r,0,cx+r,0);
+  grad.addColorStop(0, '#4EA685');
+  grad.addColorStop(1, '#3B82F6');
+
+  var fillEnd = startA + (endA - startA) * (rate/100);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, startA, fillEnd);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  ctx.stroke();
 }
 
 // ===== STATS AVANCÉES =====
