@@ -30,72 +30,100 @@
   </aside>
 
   <main class="main-content">
-    <div class="page-header">
-      <h1 class="page-title">Stocks <em>produits</em></h1>
-      <button class="btn-action" onclick="openStockModal()">+ Nouveau produit</button>
-    </div>
-
-    <!-- KPIs -->
-    <div class="stock-kpi-row">
-      <div class="stock-kpi">
-        <div class="stock-kpi-accent" style="background:var(--gold)"></div>
-        <div class="stock-kpi-label">Total produits</div>
-        <div class="stock-kpi-val" id="kpi-total">—</div>
-        <div class="stock-kpi-sub">En catalogue</div>
+    <div class="stk-topbar">
+      <div>
+        <h1 class="page-title">Stocks <em>produits</em></h1>
+        <p class="stk-subtitle">Gestion de l'inventaire &amp; ventes</p>
       </div>
-      <div class="stock-kpi">
-        <div class="stock-kpi-accent" style="background:#C4A87A"></div>
-        <div class="stock-kpi-label">Stock faible</div>
-        <div class="stock-kpi-val" id="kpi-low">—</div>
-        <div class="stock-kpi-sub">À recommander bientôt</div>
-      </div>
-      <div class="stock-kpi">
-        <div class="stock-kpi-accent" style="background:#D85A30"></div>
-        <div class="stock-kpi-label">Rupture</div>
-        <div class="stock-kpi-val" id="kpi-empty">—</div>
-        <div class="stock-kpi-sub">Quantité = 0</div>
+      <div class="stk-topbar-actions">
+        <button class="btn-secondary" onclick="openSaleModal()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-1.5 9H3.5L2 3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="6" cy="14" r="1" fill="currentColor"/><circle cx="11" cy="14" r="1" fill="currentColor"/></svg>
+          Enregistrer une vente
+        </button>
+        <button class="btn-action" onclick="openStockModal()">+ Nouveau produit</button>
       </div>
     </div>
 
-    <!-- Recherche + filtres -->
-    <div class="search-bar">
-      <input type="text" class="search-input" id="search" placeholder="Rechercher un produit ou une marque..." />
-    </div>
-    <div class="tab-bar">
-      <button class="tab active" id="tab-all"   onclick="setTab('all')">Tous</button>
-      <button class="tab"        id="tab-low"   onclick="setTab('low')">Stock faible</button>
-      <button class="tab"        id="tab-empty" onclick="setTab('empty')">Rupture</button>
+    <div class="stk-kpi-grid">
+      <div class="stk-kpi-card">
+        <div class="stk-kpi-accent" style="background:var(--gold)"></div>
+        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-gold"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 4V3M11 4V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">Total produits</span></div>
+        <div class="stk-kpi-val" id="kpi-total">—</div>
+        <div class="stk-kpi-sub">En catalogue</div>
+      </div>
+      <div class="stk-kpi-card">
+        <div class="stk-kpi-accent" style="background:#4EA685"></div>
+        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-green"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 10L8 4l3 3 3-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="stk-kpi-label">Valeur stock</span></div>
+        <div class="stk-kpi-val" id="kpi-value">—</div>
+        <div class="stk-kpi-sub">Valeur totale inventaire</div>
+      </div>
+      <div class="stk-kpi-card">
+        <div class="stk-kpi-accent" style="background:#C4A87A"></div>
+        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-amber"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">Stock faible</span></div>
+        <div class="stk-kpi-val" id="kpi-low">—</div>
+        <div class="stk-kpi-sub">À recommander bientôt</div>
+      </div>
+      <div class="stk-kpi-card">
+        <div class="stk-kpi-accent" style="background:#D85A30"></div>
+        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-red"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v3M8 11h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">Rupture</span></div>
+        <div class="stk-kpi-val" id="kpi-empty">—</div>
+        <div class="stk-kpi-sub">Quantité = 0</div>
+      </div>
+      <div class="stk-kpi-card stk-kpi-sales">
+        <div class="stk-kpi-accent" style="background:var(--ink)"></div>
+        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-dark"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-1.5 9H3.5L2 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="6" cy="14" r="1" fill="currentColor"/><circle cx="11" cy="14" r="1" fill="currentColor"/></svg></div><span class="stk-kpi-label">Ventes ce mois</span></div>
+        <div class="stk-kpi-val" id="kpi-sales-count">—</div>
+        <div class="stk-kpi-sub">Produits vendus</div>
+      </div>
+      <div class="stk-kpi-card stk-kpi-sales">
+        <div class="stk-kpi-accent" style="background:var(--ink)"></div>
+        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-dark"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M3 5h7M3 11h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">CA produits / mois</span></div>
+        <div class="stk-kpi-val" id="kpi-revenue">—</div>
+        <div class="stk-kpi-sub">Chiffre d'affaires ventes</div>
+      </div>
     </div>
 
-    <!-- Table -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title" id="list-title">Tous les produits</span>
-        <span id="list-count" style="font-size:13px;color:var(--ink-light)">—</span>
+    <div class="stk-toolbar">
+      <div class="stk-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style="color:var(--ink-light);flex-shrink:0"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 10l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input type="text" class="stk-search-input" id="search" placeholder="Rechercher un produit ou une marque..." />
       </div>
-      <div class="card-body" style="padding:0">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>Produit</th>
-              <th>Marque</th>
-              <th>Quantité</th>
-              <th>Niveau</th>
-              <th>Statut</th>
-              <th>Prix unit.</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="products-list">
-            <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--ink-light)">Chargement...</td></tr>
-          </tbody>
+      <div class="stk-tab-bar">
+        <button class="stk-tab active" id="tab-all" onclick="setTab('all')">Tous</button>
+        <button class="stk-tab" id="tab-low" onclick="setTab('low')">Stock faible</button>
+        <button class="stk-tab" id="tab-empty" onclick="setTab('empty')">Rupture</button>
+      </div>
+    </div>
+
+    <div class="stk-card">
+      <div class="stk-card-header">
+        <span class="stk-card-title" id="list-title">Tous les produits</span>
+        <span id="list-count" class="stk-card-count">—</span>
+      </div>
+      <div class="stk-table-wrap">
+        <table class="stk-table">
+          <thead><tr><th>Produit</th><th>Marque</th><th>Quantité</th><th>Niveau</th><th>Statut</th><th>Prix unit.</th><th></th></tr></thead>
+          <tbody id="products-list"><tr><td colspan="7" class="stk-loading">Chargement...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="stk-card" style="margin-top:1rem">
+      <div class="stk-card-header">
+        <span class="stk-card-title">Historique des ventes</span>
+        <span id="sales-count-label" class="stk-card-count">—</span>
+      </div>
+      <div class="stk-table-wrap">
+        <table class="stk-table">
+          <thead><tr><th>Produit</th><th>Marque</th><th>Qté</th><th>Prix unit.</th><th>Total</th><th>Date</th><th>Note</th></tr></thead>
+          <tbody id="sales-list"><tr><td colspan="7" class="stk-loading">Chargement...</td></tr></tbody>
         </table>
       </div>
     </div>
   </main>
 </div>
 
-<!-- MODAL produit -->
+<!-- MODAL PRODUIT -->
 <div class="modal-overlay" id="stock-modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -104,34 +132,43 @@
     </div>
     <form id="product-form">
       <input type="hidden" id="edit-id" />
-      <div class="form-group">
-        <label class="form-label">Nom du produit *</label>
-        <input type="text" class="form-input" id="p-name" placeholder="Ex : Shampooing réparateur" required />
-      </div>
-      <div class="form-group">
-        <label class="form-label">Marque</label>
-        <input type="text" class="form-input" id="p-brand" placeholder="Ex : Kérastase, L'Oréal..." />
-      </div>
+      <div class="form-group"><label class="form-label">Nom du produit *</label><input type="text" class="form-input" id="p-name" placeholder="Ex : Shampooing réparateur" required /></div>
+      <div class="form-group"><label class="form-label">Marque</label><input type="text" class="form-input" id="p-brand" placeholder="Ex : Kérastase, L'Oréal..." /></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group">
-          <label class="form-label">Quantité *</label>
-          <input type="number" class="form-input" id="p-qty" placeholder="0" min="0" required />
-        </div>
-        <div class="form-group">
-          <label class="form-label">Seuil d'alerte</label>
-          <input type="number" class="form-input" id="p-threshold" placeholder="2" min="0" value="2" />
-        </div>
+        <div class="form-group"><label class="form-label">Quantité *</label><input type="number" class="form-input" id="p-qty" placeholder="0" min="0" required /></div>
+        <div class="form-group"><label class="form-label">Seuil d'alerte</label><input type="number" class="form-input" id="p-threshold" placeholder="2" min="0" value="2" /></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Prix unitaire (€)</label>
-        <input type="number" class="form-input" id="p-price" placeholder="12.50" min="0" step="0.01" />
-      </div>
+      <div class="form-group"><label class="form-label">Prix unitaire (€)</label><input type="number" class="form-input" id="p-price" placeholder="12.50" min="0" step="0.01" /></div>
       <button type="submit" class="btn-submit" id="p-submit">Ajouter le produit</button>
     </form>
   </div>
 </div>
 
-<!-- MODAL suppression -->
+<!-- MODAL VENTE -->
+<div class="modal-overlay" id="sale-modal-overlay">
+  <div class="modal stk-modal-sale">
+    <div class="modal-header">
+      <span class="modal-title">Enregistrer une vente</span>
+      <button class="modal-close" onclick="closeSaleModal()">×</button>
+    </div>
+    <div id="sale-lines-wrap" class="stk-sale-lines"></div>
+    <button class="stk-add-line-btn" onclick="addSaleLine()">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Ajouter un produit
+    </button>
+    <div class="stk-sale-summary">
+      <div class="stk-sale-total-label">Total de la vente</div>
+      <div class="stk-sale-total-val" id="sale-total-display">0,00 €</div>
+    </div>
+    <div class="form-group" style="margin-top:1rem">
+      <label class="form-label">Note (optionnel)</label>
+      <input type="text" class="form-input" id="sale-note" placeholder="Ex : Vente comptoir, client Marie..." />
+    </div>
+    <button class="btn-submit" id="sale-submit-btn" onclick="confirmSale()">Valider la vente</button>
+  </div>
+</div>
+
+<!-- MODAL SUPPRESSION -->
 <div class="modal-overlay" id="delete-overlay">
   <div class="modal" style="max-width:360px">
     <div class="modal-header">
@@ -147,7 +184,6 @@
 </div>
 
 <div class="toast" id="toast"></div>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
