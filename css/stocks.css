@@ -33,74 +33,35 @@
   margin-bottom: 1.4rem;
 }
 
-/* ---- 4 premiers KPI : fond coloré dégradé ---- */
+/* KPI cards — structure de base */
 .stk-kpi-card {
-  border-radius: 14px;
-  padding: 1.3rem 1.4rem 1.2rem;
-  position: relative; overflow: hidden;
-  border: none;
-  box-shadow: 0 4px 14px rgba(26,23,20,.10);
-  transition: box-shadow .2s, transform .2s;
-  display: flex; flex-direction: column; justify-content: space-between;
-  min-height: 110px;
-}
-.stk-kpi-card:hover { box-shadow: 0 8px 24px rgba(26,23,20,.15); transform: translateY(-2px); }
-
-/* Couleurs dégradées pour les 4 premiers */
-.stk-kpi-card:nth-child(1) { background: linear-gradient(135deg, #3ABFA0 0%, #28A58A 100%); }
-.stk-kpi-card:nth-child(2) { background: linear-gradient(135deg, #5B9CF6 0%, #3A7ADE 100%); }
-.stk-kpi-card:nth-child(3) { background: linear-gradient(135deg, #F5A623 0%, #E08A10 100%); }
-.stk-kpi-card:nth-child(4) { background: linear-gradient(135deg, #E8655A 0%, #C94B40 100%); }
-
-/* Grain texture subtil sur les 4 premiers */
-.stk-kpi-card:nth-child(-n+4)::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
-  pointer-events: none; border-radius: 14px;
-}
-
-/* Label & valeur sur fond coloré (blanc) */
-.stk-kpi-card:nth-child(-n+4) .stk-kpi-label { color: rgba(255,255,255,.8); }
-.stk-kpi-card:nth-child(-n+4) .stk-kpi-val   { color: #fff; }
-.stk-kpi-card:nth-child(-n+4) .stk-kpi-sub   { color: rgba(255,255,255,.65); }
-
-/* 2 derniers KPI : style neutre (ventes) */
-.stk-kpi-sales {
   background: var(--white);
   border: 1px solid rgba(26,23,20,.08);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem .9rem;
+  position: relative; overflow: hidden;
   box-shadow: 0 2px 8px rgba(26,23,20,.05);
+  transition: box-shadow .2s, transform .2s;
 }
-.stk-kpi-sales .stk-kpi-label { color: var(--ink-light); }
-.stk-kpi-sales .stk-kpi-val   { color: var(--ink); }
-.stk-kpi-sales .stk-kpi-sub   { color: var(--ink-light); }
+.stk-kpi-card:hover { box-shadow: 0 6px 18px rgba(26,23,20,.09); transform: translateY(-1px); }
 
-/* Accent barre gauche sur les 2 derniers uniquement */
-.stk-kpi-sales .stk-kpi-accent {
-  position: absolute; top: 0; left: 0;
-  width: 3px; height: 100%;
-  border-radius: 14px 0 0 14px;
-}
+/* Légère teinte de fond sur les 4 premiers */
+.stk-kpi-card:nth-child(1) { background: #EDF7F4; border-color: #C6E8DF; }
+.stk-kpi-card:nth-child(2) { background: #EEF4FD; border-color: #C8DAF7; }
+.stk-kpi-card:nth-child(3) { background: #FDF5E8; border-color: #F0DDB0; }
+.stk-kpi-card:nth-child(4) { background: #FDEEED; border-color: #F3C8C5; }
 
-.stk-kpi-top { display: flex; align-items: center; gap: 7px; margin-bottom: .5rem; }
+/* 2 derniers KPI : style neutre */
+.stk-kpi-sales { background: var(--white); border-color: rgba(26,23,20,.08); }
+.stk-kpi-accent { position: absolute; top: 0; left: 0; width: 3px; height: 100%; border-radius: 14px 0 0 14px; }
 
-/* Icônes désactivées sur les 4 premiers */
-.stk-kpi-card:nth-child(-n+4) .stk-kpi-icon { display: none; }
-
-.stk-kpi-icon {
-  width: 26px; height: 26px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
+.stk-kpi-top { display: flex; align-items: center; gap: 7px; margin-bottom: .7rem; }
+.stk-kpi-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .stk-icon-dark { background: rgba(26,23,20,.08); color: var(--ink); }
 
-.stk-kpi-label { font-size: 11px; font-weight: 500; letter-spacing: .02em; text-transform: uppercase; }
-.stk-kpi-val {
-  font-family: var(--font-display);
-  font-size: 2rem; font-weight: 300;
-  line-height: 1; letter-spacing: -.01em;
-  margin-top: auto;
-}
-.stk-kpi-sub { font-size: 10px; margin-top: .4rem; }
+.stk-kpi-label { font-size: 11px; color: var(--ink-light); font-weight: 400; }
+.stk-kpi-val { font-family: var(--font-display); font-size: 1.8rem; font-weight: 300; color: var(--ink); line-height: 1; letter-spacing: -.01em; }
+.stk-kpi-sub { font-size: 10px; color: var(--ink-light); margin-top: .35rem; }
 
 /* Toolbar */
 .stk-toolbar {
@@ -184,9 +145,9 @@
 /* Barre de stock */
 .stock-bar-wrap { width: 64px; background: var(--cream); border-radius: 100px; height: 4px; display: inline-block; vertical-align: middle; overflow: hidden; }
 .stock-bar { height: 4px; border-radius: 100px; transition: width .4s; }
-.bar-ok    { background: #1D9E75; }
-.bar-low   { background: #C4A87A; }
-.bar-empty { background: #D85A30; }
+.bar-ok    { background: linear-gradient(90deg, #1D9E75, #4ECBA3); }
+.bar-low   { background: linear-gradient(90deg, #C4A87A, #E8C99A); }
+.bar-empty { background: linear-gradient(90deg, #D85A30, #F08060); }
 
 /* Qty control */
 .qty-control { display: flex; align-items: center; gap: 5px; }
