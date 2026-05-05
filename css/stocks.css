@@ -32,8 +32,6 @@
   gap: .9rem;
   margin-bottom: 1.4rem;
 }
-
-/* KPI Grid cards */
 .stk-kpi-card {
   background: var(--white);
   border: 1px solid rgba(26,23,20,.08);
@@ -44,17 +42,24 @@
   transition: box-shadow .2s, transform .2s;
 }
 .stk-kpi-card:hover { box-shadow: 0 6px 18px rgba(26,23,20,.09); transform: translateY(-1px); }
-
-/* 2 derniers KPI : style neutre */
-.stk-kpi-sales { background: var(--white); border-color: rgba(26,23,20,.08); }
+.stk-kpi-sales { background: linear-gradient(135deg, #FAFAF9 0%, #F5F3F0 100%); }
 .stk-kpi-accent { position: absolute; top: 0; left: 0; width: 3px; height: 100%; border-radius: 14px 0 0 14px; }
-
 .stk-kpi-top { display: flex; align-items: center; gap: 7px; margin-bottom: .7rem; }
-.stk-kpi-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.stk-icon-dark { background: rgba(26,23,20,.08); color: var(--ink); }
-
+.stk-kpi-icon {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.stk-icon-gold   { background: #F4EFEA; color: #A38B74; }
+.stk-icon-green  { background: #E8F5F0; color: #4EA685; }
+.stk-icon-amber  { background: #FAEEDA; color: #854F0B; }
+.stk-icon-red    { background: #FAECE7; color: #993C1D; }
+.stk-icon-dark   { background: rgba(26,23,20,.08); color: var(--ink); }
 .stk-kpi-label { font-size: 11px; color: var(--ink-light); font-weight: 400; }
-.stk-kpi-val { font-family: var(--font-display); font-size: 1.8rem; font-weight: 300; color: var(--ink); line-height: 1; letter-spacing: -.01em; }
+.stk-kpi-val {
+  font-family: var(--font-display);
+  font-size: 1.8rem; font-weight: 300;
+  color: var(--ink); line-height: 1; letter-spacing: -.01em;
+}
 .stk-kpi-sub { font-size: 10px; color: var(--ink-light); margin-top: .35rem; }
 
 /* Toolbar */
