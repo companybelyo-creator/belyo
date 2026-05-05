@@ -337,6 +337,7 @@ console.log('[Belyo] sb disponible ?', typeof sb);
         loadTodayAppointments(currentUserId);
         loadNextAppt(currentUserId);
         loadActivity(currentUserId);
+        if (typeof loadDashCaChart === 'function') loadDashCaChart(currentUserId);
       })
       .subscribe();
 
