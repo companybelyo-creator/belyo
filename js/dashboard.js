@@ -322,10 +322,55 @@ console.log('[Belyo] sb disponible ?', typeof sb);
     ]);
     console.log('[Belyo] Donnees chargees');
 
+    // ===== REALTIME — CA incremental =====
+    // Écoute les INSERT/UPDATE/DELETE sur appointments pour mettre à jour le CA
+    // sans recharger toute la page d'un coup.
+    sb.channel('dash-appointments-' + currentUserId)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'appointments',
+        filter: 'user_id=eq.' + currentUserId,
+      }, function(payload) {
+        // Mise à jour légère : recalcule juste les KPIs + rdv du jour
+        loadKPIs(currentUserId);
+        loadTodayAppointments(currentUserId);
+        loadNextAppt(currentUserId);
+        loadActivity(currentUserId);
+      })
+      .subscribe();
+
+    // ===== AUTO-TERMINATION — marque en "done" les RDV dont l'heure est passée =====
+    // Vérifie toutes les 60 secondes si des RDV pending sont terminés
+    setInterval(autoMarkDone, 60000);
+    autoMarkDone(); // run immédiatement
+
   } catch(err) {
     console.error('[Belyo] ERREUR init:', err);
   }
 })();
+
+// Marque automatiquement "done" les RDV pending dont l'heure de fin est passée
+async function autoMarkDone() {
+  if (!currentUserId) return;
+  var now = new Date().toISOString();
+  // Récupère les pending d'aujourd'hui dont la datetime est dans le passé
+  var today = new Date().toISOString().split('T')[0];
+  var res = await sb.from('appointments')
+    .select('id, datetime, duration_minutes, service')
+    .eq('user_id', currentUserId)
+    .eq('status', 'pending')
+    .lte('datetime', new Date(Date.now() - 30*60000).toISOString()); // au moins 30min passées
+  if (!res.data || res.data.length === 0) return;
+  var toMark = res.data.filter(function(a) {
+    var dur = a.duration_minutes || 60;
+    var end = new Date(new Date(a.datetime).getTime() + dur * 60000);
+    return end <= new Date();
+  });
+  if (!toMark.length) return;
+  var ids = toMark.map(function(a) { return a.id; });
+  await sb.from('appointments').update({ status: 'done' }).in('id', ids);
+}
 
 // ===== DECONNEXION =====
 document.getElementById('logout-btn').addEventListener('click', async function(e) {

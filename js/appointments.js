@@ -473,6 +473,7 @@ function renderList() {
         + '<button class="action-btn" onclick="openEditModal(\'' + a.id + '\')">Modifier</button>'
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
+        + (a.status === 'done' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')" title="Annuler ce RDV (erreur ou absent)">Annuler</button>' : '')
       + '</td></tr>';
   }).join('');
 }
@@ -721,7 +722,11 @@ function showApptDetail(a) {
   var btnCancel = document.getElementById('appt-detail-cancel');
   if (btnEdit)   { btnEdit.onclick   = function() { closeApptDetail(); openEditModal(a.id); }; }
   if (btnDone)   { btnDone.style.display   = st === 'pending' ? 'inline-flex' : 'none'; btnDone.onclick   = function() { updateStatus(a.id, 'done');      closeApptDetail(); }; }
-  if (btnCancel) { btnCancel.style.display = st === 'pending' ? 'inline-flex' : 'none'; btnCancel.onclick = function() { updateStatus(a.id, 'cancelled'); closeApptDetail(); }; }
+  if (btnCancel) {
+    // Afficher Annuler pour pending ET pour done
+    btnCancel.style.display = (st === 'pending' || st === 'done') ? 'inline-flex' : 'none';
+    btnCancel.onclick = function() { updateStatus(a.id, 'cancelled'); closeApptDetail(); };
+  }
   panel.classList.add('open');
   document.getElementById('appt-detail-overlay').style.display = 'block';
 }
@@ -917,6 +922,21 @@ async function deleteAppt(id) {
 }
 
 async function updateStatus(id, status) {
+  var a = allAppts.find(function(x) { return x.id === id; });
+
+  // Si on annule un RDV déjà "terminé" : logique différenciée
+  if (status === 'cancelled' && a && a.status === 'done') {
+    var apptEnd = new Date(new Date(a.datetime).getTime() + (a.duration_minutes || 60) * 60000);
+    var isPast  = apptEnd <= new Date();
+    if (isPast) {
+      // Heure déjà passée → on annule (le créneau ne peut pas être repris de toute façon)
+      if (!confirm('Annuler ce RDV terminé ? (L\'heure étant passée, le créneau ne sera pas libéré sur le planning.)')) return;
+    } else {
+      // Heure pas encore passée → le créneau peut être repris
+      if (!confirm('Annuler ce RDV ? Le créneau sera libéré sur le planning pour d\'autres clients.')) return;
+    }
+  }
+
   var res = await sb.from('appointments').update({ status: status }).eq('id', id);
   if (res.error) { showToast('Erreur', 'error'); return; }
   showToast(status === 'done' ? 'RDV marqué terminé !' : 'RDV annulé');
@@ -1063,4 +1083,27 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
   await checkSubscription(session.user.id, session.user.created_at);
   await initPlan(session.user.id, session.user.created_at);
   await Promise.all([loadAppts(), loadClients(), loadPrestationsFromSettings(currentUserId)]);
+
+  // Auto-termination : marque "done" les RDV pending dont l'heure de fin est passée
+  await autoMarkDoneAppts();
+  setInterval(autoMarkDoneAppts, 60000);
 })();
+
+// Marque automatiquement "done" les RDV pending dont l'heure de fin est passée
+async function autoMarkDoneAppts() {
+  if (!currentUserId) return;
+  var pending = allAppts.filter(function(a) {
+    if (a.status !== 'pending') return false;
+    var dur = a.duration_minutes || 60;
+    var end = new Date(new Date(a.datetime).getTime() + dur * 60000);
+    return end <= new Date();
+  });
+  if (!pending.length) return;
+  var ids = pending.map(function(a) { return a.id; });
+  var res = await sb.from('appointments').update({ status: 'done' }).in('id', ids);
+  if (!res.error) {
+    pending.forEach(function(a) { a.status = 'done'; });
+    if (currentView === 'list') renderList();
+    else renderCalendar();
+  }
+}

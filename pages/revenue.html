@@ -67,7 +67,7 @@
       </div>
     </div>
 
-    <!-- Graphique principal CA + Top services -->
+    <!-- Graphique principal CA -->
     <div class="chart-grid-2">
       <div class="chart-card">
         <div class="chart-head">
@@ -76,11 +76,52 @@
         </div>
         <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
       </div>
+      <!-- Objectif du mois -->
+      <div class="chart-card objectif-card">
+        <div class="chart-head">
+          <div class="chart-title">Objectif du mois</div>
+          <div class="chart-sub">Suivez votre progression</div>
+        </div>
+        <div class="objectif-body">
+          <div class="objectif-amounts">
+            <span class="objectif-current" id="obj-current">—</span>
+            <span class="objectif-sep">/</span>
+            <span class="objectif-target">
+              <input type="number" id="obj-target-input" class="obj-input" placeholder="ex: 3000" min="0" step="100" />
+              <span id="obj-target-display" class="obj-target-text" style="display:none">—</span>
+              <span class="obj-currency">€</span>
+            </span>
+          </div>
+          <div class="objectif-bar-track">
+            <div class="objectif-bar-fill" id="obj-bar" style="width:0%"></div>
+          </div>
+          <div class="objectif-meta">
+            <span id="obj-pct">0%</span>
+            <span id="obj-remaining">—</span>
+          </div>
+          <div class="objectif-actions">
+            <button class="obj-btn" id="obj-edit-btn" onclick="editObjectif()">✎ Définir un objectif</button>
+            <button class="obj-btn obj-btn-save" id="obj-save-btn" style="display:none" onclick="saveObjectif()">Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 graphiques : CA Produits + CA Prestations -->
+    <div class="chart-grid-eq" style="margin-bottom:1.5rem">
       <div class="chart-card">
         <div class="chart-head">
-          <div class="chart-title">Top prestations</div>
+          <div class="chart-title">CA — Vente de produits</div>
+          <div class="chart-sub" id="prod-total-label">—</div>
         </div>
-        <div id="top-services" class="top-list"></div>
+        <div class="chart-wrap"><canvas id="prod-chart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div class="chart-title">CA — Prestations</div>
+          <div class="chart-sub" id="prest-total-label">—</div>
+        </div>
+        <div class="chart-wrap"><canvas id="prest-chart"></canvas></div>
       </div>
     </div>
 
@@ -88,17 +129,17 @@
     <div class="chart-grid-3">
       <div class="chart-card">
         <div class="chart-head">
+          <div class="chart-title">Top prestations</div>
+          <div class="chart-sub">par chiffre d'affaires</div>
+        </div>
+        <div id="top-services" class="top-list"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
           <div class="chart-title">Top clients</div>
           <div class="chart-sub">par chiffre d'affaires</div>
         </div>
         <div id="top-clients" class="top-list"></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-head">
-          <div class="chart-title">RDV par jour</div>
-          <div class="chart-sub">jours les plus actifs</div>
-        </div>
-        <div class="chart-wrap sm"><canvas id="weekday-chart"></canvas></div>
       </div>
       <div class="chart-card retention-card">
         <div class="chart-head">
