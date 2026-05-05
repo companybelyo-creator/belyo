@@ -45,39 +45,43 @@
     </div>
 
     <div class="stk-kpi-grid">
+      <!-- 4 premiers : fond coloré dégradé, sans icône -->
       <div class="stk-kpi-card">
-        <div class="stk-kpi-accent" style="background:var(--gold)"></div>
-        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-gold"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M5 4V3M11 4V3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">Total produits</span></div>
+        <div class="stk-kpi-label">Total produits</div>
         <div class="stk-kpi-val" id="kpi-total">—</div>
         <div class="stk-kpi-sub">En catalogue</div>
       </div>
       <div class="stk-kpi-card">
-        <div class="stk-kpi-accent" style="background:#4EA685"></div>
-        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-green"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 10L8 4l3 3 3-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="stk-kpi-label">Valeur stock</span></div>
+        <div class="stk-kpi-label">Valeur stock</div>
         <div class="stk-kpi-val" id="kpi-value">—</div>
         <div class="stk-kpi-sub">Valeur totale inventaire</div>
       </div>
       <div class="stk-kpi-card">
-        <div class="stk-kpi-accent" style="background:#C4A87A"></div>
-        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-amber"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v4M2 8h4M10 8h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">Stock faible</span></div>
+        <div class="stk-kpi-label">Stock faible</div>
         <div class="stk-kpi-val" id="kpi-low">—</div>
         <div class="stk-kpi-sub">À recommander bientôt</div>
       </div>
       <div class="stk-kpi-card">
-        <div class="stk-kpi-accent" style="background:#D85A30"></div>
-        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-red"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.6"/><path d="M8 5v3M8 11h.01" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">Rupture</span></div>
+        <div class="stk-kpi-label">Rupture</div>
         <div class="stk-kpi-val" id="kpi-empty">—</div>
         <div class="stk-kpi-sub">Quantité = 0</div>
       </div>
+      <!-- 2 derniers : style neutre avec icône -->
       <div class="stk-kpi-card stk-kpi-sales">
         <div class="stk-kpi-accent" style="background:var(--ink)"></div>
-        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-dark"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-1.5 9H3.5L2 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="6" cy="14" r="1" fill="currentColor"/><circle cx="11" cy="14" r="1" fill="currentColor"/></svg></div><span class="stk-kpi-label">Ventes ce mois</span></div>
+        <div class="stk-kpi-top">
+          <div class="stk-kpi-icon stk-icon-dark"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2 3h12l-1.5 9H3.5L2 3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="6" cy="14" r="1" fill="currentColor"/><circle cx="11" cy="14" r="1" fill="currentColor"/></svg></div>
+          <span class="stk-kpi-label">Ventes ce mois</span>
+        </div>
         <div class="stk-kpi-val" id="kpi-sales-count">—</div>
         <div class="stk-kpi-sub">Produits vendus</div>
       </div>
       <div class="stk-kpi-card stk-kpi-sales">
         <div class="stk-kpi-accent" style="background:var(--ink)"></div>
-        <div class="stk-kpi-top"><div class="stk-kpi-icon stk-icon-dark"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M3 5h7M3 11h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div><span class="stk-kpi-label">CA produits / mois</span></div>
+        <div class="stk-kpi-top">
+          <div class="stk-kpi-icon stk-icon-dark"><svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M3 5h7M3 11h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <span class="stk-kpi-label">CA produits / mois</span>
+        </div>
         <div class="stk-kpi-val" id="kpi-revenue">—</div>
         <div class="stk-kpi-sub">Chiffre d'affaires ventes</div>
       </div>
