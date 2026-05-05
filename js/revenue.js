@@ -77,8 +77,6 @@ async function loadData() {
   // Graphiques produits + prestations
   renderProdChart(now);
   renderPrestChart(data, now);
-  // Objectif
-  renderObjectif(data, now);
 }
 
 // ===== KPIs =====
@@ -572,71 +570,6 @@ function renderPrestChart(data, now) {
       }
     })
   });
-}
-
-// ===== WIDGET OBJECTIF DU MOIS =====
-var _objectifTarget = 0;
-
-function renderObjectif(data, now) {
-  var thisKey = getMonthKey(now);
-  var thisCA  = data.filter(function(a) { return a.datetime.startsWith(thisKey); })
-    .reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
-
-  var currentEl   = document.getElementById('obj-current');
-  var barEl       = document.getElementById('obj-bar');
-  var pctEl       = document.getElementById('obj-pct');
-  var remainEl    = document.getElementById('obj-remaining');
-  var targetDisp  = document.getElementById('obj-target-display');
-  var targetInput = document.getElementById('obj-target-input');
-
-  if (currentEl) currentEl.textContent = Math.round(thisCA) + '\u20ac';
-
-  // Charger l'objectif depuis localStorage
-  var stored = localStorage.getItem('belyo_objectif_' + currentUserId);
-  _objectifTarget = stored ? parseFloat(stored) : 0;
-
-  if (_objectifTarget > 0) {
-    if (targetDisp) { targetDisp.textContent = _objectifTarget; targetDisp.style.display = 'inline'; }
-    if (targetInput) targetInput.style.display = 'none';
-    var pct  = Math.min(100, Math.round(thisCA / _objectifTarget * 100));
-    var rest = Math.max(0, Math.round(_objectifTarget - thisCA));
-    if (barEl) barEl.style.width = pct + '%';
-    if (pctEl) pctEl.textContent = pct + '%';
-    if (remainEl) remainEl.textContent = rest > 0 ? rest + '\u20ac restants' : '🎉 Objectif atteint !';
-    var editBtn = document.getElementById('obj-edit-btn');
-    if (editBtn) editBtn.textContent = '✎ Modifier';
-  } else {
-    if (targetDisp)  targetDisp.style.display = 'none';
-    if (targetInput) targetInput.style.display = 'inline-block';
-    if (barEl) barEl.style.width = '0%';
-    if (pctEl) pctEl.textContent = '—';
-    if (remainEl) remainEl.textContent = 'Aucun objectif défini';
-  }
-}
-
-function editObjectif() {
-  var input = document.getElementById('obj-target-input');
-  var disp  = document.getElementById('obj-target-display');
-  var editBtn = document.getElementById('obj-edit-btn');
-  var saveBtn = document.getElementById('obj-save-btn');
-  if (input) { input.style.display = 'inline-block'; input.value = _objectifTarget || ''; input.focus(); }
-  if (disp)  disp.style.display = 'none';
-  if (editBtn) editBtn.style.display = 'none';
-  if (saveBtn) saveBtn.style.display = 'inline-block';
-}
-
-function saveObjectif() {
-  var input  = document.getElementById('obj-target-input');
-  var val    = input ? parseFloat(input.value) : 0;
-  var saveBtn = document.getElementById('obj-save-btn');
-  var editBtn = document.getElementById('obj-edit-btn');
-  if (!val || val <= 0) { showToast('Entrez un objectif valide', 'error'); return; }
-  localStorage.setItem('belyo_objectif_' + currentUserId, val);
-  _objectifTarget = val;
-  if (saveBtn) saveBtn.style.display = 'none';
-  if (editBtn) editBtn.style.display = 'inline-block';
-  loadData(); // rafraîchit tout
-  showToast('Objectif enregistré !');
 }
 
 // ===== EXPORT PDF =====

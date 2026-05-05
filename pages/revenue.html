@@ -67,7 +67,7 @@
       </div>
     </div>
 
-    <!-- Graphique principal CA -->
+    <!-- CA mensuel + RDV par jour -->
     <div class="chart-grid-2">
       <div class="chart-card">
         <div class="chart-head">
@@ -76,38 +76,16 @@
         </div>
         <div class="chart-wrap"><canvas id="ca-chart"></canvas></div>
       </div>
-      <!-- Objectif du mois -->
-      <div class="chart-card objectif-card">
+      <div class="chart-card">
         <div class="chart-head">
-          <div class="chart-title">Objectif du mois</div>
-          <div class="chart-sub">Suivez votre progression</div>
+          <div class="chart-title">RDV par jour</div>
+          <div class="chart-sub">jours les plus actifs</div>
         </div>
-        <div class="objectif-body">
-          <div class="objectif-amounts">
-            <span class="objectif-current" id="obj-current">—</span>
-            <span class="objectif-sep">/</span>
-            <span class="objectif-target">
-              <input type="number" id="obj-target-input" class="obj-input" placeholder="ex: 3000" min="0" step="100" />
-              <span id="obj-target-display" class="obj-target-text" style="display:none">—</span>
-              <span class="obj-currency">€</span>
-            </span>
-          </div>
-          <div class="objectif-bar-track">
-            <div class="objectif-bar-fill" id="obj-bar" style="width:0%"></div>
-          </div>
-          <div class="objectif-meta">
-            <span id="obj-pct">0%</span>
-            <span id="obj-remaining">—</span>
-          </div>
-          <div class="objectif-actions">
-            <button class="obj-btn" id="obj-edit-btn" onclick="editObjectif()">✎ Définir un objectif</button>
-            <button class="obj-btn obj-btn-save" id="obj-save-btn" style="display:none" onclick="saveObjectif()">Enregistrer</button>
-          </div>
-        </div>
+        <div class="chart-wrap sm"><canvas id="weekday-chart"></canvas></div>
       </div>
     </div>
 
-    <!-- 2 graphiques : CA Produits + CA Prestations -->
+    <!-- CA Produits + CA Prestations -->
     <div class="chart-grid-eq" style="margin-bottom:1.5rem">
       <div class="chart-card">
         <div class="chart-head">
@@ -122,60 +100,6 @@
           <div class="chart-sub" id="prest-total-label">—</div>
         </div>
         <div class="chart-wrap"><canvas id="prest-chart"></canvas></div>
-      </div>
-    </div>
-
-    <!-- Top clients + RDV par jour + Taux de rétention -->
-    <div class="chart-grid-3">
-      <div class="chart-card">
-        <div class="chart-head">
-          <div class="chart-title">Top prestations</div>
-          <div class="chart-sub">par chiffre d'affaires</div>
-        </div>
-        <div id="top-services" class="top-list"></div>
-      </div>
-      <div class="chart-card">
-        <div class="chart-head">
-          <div class="chart-title">Top clients</div>
-          <div class="chart-sub">par chiffre d'affaires</div>
-        </div>
-        <div id="top-clients" class="top-list"></div>
-      </div>
-      <div class="chart-card retention-card">
-        <div class="chart-head">
-          <div class="chart-title">Taux de Rétention</div>
-        </div>
-        <!-- Jauge SVG -->
-        <div class="gauge-wrap">
-          <svg id="retention-svg" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="ret-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" style="stop-color:#4EA685"/>
-                <stop offset="100%" style="stop-color:#3B82F6"/>
-              </linearGradient>
-            </defs>
-            <!-- Track fond -->
-            <path id="ret-track" d="" fill="none" stroke="#E8E4DE" stroke-width="16" stroke-linecap="butt"/>
-            <!-- Arc coloré -->
-            <path id="ret-fill"  d="" fill="none" stroke="url(#ret-grad)" stroke-width="16" stroke-linecap="butt"/>
-            <!-- Texte centré -->
-            <text x="100" y="95" text-anchor="middle"
-              font-family="'DM Sans', sans-serif" font-size="10" fill="#8A817C" id="ret-label-taux">Taux : —</text>
-          </svg>
-        </div>
-        <!-- Barres segmentation -->
-        <div class="retention-bars">
-          <div class="ret-row">
-            <span class="ret-label">Nouveaux clients</span>
-            <span class="ret-pct" id="retention-new-pct">—</span>
-          </div>
-          <div class="ret-bar-track"><div class="ret-bar ret-bar-new" id="retention-bar-new" style="width:0%"></div></div>
-          <div class="ret-row">
-            <span class="ret-label">Clients existants</span>
-            <span class="ret-pct" id="retention-exist-pct">—</span>
-          </div>
-          <div class="ret-bar-track"><div class="ret-bar ret-bar-exist" id="retention-bar-exist" style="width:0%"></div></div>
-        </div>
       </div>
     </div>
 
@@ -206,6 +130,55 @@
           <div class="kpi-label">Clients uniques</div>
           <div class="kpi-val" id="kpi-unique">—</div>
           <div class="kpi-sub">Sur la période</div>
+        </div>
+      </div>
+
+      <!-- Top prestations + Top clients + Taux de rétention -->
+      <div class="chart-grid-3" style="margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Top prestations</div>
+            <div class="chart-sub">par chiffre d'affaires</div>
+          </div>
+          <div id="top-services" class="top-list"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Top clients</div>
+            <div class="chart-sub">par chiffre d'affaires</div>
+          </div>
+          <div id="top-clients" class="top-list"></div>
+        </div>
+        <div class="chart-card retention-card">
+          <div class="chart-head">
+            <div class="chart-title">Taux de Rétention</div>
+          </div>
+          <div class="gauge-wrap">
+            <svg id="retention-svg" viewBox="0 0 200 115" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="ret-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#4EA685"/>
+                  <stop offset="100%" style="stop-color:#3B82F6"/>
+                </linearGradient>
+              </defs>
+              <path id="ret-track" d="" fill="none" stroke="#E8E4DE" stroke-width="16" stroke-linecap="butt"/>
+              <path id="ret-fill"  d="" fill="none" stroke="url(#ret-grad)" stroke-width="16" stroke-linecap="butt"/>
+              <text x="100" y="95" text-anchor="middle"
+                font-family="'DM Sans', sans-serif" font-size="10" fill="#8A817C" id="ret-label-taux">Taux : —</text>
+            </svg>
+          </div>
+          <div class="retention-bars">
+            <div class="ret-row">
+              <span class="ret-label">Nouveaux clients</span>
+              <span class="ret-pct" id="retention-new-pct">—</span>
+            </div>
+            <div class="ret-bar-track"><div class="ret-bar ret-bar-new" id="retention-bar-new" style="width:0%"></div></div>
+            <div class="ret-row">
+              <span class="ret-label">Clients existants</span>
+              <span class="ret-pct" id="retention-exist-pct">—</span>
+            </div>
+            <div class="ret-bar-track"><div class="ret-bar ret-bar-exist" id="retention-bar-exist" style="width:0%"></div></div>
+          </div>
         </div>
       </div>
 
@@ -242,7 +215,7 @@
       <div class="pro-wall">
         <div class="pro-wall-icon">&#10022;</div>
         <h3>Statistiques avancées — Plan Pro</h3>
-        <p>Débloquez les analyses horaires, le taux de fidélisation, la répartition Homme/Femme et l'évolution des clients uniques.</p>
+        <p>Débloquez le top prestations, top clients, le taux de rétention, les analyses horaires, la répartition Homme/Femme et l'évolution des clients uniques.</p>
         <a href="settings.html" style="display:inline-block;background:var(--ink);color:var(--white);padding:10px 28px;border-radius:100px;font-size:13px;font-weight:500;text-decoration:none">Passer au Pro — 59€/mois</a>
       </div>
     </div>
