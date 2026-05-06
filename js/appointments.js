@@ -583,7 +583,27 @@ function renderCalendar() {
 
   grid.innerHTML = html;
 
-  // RDV par jour
+  // ── Overlay colonnes : une div par jour, toute la hauteur de la plage ──────
+  // La grille CSS est row-first (heure × jour) — les RDV sont placés dans des
+  // overlays absolus pour éviter que le fond de la cellule horaire colorie
+  // l'espace vide sous un RDV court.
+  var totalRows   = hours.length; // nbre de lignes horaires
+  var colH        = totalRows * SLOT_H; // hauteur totale de la grille RDV
+
+  // Conteneur relatif englobant la grille
+  var gridWrap = grid.parentElement;
+  // Supprimer les anciens overlays
+  var oldOverlays = gridWrap.querySelectorAll('.cal-day-overlay');
+  oldOverlays.forEach(function(o) { o.remove(); });
+
+  // Créer un wrapper positionné par-dessus la grille
+  var overlayWrap = document.createElement('div');
+  overlayWrap.className = 'cal-overlay-wrap';
+  overlayWrap.style.cssText = 'position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;';
+  gridWrap.style.position = 'relative';
+  gridWrap.appendChild(overlayWrap);
+
+  // ── Données RDV par jour ────────────────────────────────────────────────────
   var apptsByDay = {};
   days.forEach(function(d) {
     var k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
@@ -595,86 +615,76 @@ function renderCalendar() {
     if (apptsByDay[dk] !== undefined) apptsByDay[dk].push(a);
   });
 
+  // ── Helpers ──────────────────────────────────────────────────────────────────
+  function getDuree(a) {
+    var dureeMin = a.duration_minutes || 30;
+    if (!a.duration_minutes && PRIX_DUREE && a.service) {
+      var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
+      var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
+      var pd  = pdH || pdF;
+      if (pd && pd.duree) dureeMin = pd.duree;
+    }
+    return dureeMin;
+  }
+  function startMin(a) {
+    var dt = new Date(a.datetime);
+    return dt.getHours() * 60 + dt.getMinutes();
+  }
+  function snapH(min) {
+    var step = SLOT_H / 4;
+    return Math.max(step, Math.round((min / 60) * SLOT_H / step) * step);
+  }
+  function abbrev(name) {
+    var p = (name || '').trim().split(' ');
+    return p.length > 1 ? p[0] + ' ' + p[1].charAt(0).toUpperCase() + '.' : p[0];
+  }
+  function evInner(a, h) {
+    var t = formatTime(a.datetime), n = abbrev(a.client_name), s = a.service || '';
+    var step = SLOT_H / 4;
+    if (h <= step + 2) {
+      return '<div class="ev-line">'
+        + '<span class="ev-t">' + t + '</span>'
+        + '<span class="ev-n">' + n + '</span>'
+        + (s ? '<span class="ev-s">' + s + '</span>' : '')
+        + '</div>';
+    }
+    return '<div class="ev-top">'
+        + '<span class="ev-t">' + t + '</span>'
+        + (s ? '<span class="ev-s">' + s + '</span>' : '')
+        + '</div>'
+        + '<div class="ev-n">' + n + '</div>';
+  }
+
+  // ── Construire les overlays ──────────────────────────────────────────────────
   days.forEach(function(d, di) {
     var dk = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    var dayAppts = (apptsByDay[dk] || []).filter(function(a) { return a.status !== 'cancelled'; });
-
-    // Appliquer filtres
+    var dayAppts = (apptsByDay[dk] || []).slice();
     if (calFilterService) dayAppts = dayAppts.filter(function(a) { return a.service === calFilterService; });
     if (calFilterCollab)  dayAppts = dayAppts.filter(function(a) { return a.collaborateur === calFilterCollab; });
 
-    // Calculer durée effective de chaque RDV
-    function getDuree(a) {
-      var dureeMin = a.duration_minutes || 30;
-      if (!a.duration_minutes && PRIX_DUREE && a.service) {
-        var pdH = PRIX_DUREE.homme && PRIX_DUREE.homme[a.service];
-        var pdF = PRIX_DUREE.femme && PRIX_DUREE.femme[a.service];
-        var pd  = pdH || pdF;
-        if (pd && pd.duree) dureeMin = pd.duree;
-      }
-      return dureeMin;
-    }
+    // Overlay positionné sur la colonne di (di+1 car colonne 0 = heures)
+    var overlay = document.createElement('div');
+    overlay.className = 'cal-day-overlay';
+    overlay.dataset.di = di;
+    overlay.style.cssText = 'position:absolute;pointer-events:none;top:0;left:0;width:0;height:0;'; // sized in rAF
+    overlayWrap.appendChild(overlay);
 
-    // Minutes depuis minuit
-    function startMin(a) {
-      var dt = new Date(a.datetime);
-      return dt.getHours() * 60 + dt.getMinutes();
-    }
+    // Trier
+    var sorted = dayAppts.sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    // Trier par heure
-    var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
-
-    // Snap durée à la grille 15min
-    function snapH(min) {
-      var px = (min / 60) * SLOT_H;
-      var step = SLOT_H / 4;
-      return Math.max(step, Math.round(px / step) * step);
-    }
-
-    // Abréger le nom
-    function abbrev(name) {
-      var parts = (name || '').trim().split(' ');
-      return parts.length > 1 ? parts[0] + ' ' + parts[1].charAt(0).toUpperCase() + '.' : parts[0];
-    }
-
-    // HTML interne selon hauteur disponible
-    function evInner(a, h) {
-      var t = formatTime(a.datetime);
-      var n = abbrev(a.client_name);
-      var s = a.service || '';
-      var step = SLOT_H / 4;
-      if (h <= step + 2) {
-        // Très compact : tout sur une ligne
-        return '<div class="ev-line">'
-          + '<span class="ev-t">' + t + '</span>'
-          + '<span class="ev-n">' + n + '</span>'
-          + (s ? '<span class="ev-s">' + s + '</span>' : '')
-          + '</div>';
-      }
-      // Normal : heure+prestation ligne 1, nom ligne 2
-      return '<div class="ev-top">'
-          + '<span class="ev-t">' + t + '</span>'
-          + (s ? '<span class="ev-s">' + s + '</span>' : '')
-          + '</div>'
-          + '<div class="ev-n">' + n + '</div>';
-    }
-
-    // Grouper les RDV strictement consécutifs (gap = 0, pas de trou)
+    // Grouper RDV strictement consécutifs
     var groups = [], used = {};
     sorted.forEach(function(a) {
       if (used[a.id]) return;
       var grp = [a]; used[a.id] = true; var last = a;
-      // Chercher le suivant immédiat sans trou
-      var searching = true;
-      while (searching) {
-        searching = false;
+      var again = true;
+      while (again) {
+        again = false;
         for (var ci = 0; ci < sorted.length; ci++) {
           var nxt = sorted[ci];
           if (used[nxt.id]) continue;
           var gap = startMin(nxt) - (startMin(last) + getDuree(last));
-          if (gap >= 0 && gap <= 2) { // consécutif strict : pas de trou
-            grp.push(nxt); used[nxt.id] = true; last = nxt; searching = true; break;
-          }
+          if (gap >= 0 && gap <= 2) { grp.push(nxt); used[nxt.id] = true; last = nxt; again = true; break; }
         }
       }
       groups.push(grp);
@@ -686,16 +696,11 @@ function renderCalendar() {
       var aH = dt.getHours(), aM = dt.getMinutes();
       if (aH < HOUR_START || aH >= HOUR_END) return;
 
-      var rowIndex = aH - HOUR_START;
-      var cells = grid.querySelectorAll('.cal-cell');
-      var cell  = cells[rowIndex * 7 + di];
-      if (!cell) return;
-
-      var topPx     = (aM / 60) * SLOT_H;
+      // top = minutes depuis HOUR_START × SLOT_H/60
+      var topPx     = ((aH - HOUR_START) * 60 + aM) / 60 * SLOT_H;
       var statusCls = 'status-' + (first.status || 'pending');
 
       if (grp.length === 1) {
-        // RDV isolé
         var a   = grp[0];
         var evH = snapH(getDuree(a));
         var ev  = document.createElement('div');
@@ -703,10 +708,8 @@ function renderCalendar() {
         ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;';
         ev.innerHTML = evInner(a, evH);
         ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
-        cell.appendChild(ev);
-
+        overlay.appendChild(ev);
       } else {
-        // Groupe consécutif — un seul wrapper
         var totalMin = 0;
         grp.forEach(function(a) { totalMin += getDuree(a); });
         var totalH = snapH(totalMin);
@@ -714,36 +717,54 @@ function renderCalendar() {
         var wrapper = document.createElement('div');
         wrapper.className = 'cal-event-group ' + statusCls;
         wrapper.style.cssText = 'top:' + topPx + 'px;height:' + totalH + 'px;';
-
         grp.forEach(function(a) {
           var iH   = snapH(getDuree(a));
           var item = document.createElement('div');
           item.className = 'ev-group-item';
-          item.style.cssText = 'height:' + iH + 'px;overflow:hidden;box-sizing:border-box;';
+          item.style.cssText = 'height:' + iH + 'px;overflow:hidden;box-sizing:border-box;flex-shrink:0;';
           item.innerHTML = evInner(a, iH);
-          (function(appt) {
-            item.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(appt); });
-          })(a);
+          (function(appt) { item.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(appt); }); })(a);
           wrapper.appendChild(item);
         });
-        cell.appendChild(wrapper);
+        overlay.appendChild(wrapper);
       }
     });
   });
 
-  // Ligne now
+  // Positionner les overlays après rendu (mesure le header)
+  requestAnimationFrame(function() {
+    var headEl = grid.querySelector('.cal-head');
+    var headH  = headEl ? headEl.offsetHeight : 48;
+    overlayWrap.style.paddingTop = headH + 'px';
+    overlayWrap.style.boxSizing  = 'border-box';
+    // Aligner chaque overlay sur la colonne de la grille
+    var colEls = grid.querySelectorAll('.cal-head');
+    colEls.forEach(function(el, i) {
+      if (i === 0) return; // skip col heures
+      var ov = overlayWrap.querySelector('.cal-day-overlay[data-di="' + (i - 1) + '"]');
+      if (ov) {
+        ov.style.position = 'absolute';
+        ov.style.top      = headH + 'px';
+        ov.style.left     = el.offsetLeft + 'px';
+        ov.style.width    = el.offsetWidth + 'px';
+        ov.style.height   = (totalRows * SLOT_H) + 'px';
+      }
+    });
+  });
+
+  // ── Ligne "maintenant" ──────────────────────────────────────────────────────
   var now = new Date();
   var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-  var nowH = now.getHours(); var nowM = now.getMinutes();
+  var nowH = now.getHours(), nowM = now.getMinutes();
   if (apptsByDay[todayStr] !== undefined && nowH >= HOUR_START && nowH < HOUR_END) {
     var todayDi = days.findIndex(function(d) { return d.getTime() === today.getTime(); });
     if (todayDi >= 0) {
-      var nowCell = grid.querySelectorAll('.cal-cell')[(nowH - HOUR_START) * 7 + todayDi];
-      if (nowCell) {
+      var todayOverlay = overlayWrap.querySelector('.cal-day-overlay[data-di="' + todayDi + '"]');
+      if (todayOverlay) {
         var line = document.createElement('div');
         line.className = 'now-line';
-        line.style.top = ((nowM / 60) * SLOT_H) + 'px';
-        nowCell.appendChild(line);
+        line.style.top = (((nowH - HOUR_START) * 60 + nowM) / 60 * SLOT_H) + 'px';
+        todayOverlay.appendChild(line);
       }
     }
   }

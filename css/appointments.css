@@ -98,6 +98,30 @@
   background: var(--white);
   box-shadow: 0 2px 16px rgba(26,23,20,.06);
 }
+/* ── Overlay colonnes RDV ── */
+.cal-overlay-wrap {
+  position: absolute;
+  /* Commence après la colonne des heures (56px) et le header */
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: 56px repeat(7, 1fr);
+}
+/* Pseudo-colonne vide pour les heures */
+.cal-overlay-wrap::before {
+  content: '';
+  display: block;
+}
+.cal-day-overlay {
+  position: relative;
+  pointer-events: none;
+  /* Le top des events est relatif à HOUR_START — le header est compensé par JS */
+}
+.cal-day-overlay .cal-event,
+.cal-day-overlay .cal-event-group {
+  pointer-events: all;
+}
+
 .cal-head {
   background: var(--cream);
   padding: 12px 6px 10px;
@@ -220,40 +244,22 @@
   margin-bottom: 1px;
 }
 .ev-t {
-  font-size: 10px;
-  font-weight: 700;
-  opacity: .68;
-  white-space: nowrap;
-  flex-shrink: 0;
-  letter-spacing: .02em;
+  font-size: 10px; font-weight: 700; opacity: .68;
+  white-space: nowrap; flex-shrink: 0; letter-spacing: .02em;
 }
 .ev-s {
-  font-size: 9.5px;
-  font-weight: 500;
-  opacity: .62;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: right;
-  flex: 1;
-  min-width: 0;
+  font-size: 9.5px; font-weight: 500; opacity: .62;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-align: right; flex: 1; min-width: 0;
 }
 .ev-n {
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 12px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   letter-spacing: .01em;
 }
-/* Compact : une seule ligne */
 .ev-line {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  width: 100%;
-  overflow: hidden;
-  height: 100%;
+  display: flex; align-items: center; gap: 3px;
+  width: 100%; overflow: hidden; height: 100%;
 }
 .ev-line .ev-t { font-size: 9px; flex-shrink: 0; }
 .ev-line .ev-n { font-size: 10.5px; flex: 1; min-width: 0; }
@@ -261,34 +267,21 @@
 
 /* ── Groupe RDV consécutifs ── */
 .cal-event-group {
-  position: absolute;
-  left: 4px; right: 4px;
-  z-index: 2;
-  border-radius: 7px;
-  overflow: hidden;
-  cursor: pointer;
+  position: absolute; left: 4px; right: 4px; z-index: 2;
+  border-radius: 7px; overflow: hidden; cursor: pointer;
   transition: transform .12s, box-shadow .12s;
 }
 .cal-event-group:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,23,20,.18); }
 .cal-event-group.status-pending {
-  background: #E0EDFF;
-  border-left: 3px solid #2B7FFF;
-  box-shadow: 0 1px 4px rgba(43,127,255,.12);
-  color: #0A2540;
+  background: #E0EDFF; border-left: 3px solid #2B7FFF;
+  box-shadow: 0 1px 4px rgba(43,127,255,.12); color: #0A2540;
 }
 .cal-event-group.status-done {
-  background: #E8F5EF;
-  border-left: 3px solid #26A96C;
-  box-shadow: 0 1px 4px rgba(38,169,108,.10);
-  color: #135C38;
+  background: #E8F5EF; border-left: 3px solid #26A96C;
+  box-shadow: 0 1px 4px rgba(38,169,108,.10); color: #135C38;
 }
-.ev-group-item {
-  padding: 4px 8px;
-  flex-shrink: 0;
-}
-.ev-group-item + .ev-group-item {
-  border-top: 1px solid rgba(0,0,0,.08);
-}
+.ev-group-item { padding: 4px 8px; flex-shrink: 0; }
+.ev-group-item + .ev-group-item { border-top: 1px solid rgba(0,0,0,.08); }
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E53935; }
