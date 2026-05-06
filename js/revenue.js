@@ -11,7 +11,6 @@ var clientsChart  = null;
 var genreChart    = null;
 var prodChart      = null;
 var prestChart     = null;
-var prestDonutChart = null;
 
 // Couleurs Chart.js
 var CHART_COLORS = {
@@ -85,7 +84,6 @@ async function loadData() {
   renderStatsAvancees(data, now);
   renderProdChart(now);
   renderPrestChart(data, now);
-  renderPrestDonut(data);
   await renderTopProducts(now);
 }
 
@@ -903,83 +901,6 @@ function renderPrestChart(data, now) {
 }
 
 // ===== CA PAR PRESTATION — donut + légende barres =====
-function renderPrestDonut(data) {
-  // Agréger CA par prestation
-  var map = {};
-  data.forEach(function(a) {
-    var s = a.service || 'Autre';
-    map[s] = (map[s] || 0) + (parseFloat(a.price) || 0);
-  });
-  var sorted = Object.entries(map).sort(function(a,b){ return b[1]-a[1]; }).slice(0, 7);
-  var total  = sorted.reduce(function(s,e){ return s+e[1]; }, 0);
-
-  var sub = document.getElementById('prest-donut-sub');
-  if (sub) sub.textContent = total > 0 ? Math.round(total) + '\u20ac sur la période' : 'Aucune donnée';
-
-  // Palette : dégradés du teal au violet en passant par le doré
-  var PALETTE = ['#1D9E75','#4EC99E','#C4A87A','#7B61FF','#F97316','#3B82F6','#F472B6'];
-
-  if (prestDonutChart) prestDonutChart.destroy();
-  var ctx = document.getElementById('prest-donut-chart');
-  if (!ctx) return;
-
-  if (sorted.length === 0) {
-    var lgd = document.getElementById('prest-donut-legend');
-    if (lgd) lgd.innerHTML = '<p style="font-size:12px;color:var(--ink-light)">Aucune donnée</p>';
-    return;
-  }
-
-  prestDonutChart = new Chart(ctx.getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: sorted.map(function(e){ return e[0]; }),
-      datasets: [{
-        data: sorted.map(function(e){ return Math.round(e[1]); }),
-        backgroundColor: PALETTE.slice(0, sorted.length),
-        borderWidth: 3,
-        borderColor: '#FFFFFF',
-        hoverOffset: 8,
-      }]
-    },
-    options: {
-      responsive: false,
-      maintainAspectRatio: false,
-      cutout: '68%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: {
-          label: function(c) {
-            var pct = total > 0 ? Math.round(c.raw / total * 100) : 0;
-            return c.label + ' : ' + c.raw + '\u20ac (' + pct + '%)';
-          }
-        }}
-      }
-    }
-  });
-
-  // Légende custom avec barre de progression
-  var lgd = document.getElementById('prest-donut-legend');
-  if (!lgd) return;
-  var max = sorted[0] ? sorted[0][1] : 1;
-  lgd.innerHTML = sorted.map(function(e, i) {
-    var pct    = total > 0 ? Math.round(e[1]/total*100) : 0;
-    var barPct = max > 0   ? Math.round(e[1]/max*100)   : 0;
-    var color  = PALETTE[i] || '#ccc';
-    return '<div style="display:flex;flex-direction:column;gap:2px">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">'
-      +   '<div style="display:flex;align-items:center;gap:5px;min-width:0">'
-      +     '<span style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></span>'
-      +     '<span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">'+e[0]+'</span>'
-      +   '</div>'
-      +   '<span style="font-size:12px;font-weight:500;flex-shrink:0;color:var(--ink)">'+Math.round(e[1])+'\u20ac <span style="font-weight:400;color:var(--ink-light)">('+pct+'%)</span></span>'
-      + '</div>'
-      + '<div style="height:3px;background:var(--cream-dark);border-radius:100px;overflow:hidden">'
-      +   '<div style="height:3px;width:'+barPct+'%;background:'+color+';border-radius:100px;transition:width .5s ease"></div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
-}
-
 // ===== TOP PRODUITS VENDUS — barres horizontales + tendance =====
 async function renderTopProducts(now) {
   var startThis = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
