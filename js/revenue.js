@@ -986,7 +986,7 @@ async function renderTopProducts(now) {
       sub: null,
       trend: trend,
       barPct: Math.round(d.qty / maxQty * 100),
-      accentColor: 'linear-gradient(90deg,#F97316,#FB923C)',
+      accentColor: 'linear-gradient(90deg,#3B82F6,#93C5FD)',
     };
   }), 'Aucune vente ce mois');
 }
