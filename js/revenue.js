@@ -191,50 +191,79 @@ function renderCAChart(data, prodData, now) {
   });
 }
 
+// ===== HELPER : rendu unifié d'un top-list =====
+// items = [{ rank, label, value, sub, trend, barPct, accentColor }]
+function renderTopList(elId, items, emptyMsg) {
+  var el = document.getElementById(elId);
+  if (!el) return;
+  if (!items || items.length === 0) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--ink-light);padding:.5rem 0">'+emptyMsg+'</p>';
+    return;
+  }
+  el.innerHTML = items.map(function(it) {
+    var rankBg   = it.rank === 1 ? 'linear-gradient(135deg,#C4A87A,#E8D5A8)' : 'var(--cream-dark)';
+    var rankColor= it.rank === 1 ? '#fff'                                     : 'var(--ink-light)';
+    var trendHtml = it.trend
+      ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:'+it.trend.bg+';color:'+it.trend.color+'">'+it.trend.label+'</span>'
+      : '';
+    return ''
+      + '<div style="display:flex;flex-direction:column;gap:5px">'
+      +   '<div style="display:flex;align-items:center;gap:10px">'
+      +     '<div style="width:22px;height:22px;border-radius:6px;background:'+rankBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +       '<span style="font-size:11px;font-weight:700;color:'+rankColor+';font-family:var(--font-body)">'+it.rank+'</span>'
+      +     '</div>'
+      +     '<div style="flex:1;min-width:0">'
+      +       '<div style="font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+it.label+'</div>'
+      +       (it.sub ? '<div style="font-size:11px;color:var(--ink-light);margin-top:1px">'+it.sub+'</div>' : '')
+      +     '</div>'
+      +     '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+      +       trendHtml
+      +       '<span style="font-size:13px;font-weight:600;color:var(--ink)">'+it.value+'</span>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div style="height:3px;background:var(--cream-dark);border-radius:100px;overflow:hidden;margin-left:32px">'
+      +     '<div style="height:3px;width:'+it.barPct+'%;background:'+it.accentColor+';border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>'
+      +   '</div>'
+      + '</div>';
+  }).join('');
+}
+
 // ===== TOP SERVICES =====
 function renderTopServices(data) {
-  var services = {};
+  var map = {};
   data.forEach(function(a) {
-    if (a.service) services[a.service] = (services[a.service]||0) + (parseFloat(a.price)||0);
+    if (a.service) map[a.service] = (map[a.service]||0) + (parseFloat(a.price)||0);
   });
-  var top = Object.entries(services).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var top = Object.entries(map).sort(function(a,b){ return b[1]-a[1]; }).slice(0, 5);
   var max = top.length > 0 ? top[0][1] : 1;
-  var el  = document.getElementById('top-services');
-  if (!el) return;
-  el.innerHTML = top.length === 0
-    ? '<p style="font-size:13px;color:var(--ink-light)">Aucune donnée</p>'
-    : top.map(function(s,i) {
-        var pct = Math.round(s[1]/max*100);
-        return '<div class="top-item">'
-          + '<div class="top-num' + (i===0?' gold':'') + '">' + (i+1) + '</div>'
-          + '<span class="top-name">' + s[0] + '</span>'
-          + '<div class="top-bar-wrap"><div class="top-bar" style="width:'+pct+'%"></div></div>'
-          + '<span class="top-val">' + Math.round(s[1]) + '\u20ac</span>'
-          + '</div>';
-      }).join('');
+  renderTopList('top-services', top.map(function(s, i) {
+    return {
+      rank: i+1,
+      label: s[0],
+      value: Math.round(s[1]) + '\u20ac',
+      barPct: Math.round(s[1]/max*100),
+      accentColor: 'linear-gradient(90deg,#1D9E75,#4EC99E)',
+    };
+  }), 'Aucune donnée');
 }
 
 // ===== TOP CLIENTS =====
 function renderTopClients(data) {
-  var clients = {};
+  var map = {};
   data.forEach(function(a) {
-    clients[a.client_name] = (clients[a.client_name]||0) + (parseFloat(a.price)||0);
+    map[a.client_name] = (map[a.client_name]||0) + (parseFloat(a.price)||0);
   });
-  var top = Object.entries(clients).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+  var top = Object.entries(map).sort(function(a,b){ return b[1]-a[1]; }).slice(0, 5);
   var max = top.length > 0 ? top[0][1] : 1;
-  var el  = document.getElementById('top-clients');
-  if (!el) return;
-  el.innerHTML = top.length === 0
-    ? '<p style="font-size:13px;color:var(--ink-light)">Aucune donnée</p>'
-    : top.map(function(c,i) {
-        var pct = Math.round(c[1]/max*100);
-        return '<div class="top-item">'
-          + '<div class="top-num' + (i===0?' gold':'') + '">' + (i+1) + '</div>'
-          + '<span class="top-name">' + c[0] + '</span>'
-          + '<div class="top-bar-wrap"><div class="top-bar" style="width:'+pct+'%"></div></div>'
-          + '<span class="top-val">' + Math.round(c[1]) + '\u20ac</span>'
-          + '</div>';
-      }).join('');
+  renderTopList('top-clients', top.map(function(c, i) {
+    return {
+      rank: i+1,
+      label: c[0],
+      value: Math.round(c[1]) + '\u20ac',
+      barPct: Math.round(c[1]/max*100),
+      accentColor: 'linear-gradient(90deg,#7B61FF,#A78BFA)',
+    };
+  }), 'Aucune donnée');
 }
 
 // ===== WEEKDAY CHART — dégradé doré par intensité =====
@@ -900,25 +929,20 @@ function renderPrestChart(data, now) {
   });
 }
 
-// ===== CA PAR PRESTATION — donut + légende barres =====
-// ===== TOP PRODUITS VENDUS — barres horizontales + tendance =====
+// ===== TOP PRODUITS VENDUS =====
 async function renderTopProducts(now) {
   var startThis = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
   var startLast = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
-  var endLast   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
 
-  // Ce mois + mois dernier en une seule requête
-  var from = startLast;
-  var res  = await sb.from('product_sales')
+  var res = await sb.from('product_sales')
     .select('product_name, quantity_sold, unit_price, created_at')
     .eq('user_id', currentUserId)
-    .gte('created_at', from);
+    .gte('created_at', startLast);
 
   var sales = res.data || [];
-
-  // Agréger ce mois et mois dernier séparément
   var thisMonth = {};
   var lastMonth = {};
+
   sales.forEach(function(s) {
     var name = s.product_name || 'Produit';
     var qty  = parseInt(s.quantity_sold) || 1;
@@ -934,54 +958,37 @@ async function renderTopProducts(now) {
     }
   });
 
-  var el = document.getElementById('top-products-list');
-  if (!el) return;
+  var sorted = Object.entries(thisMonth).sort(function(a,b){ return b[1].qty - a[1].qty; }).slice(0, 5);
+  var maxQty = sorted.length > 0 ? sorted[0][1].qty : 1;
 
-  var sorted = Object.entries(thisMonth).sort(function(a,b){ return b[1].qty - a[1].qty; }).slice(0, 6);
-
-  if (sorted.length === 0) {
-    el.innerHTML = '<p style="font-size:13px;color:var(--ink-light);text-align:center;padding:1rem 0">Aucune vente ce mois</p>';
-    return;
-  }
-
-  var maxQty = sorted[0][1].qty || 1;
-
-  el.innerHTML = sorted.map(function(entry, i) {
+  renderTopList('top-products-list', sorted.map(function(entry, i) {
     var name    = entry[0];
     var d       = entry[1];
     var prevQty = lastMonth[name] ? lastMonth[name].qty : 0;
     var diff    = d.qty - prevQty;
-    var barPct  = Math.round(d.qty / maxQty * 100);
 
-    // Badge tendance
-    var trend = '';
+    var trend = null;
     if (prevQty > 0) {
-      var pct = Math.round((d.qty - prevQty) / prevQty * 100);
-      var color  = diff > 0 ? '#1D9E75' : diff < 0 ? '#D85A30' : '#8A817C';
-      var bg     = diff > 0 ? '#E8F5F0' : diff < 0 ? '#FAECE7' : '#F0EEEC';
-      var arrow  = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
-      trend = '<span style="font-size:10px;font-weight:500;padding:2px 6px;border-radius:100px;background:'+bg+';color:'+color+'">'+arrow+' '+(diff>0?'+':'')+pct+'%</span>';
+      var pct   = Math.round(Math.abs(d.qty - prevQty) / prevQty * 100);
+      trend = {
+        label: (diff > 0 ? '↑ +' : diff < 0 ? '↓ -' : '→ ') + pct + '%',
+        color: diff > 0 ? '#1D9E75' : diff < 0 ? '#D85A30' : '#8A817C',
+        bg:    diff > 0 ? '#E8F5F0' : diff < 0 ? '#FAECE7' : '#F0EEEC',
+      };
     } else if (d.qty > 0) {
-      trend = '<span style="font-size:10px;font-weight:500;padding:2px 6px;border-radius:100px;background:#F9F4E9;color:#C4A87A">Nouveau</span>';
+      trend = { label: 'Nouveau', color: '#C4A87A', bg: '#F9F4E9' };
     }
 
-    // Couleur barre : alterne sur la palette
-    var BAR_COLORS = ['#7B61FF','#1D9E75','#F97316','#3B82F6','#F472B6','#C4A87A'];
-    var barColor = BAR_COLORS[i % BAR_COLORS.length];
-
-    return '<div style="display:flex;flex-direction:column;gap:4px">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
-      +   '<span style="font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">'+name+'</span>'
-      +   '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
-      +     trend
-      +     '<span style="font-size:13px;font-weight:500;color:var(--ink)">'+d.qty+' vente'+(d.qty>1?'s':'')+' · '+Math.round(d.ca)+'\u20ac</span>'
-      +   '</div>'
-      + '</div>'
-      + '<div style="height:5px;background:var(--cream-dark);border-radius:100px;overflow:hidden">'
-      +   '<div style="height:5px;width:'+barPct+'%;background:'+barColor+';border-radius:100px;transition:width .5s ease"></div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+    return {
+      rank: i+1,
+      label: name,
+      value: d.qty + ' vente' + (d.qty > 1 ? 's' : '') + ' · ' + Math.round(d.ca) + '\u20ac',
+      sub: null,
+      trend: trend,
+      barPct: Math.round(d.qty / maxQty * 100),
+      accentColor: 'linear-gradient(90deg,#F97316,#FB923C)',
+    };
+  }), 'Aucune vente ce mois');
 }
 
 (async function() {
