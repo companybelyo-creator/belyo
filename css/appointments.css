@@ -150,19 +150,7 @@
   transition: background .1s;
 }
 /* Subdivisions quarts d'heure : 15min, 30min, 45min */
-.cal-cell::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to bottom, transparent calc(25% - 0.5px), rgba(26,23,20,.04) calc(25% - 0.5px), rgba(26,23,20,.04) 25%,
-      transparent 25%, transparent calc(50% - 0.5px), rgba(26,23,20,.06) calc(50% - 0.5px), rgba(26,23,20,.06) 50%,
-      transparent 50%, transparent calc(75% - 0.5px), rgba(26,23,20,.04) calc(75% - 0.5px), rgba(26,23,20,.04) 75%,
-      transparent 75%);
-  pointer-events: none;
-  z-index: 0;
-}
-/* La ligne du demi (30min) est légèrement plus visible */
+
 .cal-cell:last-child { border-right: none; }
 .cal-cell.today-col { background: rgba(196,168,122,.035); }
 .cal-cell.worked { cursor: pointer; }
