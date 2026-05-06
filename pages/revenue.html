@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
   <link rel="stylesheet" href="../css/revenue.css" />
 </head>
 <body>
@@ -44,27 +45,59 @@
       </div>
     </div>
 
-    <div class="kpi-row">
-      <div class="kpi-card">
-        <div class="kpi-label">CA ce mois</div>
-        <div class="kpi-val" id="kpi-current">—</div>
-        <div class="kpi-sub"><span class="kpi-trend flat" id="kpi-trend">—</span><span id="kpi-vs">vs mois dernier</span></div>
+    <div class="dash-kpi-grid rev-kpi-grid">
+
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-accent" style="background:#4EA685"></div>
+        <div class="dash-kpi-top">
+          <div class="dash-kpi-icon" style="background:#E8F5F0;color:#4EA685">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          </div>
+          <span class="dash-kpi-label">CA ce mois</span>
+        </div>
+        <div class="dash-kpi-val" id="kpi-current">—</div>
+        <div class="dash-kpi-sub">
+          <span class="dash-kpi-trend" id="kpi-trend"></span>
+          <span id="kpi-vs" class="dash-kpi-note">vs mois dernier</span>
+        </div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">CA sur la période</div>
-        <div class="kpi-val" id="kpi-period">—</div>
-        <div class="kpi-sub" id="kpi-period-label">—</div>
+
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-accent" style="background:#C4A87A"></div>
+        <div class="dash-kpi-top">
+          <div class="dash-kpi-icon" style="background:#F9F4E9;color:#C4A87A">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <span class="dash-kpi-label">CA sur la période</span>
+        </div>
+        <div class="dash-kpi-val" id="kpi-period">—</div>
+        <div class="dash-kpi-sub"><span id="kpi-period-label" class="dash-kpi-note">—</span></div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Panier moyen</div>
-        <div class="kpi-val" id="kpi-avg">—</div>
-        <div class="kpi-sub">Par RDV terminé</div>
+
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-accent" style="background:#7D7CBD"></div>
+        <div class="dash-kpi-top">
+          <div class="dash-kpi-icon" style="background:#EFEEF9;color:#7D7CBD">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </div>
+          <span class="dash-kpi-label">Panier moyen</span>
+        </div>
+        <div class="dash-kpi-val" id="kpi-avg">—</div>
+        <div class="dash-kpi-sub"><span class="dash-kpi-note">Par RDV terminé</span></div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">RDV terminés</div>
-        <div class="kpi-val" id="kpi-count">—</div>
-        <div class="kpi-sub" id="kpi-count-sub">Sur la période</div>
+
+      <div class="dash-kpi-card">
+        <div class="dash-kpi-accent" style="background:#A38B74"></div>
+        <div class="dash-kpi-top">
+          <div class="dash-kpi-icon" style="background:#F4EFEA;color:#A38B74">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <span class="dash-kpi-label">RDV terminés</span>
+        </div>
+        <div class="dash-kpi-val" id="kpi-count">—</div>
+        <div class="dash-kpi-sub"><span id="kpi-count-sub" class="dash-kpi-note">Sur la période</span></div>
       </div>
+
     </div>
 
     <!-- CA mensuel + RDV par jour -->

@@ -80,21 +80,11 @@
   .kpi-row { grid-template-columns:1fr 1fr; }
   .period-tab { padding:5px 12px; font-size:12px; }
 }
-/* ===== OBJECTIF DU MOIS ===== */
-.objectif-card { display:flex; flex-direction:column; }
-.objectif-body { flex:1; display:flex; flex-direction:column; justify-content:space-between; padding-top:.5rem; }
-.objectif-amounts { display:flex; align-items:baseline; gap:6px; margin-bottom:1rem; }
-.objectif-current { font-family:var(--font-display); font-size:2.2rem; font-weight:300; color:var(--ink); }
-.objectif-sep { font-size:1.4rem; color:var(--ink-light); }
-.objectif-target { display:flex; align-items:baseline; gap:4px; }
-.obj-input { font-family:var(--font-display); font-size:1.8rem; font-weight:300; color:var(--ink-light); border:none; border-bottom:2px solid var(--gold); background:transparent; width:100px; outline:none; }
-.obj-target-text { font-family:var(--font-display); font-size:1.8rem; font-weight:300; color:var(--ink-light); }
-.obj-currency { font-size:1.1rem; color:var(--ink-light); }
-.objectif-bar-track { background:var(--cream-dark); border-radius:100px; height:10px; overflow:hidden; margin-bottom:.6rem; }
-.objectif-bar-fill { height:100%; border-radius:100px; background:linear-gradient(90deg,#C4A87A,#1D9E75); transition:width 0.6s ease; }
-.objectif-meta { display:flex; justify-content:space-between; font-size:12px; color:var(--ink-light); margin-bottom:1rem; }
-.objectif-actions { display:flex; gap:8px; }
-.obj-btn { padding:6px 16px; border-radius:100px; border:1px solid var(--border); background:transparent; font-size:12px; font-family:var(--font-body); color:var(--ink-light); cursor:pointer; transition:all .15s; }
-.obj-btn:hover { background:var(--cream-dark); color:var(--ink); }
-.obj-btn-save { background:var(--ink); color:var(--white); border-color:var(--ink); }
-.obj-btn-save:hover { background:#333; }
+/* ===== KPI DASHBOARD-STYLE (revenue) ===== */
+.rev-kpi-grid { margin-bottom: 1.5rem; }
+.dash-kpi-sub { font-size:11px; color:var(--ink-light); margin-top:.3rem; display:flex; align-items:center; gap:4px; }
+.dash-kpi-note { font-size:11px; color:var(--ink-light); }
+.dash-kpi-trend { font-size:11px; font-weight:500; padding:2px 7px; border-radius:100px; }
+.trend-up   { background:#E1F5EE; color:#0F6E56; }
+.trend-down { background:#FAECE7; color:#993C1D; }
+.trend-flat { background:var(--cream-dark); color:var(--ink-light); }

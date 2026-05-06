@@ -9,8 +9,6 @@ var weekdayChart  = null;
 var hourChart     = null;
 var clientsChart  = null;
 var genreChart    = null;
-var prodChart     = null;
-var prestChart    = null;
 
 // Couleurs Chart.js
 var CHART_COLORS = {
@@ -60,60 +58,85 @@ async function loadData() {
   var now  = new Date();
   var from = new Date(now.getFullYear(), now.getMonth() - currentPeriod + 1, 1);
 
+  // RDV terminés sur la période
   var res = await sb.from('appointments').select('*')
     .eq('user_id', currentUserId)
     .eq('status', 'done')
     .gte('datetime', from.toISOString())
     .order('datetime', { ascending: true });
 
-  var data = res.data || [];
-  renderKPIs(data, now);
-  renderCAChart(data, now);
+  // Ventes produits sur la période
+  var resProd = await sb.from('product_sales').select('created_at, unit_price, quantity_sold')
+    .eq('user_id', currentUserId)
+    .gte('created_at', from.toISOString());
+
+  var data     = res.data     || [];
+  var prodData = resProd.data || [];
+
+  renderKPIs(data, prodData, now);
+  renderCAChart(data, prodData, now);
   renderTopServices(data);
   renderTopClients(data);
   renderWeekdayChart(data);
   renderRetentionGauge(data);
   renderStatsAvancees(data, now);
-  // Graphiques produits + prestations
   renderProdChart(now);
   renderPrestChart(data, now);
 }
 
-// ===== KPIs =====
-function renderKPIs(data, now) {
+// ===== KPIs (RDV done + produits) =====
+function renderKPIs(data, prodData, now) {
   var thisKey = getMonthKey(now);
   var lastKey = getMonthKey(new Date(now.getFullYear(), now.getMonth()-1, 1));
 
-  var thisCA = data.filter(function(a) { return a.datetime.startsWith(thisKey); })
+  // CA RDV
+  var thisCA_appts = data.filter(function(a) { return a.datetime.startsWith(thisKey); })
     .reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
-  var lastCA = data.filter(function(a) { return a.datetime.startsWith(lastKey); })
+  var lastCA_appts = data.filter(function(a) { return a.datetime.startsWith(lastKey); })
     .reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
-  var totalCA = data.reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
-  var avgCA   = data.length > 0 ? totalCA / data.length : 0;
+  var totalCA_appts = data.reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
 
-  document.getElementById('kpi-current').textContent = Math.round(thisCA) + '\u20ac';
-  document.getElementById('kpi-period').textContent  = Math.round(totalCA) + '\u20ac';
+  // CA produits
+  var thisCA_prod = (prodData||[]).filter(function(p) { return (p.created_at||'').startsWith(thisKey); })
+    .reduce(function(s,p) { return s + (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1); }, 0);
+  var lastCA_prod = (prodData||[]).filter(function(p) { return (p.created_at||'').startsWith(lastKey); })
+    .reduce(function(s,p) { return s + (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1); }, 0);
+  var totalCA_prod = (prodData||[]).reduce(function(s,p) { return s + (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1); }, 0);
+
+  var thisCA  = thisCA_appts  + thisCA_prod;
+  var lastCA  = lastCA_appts  + lastCA_prod;
+  var totalCA = totalCA_appts + totalCA_prod;
+  var avgCA   = data.length > 0 ? totalCA_appts / data.length : 0;
+
+  document.getElementById('kpi-current').textContent      = Math.round(thisCA) + '\u20ac';
+  document.getElementById('kpi-period').textContent       = Math.round(totalCA) + '\u20ac';
   document.getElementById('kpi-period-label').textContent = 'Sur ' + currentPeriod + ' mois';
-  document.getElementById('kpi-avg').textContent     = Math.round(avgCA) + '\u20ac';
-  document.getElementById('kpi-count').textContent   = data.length;
-  document.getElementById('ca-total-label').textContent = Math.round(totalCA) + '\u20ac total';
+  document.getElementById('kpi-avg').textContent          = Math.round(avgCA) + '\u20ac';
+  document.getElementById('kpi-count').textContent        = data.length;
+  document.getElementById('ca-total-label').textContent   = Math.round(totalCA) + '\u20ac total';
 
   var trendEl = document.getElementById('kpi-trend');
   var vsEl    = document.getElementById('kpi-vs');
-  if (lastCA > 0) {
-    var diff = Math.round((thisCA - lastCA) / lastCA * 100);
-    trendEl.textContent = (diff >= 0 ? '+' : '') + diff + '%';
-    trendEl.className = 'kpi-trend ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : 'flat');
-    vsEl.textContent = 'vs mois dernier';
-  } else {
-    trendEl.textContent = 'Premier mois';
-    trendEl.className = 'kpi-trend flat';
-    vsEl.textContent = '';
+  if (trendEl) {
+    if (lastCA > 0) {
+      var diff = Math.round((thisCA - lastCA) / lastCA * 100);
+      trendEl.textContent = (diff >= 0 ? '+' : '') + diff + '%';
+      trendEl.className = 'dash-kpi-trend ' + (diff > 0 ? 'trend-up' : diff < 0 ? 'trend-down' : 'trend-flat');
+      if (vsEl) vsEl.textContent = 'vs mois dernier';
+    } else if (thisCA > 0) {
+      trendEl.textContent = '1er mois';
+      trendEl.className = 'dash-kpi-trend trend-flat';
+      if (vsEl) vsEl.textContent = 'Lancement !';
+    } else {
+      trendEl.textContent = '';
+      trendEl.className = 'dash-kpi-trend';
+      if (vsEl) vsEl.textContent = 'Aucune vente ce mois';
+    }
   }
 }
 
-// ===== CA CHART =====
-function renderCAChart(data, now) {
+// ===== CA CHART (RDV done + produits) =====
+function renderCAChart(data, prodData, now) {
   var months = [];
   for (var i = currentPeriod-1; i >= 0; i--)
     months.push(getMonthKey(new Date(now.getFullYear(), now.getMonth()-i, 1)));
@@ -123,6 +146,10 @@ function renderCAChart(data, now) {
   data.forEach(function(a) {
     var mk = a.datetime.slice(0,7);
     if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price)||0;
+  });
+  (prodData||[]).forEach(function(p) {
+    var mk = (p.created_at||'').slice(0,7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);
   });
 
   var values = months.map(function(m) { return Math.round(caByMonth[m]); });
@@ -468,108 +495,6 @@ async function renderStatsAvancees(data, now) {
       }
     });
   }
-}
-
-// ===== CA PRODUITS (depuis product_sales) =====
-async function renderProdChart(now) {
-  var from = new Date(now.getFullYear(), now.getMonth() - currentPeriod + 1, 1);
-  var res  = await sb.from('product_sales')
-    .select('created_at, unit_price, quantity_sold')
-    .eq('user_id', currentUserId)
-    .gte('created_at', from.toISOString())
-    .order('created_at', { ascending: true });
-
-  var sales = res.data || [];
-  var months = [];
-  for (var i = currentPeriod-1; i >= 0; i--)
-    months.push(getMonthKey(new Date(now.getFullYear(), now.getMonth()-i, 1)));
-
-  var caByMonth = {};
-  months.forEach(function(m) { caByMonth[m] = 0; });
-  sales.forEach(function(s) {
-    var mk = (s.created_at || '').slice(0,7);
-    if (caByMonth[mk] !== undefined) caByMonth[mk] += (parseFloat(s.unit_price)||0) * (parseInt(s.quantity_sold)||1);
-  });
-
-  var totalProd = sales.reduce(function(acc, s) {
-    return acc + (parseFloat(s.unit_price)||0) * (parseInt(s.quantity_sold)||1);
-  }, 0);
-  var el = document.getElementById('prod-total-label');
-  if (el) el.textContent = Math.round(totalProd) + '\u20ac total en produits';
-
-  var values = months.map(function(m) { return Math.round(caByMonth[m]); });
-  var maxVal  = Math.max.apply(null, values) || 1;
-
-  if (prodChart) prodChart.destroy();
-  var ctx = document.getElementById('prod-chart');
-  if (!ctx) return;
-  prodChart = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: months.map(monthLabel),
-      datasets: [{
-        data: values,
-        backgroundColor: values.map(function(v) { return v === maxVal && maxVal > 0 ? CHART_COLORS.teal : 'rgba(29,158,117,0.25)'; }),
-        borderRadius: 6, borderSkipped: false, barPercentage: 0.45, categoryPercentage: 0.6,
-      }]
-    },
-    options: chartDefaults({
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: function(c) { return c.raw + '\u20ac'; } } }
-      },
-      scales: {
-        y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:11}, callback:function(v){ return v+'\u20ac'; } }, border:{display:false} },
-        x: { grid:{ display:false }, ticks:{ color:CHART_COLORS.text, font:{size:11} }, border:{display:false} }
-      }
-    })
-  });
-}
-
-// ===== CA PRESTATIONS (depuis appointments done) =====
-function renderPrestChart(data, now) {
-  var months = [];
-  for (var i = currentPeriod-1; i >= 0; i--)
-    months.push(getMonthKey(new Date(now.getFullYear(), now.getMonth()-i, 1)));
-
-  var caByMonth = {};
-  months.forEach(function(m) { caByMonth[m] = 0; });
-  data.forEach(function(a) {
-    var mk = a.datetime.slice(0,7);
-    if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price)||0;
-  });
-
-  var totalPrest = data.reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
-  var el = document.getElementById('prest-total-label');
-  if (el) el.textContent = Math.round(totalPrest) + '\u20ac total en prestations';
-
-  var values = months.map(function(m) { return Math.round(caByMonth[m]); });
-  var maxVal  = Math.max.apply(null, values) || 1;
-
-  if (prestChart) prestChart.destroy();
-  var ctx = document.getElementById('prest-chart');
-  if (!ctx) return;
-  prestChart = new Chart(ctx.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: months.map(monthLabel),
-      datasets: [{
-        data: values,
-        backgroundColor: values.map(function(v) { return v === maxVal && maxVal > 0 ? CHART_COLORS.ink : CHART_COLORS.gold; }),
-        borderRadius: 6, borderSkipped: false, barPercentage: 0.45, categoryPercentage: 0.6,
-      }]
-    },
-    options: chartDefaults({
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: function(c) { return c.raw + '\u20ac'; } } }
-      },
-      scales: {
-        y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:11}, callback:function(v){ return v+'\u20ac'; } }, border:{display:false} },
-        x: { grid:{ display:false }, ticks:{ color:CHART_COLORS.text, font:{size:11} }, border:{display:false} }
-      }
-    })
-  });
 }
 
 // ===== EXPORT PDF =====
