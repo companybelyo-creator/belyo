@@ -1,0 +1,474 @@
+// ============================================================
+// NOTIFICATIONS.JS — Belyo Notification Center
+// ============================================================
+
+(function() {
+  'use strict';
+
+  // ─── State ──────────────────────────────────────────────────
+  var _notifications  = [];
+  var _unreadCount    = 0;
+  var _panelOpen      = false;
+  var _userId         = null;
+  var _pollInterval   = null;
+  var _dismissedKey   = 'belyo_dismissed_notifs';
+
+  // ─── Helpers ────────────────────────────────────────────────
+  function getDismissed() {
+    try { return JSON.parse(localStorage.getItem(_dismissedKey) || '[]'); }
+    catch(e) { return []; }
+  }
+  function saveDismissed(ids) {
+    try { localStorage.setItem(_dismissedKey, JSON.stringify(ids)); }
+    catch(e) {}
+  }
+  function isDismissed(id) { return getDismissed().indexOf(id) !== -1; }
+  function dismiss(id) {
+    var d = getDismissed();
+    if (d.indexOf(id) === -1) { d.push(id); saveDismissed(d); }
+  }
+
+  function formatTime(iso) {
+    var d = new Date(iso);
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+  function formatDate(iso) {
+    var d = new Date(iso);
+    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  // ─── Notification Builders ───────────────────────────────────
+
+  /**
+   * Upcoming RDV (15 min) — checks every minute
+   * ID: rdv-soon-{apptId}
+   */
+  async function checkUpcomingRdv(userId) {
+    var now  = new Date();
+    var plus20 = new Date(now.getTime() + 20 * 60000).toISOString();
+    var minus2 = new Date(now.getTime() -  2 * 60000).toISOString();
+
+    var res = await sb.from('appointments').select('id, client_name, service, datetime')
+      .eq('user_id', userId)
+      .eq('status', 'pending')
+      .gte('datetime', minus2)
+      .lte('datetime', plus20)
+      .order('datetime', { ascending: true });
+
+    if (!res.data) return [];
+    return res.data.map(function(a) {
+      var diffMs = new Date(a.datetime) - now;
+      var diffM  = Math.round(diffMs / 60000);
+      var id     = 'rdv-soon-' + a.id;
+      return {
+        id:       id,
+        type:     diffM <= 0 ? 'rdv-now' : 'rdv-soon',
+        priority: 1,
+        icon:     diffM <= 0 ? '🟢' : '⏰',
+        title:    diffM <= 0 ? 'RDV en cours' : 'RDV dans ' + diffM + ' min',
+        body:     a.client_name + ' — ' + (a.service || 'Prestation'),
+        sub:      formatTime(a.datetime),
+        link:     null,
+        time:     new Date(),
+        _apptId:  a.id,
+      };
+    });
+  }
+
+  /**
+   * RDV ajouté / annulé / terminé récemment (< 24h)
+   * IDs: rdv-added-{id}, rdv-cancelled-{id}, rdv-done-{id}
+   */
+  async function checkRecentRdvEvents(userId) {
+    var since = new Date(Date.now() - 24 * 3600000).toISOString();
+    var res   = await sb.from('appointments')
+      .select('id, client_name, service, datetime, status, updated_at, created_at')
+      .eq('user_id', userId)
+      .gte('updated_at', since)
+      .order('updated_at', { ascending: false });
+
+    if (!res.data) return [];
+    var notifs = [];
+    res.data.forEach(function(a) {
+      if (a.status === 'pending') {
+        var id = 'rdv-added-' + a.id;
+        notifs.push({
+          id: id, type: 'rdv-added', priority: 3,
+          icon: '✅',
+          title: 'RDV confirmé',
+          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
+          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
+          link:  'appointments.html',
+          time:  new Date(a.created_at || a.updated_at),
+        });
+      } else if (a.status === 'cancelled') {
+        var id = 'rdv-cancelled-' + a.id;
+        notifs.push({
+          id: id, type: 'rdv-cancelled', priority: 2,
+          icon: '❌',
+          title: 'RDV annulé',
+          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
+          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
+          link:  'appointments.html',
+          time:  new Date(a.updated_at),
+        });
+      } else if (a.status === 'done') {
+        var id = 'rdv-done-' + a.id;
+        notifs.push({
+          id: id, type: 'rdv-done', priority: 4,
+          icon: '🎉',
+          title: 'RDV terminé',
+          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
+          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
+          link:  'appointments.html',
+          time:  new Date(a.updated_at),
+        });
+      }
+    });
+    return notifs;
+  }
+
+  /**
+   * Stocks faibles / vides
+   * IDs: stock-low-{id}, stock-empty-{id}
+   */
+  async function checkStocks(userId) {
+    var res = await sb.from('products')
+      .select('id, name, quantity, alert_threshold')
+      .eq('user_id', userId);
+
+    if (!res.data) return [];
+    var notifs = [];
+    res.data.forEach(function(p) {
+      var qty = p.quantity || 0;
+      var thr = p.alert_threshold || 2;
+      if (qty === 0) {
+        notifs.push({
+          id:       'stock-empty-' + p.id,
+          type:     'stock-empty',
+          priority: 1,
+          icon:     '🚨',
+          title:    'Rupture de stock',
+          body:     p.name,
+          sub:      '0 unité restante',
+          link:     'stocks.html',
+          linkLabel:'Voir les stocks',
+          time:     new Date(),
+        });
+      } else if (qty <= thr) {
+        notifs.push({
+          id:       'stock-low-' + p.id,
+          type:     'stock-low',
+          priority: 2,
+          icon:     '⚠️',
+          title:    'Stock faible',
+          body:     p.name,
+          sub:      qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''),
+          link:     'stocks.html',
+          linkLabel:'Voir les stocks',
+          time:     new Date(),
+        });
+      }
+    });
+    return notifs;
+  }
+
+  /**
+   * Rapport disponible — vérifie quels mois complets ont des données
+   * ID: rapport-{YYYY}-{MM}
+   */
+  async function checkRapports(userId) {
+    var now         = new Date();
+    var currentYear = now.getFullYear();
+    var currentMon  = now.getMonth(); // 0-based
+
+    // Fetch all done appointments to find months with data
+    var res = await sb.from('appointments')
+      .select('datetime')
+      .eq('user_id', userId)
+      .eq('status', 'done')
+      .order('datetime', { ascending: false });
+
+    if (!res.data || res.data.length === 0) return [];
+
+    // Collect distinct completed months (not current month)
+    var seen = {};
+    var notifs = [];
+    res.data.forEach(function(a) {
+      var d   = new Date(a.datetime);
+      var y   = d.getFullYear();
+      var m   = d.getMonth(); // 0-based
+      var key = y + '-' + m;
+      // Skip current month
+      if (y === currentYear && m === currentMon) return;
+      if (seen[key]) return;
+      seen[key] = true;
+
+      var monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                        'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+      var id = 'rapport-' + y + '-' + (m + 1);
+      notifs.push({
+        id:       id,
+        type:     'rapport',
+        priority: 5,
+        icon:     '📊',
+        title:    'Rapport disponible',
+        body:     monthNames[m] + ' ' + y,
+        sub:      'Consultez votre chiffre d\'affaires',
+        link:     'revenue.html?month=' + (m + 1) + '&year=' + y,
+        linkLabel:'Voir le rapport',
+        time:     new Date(y, m + 1, 1), // first day of *next* month = month completed
+      });
+    });
+
+    // Only push the 3 most recent months
+    return notifs.slice(0, 3);
+  }
+
+  // ─── Aggregation ────────────────────────────────────────────
+  async function loadAllNotifications(userId) {
+    var results = await Promise.allSettled([
+      checkUpcomingRdv(userId),
+      checkRecentRdvEvents(userId),
+      checkStocks(userId),
+      checkRapports(userId),
+    ]);
+
+    var all = [];
+    results.forEach(function(r) {
+      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
+        all = all.concat(r.value);
+      }
+    });
+
+    // Deduplicate by id
+    var seen = {};
+    all = all.filter(function(n) {
+      if (seen[n.id]) return false;
+      seen[n.id] = true;
+      return true;
+    });
+
+    // Sort: priority asc, then time desc
+    all.sort(function(a, b) {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      return b.time - a.time;
+    });
+
+    _notifications = all;
+
+    // Unread = not dismissed
+    _unreadCount = all.filter(function(n) { return !isDismissed(n.id); }).length;
+    updateBadges();
+    if (_panelOpen) renderPanel();
+  }
+
+  // ─── Badge Update ────────────────────────────────────────────
+  function updateBadges() {
+    var badges = document.querySelectorAll('.dash-notif-badge, .sidebar-notif-badge');
+    badges.forEach(function(b) {
+      if (_unreadCount > 0) {
+        b.style.display = 'flex';
+        b.textContent   = _unreadCount > 9 ? '9+' : _unreadCount;
+      } else {
+        b.style.display = 'none';
+      }
+    });
+  }
+
+  // ─── Panel Render ────────────────────────────────────────────
+  function renderPanel() {
+    var panel = document.getElementById('notif-panel');
+    if (!panel) return;
+
+    var body  = panel.querySelector('.notif-panel-body');
+    if (!body) return;
+
+    var visible = _notifications.filter(function(n) { return !isDismissed(n.id); });
+
+    if (visible.length === 0) {
+      body.innerHTML = '<div class="notif-empty">'
+        + '<div class="notif-empty-icon">🔔</div>'
+        + '<div class="notif-empty-text">Tout est à jour</div>'
+        + '<div class="notif-empty-sub">Aucune notification pour le moment</div>'
+        + '</div>';
+      return;
+    }
+
+    // Group by type category
+    var groups = {
+      urgent:  { label: 'Urgent', items: [] },
+      rdv:     { label: 'Rendez-vous', items: [] },
+      stock:   { label: 'Stocks', items: [] },
+      rapport: { label: 'Rapports', items: [] },
+    };
+
+    visible.forEach(function(n) {
+      if (n.type === 'rdv-now' || n.type === 'rdv-soon') groups.urgent.items.push(n);
+      else if (n.type === 'rdv-added' || n.type === 'rdv-cancelled' || n.type === 'rdv-done') groups.rdv.items.push(n);
+      else if (n.type === 'stock-empty' || n.type === 'stock-low') groups.stock.items.push(n);
+      else if (n.type === 'rapport') groups.rapport.items.push(n);
+    });
+
+    var html = '';
+    ['urgent', 'rdv', 'stock', 'rapport'].forEach(function(key) {
+      var g = groups[key];
+      if (g.items.length === 0) return;
+      html += '<div class="notif-group">';
+      html += '<div class="notif-group-label">' + g.label + '</div>';
+      g.items.forEach(function(n) {
+        html += renderNotifCard(n);
+      });
+      html += '</div>';
+    });
+
+    body.innerHTML = html;
+  }
+
+  function renderNotifCard(n) {
+    var typeClass = {
+      'rdv-now':       'notif-card--urgent',
+      'rdv-soon':      'notif-card--soon',
+      'rdv-added':     'notif-card--added',
+      'rdv-cancelled': 'notif-card--cancelled',
+      'rdv-done':      'notif-card--done',
+      'stock-low':     'notif-card--stock-low',
+      'stock-empty':   'notif-card--stock-empty',
+      'rapport':       'notif-card--rapport',
+    }[n.type] || '';
+
+    var linkHtml = n.link
+      ? '<a href="' + n.link + '" class="notif-card-link">' + (n.linkLabel || 'Voir →') + '</a>'
+      : '';
+
+    var dismissHtml = '<button class="notif-card-dismiss" onclick="window.BNotif.dismiss(\'' + n.id + '\')" title="Masquer">×</button>';
+
+    return '<div class="notif-card ' + typeClass + '" data-id="' + n.id + '">'
+      + '<div class="notif-card-icon">' + n.icon + '</div>'
+      + '<div class="notif-card-content">'
+      + '<div class="notif-card-title">' + n.title + '</div>'
+      + '<div class="notif-card-body">' + n.body + '</div>'
+      + '<div class="notif-card-sub">' + n.sub + '</div>'
+      + (linkHtml ? '<div class="notif-card-action">' + linkHtml + '</div>' : '')
+      + '</div>'
+      + dismissHtml
+      + '</div>';
+  }
+
+  // ─── Panel Open / Close ─────────────────────────────────────
+  function openPanel() {
+    var overlay = document.getElementById('notif-overlay');
+    var panel   = document.getElementById('notif-panel');
+    if (!overlay || !panel) { buildPanelDOM(); openPanel(); return; }
+
+    _panelOpen = true;
+    renderPanel();
+
+    overlay.classList.add('notif-overlay--visible');
+    panel.classList.add('notif-panel--visible');
+
+    // Mark all as read
+    _notifications.forEach(function(n) { dismiss(n.id); });
+    _unreadCount = 0;
+    updateBadges();
+  }
+
+  function closePanel() {
+    var overlay = document.getElementById('notif-overlay');
+    var panel   = document.getElementById('notif-panel');
+    _panelOpen  = false;
+    if (overlay) overlay.classList.remove('notif-overlay--visible');
+    if (panel)   panel.classList.remove('notif-panel--visible');
+  }
+
+  function togglePanel() {
+    if (_panelOpen) closePanel(); else openPanel();
+  }
+
+  // ─── DOM Construction ────────────────────────────────────────
+  function buildPanelDOM() {
+    if (document.getElementById('notif-panel')) return;
+
+    // Overlay
+    var overlay = document.createElement('div');
+    overlay.id  = 'notif-overlay';
+    overlay.className = 'notif-overlay';
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closePanel();
+    });
+
+    // Panel
+    var panel = document.createElement('div');
+    panel.id  = 'notif-panel';
+    panel.className = 'notif-panel';
+    panel.innerHTML = ''
+      + '<div class="notif-panel-header">'
+      + '  <div class="notif-panel-header-left">'
+      + '    <span class="notif-panel-title">Notifications</span>'
+      + '    <span class="notif-panel-count" id="notif-panel-count"></span>'
+      + '  </div>'
+      + '  <div class="notif-panel-header-right">'
+      + '    <button class="notif-clear-all" onclick="window.BNotif.clearAll()">Tout effacer</button>'
+      + '    <button class="notif-panel-close" onclick="window.BNotif.close()">×</button>'
+      + '  </div>'
+      + '</div>'
+      + '<div class="notif-panel-body" id="notif-panel-body">'
+      + '  <div class="notif-loading">Chargement...</div>'
+      + '</div>';
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+  }
+
+  // ─── Public API ──────────────────────────────────────────────
+  window.BNotif = {
+    init: function(userId) {
+      _userId = userId;
+      buildPanelDOM();
+
+      // Wire up all trigger buttons
+      var btns = document.querySelectorAll('[data-notif-trigger], #dash-notif-btn, #sidebar-notif-btn');
+      btns.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          togglePanel();
+        });
+      });
+
+      // Close on Escape
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && _panelOpen) closePanel();
+      });
+
+      // Initial load
+      loadAllNotifications(userId);
+
+      // Poll every 60 seconds
+      _pollInterval = setInterval(function() {
+        loadAllNotifications(userId);
+      }, 60000);
+    },
+
+    open:    openPanel,
+    close:   closePanel,
+    toggle:  togglePanel,
+    refresh: function() { if (_userId) loadAllNotifications(_userId); },
+
+    dismiss: function(id) {
+      dismiss(id);
+      _notifications = _notifications.filter(function(n) { return n.id !== id; });
+      _unreadCount   = Math.max(0, _unreadCount - 1);
+      updateBadges();
+      if (_panelOpen) renderPanel();
+    },
+
+    clearAll: function() {
+      _notifications.forEach(function(n) { dismiss(n.id); });
+      _notifications = [];
+      _unreadCount   = 0;
+      updateBadges();
+      if (_panelOpen) renderPanel();
+    },
+  };
+
+})();
