@@ -9,7 +9,7 @@ var allAppts       = [];
 var allClients     = [];
 var selectedClient = null;
 var currentTab     = 'all';
-var currentView    = 'calendar';
+var currentView    = 'list';
 var weekOffset     = 0;
 
 // ===== FILTRES CALENDRIER =====
@@ -97,15 +97,8 @@ async function loadPrestationsFromSettings(userId) {
     .maybeSingle();
 
   if (res.data && res.data.prestations) {
-    // Exclure les noms génériques "Coupe" remplacés par "Coupe Homme"/"Coupe Femme"
-    var _OBSOLETE = ['coupe'];
-    function _clean(list) {
-      return (list || []).filter(function(p) {
-        return _OBSOLETE.indexOf(p.toLowerCase().trim()) === -1;
-      });
-    }
-    PRESTATIONS.homme = _clean(res.data.prestations.homme);
-    PRESTATIONS.femme = _clean(res.data.prestations.femme);
+    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
+    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
   if (res.data && res.data.planning)   salonPlanning = res.data.planning;
@@ -179,11 +172,18 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Première prestation de la liste (ordre paramètres), en ignorant 'Autre'
-  var defaultOpt = options.find(function(p) { return p !== 'Autre'; }) || options[0];
-  if (defaultOpt) {
+  // Sélectionner la première prestation par défaut (priorité à Coupe, sinon la première)
+  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
+  if (defaultOpt && defaultOpt !== 'Autre') {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
     var prix = pd && pd.prix ? pd.prix : 0;
+    if (!prix) {
+      var defs = {
+        homme: { 'Coupe':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
+        femme: { 'Coupe':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
+      };
+      prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
+    }
     selectService(defaultOpt, prix);
   }
   checkFormValidity();
@@ -624,60 +624,99 @@ function renderCalendar() {
     // Trier par heure
     var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    // Construire les chaînes : prev/next basé sur tri temporel strict
-    var prevMap = {}; // id → id du précédent
-    var nextMap = {}; // id → id du suivant
-    for (var ci = 0; ci < sorted.length - 1; ci++) {
-      var cur  = sorted[ci];
-      var nxt  = sorted[ci + 1];
-      var curEnd = startMin(cur) + getDuree(cur);
-      if (Math.abs(startMin(nxt) - curEnd) <= 2 && cur.status === nxt.status) {
-        nextMap[cur.id] = nxt.id;
-        prevMap[nxt.id] = cur.id;
-      }
-    }
-
+    // Grouper les RDV consécutifs (fin d'un = début du suivant, ±2 min)
+    var groups = []; // chaque groupe = tableau de RDV
+    var used   = {};
     sorted.forEach(function(a) {
-      var dt = new Date(a.datetime);
-      var aH = dt.getHours();
-      var aM = dt.getMinutes();
+      if (used[a.id]) return;
+      var group = [a];
+      used[a.id] = true;
+      var last = a;
+      for (var ci = 0; ci < sorted.length; ci++) {
+        var nxt = sorted[ci];
+        if (used[nxt.id]) continue;
+        var lastEnd = startMin(last) + getDuree(last);
+        if (Math.abs(startMin(nxt) - lastEnd) <= 2) {
+          group.push(nxt);
+          used[nxt.id] = true;
+          last = nxt;
+        }
+      }
+      groups.push(group);
+    });
+
+    groups.forEach(function(group) {
+      var first  = group[0];
+      var dt     = new Date(first.datetime);
+      var aH     = dt.getHours();
+      var aM     = dt.getMinutes();
       if (aH < HOUR_START || aH >= HOUR_END) return;
 
+      // Cellule d'ancrage = heure du premier RDV du groupe
       var rowIndex = aH - HOUR_START;
-      var cells = grid.querySelectorAll('.cal-cell');
-      var cell = cells[rowIndex * 7 + di];
+      var cells    = grid.querySelectorAll('.cal-cell');
+      var cell     = cells[rowIndex * 7 + di];
       if (!cell) return;
 
-      var dureeMin = getDuree(a);
-      var evH = Math.max(36, (dureeMin / 60) * SLOT_H);
+      // Hauteur totale = somme des durées
+      var totalMin = 0;
+      group.forEach(function(a) { totalMin += getDuree(a); });
+      var totalH = Math.max(36, (totalMin / 60) * SLOT_H);
 
-      var ev = document.createElement('div');
-      var hasNext = !!nextMap[a.id];
-      var hasPrev = !!prevMap[a.id];
+      // Statut dominant
+      var statusCls = 'status-' + (first.status || 'pending');
 
-      ev.className = 'cal-event status-' + (a.status || 'pending')
-        + (hasNext ? ' chain-top' : '')
-        + (hasPrev ? ' chain-bottom' : '');
-      ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + evH + 'px;';
+      if (group.length === 1) {
+        // RDV isolé — rendu classique
+        var a   = group[0];
+        var ev  = document.createElement('div');
+        ev.className = 'cal-event ' + statusCls;
+        ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + Math.max(36, (getDuree(a) / 60) * SLOT_H) + 'px;';
+        var rawName   = (a.client_name || '').trim();
+        var nameParts = rawName.split(' ');
+        var shortName = nameParts.length > 1
+          ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
+          : rawName;
+        ev.innerHTML = '<div class="cal-event-row">'
+          + '<div class="cal-event-left">'
+          + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
+          + '<div class="cal-event-name">' + shortName + '</div>'
+          + '</div>'
+          + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
+          + '</div>';
+        ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
+        cell.appendChild(ev);
+      } else {
+        // Groupe — un seul wrapper avec un item par RDV
+        var wrapper = document.createElement('div');
+        wrapper.className = 'cal-event-group ' + statusCls;
+        wrapper.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + totalH + 'px;';
 
-      // Nom court
-      var rawName   = (a.client_name || '').trim();
-      var nameParts = rawName.split(' ');
-      var shortName = nameParts.length > 1
-        ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
-        : rawName;
+        group.forEach(function(a) {
+          var rawName   = (a.client_name || '').trim();
+          var nameParts = rawName.split(' ');
+          var shortName = nameParts.length > 1
+            ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
+            : rawName;
+          var itemH = Math.max(28, (getDuree(a) / 60) * SLOT_H);
+          var item  = document.createElement('div');
+          item.className = 'cal-event-group-item';
+          item.style.height = itemH + 'px';
+          item.innerHTML = '<div class="cal-event-row">'
+            + '<div class="cal-event-left">'
+            + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
+            + '<div class="cal-event-name">' + shortName + '</div>'
+            + '</div>'
+            + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
+            + '</div>';
+          (function(appt) {
+            item.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(appt); });
+          })(a);
+          wrapper.appendChild(item);
+        });
 
-      // Layout : heure + nom à gauche, prestation à droite
-      var html = '<div class="cal-event-row">'
-        + '<div class="cal-event-left">'
-        + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
-        + '<div class="cal-event-name">' + shortName + '</div>'
-        + '</div>'
-        + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
-        + '</div>';
-      ev.innerHTML = html;
-      ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
-      cell.appendChild(ev);
+        cell.appendChild(wrapper);
+      }
     });
   });
 
@@ -955,11 +994,6 @@ async function loadAppts() {
 
 document.getElementById('filter-date').addEventListener('change', renderList);
 
-// Vue par défaut : Semaine
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof setView === 'function') setView('calendar');
-});
-
 document.getElementById('appt-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn = document.getElementById('appt-submit');
@@ -967,14 +1001,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.textContent = 'Enregistrement...';
 
   var clientName = document.getElementById('appt-client').value.trim();
-  // Construire un ISO avec offset local explicite pour éviter le décalage UTC
-  var _rawDt = document.getElementById('appt-datetime').value; // "YYYY-MM-DDTHH:MM"
-  var _d = new Date(_rawDt + ':00'); // interprété local par le navigateur
-  var _off = -_d.getTimezoneOffset(); // offset en minutes (ex: +120 pour UTC+2)
-  var _sign = _off >= 0 ? '+' : '-';
-  var _hOff = String(Math.floor(Math.abs(_off) / 60)).padStart(2, '0');
-  var _mOff = String(Math.abs(_off) % 60).padStart(2, '0');
-  var datetime = _rawDt + ':00' + _sign + _hOff + ':' + _mOff;
+  var datetime   = document.getElementById('appt-datetime').value;
   var priceVal   = document.getElementById('appt-price').value;
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';

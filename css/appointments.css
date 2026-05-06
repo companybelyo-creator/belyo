@@ -255,43 +255,46 @@
   line-height: 1.3;
 }
 
-/* RDV consécutifs reliés */
-/* Premier d'une chaîne */
+/* RDV consécutifs — groupe fusionné via wrapper */
+.cal-event-group {
+  position: absolute;
+  left: 4px; right: 4px;
+  z-index: 2;
+  border-radius: 7px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(43,127,255,.12);
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
+}
+.cal-event-group:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,23,20,.18); }
+.cal-event-group.status-pending { background: #E0EDFF; border-left: 3px solid #2B7FFF; }
+.cal-event-group.status-done    { background: #E8F5EF; border-left: 3px solid #26A96C; }
+
+/* Item dans un groupe */
+.cal-event-group-item {
+  padding: 5px 8px 4px;
+  min-height: 28px;
+}
+.cal-event-group-item + .cal-event-group-item {
+  border-top: 1px solid rgba(0,0,0,.08);
+}
+
+/* RDV isolé — garde le style existant */
 .cal-event.chain-top {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   border-bottom: none;
-  padding-bottom: 3px;
 }
-/* Milieu d'une chaîne (a un précédent ET un suivant) */
 .cal-event.chain-top.chain-bottom {
   border-radius: 0;
   border-top: none;
   border-bottom: none;
-  padding-top: 4px;
-  padding-bottom: 3px;
-  margin-top: -1px;
 }
-/* Dernier d'une chaîne */
 .cal-event.chain-bottom:not(.chain-top) {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   border-top: none;
-  margin-top: -1px;
-  padding-top: 4px;
 }
-/* Séparateur visuel entre les blocs : ligne pointillée sur le bord gauche coloré */
-.cal-event.chain-top::after,
-.cal-event.chain-top.chain-bottom::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0;
-  width: 3px;
-  height: 1px;
-  background: rgba(255,255,255,.55);
-}
-.cal-event.status-pending.chain-top::after { background: rgba(43,127,255,.35); }
-.cal-event.status-done.chain-top::after    { background: rgba(38,169,108,.35); }
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E53935; }
@@ -528,15 +531,3 @@
 .adp-btn-success:hover { background: #E8F5EF; }
 .adp-btn-danger  { background: transparent; color: var(--danger); border-color: var(--danger); }
 .adp-btn-danger:hover  { background: #fdf0ef; }
-
-/* Slot dépassant les horaires salon — sélectionnable avec confirmation */
-.slot-overflow {
-  border: 1px dashed #E89020 !important;
-  color: #E89020 !important;
-  background: #fffbf0 !important;
-  opacity: 1 !important;
-  cursor: pointer !important;
-}
-.slot-overflow:hover {
-  background: #fff3d0 !important;
-}
