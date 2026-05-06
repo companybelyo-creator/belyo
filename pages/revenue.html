@@ -136,32 +136,6 @@
       </div>
     </div>
 
-    <!-- CA par prestation + Top produits vendus -->
-    <div class="chart-grid-eq" style="margin-bottom:1.5rem">
-
-      <div class="chart-card">
-        <div class="chart-head">
-          <div class="chart-title">CA par prestation</div>
-          <div class="chart-sub" id="prest-donut-sub">Répartition sur la période</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:1.5rem;padding-top:.5rem">
-          <div style="position:relative;flex-shrink:0;width:130px;height:130px">
-            <canvas id="prest-donut-chart" style="width:130px!important;height:130px!important"></canvas>
-          </div>
-          <div id="prest-donut-legend" style="flex:1;display:flex;flex-direction:column;gap:7px;min-width:0"></div>
-        </div>
-      </div>
-
-      <div class="chart-card">
-        <div class="chart-head">
-          <div class="chart-title">Top produits vendus</div>
-          <div class="chart-sub">quantité + tendance vs mois dernier</div>
-        </div>
-        <div id="top-products-list" style="display:flex;flex-direction:column;gap:10px;padding-top:.4rem"></div>
-      </div>
-
-    </div>
-
     <!-- Stats Pro -->
     <div id="stats-pro-section" style="display:none" class="pro-section">
       <div class="pro-badge-row">
@@ -221,7 +195,7 @@
 
       </div>
 
-      <!-- Top prestations + Top clients + Taux de rétention -->
+      <!-- Top prestations + Top clients + Top produits vendus -->
       <div class="chart-grid-3" style="margin-bottom:1.5rem">
         <div class="chart-card">
           <div class="chart-head">
@@ -236,6 +210,32 @@
             <div class="chart-sub">par chiffre d'affaires</div>
           </div>
           <div id="top-clients" class="top-list"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Top produits vendus</div>
+            <div class="chart-sub">quantité + tendance vs mois dernier</div>
+          </div>
+          <div id="top-products-list" style="display:flex;flex-direction:column;gap:10px;padding-top:.4rem"></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-3" style="margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Heure de pointe</div>
+            <div class="chart-sub">affluence par heure</div>
+          </div>
+          <div class="chart-wrap sm"><canvas id="hour-chart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Répartition Homme / Femme</div>
+          </div>
+          <div class="donut-wrap" style="margin-top:.5rem">
+            <canvas class="donut-canvas" id="genre-chart"></canvas>
+            <div class="donut-legend" id="genre-legend"></div>
+          </div>
         </div>
         <div class="chart-card retention-card">
           <div class="chart-head">
@@ -266,25 +266,6 @@
               <span class="ret-pct" id="retention-exist-pct">—</span>
             </div>
             <div class="ret-bar-track"><div class="ret-bar ret-bar-exist" id="retention-bar-exist" style="width:0%"></div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="chart-grid-eq" style="margin-bottom:1.5rem">
-        <div class="chart-card">
-          <div class="chart-head">
-            <div class="chart-title">Heure de pointe</div>
-            <div class="chart-sub">affluence par heure</div>
-          </div>
-          <div class="chart-wrap sm"><canvas id="hour-chart"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-head">
-            <div class="chart-title">Répartition Homme / Femme</div>
-          </div>
-          <div class="donut-wrap" style="margin-top:.5rem">
-            <canvas class="donut-canvas" id="genre-chart"></canvas>
-            <div class="donut-legend" id="genre-legend"></div>
           </div>
         </div>
       </div>
