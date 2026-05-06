@@ -97,8 +97,9 @@ async function loadPrestationsFromSettings(userId) {
     .maybeSingle();
 
   if (res.data && res.data.prestations) {
-    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
-    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
+    // Respecter l'ordre exact des paramètres — pas d'ajout automatique d'Autre
+    PRESTATIONS.homme = res.data.prestations.homme || [];
+    PRESTATIONS.femme = res.data.prestations.femme || [];
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
   if (res.data && res.data.planning)   salonPlanning = res.data.planning;
@@ -172,18 +173,11 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Sélectionner la première prestation par défaut (priorité à Coupe, sinon la première)
-  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
-  if (defaultOpt && defaultOpt !== 'Autre') {
+  // Sélectionner la première prestation de la liste (ordre des paramètres)
+  var defaultOpt = options[0];
+  if (defaultOpt) {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
     var prix = pd && pd.prix ? pd.prix : 0;
-    if (!prix) {
-      var defs = {
-        homme: { 'Coupe':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
-        femme: { 'Coupe':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
-      };
-      prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
-    }
     selectService(defaultOpt, prix);
   }
   checkFormValidity();
