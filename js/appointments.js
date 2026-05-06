@@ -9,7 +9,7 @@ var allAppts       = [];
 var allClients     = [];
 var selectedClient = null;
 var currentTab     = 'all';
-var currentView    = 'calendar';
+var currentView    = 'list';
 var weekOffset     = 0;
 
 // ===== FILTRES CALENDRIER =====
@@ -667,14 +667,12 @@ function renderCalendar() {
         ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
         : rawName;
 
-      // Layout : heure + nom à gauche, prestation à droite
+      // Layout : heure à gauche + prestation à droite (ligne 1), nom en gras (ligne 2)
       var html = '<div class="cal-event-row">'
-        + '<div class="cal-event-left">'
-        + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
-        + '<div class="cal-event-name">' + shortName + '</div>'
-        + '</div>'
-        + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
-        + '</div>';
+          + '<span class="cal-event-time">' + formatTime(a.datetime) + '</span>'
+          + (a.service ? '<span class="cal-event-svc-badge">' + a.service + '</span>' : '')
+          + '</div>'
+          + '<div class="cal-event-name">' + shortName + '</div>';
       ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
       cell.appendChild(ev);
@@ -1083,7 +1081,6 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
   await checkSubscription(session.user.id, session.user.created_at);
   await initPlan(session.user.id, session.user.created_at);
   await Promise.all([loadAppts(), loadClients(), loadPrestationsFromSettings(currentUserId)]);
-  setView('calendar');
 
   // Auto-termination : marque "done" les RDV pending dont l'heure de fin est passée
   await autoMarkDoneAppts();

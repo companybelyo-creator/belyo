@@ -210,8 +210,8 @@
 /* Annule - masque */
 .cal-event.status-cancelled { display: none; }
 
-/* ── Layout événement ── */
-.ev-top {
+/* Ligne 1 : heure à gauche + prestation à droite */
+.cal-event-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -219,56 +219,75 @@
   min-width: 0;
   margin-bottom: 1px;
 }
-.ev-t {
-  font-size: 10px; font-weight: 700; opacity: .7;
-  white-space: nowrap; flex-shrink: 0; letter-spacing: .02em;
-}
-.ev-s {
-  font-size: 9.5px; font-weight: 500; opacity: .65;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  text-align: right; flex: 1; min-width: 0;
-}
-.ev-n {
-  font-size: 12px; font-weight: 700;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  letter-spacing: .01em;
-}
-/* Compact 15min : tout sur une ligne */
-.ev-line {
-  display: flex; align-items: center; gap: 3px;
-  width: 100%; height: 100%; overflow: hidden;
-}
-.ev-line .ev-t { font-size: 9.5px; flex-shrink: 0; }
-.ev-line .ev-n { font-size: 11px; flex: 1; min-width: 0; font-weight: 700; }
-.ev-line .ev-s { font-size: 9px; flex-shrink: 0; max-width: 40%; text-align: right; opacity: .6; }
-
-/* ── Groupe RDV consécutifs ── */
-.cal-event-group {
-  position: absolute;
-  left: 4px; right: 4px; z-index: 2;
-  border-radius: 7px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform .12s, box-shadow .12s;
-}
-.cal-event-group:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,23,20,.18); }
-.cal-event-group.status-pending {
-  background: #E0EDFF; border-left: 3px solid #2B7FFF;
-  box-shadow: 0 1px 4px rgba(43,127,255,.12); color: #0A2540;
-}
-.cal-event-group.status-done {
-  background: #E8F5EF; border-left: 3px solid #26A96C;
-  box-shadow: 0 1px 4px rgba(38,169,108,.10); color: #135C38;
-}
-/* Items : trait droit entre eux (pas de border-radius interne) */
-.ev-group-item {
-  padding: 4px 8px;
+.cal-event-left { display: none; } /* inutilisé, compat */
+.cal-event-time {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: .68;
+  white-space: nowrap;
   flex-shrink: 0;
-  box-sizing: border-box;
+  letter-spacing: .02em;
 }
-.ev-group-item + .ev-group-item {
-  border-top: 1.5px solid rgba(0,0,0,.10);
+.cal-event-service { display: none; }
+.cal-event-svc-badge {
+  font-size: 9.5px;
+  font-weight: 500;
+  opacity: .65;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  flex: 1;
+  min-width: 0;
 }
+/* Ligne 2 : prénom en gras */
+.cal-event-name {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: .01em;
+  display: block;
+}
+
+/* RDV consécutifs reliés */
+/* Premier d'une chaîne */
+.cal-event.chain-top {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom: none;
+  padding-bottom: 3px;
+}
+/* Milieu d'une chaîne (a un précédent ET un suivant) */
+.cal-event.chain-top.chain-bottom {
+  border-radius: 0;
+  border-top: none;
+  border-bottom: none;
+  padding-top: 4px;
+  padding-bottom: 3px;
+  margin-top: -1px;
+}
+/* Dernier d'une chaîne */
+.cal-event.chain-bottom:not(.chain-top) {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  border-top: none;
+  margin-top: -1px;
+  padding-top: 4px;
+}
+/* Séparateur visuel entre les blocs : ligne pointillée sur le bord gauche coloré */
+.cal-event.chain-top::after,
+.cal-event.chain-top.chain-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 3px;
+  height: 1px;
+  background: rgba(255,255,255,.55);
+}
+.cal-event.status-pending.chain-top::after { background: rgba(43,127,255,.35); }
+.cal-event.status-done.chain-top::after    { background: rgba(38,169,108,.35); }
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E53935; }
