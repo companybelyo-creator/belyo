@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
-  <link rel="stylesheet" href="../css/notifications.css" />
 </head>
 <body>
 <div class="app-layout">
@@ -27,10 +26,6 @@
         <strong id="sidebar-salon">Chargement...</strong>
         <span id="sidebar-email">—</span>
       </div>
-      <button class="sidebar-notif-btn" id="sidebar-notif-btn" data-notif-trigger>
-        <span class="sidebar-icon">🔔</span> Notifications
-        <span class="sidebar-notif-badge dash-notif-badge" id="sidebar-notif-badge" style="display:none"></span>
-      </button>
       <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
       <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
     </div>
@@ -50,9 +45,9 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input type="text" placeholder="Rechercher..." />
         </div>
-        <button class="dash-notif-btn" id="dash-notif-btn">
+        <button class="dash-notif-btn" id="dash-notif-btn" onclick="toggleNotifPanel()">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span class="dash-notif-badge" id="dash-notif-badge" style="display:none"></span>
+          <span class="notif-badge" id="notif-badge" style="display:none"></span>
         </button>
         <button class="dash-btn-new" onclick="openModal()">+ Nouveau RDV</button>
       </div>
@@ -306,7 +301,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
-<script src="../js/notifications.js"></script>
+<script>
+// Dashboard: pas de bouton notif dans la sidebar, on utilise la cloche en haut à droite
+var _origInitNotifications = initNotifications;
+initNotifications = function(userId) {
+  _notifUserId = userId;
+  var overlay = document.createElement('div');
+  overlay.id = 'notif-overlay';
+  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:9000;background:rgba(26,23,20,0.38);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) closeNotifPanel(); };
+  var panel = document.createElement('div');
+  panel.id = 'notif-panel';
+  panel.style.cssText = 'width:500px;max-width:calc(100vw - 2rem);max-height:82vh;background:var(--white,#fff);border-radius:20px;box-shadow:0 24px 80px rgba(26,23,20,.20),0 8px 24px rgba(26,23,20,.10),0 0 0 1px rgba(26,23,20,.06);display:flex;flex-direction:column;overflow:hidden;transform:translateY(18px) scale(.97);opacity:0;transition:transform .26s cubic-bezier(.34,1.28,.64,1),opacity .2s ease;pointer-events:all;';
+  panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.4rem 1rem;border-bottom:1px solid rgba(26,23,20,.07);flex-shrink:0"><div style="display:flex;align-items:center;gap:10px"><span style="font-family:var(--font-display,serif);font-size:1.3rem;font-weight:600;color:var(--ink,#1A1714);letter-spacing:-.01em">Notifications</span><span id="notif-count-badge" style="display:none;font-size:11px;font-weight:700;background:#C0392B;color:#fff;border-radius:100px;padding:2px 8px;min-width:18px;text-align:center"></span></div><div style="display:flex;align-items:center;gap:8px"><button onclick="clearAllNotifs()" style="background:none;border:1px solid rgba(26,23,20,.12);border-radius:100px;padding:5px 13px;font-family:var(--font-body,sans-serif);font-size:12px;color:var(--ink-light,#888);cursor:pointer">Tout effacer</button><button onclick="closeNotifPanel()" style="background:rgba(26,23,20,.06);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--ink-light,#888);cursor:pointer;line-height:1">&#215;</button></div></div><div id="notif-list" style="overflow-y:auto;padding:1rem 1.2rem 1.2rem;flex:1;display:flex;flex-direction:column;gap:0"><div class="notif-empty">Chargement...</div></div>';
+  overlay.appendChild(panel);
+  document.body.appendChild(overlay);
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && notifOpen) closeNotifPanel(); });
+  loadNotifications(userId);
+};
+</script>
 <script>
 (async function() {
   var s = await sb.auth.getSession();
@@ -755,7 +768,6 @@ var _origInit = window.onload;
       loadTopServices(currentUserId);
       loadCaSparkline(currentUserId);
       loadDashCaChart(currentUserId);
-      if (window.BNotif) window.BNotif.init(currentUserId);
     }
   }, 300);
 })();
