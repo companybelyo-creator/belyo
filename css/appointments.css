@@ -211,8 +211,6 @@
 .cal-event.status-cancelled { display: none; }
 
 /* ── Contenu événements ── */
-
-/* Layout normal : ligne 1 = heure + prestation, ligne 2 = nom */
 .ev-top {
   display: flex;
   align-items: baseline;
@@ -232,7 +230,7 @@
 .ev-s {
   font-size: 9.5px;
   font-weight: 500;
-  opacity: .65;
+  opacity: .62;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -248,19 +246,18 @@
   text-overflow: ellipsis;
   letter-spacing: .01em;
 }
-.ev-n-block { display: block; }
-
-/* Layout compact (≤ 17px) : tout sur une ligne */
+/* Compact : une seule ligne */
 .ev-line {
   display: flex;
   align-items: center;
   gap: 3px;
   width: 100%;
   overflow: hidden;
+  height: 100%;
 }
-.ev-line .ev-t  { font-size: 9px; flex-shrink: 0; }
-.ev-line .ev-n  { font-size: 10.5px; flex: 1; min-width: 0; }
-.ev-line .ev-s  { font-size: 9px; max-width: 38%; flex-shrink: 0; }
+.ev-line .ev-t { font-size: 9px; flex-shrink: 0; }
+.ev-line .ev-n { font-size: 10.5px; flex: 1; min-width: 0; }
+.ev-line .ev-s { font-size: 9px; flex-shrink: 0; max-width: 38%; text-align: right; }
 
 /* ── Groupe RDV consécutifs ── */
 .cal-event-group {
@@ -282,13 +279,11 @@
 .cal-event-group.status-done {
   background: #E8F5EF;
   border-left: 3px solid #26A96C;
-  box-shadow: 0 1px 4px rgba(38,169,108,.1);
+  box-shadow: 0 1px 4px rgba(38,169,108,.10);
   color: #135C38;
 }
 .ev-group-item {
   padding: 4px 8px;
-  overflow: hidden;
-  box-sizing: border-box;
   flex-shrink: 0;
 }
 .ev-group-item + .ev-group-item {

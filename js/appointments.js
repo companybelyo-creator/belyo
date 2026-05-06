@@ -621,51 +621,64 @@ function renderCalendar() {
       return dt.getHours() * 60 + dt.getMinutes();
     }
 
-    // Snap à la grille 15min
-    function snapH(min) { return Math.round((min / 60) * SLOT_H / (SLOT_H/4)) * (SLOT_H/4); }
-
     // Trier par heure
     var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    // Grouper RDV consécutifs (fin du précédent = début du suivant ± 2min)
-    var groups = [], used = {};
-    sorted.forEach(function(a) {
-      if (used[a.id]) return;
-      var grp = [a]; used[a.id] = true; var last = a;
-      for (var ci = 0; ci < sorted.length; ci++) {
-        var nxt = sorted[ci];
-        if (used[nxt.id]) continue;
-        if (Math.abs(startMin(nxt) - (startMin(last) + getDuree(last))) <= 2) {
-          grp.push(nxt); used[nxt.id] = true; last = nxt;
-        }
-      }
-      groups.push(grp);
-    });
+    // Snap durée à la grille 15min
+    function snapH(min) {
+      var px = (min / 60) * SLOT_H;
+      var step = SLOT_H / 4;
+      return Math.max(step, Math.round(px / step) * step);
+    }
 
-    // Nom abrégé
-    function abbrev(a) {
-      var parts = (a.client_name || '').trim().split(' ');
+    // Abréger le nom
+    function abbrev(name) {
+      var parts = (name || '').trim().split(' ');
       return parts.length > 1 ? parts[0] + ' ' + parts[1].charAt(0).toUpperCase() + '.' : parts[0];
     }
 
-    // HTML d'un item selon hauteur dispo
+    // HTML interne selon hauteur disponible
     function evInner(a, h) {
-      var t = formatTime(a.datetime), n = abbrev(a), s = a.service || '';
-      if (h <= SLOT_H / 4) {
-        // ≤ 17px : tout sur une ligne ultra-compact
+      var t = formatTime(a.datetime);
+      var n = abbrev(a.client_name);
+      var s = a.service || '';
+      var step = SLOT_H / 4;
+      if (h <= step + 2) {
+        // Très compact : tout sur une ligne
         return '<div class="ev-line">'
           + '<span class="ev-t">' + t + '</span>'
           + '<span class="ev-n">' + n + '</span>'
           + (s ? '<span class="ev-s">' + s + '</span>' : '')
           + '</div>';
       }
-      // Normal : heure + prestation ligne 1, nom ligne 2
+      // Normal : heure+prestation ligne 1, nom ligne 2
       return '<div class="ev-top">'
           + '<span class="ev-t">' + t + '</span>'
           + (s ? '<span class="ev-s">' + s + '</span>' : '')
           + '</div>'
-          + '<div class="ev-n ev-n-block">' + n + '</div>';
+          + '<div class="ev-n">' + n + '</div>';
     }
+
+    // Grouper les RDV strictement consécutifs (gap = 0, pas de trou)
+    var groups = [], used = {};
+    sorted.forEach(function(a) {
+      if (used[a.id]) return;
+      var grp = [a]; used[a.id] = true; var last = a;
+      // Chercher le suivant immédiat sans trou
+      var searching = true;
+      while (searching) {
+        searching = false;
+        for (var ci = 0; ci < sorted.length; ci++) {
+          var nxt = sorted[ci];
+          if (used[nxt.id]) continue;
+          var gap = startMin(nxt) - (startMin(last) + getDuree(last));
+          if (gap >= 0 && gap <= 2) { // consécutif strict : pas de trou
+            grp.push(nxt); used[nxt.id] = true; last = nxt; searching = true; break;
+          }
+        }
+      }
+      groups.push(grp);
+    });
 
     groups.forEach(function(grp) {
       var first = grp[0];
@@ -678,37 +691,39 @@ function renderCalendar() {
       var cell  = cells[rowIndex * 7 + di];
       if (!cell) return;
 
-      var topPx   = (aM / 60) * SLOT_H;
+      var topPx     = (aM / 60) * SLOT_H;
       var statusCls = 'status-' + (first.status || 'pending');
 
       if (grp.length === 1) {
         // RDV isolé
         var a   = grp[0];
-        var evH = Math.max(SLOT_H / 4, snapH(getDuree(a)));
+        var evH = snapH(getDuree(a));
         var ev  = document.createElement('div');
         ev.className = 'cal-event ' + statusCls;
-        ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;overflow:hidden;';
+        ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;';
         ev.innerHTML = evInner(a, evH);
         ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
         cell.appendChild(ev);
 
       } else {
-        // Groupe — wrapper unique, hauteur = somme
+        // Groupe consécutif — un seul wrapper
         var totalMin = 0;
         grp.forEach(function(a) { totalMin += getDuree(a); });
-        var totalH = Math.max(SLOT_H / 4 * grp.length, snapH(totalMin));
+        var totalH = snapH(totalMin);
 
         var wrapper = document.createElement('div');
         wrapper.className = 'cal-event-group ' + statusCls;
         wrapper.style.cssText = 'top:' + topPx + 'px;height:' + totalH + 'px;';
 
         grp.forEach(function(a) {
-          var iH   = Math.max(SLOT_H / 4, snapH(getDuree(a)));
+          var iH   = snapH(getDuree(a));
           var item = document.createElement('div');
           item.className = 'ev-group-item';
-          item.style.height = iH + 'px';
+          item.style.cssText = 'height:' + iH + 'px;overflow:hidden;box-sizing:border-box;';
           item.innerHTML = evInner(a, iH);
-          (function(appt){ item.addEventListener('click', function(e){ e.stopPropagation(); showApptDetail(appt); }); })(a);
+          (function(appt) {
+            item.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(appt); });
+          })(a);
           wrapper.appendChild(item);
         });
         cell.appendChild(wrapper);
