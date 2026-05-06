@@ -137,7 +137,7 @@ function renderKPIs(data, prodData, now) {
   }
 }
 
-// ===== CA CHART (RDV done + produits) =====
+// ===== CA CHART — dégradé vert émeraude =====
 function renderCAChart(data, prodData, now) {
   var months = [];
   for (var i = currentPeriod-1; i >= 0; i--)
@@ -155,30 +155,32 @@ function renderCAChart(data, prodData, now) {
   });
 
   var values = months.map(function(m) { return Math.round(caByMonth[m]); });
-  var maxVal = Math.max.apply(null, values) || 1;
 
   if (caChart) caChart.destroy();
   var ctx = document.getElementById('ca-chart');
   if (!ctx) return;
-  caChart = new Chart(ctx.getContext('2d'), {
+
+  var c2d = ctx.getContext('2d');
+  var grad = c2d.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0,   '#1D9E75');
+  grad.addColorStop(0.5, '#4EC99E');
+  grad.addColorStop(1,   '#A8DFC9');
+
+  caChart = new Chart(c2d, {
     type: 'bar',
     data: {
       labels: months.map(monthLabel),
       datasets: [{
         data: values,
-        backgroundColor: values.map(function(v) {
-          return v === maxVal ? CHART_COLORS.ink : CHART_COLORS.gold;
-        }),
-        borderRadius: 6,
-        borderSkipped: false,
-        barPercentage: 0.45,
-        categoryPercentage: 0.6,
+        backgroundColor: grad,
+        borderRadius: 8, borderSkipped: false,
+        barPercentage: 0.5, categoryPercentage: 0.65,
       }]
     },
     options: chartDefaults({
       plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: function(ctx) { return ctx.raw + '\u20ac'; } } }
+        tooltip: { callbacks: { label: function(c) { return c.raw + '\u20ac'; } } }
       },
       scales: {
         y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:11}, callback:function(v){ return v+'\u20ac'; } }, border:{display:false} },
@@ -234,13 +236,10 @@ function renderTopClients(data) {
       }).join('');
 }
 
-// ===== WEEKDAY CHART =====
+// ===== WEEKDAY CHART — dégradé doré par intensité =====
 function renderWeekdayChart(data) {
   var days = [0,0,0,0,0,0,0];
-  var labels = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
   data.forEach(function(a) { days[new Date(a.datetime).getDay()]++; });
-
-  // Réordonner Lun→Dim
   var ordered = [days[1],days[2],days[3],days[4],days[5],days[6],days[0]];
   var orderedLabels = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   var maxD = Math.max.apply(null, ordered) || 1;
@@ -248,30 +247,40 @@ function renderWeekdayChart(data) {
   if (weekdayChart) weekdayChart.destroy();
   var ctx = document.getElementById('weekday-chart');
   if (!ctx) return;
+
+  // Couleur par intensité : plus c'est fréquenté, plus c'est foncé
+  var colors = ordered.map(function(v) {
+    var ratio = maxD > 0 ? v / maxD : 0;
+    // Interpolation ambrée : faible=#F9E4C8, fort=#C07020
+    var r = Math.round(249 - ratio * (249 - 192));
+    var g = Math.round(228 - ratio * (228 - 112));
+    var b = Math.round(200 - ratio * (200 - 32));
+    return 'rgb('+r+','+g+','+b+')';
+  });
+
   weekdayChart = new Chart(ctx.getContext('2d'), {
     type: 'bar',
     data: {
       labels: orderedLabels,
       datasets: [{
         data: ordered,
-        backgroundColor: ordered.map(function(v){ return v===maxD ? CHART_COLORS.ink : CHART_COLORS.gold; }),
-        borderRadius: 4,
-        borderSkipped: false,
-        barPercentage: 0.35,
-        categoryPercentage: 0.5,
+        backgroundColor: colors,
+        borderRadius: 6, borderSkipped: false,
+        barPercentage: 0.5, categoryPercentage: 0.65,
       }]
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label:function(c){ return c.raw+' RDV'; } } } },
+    options: chartDefaults({
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(c) { return c.raw + ' RDV'; } } }
+      },
       scales: {
-        y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:10} }, border:{display:false} },
+        y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:11}, precision:0 }, border:{display:false} },
         x: { grid:{ display:false }, ticks:{ color:CHART_COLORS.text, font:{size:11} }, border:{display:false} }
       }
-    }
+    })
   });
 }
-
 // ===== GAUGE RÉTENTION =====
 function renderRetentionGauge(data) {
   // Calcul : clients revenus 2x+ = "existants", reste = "nouveaux"
@@ -369,7 +378,7 @@ async function renderStatsAvancees(data, now) {
     document.getElementById('kpi-weekly-avg').textContent = (data.length/weeks).toFixed(1);
   }
 
-  // Heure de pointe
+  // Heure de pointe — dégradé bleu-cyan
   var hours = {};
   for (var h=8; h<=19; h++) hours[h]=0;
   data.forEach(function(a) { var hr=new Date(a.datetime).getHours(); if(hours[hr]!==undefined)hours[hr]++; });
@@ -379,29 +388,34 @@ async function renderStatsAvancees(data, now) {
   var ctx2 = document.getElementById('hour-chart');
   if (ctx2) {
     var hVals = Object.values(hours);
-    hourChart = new Chart(ctx2.getContext('2d'), {
+    var hCtx  = ctx2.getContext('2d');
+    var hGrad = hCtx.createLinearGradient(0, 0, 0, 160);
+    hGrad.addColorStop(0,   '#3B82F6');
+    hGrad.addColorStop(0.5, '#60A5FA');
+    hGrad.addColorStop(1,   '#BAE6FD');
+    hourChart = new Chart(hCtx, {
       type: 'bar',
       data: {
         labels: Object.keys(hours).map(function(h){ return h+'h'; }),
         datasets: [{
           data: hVals,
-          backgroundColor: hVals.map(function(v){ return v===maxH ? CHART_COLORS.teal : 'rgba(29,158,117,0.25)'; }),
-          borderRadius: 4, borderSkipped: false,
+          backgroundColor: hGrad,
+          borderRadius: 5, borderSkipped: false,
+          barPercentage: 0.5, categoryPercentage: 0.65,
         }]
       },
       options: {
         responsive:true, maintainAspectRatio:false,
         plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(c){ return c.raw+' RDV'; }}} },
         scales:{
-          y:{beginAtZero:true,grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.text,font:{size:10}},border:{display:false}},
+          y:{beginAtZero:true,grid:{color:CHART_COLORS.grid},ticks:{color:CHART_COLORS.text,font:{size:10},precision:0},border:{display:false}},
           x:{grid:{display:false},ticks:{color:CHART_COLORS.text,font:{size:10}},border:{display:false}}
         }
       }
     });
   }
 
-  // Genre donut — utilise la colonne genre stockée dans appointments
-  // Fallback sur les prestations configurées du salon si genre absent
+  // Genre donut — bleu nuit + rose chaleureux
   var salonPrests = { homme: [], femme: [] };
   var settRes = await sb.from('salon_settings').select('prestations').eq('user_id', currentUserId).maybeSingle();
   if (settRes.data && settRes.data.prestations) {
@@ -416,7 +430,6 @@ async function renderStatsAvancees(data, now) {
     } else if (a.genre === 'homme') {
       genreCount.Homme++;
     } else {
-      // Fallback : chercher dans les prestations configurées
       var svc = (a.service||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
       var inFemme = salonPrests.femme.indexOf(svc) !== -1;
       var inHomme = salonPrests.homme.indexOf(svc) !== -1;
@@ -424,6 +437,9 @@ async function renderStatsAvancees(data, now) {
       else genreCount.Homme++;
     }
   });
+
+  var COLOR_HOMME = '#2563EB';
+  var COLOR_FEMME = '#F472B6';
 
   if (genreChart) genreChart.destroy();
   var ctx3 = document.getElementById('genre-chart');
@@ -434,15 +450,15 @@ async function renderStatsAvancees(data, now) {
         labels: ['Homme','Femme'],
         datasets: [{
           data: [genreCount.Homme, genreCount.Femme],
-          backgroundColor: [CHART_COLORS.ink, CHART_COLORS.gold],
+          backgroundColor: [COLOR_HOMME, COLOR_FEMME],
           borderWidth: 0,
-          hoverOffset: 4,
+          hoverOffset: 6,
         }]
       },
       options: {
         responsive:false, maintainAspectRatio:false, cutout:'72%',
         plugins:{ legend:{display:false}, tooltip:{callbacks:{
-          label:function(c){ return c.label+': '+c.raw+' RDV ('+Math.round(c.raw/data.length*100)+'%)'; }
+          label:function(c){ return c.label+': '+c.raw+' RDV ('+Math.round(c.raw/(data.length||1)*100)+'%)'; }
         }}}
       }
     });
@@ -450,8 +466,8 @@ async function renderStatsAvancees(data, now) {
   var lgd = document.getElementById('genre-legend');
   if (lgd) {
     lgd.innerHTML = [
-      {label:'Homme', val:genreCount.Homme, color:CHART_COLORS.ink},
-      {label:'Femme', val:genreCount.Femme, color:CHART_COLORS.gold}
+      {label:'Homme', val:genreCount.Homme, color:COLOR_HOMME},
+      {label:'Femme', val:genreCount.Femme, color:COLOR_FEMME}
     ].map(function(g) {
       var pct = data.length > 0 ? Math.round(g.val/data.length*100) : 0;
       return '<div class="donut-legend-item">'
@@ -462,7 +478,7 @@ async function renderStatsAvancees(data, now) {
     }).join('');
   }
 
-  // Clients uniques par mois
+  // Clients uniques par mois — ligne teal dégradé
   var months = [];
   for (var i=currentPeriod-1;i>=0;i--)
     months.push(getMonthKey(new Date(now.getFullYear(),now.getMonth()-i,1)));
@@ -474,17 +490,24 @@ async function renderStatsAvancees(data, now) {
   var ctx4 = document.getElementById('clients-chart');
   if (ctx4) {
     var cVals = months.map(function(m){ return clientsByMonth[m]?clientsByMonth[m].size:0; });
-    clientsChart = new Chart(ctx4.getContext('2d'), {
+    var cCtx  = ctx4.getContext('2d');
+    var cGrad = cCtx.createLinearGradient(0, 0, 0, 220);
+    cGrad.addColorStop(0,   'rgba(29,158,117,0.35)');
+    cGrad.addColorStop(1,   'rgba(29,158,117,0.02)');
+    clientsChart = new Chart(cCtx, {
       type: 'line',
       data: {
         labels: months.map(monthLabel),
         datasets: [{
           data: cVals,
-          borderColor: CHART_COLORS.teal,
-          backgroundColor: 'rgba(29,158,117,0.08)',
-          tension: 0.35, fill: true,
-          pointRadius: 5, pointBackgroundColor: CHART_COLORS.teal,
-          pointBorderColor: '#fff', pointBorderWidth: 2,
+          borderColor: '#1D9E75',
+          backgroundColor: cGrad,
+          tension: 0.4, fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: '#1D9E75',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2.5,
+          borderWidth: 2.5,
         }]
       },
       options: {
@@ -759,7 +782,7 @@ async function exportPDF() {
 }
 
 
-// ===== CA PRODUITS =====
+// ===== CA PRODUITS — dégradé violet =====
 async function renderProdChart(now) {
   var from = new Date(now.getFullYear(), now.getMonth() - currentPeriod + 1, 1);
   var res  = await sb.from('product_sales')
@@ -788,21 +811,26 @@ async function renderProdChart(now) {
   if (el) el.textContent = Math.round(totalProd) + '\u20ac total en produits';
 
   var values = months.map(function(m) { return Math.round(caByMonth[m]); });
-  var maxVal  = Math.max.apply(null, values) || 1;
 
   if (prodChart) prodChart.destroy();
   var ctx = document.getElementById('prod-chart');
   if (!ctx) return;
-  prodChart = new Chart(ctx.getContext('2d'), {
+
+  var c2d = ctx.getContext('2d');
+  var grad = c2d.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0,   '#7B61FF');
+  grad.addColorStop(0.5, '#A78BFA');
+  grad.addColorStop(1,   '#DDD6FE');
+
+  prodChart = new Chart(c2d, {
     type: 'bar',
     data: {
       labels: months.map(monthLabel),
       datasets: [{
         data: values,
-        backgroundColor: values.map(function(v) {
-          return v === maxVal && maxVal > 0 ? CHART_COLORS.teal : 'rgba(29,158,117,0.25)';
-        }),
-        borderRadius: 6, borderSkipped: false, barPercentage: 0.45, categoryPercentage: 0.6,
+        backgroundColor: grad,
+        borderRadius: 8, borderSkipped: false,
+        barPercentage: 0.5, categoryPercentage: 0.65,
       }]
     },
     options: chartDefaults({
@@ -818,7 +846,7 @@ async function renderProdChart(now) {
   });
 }
 
-// ===== CA PRESTATIONS =====
+// ===== CA PRESTATIONS — dégradé corail =====
 function renderPrestChart(data, now) {
   var months = [];
   for (var i = currentPeriod-1; i >= 0; i--)
@@ -836,21 +864,26 @@ function renderPrestChart(data, now) {
   if (el) el.textContent = Math.round(totalPrest) + '\u20ac total en prestations';
 
   var values = months.map(function(m) { return Math.round(caByMonth[m]); });
-  var maxVal  = Math.max.apply(null, values) || 1;
 
   if (prestChart) prestChart.destroy();
   var ctx = document.getElementById('prest-chart');
   if (!ctx) return;
-  prestChart = new Chart(ctx.getContext('2d'), {
+
+  var c2d = ctx.getContext('2d');
+  var grad = c2d.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0,   '#F97316');
+  grad.addColorStop(0.5, '#FB923C');
+  grad.addColorStop(1,   '#FED7AA');
+
+  prestChart = new Chart(c2d, {
     type: 'bar',
     data: {
       labels: months.map(monthLabel),
       datasets: [{
         data: values,
-        backgroundColor: values.map(function(v) {
-          return v === maxVal && maxVal > 0 ? CHART_COLORS.ink : CHART_COLORS.gold;
-        }),
-        borderRadius: 6, borderSkipped: false, barPercentage: 0.45, categoryPercentage: 0.6,
+        backgroundColor: grad,
+        borderRadius: 8, borderSkipped: false,
+        barPercentage: 0.5, categoryPercentage: 0.65,
       }]
     },
     options: chartDefaults({
