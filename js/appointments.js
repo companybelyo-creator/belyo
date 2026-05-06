@@ -9,7 +9,7 @@ var allAppts       = [];
 var allClients     = [];
 var selectedClient = null;
 var currentTab     = 'all';
-var currentView    = 'list';
+var currentView    = 'calendar';
 var weekOffset     = 0;
 
 // ===== FILTRES CALENDRIER =====
@@ -621,123 +621,63 @@ function renderCalendar() {
       return dt.getHours() * 60 + dt.getMinutes();
     }
 
-    // Trier
+    // Trier par heure
     var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    // Snap durée px sur grille 15min
-    function snapH(min) {
-      var step = SLOT_H / 4; // 17px par 15min
-      return Math.max(step, Math.round((min / 60) * SLOT_H / step) * step);
-    }
-
-    // Nom abrégé
-    function abbrev(name) {
-      var p = (name || '').trim().split(' ');
-      return p.length > 1 ? p[0] + ' ' + p[1].charAt(0).toUpperCase() + '.' : p[0];
-    }
-
-    // Grouper RDV strictement consécutifs (gap ≤ 2min)
-    var groups = [], used = {};
-    sorted.forEach(function(a) {
-      if (used[a.id]) return;
-      var grp = [a]; used[a.id] = true; var last = a;
-      var again = true;
-      while (again) {
-        again = false;
-        for (var ci = 0; ci < sorted.length; ci++) {
-          var nxt = sorted[ci];
-          if (used[nxt.id]) continue;
-          var gap = startMin(nxt) - (startMin(last) + getDuree(last));
-          if (gap >= 0 && gap <= 2) {
-            grp.push(nxt); used[nxt.id] = true; last = nxt; again = true; break;
-          }
-        }
+    // Construire les chaînes : prev/next basé sur tri temporel strict
+    var prevMap = {}; // id → id du précédent
+    var nextMap = {}; // id → id du suivant
+    for (var ci = 0; ci < sorted.length - 1; ci++) {
+      var cur  = sorted[ci];
+      var nxt  = sorted[ci + 1];
+      var curEnd = startMin(cur) + getDuree(cur);
+      if (Math.abs(startMin(nxt) - curEnd) <= 2 && cur.status === nxt.status) {
+        nextMap[cur.id] = nxt.id;
+        prevMap[nxt.id] = cur.id;
       }
-      groups.push(grp);
-    });
+    }
 
-    groups.forEach(function(grp) {
-      var first = grp[0];
-      var dt = new Date(first.datetime);
-      var aH = dt.getHours(), aM = dt.getMinutes();
+    sorted.forEach(function(a) {
+      var dt = new Date(a.datetime);
+      var aH = dt.getHours();
+      var aM = dt.getMinutes();
       if (aH < HOUR_START || aH >= HOUR_END) return;
 
       var rowIndex = aH - HOUR_START;
-      var cells    = grid.querySelectorAll('.cal-cell');
-      var cell     = cells[rowIndex * 7 + di];
+      var cells = grid.querySelectorAll('.cal-cell');
+      var cell = cells[rowIndex * 7 + di];
       if (!cell) return;
 
-      var topPx     = (aM / 60) * SLOT_H;
-      var statusCls = 'status-' + (first.status || 'pending');
+      var dureeMin = getDuree(a);
+      var evH = Math.max(36, (dureeMin / 60) * SLOT_H);
 
-      if (grp.length === 1) {
-        // ── RDV isolé ──
-        var a   = grp[0];
-        var evH = snapH(getDuree(a));
-        var ev  = document.createElement('div');
-        ev.className = 'cal-event ' + statusCls;
-        ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;';
-        // Contenu adaptatif : compact si < 2 lignes dispo
-        var t = formatTime(a.datetime), n = abbrev(a.client_name), s = a.service || '';
-        if (evH <= SLOT_H / 4 + 2) {
-          // 15min : tout sur une ligne centrée
-          ev.innerHTML = '<div class="ev-line">'
-            + '<span class="ev-t">' + t + '</span>'
-            + '<span class="ev-n">' + n + '</span>'
-            + (s ? '<span class="ev-s">' + s + '</span>' : '')
-            + '</div>';
-        } else {
-          // Normal : heure+prestation / nom
-          ev.innerHTML = '<div class="ev-top">'
-              + '<span class="ev-t">' + t + '</span>'
-              + (s ? '<span class="ev-s">' + s + '</span>' : '')
-              + '</div>'
-              + '<div class="ev-n">' + n + '</div>';
-        }
-        ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
-        cell.appendChild(ev);
+      var ev = document.createElement('div');
+      var hasNext = !!nextMap[a.id];
+      var hasPrev = !!prevMap[a.id];
 
-      } else {
-        // ── Groupe consécutif : un seul bloc, bords droits entre items ──
-        var totalMin = 0;
-        grp.forEach(function(x) { totalMin += getDuree(x); });
-        var totalH = snapH(totalMin);
+      ev.className = 'cal-event status-' + (a.status || 'pending')
+        + (hasNext ? ' chain-top' : '')
+        + (hasPrev ? ' chain-bottom' : '');
+      ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + evH + 'px;';
 
-        var wrapper = document.createElement('div');
-        wrapper.className = 'cal-event-group ' + statusCls;
-        wrapper.style.cssText = 'top:' + topPx + 'px;height:' + totalH + 'px;';
+      // Nom court
+      var rawName   = (a.client_name || '').trim();
+      var nameParts = rawName.split(' ');
+      var shortName = nameParts.length > 1
+        ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
+        : rawName;
 
-        grp.forEach(function(a, idx) {
-          var iH   = snapH(getDuree(a));
-          var item = document.createElement('div');
-          // Coins droits entre items (pas de radius interne)
-          var isFirst = idx === 0;
-          var isLast  = idx === grp.length - 1;
-          item.className = 'ev-group-item'
-            + (isFirst ? ' ev-group-first' : '')
-            + (isLast  ? ' ev-group-last'  : '');
-          item.style.cssText = 'height:' + iH + 'px;overflow:hidden;box-sizing:border-box;';
-          var t = formatTime(a.datetime), n = abbrev(a.client_name), s = a.service || '';
-          if (iH <= SLOT_H / 4 + 2) {
-            item.innerHTML = '<div class="ev-line">'
-              + '<span class="ev-t">' + t + '</span>'
-              + '<span class="ev-n">' + n + '</span>'
-              + (s ? '<span class="ev-s">' + s + '</span>' : '')
-              + '</div>';
-          } else {
-            item.innerHTML = '<div class="ev-top">'
-                + '<span class="ev-t">' + t + '</span>'
-                + (s ? '<span class="ev-s">' + s + '</span>' : '')
-                + '</div>'
-                + '<div class="ev-n">' + n + '</div>';
-          }
-          (function(appt) {
-            item.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(appt); });
-          })(a);
-          wrapper.appendChild(item);
-        });
-        cell.appendChild(wrapper);
-      }
+      // Layout : heure + nom à gauche, prestation à droite
+      var html = '<div class="cal-event-row">'
+        + '<div class="cal-event-left">'
+        + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
+        + '<div class="cal-event-name">' + shortName + '</div>'
+        + '</div>'
+        + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
+        + '</div>';
+      ev.innerHTML = html;
+      ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
+      cell.appendChild(ev);
     });
   });
 
@@ -1143,6 +1083,7 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
   await checkSubscription(session.user.id, session.user.created_at);
   await initPlan(session.user.id, session.user.created_at);
   await Promise.all([loadAppts(), loadClients(), loadPrestationsFromSettings(currentUserId)]);
+  setView('calendar');
 
   // Auto-termination : marque "done" les RDV pending dont l'heure de fin est passée
   await autoMarkDoneAppts();
