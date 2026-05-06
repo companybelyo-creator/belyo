@@ -604,7 +604,9 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.disabled = true; btn.textContent = 'Enregistrement...';
 
   var clientName  = document.getElementById('appt-client').value.trim();
-  var datetime    = document.getElementById('appt-datetime').value;
+  var _rawDt   = document.getElementById('appt-datetime').value;
+  var _localDt = new Date(_rawDt);
+  var datetime = _localDt.toISOString();
   var priceVal    = document.getElementById('appt-price').value;
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
