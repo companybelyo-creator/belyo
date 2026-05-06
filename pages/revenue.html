@@ -195,31 +195,6 @@
 
       </div>
 
-      <!-- Top prestations + Top clients + Top produits vendus -->
-      <div class="chart-grid-3" style="margin-bottom:1.5rem">
-        <div class="chart-card">
-          <div class="chart-head">
-            <div class="chart-title">Top prestations</div>
-            <div class="chart-sub">par chiffre d'affaires</div>
-          </div>
-          <div id="top-services" style="display:flex;flex-direction:column;gap:12px;padding-top:.25rem"></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-head">
-            <div class="chart-title">Top clients</div>
-            <div class="chart-sub">par chiffre d'affaires</div>
-          </div>
-          <div id="top-clients" style="display:flex;flex-direction:column;gap:12px;padding-top:.25rem"></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-head">
-            <div class="chart-title">Top produits vendus</div>
-            <div class="chart-sub">quantité · tendance vs mois dernier</div>
-          </div>
-          <div id="top-products-list" style="display:flex;flex-direction:column;gap:12px;padding-top:.25rem"></div>
-        </div>
-      </div>
-
       <div class="chart-grid-3" style="margin-bottom:1.5rem">
         <div class="chart-card">
           <div class="chart-head">
@@ -270,12 +245,47 @@
         </div>
       </div>
 
-      <div class="chart-card">
-        <div class="chart-head">
-          <div class="chart-title">Clients uniques par mois</div>
-          <div class="chart-sub">fidélisation sur la durée</div>
+      <!-- Taux d'occupation + Clients uniques -->
+      <div class="chart-grid-eq" style="margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Taux d'occupation par jour</div>
+            <div class="chart-sub">% moyen de créneaux occupés</div>
+          </div>
+          <div id="occupation-list" style="display:flex;flex-direction:column;gap:10px;padding-top:.25rem"></div>
         </div>
-        <div class="chart-wrap"><canvas id="clients-chart"></canvas></div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Clients uniques par mois</div>
+            <div class="chart-sub">fidélisation sur la durée</div>
+          </div>
+          <div class="chart-wrap"><canvas id="clients-chart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Top prestations + Top clients + Top produits vendus -->
+      <div class="chart-grid-3" style="margin-bottom:1.5rem">
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Top prestations</div>
+            <div class="chart-sub">par chiffre d'affaires</div>
+          </div>
+          <div id="top-services" style="display:flex;flex-direction:column;gap:12px;padding-top:.25rem"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Top clients</div>
+            <div class="chart-sub">par chiffre d'affaires</div>
+          </div>
+          <div id="top-clients" style="display:flex;flex-direction:column;gap:12px;padding-top:.25rem"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div class="chart-title">Top produits vendus</div>
+            <div class="chart-sub">quantité · tendance vs mois dernier</div>
+          </div>
+          <div id="top-products-list" style="display:flex;flex-direction:column;gap:12px;padding-top:.25rem"></div>
+        </div>
       </div>
     </div>
 

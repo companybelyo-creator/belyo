@@ -550,6 +550,75 @@ async function renderStatsAvancees(data, now) {
       }
     });
   }
+
+  // Taux d'occupation par jour
+  renderOccupation(data);
+}
+
+// ===== TAUX D'OCCUPATION PAR JOUR =====
+function renderOccupation(data) {
+  var el = document.getElementById('occupation-list');
+  if (!el) return;
+
+  // Paramètres du salon : créneaux dispo par jour (8h→19h, toutes les 30min = 22 créneaux/jour)
+  var SLOTS_PER_DAY = 22;
+  var DAY_LABELS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+  // JS getDay() : 0=dim, 1=lun ... 6=sam → on remapping en 0=lun...6=dim
+  var DAY_MAP   = [6, 0, 1, 2, 3, 4, 5]; // DAY_MAP[getDay()] → index lun-dim
+
+  // Compter les semaines distinctes présentes dans la période
+  var weeks = new Set();
+  data.forEach(function(a) {
+    var d   = new Date(a.datetime);
+    var mon = new Date(d);
+    mon.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // lundi de la semaine
+    weeks.add(mon.toISOString().slice(0,10));
+  });
+  var nbWeeks = Math.max(weeks.size, 1);
+
+  // Compter RDV par jour de semaine (lun-dim)
+  var counts = [0,0,0,0,0,0,0];
+  data.forEach(function(a) {
+    var dow = new Date(a.datetime).getDay();
+    counts[DAY_MAP[dow]]++;
+  });
+
+  // Taux = (RDV total pour ce jour / nbWeeks) / SLOTS_PER_DAY
+  var rates = counts.map(function(c) {
+    return Math.min(100, Math.round((c / nbWeeks) / SLOTS_PER_DAY * 100));
+  });
+
+  var COLORS = [
+    'linear-gradient(90deg,#1D9E75,#4EC99E)',  // lundi
+    'linear-gradient(90deg,#3B82F6,#93C5FD)',  // mardi
+    'linear-gradient(90deg,#7B61FF,#A78BFA)',  // mercredi
+    'linear-gradient(90deg,#F97316,#FB923C)',  // jeudi
+    'linear-gradient(90deg,#F472B6,#FBCFE8)',  // vendredi
+    'linear-gradient(90deg,#C4A87A,#E8D5A8)',  // samedi
+    'linear-gradient(90deg,#8A817C,#C5BEB9)',  // dimanche
+  ];
+
+  el.innerHTML = DAY_LABELS.map(function(label, i) {
+    var rate  = rates[i];
+    var color = rate >= 70 ? '#0F6E56' : rate >= 40 ? 'var(--ink)' : 'var(--ink-light)';
+    var badge = rate >= 70
+      ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:#E1F5EE;color:#0F6E56">Chargé</span>'
+      : rate <= 20
+      ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:#FAECE7;color:#993C1D">Creux</span>'
+      : '';
+    return '<div style="display:flex;flex-direction:column;gap:4px">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      +   '<span style="font-size:12px;font-weight:500;color:'+color+';width:74px;flex-shrink:0">'+label+'</span>'
+      +   '<div style="flex:1;height:6px;background:var(--cream-dark);border-radius:100px;overflow:hidden">'
+      +     '<div style="height:6px;width:'+rate+'%;background:'+COLORS[i]+';border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>'
+      +   '</div>'
+      +   '<div style="display:flex;align-items:center;gap:6px;width:80px;justify-content:flex-end;flex-shrink:0">'
+      +     badge
+      +     '<span style="font-size:12px;font-weight:600;color:'+color+'">'+rate+'%</span>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 // ===== EXPORT PDF =====
