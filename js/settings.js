@@ -368,43 +368,24 @@ async function loadPrestations() {
     .eq('user_id', currentUser.id)
     .maybeSingle();
 
-  var needsSave = false;
   if (res.data) {
     activePrestations = res.data.prestations       || buildDefaultActive();
     customPrestations = res.data.custom_prestations || { homme: [], femme: [] };
-    if (!res.data.prix_duree) {
-      prixDuree  = buildDefaultPrixDuree();
-      needsSave  = true;  // sauvegarder les prix par défaut en base
-    } else {
-      prixDuree = res.data.prix_duree;
-    }
+    // Merger : les défauts du catalogue comblent les prix/durées manquants en base
+    prixDuree = mergeWithDefaults(res.data.prix_duree || {});
   } else {
     activePrestations = buildDefaultActive();
     customPrestations = { homme: [], femme: [] };
     prixDuree         = buildDefaultPrixDuree();
-    needsSave         = true;
   }
 
-  // Sauvegarder les prix par défaut si jamais configurés
-  if (needsSave) {
-    await sb.from('salon_settings').upsert({
-      user_id:   currentUser.id,
-      prestations:       activePrestations,
-      prix_duree:        prixDuree,
-    }, { onConflict: 'user_id' });
-  }
-
-  // Nettoyer activePrestations : supprimer les noms qui n'existent plus dans le catalogue
-  ['homme', 'femme'].forEach(function(g) {
-    var known = getAllForGenre(g).map(function(p) { return p.name; });
-    activePrestations[g] = (activePrestations[g] || []).filter(function(n) { return known.indexOf(n) !== -1; });
-    // Nettoyer aussi prix_duree des clés orphelines
-    if (prixDuree[g]) {
-      Object.keys(prixDuree[g]).forEach(function(k) {
-        if (known.indexOf(k) === -1) delete prixDuree[g][k];
-      });
-    }
-  });
+  // Toujours sauvegarder prix_duree complet (comble les manquants)
+  await sb.from('salon_settings').upsert({
+    user_id:    currentUser.id,
+    prestations:        activePrestations,
+    custom_prestations: customPrestations,
+    prix_duree:         prixDuree,
+  }, { onConflict: 'user_id' });
 
   renderPrestations('homme');
   renderPrestations('femme');
@@ -423,6 +404,28 @@ function buildDefaultPrixDuree() {
     ALL_PRESTATIONS[g].forEach(function(p) {
       result[g][p.name] = { prix: p.prix, duree: p.duree };
     });
+  });
+  return result;
+}
+
+// Merge : valeurs en base + défauts du catalogue pour les manquants
+function mergeWithDefaults(fromDb) {
+  var defaults = buildDefaultPrixDuree();
+  var result   = { homme: {}, femme: {} };
+  ['homme', 'femme'].forEach(function(g) {
+    // Partir des défauts
+    Object.keys(defaults[g]).forEach(function(name) {
+      result[g][name] = Object.assign({}, defaults[g][name]);
+    });
+    // Écraser avec les valeurs saisies en base (prix/durée personnalisés)
+    if (fromDb[g]) {
+      Object.keys(fromDb[g]).forEach(function(name) {
+        var pd = fromDb[g][name];
+        if (!result[g][name]) result[g][name] = {};
+        if (pd.prix  !== undefined && pd.prix  !== null && pd.prix  !== '') result[g][name].prix  = pd.prix;
+        if (pd.duree !== undefined && pd.duree !== null && pd.duree !== '') result[g][name].duree = pd.duree;
+      });
+    }
   });
   return result;
 }
@@ -507,6 +510,18 @@ function updatePrixDuree(genre, idx, field, value) {
   prixDuree[genre][name][field] = parseFloat(value) || 0;
 }
 
+
+function updatePrixDuree(genre, idx, field, value) {
+  var container = document.getElementById('prestations-' + genre);
+  var all  = container ? container._all : [];
+  var item = all[idx];
+  if (!item) return;
+  var name = item.name;
+  if (!prixDuree[genre]) prixDuree[genre] = {};
+  if (!prixDuree[genre][name]) prixDuree[genre][name] = {};
+  prixDuree[genre][name][field] = parseFloat(value) || 0;
+}
+
 function togglePrestation(genre, idx) {
   var container = document.getElementById('prestations-' + genre);
   var all  = container ? container._all : [];
@@ -564,17 +579,7 @@ async function savePrestations() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
-  // Nettoyer avant sauvegarde : ne garder que les noms connus
-  ['homme', 'femme'].forEach(function(g) {
-    var known = getAllForGenre(g).map(function(p) { return p.name; });
-    activePrestations[g] = (activePrestations[g] || []).filter(function(n) { return known.indexOf(n) !== -1; });
-    if (prixDuree[g]) {
-      Object.keys(prixDuree[g]).forEach(function(k) {
-        if (known.indexOf(k) === -1) delete prixDuree[g][k];
-      });
-    }
-  });
-
+  // UPDATE avec select() pour éviter le 400 sur Prefer: return=representation
   var res = await sb.from('salon_settings')
     .update({
       prestations:        activePrestations,
