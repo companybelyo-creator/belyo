@@ -85,8 +85,6 @@
 .action-done:hover { background: var(--gold-light); color: var(--ink); }
 .action-cancel { border-color: var(--border); color: var(--ink-light); }
 .action-cancel:hover { background: var(--cream-dark); }
-.action-restore { border-color: #4EA685; color: #4EA685; }
-.action-restore:hover { background: #f0fdf8; color: #2d7a5f; }
 .action-delete { color: var(--ink-light); }
 .empty-state { text-align: center; padding: 3rem; color: var(--ink-light); }
 
@@ -530,3 +528,15 @@
 .adp-btn-success:hover { background: #E8F5EF; }
 .adp-btn-danger  { background: transparent; color: var(--danger); border-color: var(--danger); }
 .adp-btn-danger:hover  { background: #fdf0ef; }
+
+/* Slot dépassant les horaires salon — sélectionnable avec confirmation */
+.slot-overflow {
+  border: 1px dashed #E89020 !important;
+  color: #E89020 !important;
+  background: #fffbf0 !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+.slot-overflow:hover {
+  background: #fff3d0 !important;
+}

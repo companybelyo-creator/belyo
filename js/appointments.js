@@ -172,18 +172,11 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Sélectionner la première prestation par défaut (priorité à Coupe, sinon la première)
-  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
-  if (defaultOpt && defaultOpt !== 'Autre') {
+  // Première prestation non-Autre de la liste (ordre exact des paramètres)
+  var defaultOpt = options.find(function(p) { return p !== 'Autre'; }) || options[0];
+  if (defaultOpt) {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
     var prix = pd && pd.prix ? pd.prix : 0;
-    if (!prix) {
-      var defs = {
-        homme: { 'Coupe':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
-        femme: { 'Coupe':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
-      };
-      prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
-    }
     selectService(defaultOpt, prix);
   }
   checkFormValidity();
@@ -474,7 +467,6 @@ function renderList() {
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
         + (a.status === 'done' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')" title="Annuler ce RDV (erreur ou absent)">Annuler</button>' : '')
-        + (a.status === 'cancelled' ? '<button class="action-btn action-restore" onclick="updateStatus(\'' + a.id + '\',\'pending\')">Remettre</button>' : '')
       + '</td></tr>';
   }).join('');
 }

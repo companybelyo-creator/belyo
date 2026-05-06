@@ -268,9 +268,30 @@ function toggleCalPicker() {
   if (calPickerOpen) {
     if (!calPickerDate) calPickerMonth = new Date();
     calPickerRender();
+    // Repositionner pour ne pas dépasser l'écran
     setTimeout(function() {
-      if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 50);
+      var rect    = popup.getBoundingClientRect();
+      var vw      = window.innerWidth;
+      var vh      = window.innerHeight;
+      // Réinitialiser
+      popup.style.left   = '';
+      popup.style.right  = '';
+      popup.style.top    = '';
+      popup.style.bottom = '';
+      // Dépasse à droite ?
+      if (rect.right > vw - 8) {
+        popup.style.left  = 'auto';
+        popup.style.right = '0';
+      }
+      // Dépasse en bas ?
+      var rect2 = popup.getBoundingClientRect();
+      if (rect2.bottom > vh - 8) {
+        popup.style.top    = 'auto';
+        popup.style.bottom = '100%';
+        popup.style.marginBottom = '4px';
+        popup.style.marginTop    = '0';
+      }
+    }, 10);
   }
 }
 
@@ -413,14 +434,23 @@ function calPickerSelectDay(year, month, day) {
       var lbl     = String(hh).padStart(2, '0') + 'h' + (mm ? String(mm).padStart(2, '0') : '');
       var slotEnd = tm + (_dur > 0 ? _dur : 30);
 
-      var isPast    = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
-      var isBlocked = congesH.some(function(c) { return slotStr >= c.h_debut && slotStr < c.h_fin; });
-      var isBooked  = _booked.some(function(r) { return tm < r.e && slotEnd > r.s; });
-      var overflows = _dur > 0 && slotEnd > endMin;
+      var isPast        = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
+      var isBlocked     = congesH.some(function(c) { return slotStr >= c.h_debut && slotStr < c.h_fin; });
+      var isBooked      = _booked.some(function(r) { return tm < r.e && slotEnd > r.s; });
+      // Dépasse les horaires du salon (mais on laisse choisir avec confirmation)
+      var overflowsEnd  = _dur > 0 && slotEnd > endMin;
+      // Un RDV existant commence avant la fin de ce créneau → barré
+      var blockedByNext = _booked.some(function(r) { return r.s >= tm && r.s < slotEnd; });
 
       hasSlots = true;
-      if (isPast || isBlocked || isBooked || overflows) {
+      if (isPast || isBlocked || isBooked || blockedByNext) {
         html += '<button type="button" class="cal-picker-slot slot-unavail" disabled>' + lbl + '</button>';
+      } else if (overflowsEnd) {
+        // Créneau possible mais dépasse les horaires → warning à la sélection
+        html += '<button type="button" class="cal-picker-slot slot-overflow"'
+             + ' data-slot="' + slotStr + '" data-overflow="1"'
+             + ' onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot,true)">'
+             + lbl + ' <span style=\'font-size:9px;opacity:.7\'>⚠</span></button>';
       } else {
         html += '<button type="button" class="cal-picker-slot"'
              + ' data-slot="' + slotStr + '"'
@@ -444,7 +474,11 @@ function calPickerSelectDay(year, month, day) {
 }
 
 var calPickerSelectedSlot = null;
-function calPickerSelectSlot(slotStr) {
+function calPickerSelectSlot(slotStr, overflow) {
+  if (overflow) {
+    var ok = confirm('Ce créneau dépasse vos horaires de fermeture. Confirmer quand même ?');
+    if (!ok) return;
+  }
   calPickerSelectedSlot = slotStr;
   document.querySelectorAll('.cal-picker-slot').forEach(function(btn) {
     btn.classList.toggle('selected', btn.dataset.slot === slotStr);
@@ -689,13 +723,10 @@ document.addEventListener('click', function(e) {
 });
 
 // ===== NOTIFICATIONS IN-APP =====
-var notifOpen   = false;
-var _notifUserId = null;
+var notifOpen = false;
 
 function initNotifications(userId) {
-  _notifUserId = userId;
-
-  // ── Bouton dans la sidebar ──────────────────────────────────
+  // Injecter la cloche dans la sidebar
   var sidebarBottom = document.querySelector('.sidebar-bottom');
   if (!sidebarBottom) return;
 
@@ -706,64 +737,26 @@ function initNotifications(userId) {
   btn.innerHTML = '<span class="sidebar-icon">&#9956;</span> Notifications<span class="notif-badge" id="notif-badge" style="display:none">0</span>';
   sidebarBottom.insertBefore(btn, sidebarBottom.firstChild);
 
-  // ── Overlay (fond flouté centré) ────────────────────────────
-  var overlay = document.createElement('div');
-  overlay.id = 'notif-overlay';
-  overlay.style.cssText = [
-    'display:none',
-    'position:fixed',
-    'inset:0',
-    'z-index:9000',
-    'background:rgba(26,23,20,0.38)',
-    'backdrop-filter:blur(4px)',
-    '-webkit-backdrop-filter:blur(4px)',
-    'align-items:center',
-    'justify-content:center',
-  ].join(';');
-  overlay.onclick = function(e) { if (e.target === overlay) closeNotifPanel(); };
-
-  // ── Panel centré ────────────────────────────────────────────
+  // Injecter le panel
   var panel = document.createElement('div');
+  panel.className = 'notif-panel';
   panel.id = 'notif-panel';
-  panel.style.cssText = [
-    'width:500px',
-    'max-width:calc(100vw - 2rem)',
-    'max-height:82vh',
-    'background:var(--white,#fff)',
-    'border-radius:20px',
-    'box-shadow:0 24px 80px rgba(26,23,20,.20),0 8px 24px rgba(26,23,20,.10),0 0 0 1px rgba(26,23,20,.06)',
-    'display:flex',
-    'flex-direction:column',
-    'overflow:hidden',
-    'transform:translateY(18px) scale(.97)',
-    'opacity:0',
-    'transition:transform .26s cubic-bezier(.34,1.28,.64,1),opacity .2s ease',
-    'pointer-events:all',
-  ].join(';');
-
   panel.innerHTML = ''
-    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.4rem 1rem;border-bottom:1px solid rgba(26,23,20,.07);flex-shrink:0">'
-    +   '<div style="display:flex;align-items:center;gap:10px">'
-    +     '<span style="font-family:var(--font-display,serif);font-size:1.3rem;font-weight:600;color:var(--ink,#1A1714);letter-spacing:-.01em">Notifications</span>'
-    +     '<span id="notif-count-badge" style="display:none;font-size:11px;font-weight:700;background:#C0392B;color:#fff;border-radius:100px;padding:2px 8px;min-width:18px;text-align:center"></span>'
-    +   '</div>'
-    +   '<div style="display:flex;align-items:center;gap:8px">'
-    +     '<button onclick="clearAllNotifs()" style="background:none;border:1px solid rgba(26,23,20,.12);border-radius:100px;padding:5px 13px;font-family:var(--font-body,sans-serif);font-size:12px;color:var(--ink-light,#888);cursor:pointer" onmouseover="this.style.borderColor=\'var(--ink,#1A1714)\';this.style.color=\'var(--ink,#1A1714)\'" onmouseout="this.style.borderColor=\'rgba(26,23,20,.12)\';this.style.color=\'var(--ink-light,#888)\'">Tout effacer</button>'
-    +     '<button onclick="closeNotifPanel()" style="background:rgba(26,23,20,.06);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--ink-light,#888);cursor:pointer;line-height:1" onmouseover="this.style.background=\'rgba(26,23,20,.12)\'" onmouseout="this.style.background=\'rgba(26,23,20,.06)\'">&#215;</button>'
-    +   '</div>'
+    + '<div class="notif-panel-header">'
+    +   '<span class="notif-panel-title">Notifications</span>'
+    +   '<button class="notif-close" onclick="closeNotifPanel()">&#215;</button>'
     + '</div>'
-    + '<div id="notif-list" style="overflow-y:auto;padding:1rem 1.2rem 1.2rem;flex:1;display:flex;flex-direction:column;gap:0">'
-    +   '<div class="notif-empty">Chargement...</div>'
-    + '</div>';
+    + '<div class="notif-list" id="notif-list"><div class="notif-empty">Chargement...</div></div>';
+  document.body.appendChild(panel);
 
-  overlay.appendChild(panel);
+  // Overlay pour fermer en cliquant dehors
+  var overlay = document.createElement('div');
+  overlay.className = 'notif-overlay';
+  overlay.id = 'notif-overlay';
+  overlay.onclick = closeNotifPanel;
   document.body.appendChild(overlay);
 
-  // Escape pour fermer
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && notifOpen) closeNotifPanel();
-  });
-
+  // Charger les notifications
   loadNotifications(userId);
 }
 
@@ -773,192 +766,116 @@ function toggleNotifPanel() {
 }
 
 function openNotifPanel() {
-  var overlay = document.getElementById('notif-overlay');
   var panel   = document.getElementById('notif-panel');
-  if (!overlay || !panel) return;
-  overlay.style.display = 'flex';
-  // Force reflow pour l'animation
-  panel.getBoundingClientRect();
-  panel.style.transform = 'translateY(0) scale(1)';
-  panel.style.opacity   = '1';
+  var overlay = document.getElementById('notif-overlay');
+  if (panel)   panel.classList.add('open');
+  if (overlay) overlay.style.display = 'block';
   notifOpen = true;
 }
 
 function closeNotifPanel() {
-  var overlay = document.getElementById('notif-overlay');
   var panel   = document.getElementById('notif-panel');
-  if (!overlay || !panel) return;
-  panel.style.transform = 'translateY(18px) scale(.97)';
-  panel.style.opacity   = '0';
-  setTimeout(function() { overlay.style.display = 'none'; }, 220);
+  var overlay = document.getElementById('notif-overlay');
+  if (panel)   panel.classList.remove('open');
+  if (overlay) overlay.style.display = 'none';
   notifOpen = false;
-}
-
-function clearAllNotifs() {
-  var list = document.getElementById('notif-list');
-  if (list) list.innerHTML = '<div class="notif-empty">&#10003; Tout est en ordre !</div>';
-  var badge = document.getElementById('notif-badge');
-  var cb    = document.getElementById('notif-count-badge');
-  if (badge) badge.style.display = 'none';
-  if (cb)    cb.style.display    = 'none';
 }
 
 async function loadNotifications(userId) {
   var list  = document.getElementById('notif-list');
   var badge = document.getElementById('notif-badge');
-  var cb    = document.getElementById('notif-count-badge');
   if (!list) return;
 
   var notifications = [];
   var now   = new Date();
   var today = now.toISOString().slice(0, 10);
 
-  // ── 1. RDV dans les 20 prochaines minutes / en cours ───────
-  var plus20 = new Date(now.getTime() + 20 * 60000).toISOString();
-  var minus5  = new Date(now.getTime() -  5 * 60000).toISOString();
-  var soonRes = await sb.from('appointments')
+  // 1. RDV du jour
+  var rdvRes = await sb.from('appointments')
     .select('id, client_name, service, datetime')
     .eq('user_id', userId)
     .eq('status', 'pending')
-    .gte('datetime', minus5)
-    .lte('datetime', plus20)
+    .gte('datetime', today + 'T00:00:00')
+    .lte('datetime', today + 'T23:59:59')
     .order('datetime', { ascending: true });
 
-  (soonRes.data || []).forEach(function(a) {
-    var dt    = new Date(a.datetime);
-    var diffM = Math.round((dt - now) / 60000);
-    var hm    = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-    var isNow = diffM <= 0;
-    notifications.push({
-      icon:   isNow ? '🟢' : '⏰',
-      title:  isNow ? 'RDV en cours' : 'RDV dans ' + diffM + ' min',
-      desc:   a.client_name + ' — ' + (a.service || 'Prestation'),
-      sub:    hm,
-      link:   'appointments.html',
-      unread: true,
-      type:   'urgent',
-      color:  isNow ? '#4EA685' : '#F4A62A',
+  var rdvAujourdhui = rdvRes.data || [];
+
+  if (rdvAujourdhui.length > 0) {
+    rdvAujourdhui.forEach(function(a) {
+      var dt  = new Date(a.datetime);
+      var hm  = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+      var isPast = dt < now;
+      notifications.push({
+        icon: '&#9201;',
+        title: a.client_name,
+        desc: (a.service || 'RDV') + ' — ' + hm,
+        time: isPast ? 'Passe' : 'Aujourd\'hui a ' + hm,
+        unread: !isPast,
+        type: 'rdv',
+      });
     });
-  });
+  }
 
-  // ── 2. RDV ajoutés / annulés / terminés (dernières 24h) ────
-  var since24 = new Date(now.getTime() - 24 * 3600000).toISOString();
-  var recentRes = await sb.from('appointments')
-    .select('id, client_name, service, datetime, status, updated_at, created_at')
-    .eq('user_id', userId)
-    .gte('updated_at', since24)
-    .order('updated_at', { ascending: false });
-
-  (recentRes.data || []).forEach(function(a) {
-    var dt = new Date(a.datetime);
-    var hm = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-    var dateStr = dt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ' à ' + hm;
-    if (a.status === 'pending') {
-      notifications.push({ icon:'✅', title:'RDV confirmé', desc: a.client_name + ' — ' + (a.service||'Prestation'), sub: dateStr, link:'appointments.html', unread: false, type:'rdv', color:'#4EA685' });
-    } else if (a.status === 'cancelled') {
-      notifications.push({ icon:'❌', title:'RDV annulé',   desc: a.client_name + ' — ' + (a.service||'Prestation'), sub: dateStr, link:'appointments.html', unread: true,  type:'rdv', color:'#D85A30' });
-    } else if (a.status === 'done') {
-      notifications.push({ icon:'🎉', title:'RDV terminé',  desc: a.client_name + ' — ' + (a.service||'Prestation'), sub: dateStr, link:'appointments.html', unread: false, type:'rdv', color:'#7D7CBD' });
-    }
-  });
-
-  // ── 3. Stocks faibles / en rupture ─────────────────────────
+  // 2. Stocks en rupture/alerte
   var stockRes = await sb.from('products')
     .select('id, name, quantity, alert_threshold')
     .eq('user_id', userId);
 
-  (stockRes.data || []).forEach(function(p) {
-    var qty = p.quantity || 0;
-    var thr = p.alert_threshold || 2;
-    if (qty === 0) {
-      notifications.push({ icon:'🚨', title:'Rupture de stock', desc: p.name, sub: '0 unité restante',  link:'stocks.html', linkLabel:'Voir les stocks', unread: true,  type:'stock', color:'#C0392B' });
-    } else if (qty <= thr) {
-      notifications.push({ icon:'⚠️', title:'Stock faible',     desc: p.name, sub: qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''), link:'stocks.html', linkLabel:'Voir les stocks', unread: false, type:'stock', color:'#E89020' });
-    }
+  var stocksAlerte = (stockRes.data || []).filter(function(p) {
+    return p.quantity <= (p.alert_threshold || 2);
   });
 
-  // ── 4. Rapports disponibles (mois complets avec données) ────
-  var apptAllRes = await sb.from('appointments')
-    .select('datetime')
-    .eq('user_id', userId)
-    .eq('status', 'done')
-    .order('datetime', { ascending: false });
-
-  var currentYear = now.getFullYear();
-  var currentMon  = now.getMonth(); // 0-based
-  var seenMonths  = {};
-  var monthNames  = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-
-  (apptAllRes.data || []).forEach(function(a) {
-    var d = new Date(a.datetime);
-    var y = d.getFullYear();
-    var m = d.getMonth();
-    if (y === currentYear && m === currentMon) return; // mois en cours = pas dispo
-    var key = y + '-' + m;
-    if (seenMonths[key]) return;
-    seenMonths[key] = true;
+  stocksAlerte.forEach(function(p) {
+    var isRupture = p.quantity === 0;
     notifications.push({
-      icon:'📊', title:'Rapport disponible', desc: monthNames[m] + ' ' + y,
-      sub:'Consultez votre chiffre d\'affaires',
-      link:'revenue.html?month=' + (m + 1) + '&year=' + y,
-      linkLabel:'Voir le rapport',
-      unread: false, type:'rapport', color:'#9B7FD4',
+      icon: isRupture ? '&#9888;' : '&#9661;',
+      title: p.name,
+      desc: isRupture ? 'Rupture de stock' : 'Stock faible — ' + p.quantity + ' restant' + (p.quantity > 1 ? 's' : ''),
+      time: 'Stock',
+      unread: isRupture,
+      type: 'stock',
     });
   });
-  // Garder seulement les 3 rapports les plus récents
-  var rapportItems = notifications.filter(function(n) { return n.type === 'rapport'; }).slice(0, 3);
-  notifications = notifications.filter(function(n) { return n.type !== 'rapport'; }).concat(rapportItems);
 
-  // ── Badge ───────────────────────────────────────────────────
+  // Mettre à jour le badge
   var unreadCount = notifications.filter(function(n) { return n.unread; }).length;
   if (badge) {
-    badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+    badge.textContent = unreadCount;
     badge.style.display = unreadCount > 0 ? 'flex' : 'none';
   }
-  if (cb) {
-    cb.textContent = unreadCount > 9 ? '9+' : unreadCount;
-    cb.style.display = unreadCount > 0 ? 'inline-block' : 'none';
-  }
 
-  // ── Render ──────────────────────────────────────────────────
+  // Rendre les notifications
   if (notifications.length === 0) {
     list.innerHTML = '<div class="notif-empty">&#10003; Tout est en ordre !</div>';
     return;
   }
 
-  var groups = {
-    urgent:  { label: 'Urgent',         items: [] },
-    rdv:     { label: 'Rendez-vous',    items: [] },
-    stock:   { label: 'Stocks',         items: [] },
-    rapport: { label: 'Rapports',       items: [] },
-  };
-  notifications.forEach(function(n) { if (groups[n.type]) groups[n.type].items.push(n); });
+  var rdvItems   = notifications.filter(function(n) { return n.type === 'rdv'; });
+  var stockItems = notifications.filter(function(n) { return n.type === 'stock'; });
 
   var html = '';
-  ['urgent','rdv','stock','rapport'].forEach(function(key) {
-    var g = groups[key];
-    if (!g.items.length) return;
-    html += '<div style="margin-bottom:1.1rem">'
-          + '<div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-light,#888);margin-bottom:8px;padding-left:2px">' + g.label + '</div>';
-    g.items.forEach(function(n) { html += renderNotifItem(n); });
-    html += '</div>';
-  });
+
+  if (rdvItems.length > 0) {
+    html += '<div class="notif-section-label">RDV aujourd\'hui (' + rdvItems.length + ')</div>';
+    html += rdvItems.map(renderNotifItem).join('');
+  }
+
+  if (stockItems.length > 0) {
+    html += '<div class="notif-section-label" style="margin-top:8px">Alertes stock</div>';
+    html += stockItems.map(renderNotifItem).join('');
+  }
 
   list.innerHTML = html;
 }
 
 function renderNotifItem(n) {
-  var linkHtml = n.link
-    ? '<a href="' + n.link + '" style="display:inline-block;margin-top:5px;font-size:11px;font-weight:600;color:var(--gold,#C4A87A);text-decoration:none;border-bottom:1px solid transparent" onmouseover="this.style.borderBottomColor=\'var(--gold,#C4A87A)\'" onmouseout="this.style.borderBottomColor=\'transparent\'">' + (n.linkLabel || 'Voir →') + '</a>'
-    : '';
-  var borderColor = n.color || 'var(--border)';
-  return '<div style="display:flex;align-items:flex-start;gap:12px;padding:11px 13px;border-radius:12px;border:1px solid rgba(26,23,20,.07);border-left:3px solid ' + borderColor + ';margin-bottom:6px;background:var(--cream,#F7F4F0);transition:transform .15s" onmouseover="this.style.transform=\'translateX(2px)\'" onmouseout="this.style.transform=\'none\'">'
-    + '<div style="font-size:18px;line-height:1;flex-shrink:0;margin-top:2px">' + n.icon + '</div>'
-    + '<div style="flex:1;min-width:0">'
-    +   '<div style="font-size:13px;font-weight:600;color:var(--ink,#1A1714);margin-bottom:1px">' + n.title + '</div>'
-    +   '<div style="font-size:13px;color:var(--ink,#1A1714);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px">' + n.desc + '</div>'
-    +   (n.sub ? '<div style="font-size:11px;color:var(--ink-light,#888)">' + n.sub + '</div>' : '')
-    +   linkHtml
+  return '<div class="notif-item' + (n.unread ? ' unread' : '') + '">'
+    + '<div class="notif-icon">' + n.icon + '</div>'
+    + '<div class="notif-content">'
+    +   '<div class="notif-title">' + n.title + '</div>'
+    +   '<div class="notif-desc">' + n.desc + '</div>'
+    +   '<div class="notif-time">' + n.time + '</div>'
     + '</div>'
     + '</div>';
 }
