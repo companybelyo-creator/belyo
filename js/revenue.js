@@ -551,74 +551,120 @@ async function renderStatsAvancees(data, now) {
     });
   }
 
-  // Taux d'occupation par jour
-  renderOccupation(data);
+  // Heatmap cohortes
+  renderCohortHeatmap(data);
 }
 
-// ===== TAUX D'OCCUPATION PAR JOUR =====
-function renderOccupation(data) {
-  var el = document.getElementById('occupation-list');
+// ===== HEATMAP RÉTENTION PAR COHORTE =====
+function renderCohortHeatmap(data) {
+  var el = document.getElementById('cohort-heatmap');
   if (!el) return;
 
-  // Paramètres du salon : créneaux dispo par jour (8h→19h, toutes les 30min = 22 créneaux/jour)
-  var SLOTS_PER_DAY = 22;
-  var DAY_LABELS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  // JS getDay() : 0=dim, 1=lun ... 6=sam → on remapping en 0=lun...6=dim
-  var DAY_MAP   = [6, 0, 1, 2, 3, 4, 5]; // DAY_MAP[getDay()] → index lun-dim
+  if (!data || data.length === 0) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--ink-light)">Aucune donnée</p>';
+    return;
+  }
 
-  // Compter les semaines distinctes présentes dans la période
-  var weeks = new Set();
+  // Construire les cohortes : par mois d'arrivée (1ère visite du client)
+  // On identifie la 1ère visite de chaque client dans les données
+  var firstVisit = {};
+  var allByClient = {};
   data.forEach(function(a) {
-    var d   = new Date(a.datetime);
-    var mon = new Date(d);
-    mon.setDate(d.getDate() - ((d.getDay() + 6) % 7)); // lundi de la semaine
-    weeks.add(mon.toISOString().slice(0,10));
-  });
-  var nbWeeks = Math.max(weeks.size, 1);
-
-  // Compter RDV par jour de semaine (lun-dim)
-  var counts = [0,0,0,0,0,0,0];
-  data.forEach(function(a) {
-    var dow = new Date(a.datetime).getDay();
-    counts[DAY_MAP[dow]]++;
+    var mk = a.datetime.slice(0, 7);
+    var cn = a.client_name;
+    if (!firstVisit[cn] || mk < firstVisit[cn]) firstVisit[cn] = mk;
+    allByClient[cn] = allByClient[cn] || [];
+    allByClient[cn].push(mk);
   });
 
-  // Taux = (RDV total pour ce jour / nbWeeks) / SLOTS_PER_DAY
-  var rates = counts.map(function(c) {
-    return Math.min(100, Math.round((c / nbWeeks) / SLOTS_PER_DAY * 100));
+  // Liste des mois présents, triés
+  var monthsSet = new Set();
+  data.forEach(function(a) { monthsSet.add(a.datetime.slice(0, 7)); });
+  var months = Array.from(monthsSet).sort();
+  // Limiter aux 6 derniers mois max pour lisibilité
+  if (months.length > 6) months = months.slice(months.length - 6);
+
+  // Pour chaque cohorte (mois d'arrivée parmi les mois affichés),
+  // calculer le % de retour à M+0, M+1, M+2...
+  var cohorts = months.map(function(cohortMonth) {
+    // Clients arrivés ce mois
+    var cohortClients = Object.keys(firstVisit).filter(function(cn) {
+      return firstVisit[cn] === cohortMonth;
+    });
+    var size = cohortClients.length;
+
+    // Pour chaque décalage M+0 à M+5, combien sont revenus ?
+    var rates = months.map(function(m) {
+      if (m < cohortMonth) return null; // avant la cohorte
+      var returned = cohortClients.filter(function(cn) {
+        return (allByClient[cn] || []).indexOf(m) !== -1;
+      }).length;
+      return size > 0 ? Math.round(returned / size * 100) : null;
+    });
+
+    return { month: cohortMonth, size: size, rates: rates };
   });
 
-  var COLORS = [
-    'linear-gradient(90deg,#1D9E75,#4EC99E)',  // lundi
-    'linear-gradient(90deg,#3B82F6,#93C5FD)',  // mardi
-    'linear-gradient(90deg,#7B61FF,#A78BFA)',  // mercredi
-    'linear-gradient(90deg,#F97316,#FB923C)',  // jeudi
-    'linear-gradient(90deg,#F472B6,#FBCFE8)',  // vendredi
-    'linear-gradient(90deg,#C4A87A,#E8D5A8)',  // samedi
-    'linear-gradient(90deg,#8A817C,#C5BEB9)',  // dimanche
-  ];
+  // Couleur : teal dégradé selon le taux (0%=blanc, 100%=teal foncé)
+  function rateColor(r) {
+    if (r === null) return { bg: '#F5F3F0', text: 'transparent' };
+    if (r === 0)   return { bg: '#F0EEEC', text: '#C5BEB9' };
+    // Interpolation blanc → teal
+    var t  = r / 100;
+    var rC = Math.round(255 - t * (255 - 29));
+    var gC = Math.round(255 - t * (255 - 158));
+    var bC = Math.round(255 - t * (255 - 117));
+    var textLight = t < 0.45;
+    return {
+      bg:   'rgb(' + rC + ',' + gC + ',' + bC + ')',
+      text: textLight ? '#1A1714' : '#ffffff',
+    };
+  }
 
-  el.innerHTML = DAY_LABELS.map(function(label, i) {
-    var rate  = rates[i];
-    var color = rate >= 70 ? '#0F6E56' : rate >= 40 ? 'var(--ink)' : 'var(--ink-light)';
-    var badge = rate >= 70
-      ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:#E1F5EE;color:#0F6E56">Chargé</span>'
-      : rate <= 20
-      ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:#FAECE7;color:#993C1D">Creux</span>'
-      : '';
-    return '<div style="display:flex;flex-direction:column;gap:4px">'
-      + '<div style="display:flex;align-items:center;gap:10px">'
-      +   '<span style="font-size:12px;font-weight:500;color:'+color+';width:74px;flex-shrink:0">'+label+'</span>'
-      +   '<div style="flex:1;height:6px;background:var(--cream-dark);border-radius:100px;overflow:hidden">'
-      +     '<div style="height:6px;width:'+rate+'%;background:'+COLORS[i]+';border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>'
-      +   '</div>'
-      +   '<div style="display:flex;align-items:center;gap:6px;width:80px;justify-content:flex-end;flex-shrink:0">'
-      +     badge
-      +     '<span style="font-size:12px;font-weight:600;color:'+color+'">'+rate+'%</span>'
-      +   '</div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+  // Rendu HTML : table compacte
+  var cellW = 'min-width:52px;width:52px';
+  var cellStyle = 'padding:6px 4px;text-align:center;font-size:11px;font-weight:600;border-radius:6px;';
+
+  var html = '<table style="border-collapse:separate;border-spacing:4px;width:100%">';
+
+  // Header : M+0, M+1, ...
+  html += '<tr>';
+  html += '<th style="text-align:left;font-size:11px;font-weight:500;color:var(--ink-light);padding:4px 4px 8px;white-space:nowrap">Cohorte</th>';
+  html += '<th style="font-size:11px;font-weight:500;color:var(--ink-light);padding:4px 4px 8px;text-align:center">Taille</th>';
+  months.forEach(function(m, i) {
+    html += '<th style="font-size:11px;font-weight:500;color:var(--ink-light);padding:4px 4px 8px;text-align:center;' + cellW + '">M+' + i + '</th>';
+  });
+  html += '</tr>';
+
+  // Lignes cohortes
+  cohorts.forEach(function(c) {
+    var label = new Date(c.month + '-02').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
+    html += '<tr>';
+    html += '<td style="font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;padding:0 4px">' + label + '</td>';
+    html += '<td style="font-size:11px;color:var(--ink-light);text-align:center;padding:0 4px">' + c.size + '</td>';
+    c.rates.forEach(function(r) {
+      var col = rateColor(r);
+      var txt = r === null ? '' : r + '%';
+      html += '<td style="' + cellStyle + cellW + ';background:' + col.bg + ';color:' + col.text + '">' + txt + '</td>';
+    });
+    html += '</tr>';
+  });
+
+  html += '</table>';
+
+  // Légende
+  html += '<div style="display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end">';
+  html += '<span style="font-size:10px;color:var(--ink-light)">0%</span>';
+  [0, 0.2, 0.4, 0.6, 0.8, 1].forEach(function(t) {
+    var r = Math.round(255 - t * (255 - 29));
+    var g = Math.round(255 - t * (255 - 158));
+    var b = Math.round(255 - t * (255 - 117));
+    html += '<div style="width:18px;height:10px;border-radius:3px;background:rgb('+r+','+g+','+b+')"></div>';
+  });
+  html += '<span style="font-size:10px;color:var(--ink-light)">100%</span>';
+  html += '</div>';
+
+  el.innerHTML = html;
 }
 
 // ===== EXPORT PDF =====
