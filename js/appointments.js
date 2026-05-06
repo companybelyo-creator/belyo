@@ -474,6 +474,7 @@ function renderList() {
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
         + (a.status === 'done' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')" title="Annuler ce RDV (erreur ou absent)">Annuler</button>' : '')
+        + (a.status === 'cancelled' ? '<button class="action-btn action-restore" onclick="updateStatus(\'' + a.id + '\',\'pending\')">Remettre</button>' : '')
       + '</td></tr>';
   }).join('');
 }
@@ -962,10 +963,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.textContent = 'Enregistrement...';
 
   var clientName = document.getElementById('appt-client').value.trim();
-  // Interpréter la valeur locale (YYYY-MM-DDTHH:MM) comme heure locale → convertir en UTC ISO
-  var _rawDt   = document.getElementById('appt-datetime').value; // ex: "2025-05-06T14:00"
-  var _localDt = new Date(_rawDt);                               // JS l'interprète en local
-  var datetime = _localDt.toISOString();                        // → UTC ISO avec Z
+  var datetime   = document.getElementById('appt-datetime').value;
   var priceVal   = document.getElementById('appt-price').value;
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
@@ -1013,7 +1011,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       price:            priceVal ? parseFloat(priceVal) : null,
       notes:            notesVal,
       genre:            selectedGenre,
-    }).eq('id', editApptId).eq('user_id', currentUserId);
+    }).eq('id', editApptId);
   } else {
     // Mode création
     res = await sb.from('appointments').insert({
