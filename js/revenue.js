@@ -9,8 +9,9 @@ var weekdayChart  = null;
 var hourChart     = null;
 var clientsChart  = null;
 var genreChart    = null;
-var prodChart     = null;
-var prestChart    = null;
+var prodChart      = null;
+var prestChart     = null;
+var prestDonutChart = null;
 
 // Couleurs Chart.js
 var CHART_COLORS = {
@@ -84,6 +85,8 @@ async function loadData() {
   renderStatsAvancees(data, now);
   renderProdChart(now);
   renderPrestChart(data, now);
+  renderPrestDonut(data);
+  await renderTopProducts(now);
 }
 
 // ===== KPIs (RDV done + produits) =====
@@ -897,6 +900,167 @@ function renderPrestChart(data, now) {
       }
     })
   });
+}
+
+// ===== CA PAR PRESTATION — donut + légende barres =====
+function renderPrestDonut(data) {
+  // Agréger CA par prestation
+  var map = {};
+  data.forEach(function(a) {
+    var s = a.service || 'Autre';
+    map[s] = (map[s] || 0) + (parseFloat(a.price) || 0);
+  });
+  var sorted = Object.entries(map).sort(function(a,b){ return b[1]-a[1]; }).slice(0, 7);
+  var total  = sorted.reduce(function(s,e){ return s+e[1]; }, 0);
+
+  var sub = document.getElementById('prest-donut-sub');
+  if (sub) sub.textContent = total > 0 ? Math.round(total) + '\u20ac sur la période' : 'Aucune donnée';
+
+  // Palette : dégradés du teal au violet en passant par le doré
+  var PALETTE = ['#1D9E75','#4EC99E','#C4A87A','#7B61FF','#F97316','#3B82F6','#F472B6'];
+
+  if (prestDonutChart) prestDonutChart.destroy();
+  var ctx = document.getElementById('prest-donut-chart');
+  if (!ctx) return;
+
+  if (sorted.length === 0) {
+    var lgd = document.getElementById('prest-donut-legend');
+    if (lgd) lgd.innerHTML = '<p style="font-size:12px;color:var(--ink-light)">Aucune donnée</p>';
+    return;
+  }
+
+  prestDonutChart = new Chart(ctx.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: sorted.map(function(e){ return e[0]; }),
+      datasets: [{
+        data: sorted.map(function(e){ return Math.round(e[1]); }),
+        backgroundColor: PALETTE.slice(0, sorted.length),
+        borderWidth: 3,
+        borderColor: '#FFFFFF',
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: false,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: function(c) {
+            var pct = total > 0 ? Math.round(c.raw / total * 100) : 0;
+            return c.label + ' : ' + c.raw + '\u20ac (' + pct + '%)';
+          }
+        }}
+      }
+    }
+  });
+
+  // Légende custom avec barre de progression
+  var lgd = document.getElementById('prest-donut-legend');
+  if (!lgd) return;
+  var max = sorted[0] ? sorted[0][1] : 1;
+  lgd.innerHTML = sorted.map(function(e, i) {
+    var pct    = total > 0 ? Math.round(e[1]/total*100) : 0;
+    var barPct = max > 0   ? Math.round(e[1]/max*100)   : 0;
+    var color  = PALETTE[i] || '#ccc';
+    return '<div style="display:flex;flex-direction:column;gap:2px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:6px">'
+      +   '<div style="display:flex;align-items:center;gap:5px;min-width:0">'
+      +     '<span style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></span>'
+      +     '<span style="font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)">'+e[0]+'</span>'
+      +   '</div>'
+      +   '<span style="font-size:12px;font-weight:500;flex-shrink:0;color:var(--ink)">'+Math.round(e[1])+'\u20ac <span style="font-weight:400;color:var(--ink-light)">('+pct+'%)</span></span>'
+      + '</div>'
+      + '<div style="height:3px;background:var(--cream-dark);border-radius:100px;overflow:hidden">'
+      +   '<div style="height:3px;width:'+barPct+'%;background:'+color+';border-radius:100px;transition:width .5s ease"></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ===== TOP PRODUITS VENDUS — barres horizontales + tendance =====
+async function renderTopProducts(now) {
+  var startThis = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  var startLast = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+  var endLast   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+
+  // Ce mois + mois dernier en une seule requête
+  var from = startLast;
+  var res  = await sb.from('product_sales')
+    .select('product_name, quantity_sold, unit_price, created_at')
+    .eq('user_id', currentUserId)
+    .gte('created_at', from);
+
+  var sales = res.data || [];
+
+  // Agréger ce mois et mois dernier séparément
+  var thisMonth = {};
+  var lastMonth = {};
+  sales.forEach(function(s) {
+    var name = s.product_name || 'Produit';
+    var qty  = parseInt(s.quantity_sold) || 1;
+    var ca   = (parseFloat(s.unit_price) || 0) * qty;
+    if (s.created_at >= startThis) {
+      thisMonth[name] = thisMonth[name] || { qty:0, ca:0 };
+      thisMonth[name].qty += qty;
+      thisMonth[name].ca  += ca;
+    } else {
+      lastMonth[name] = lastMonth[name] || { qty:0, ca:0 };
+      lastMonth[name].qty += qty;
+      lastMonth[name].ca  += ca;
+    }
+  });
+
+  var el = document.getElementById('top-products-list');
+  if (!el) return;
+
+  var sorted = Object.entries(thisMonth).sort(function(a,b){ return b[1].qty - a[1].qty; }).slice(0, 6);
+
+  if (sorted.length === 0) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--ink-light);text-align:center;padding:1rem 0">Aucune vente ce mois</p>';
+    return;
+  }
+
+  var maxQty = sorted[0][1].qty || 1;
+
+  el.innerHTML = sorted.map(function(entry, i) {
+    var name    = entry[0];
+    var d       = entry[1];
+    var prevQty = lastMonth[name] ? lastMonth[name].qty : 0;
+    var diff    = d.qty - prevQty;
+    var barPct  = Math.round(d.qty / maxQty * 100);
+
+    // Badge tendance
+    var trend = '';
+    if (prevQty > 0) {
+      var pct = Math.round((d.qty - prevQty) / prevQty * 100);
+      var color  = diff > 0 ? '#1D9E75' : diff < 0 ? '#D85A30' : '#8A817C';
+      var bg     = diff > 0 ? '#E8F5F0' : diff < 0 ? '#FAECE7' : '#F0EEEC';
+      var arrow  = diff > 0 ? '↑' : diff < 0 ? '↓' : '→';
+      trend = '<span style="font-size:10px;font-weight:500;padding:2px 6px;border-radius:100px;background:'+bg+';color:'+color+'">'+arrow+' '+(diff>0?'+':'')+pct+'%</span>';
+    } else if (d.qty > 0) {
+      trend = '<span style="font-size:10px;font-weight:500;padding:2px 6px;border-radius:100px;background:#F9F4E9;color:#C4A87A">Nouveau</span>';
+    }
+
+    // Couleur barre : alterne sur la palette
+    var BAR_COLORS = ['#7B61FF','#1D9E75','#F97316','#3B82F6','#F472B6','#C4A87A'];
+    var barColor = BAR_COLORS[i % BAR_COLORS.length];
+
+    return '<div style="display:flex;flex-direction:column;gap:4px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">'
+      +   '<span style="font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1">'+name+'</span>'
+      +   '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+      +     trend
+      +     '<span style="font-size:13px;font-weight:500;color:var(--ink)">'+d.qty+' vente'+(d.qty>1?'s':'')+' · '+Math.round(d.ca)+'\u20ac</span>'
+      +   '</div>'
+      + '</div>'
+      + '<div style="height:5px;background:var(--cream-dark);border-radius:100px;overflow:hidden">'
+      +   '<div style="height:5px;width:'+barPct+'%;background:'+barColor+';border-radius:100px;transition:width .5s ease"></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
 }
 
 (async function() {
