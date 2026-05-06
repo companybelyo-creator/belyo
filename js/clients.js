@@ -290,6 +290,16 @@ document.getElementById('edit-modal').addEventListener('click', function(e) {
 
 document.getElementById('search').addEventListener('input', renderClients);
 
+// Auto-remplir la recherche depuis ?search= (ex: depuis fiche RDV)
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var q = params.get('search');
+  if (q) {
+    var inp = document.getElementById('search');
+    if (inp) { inp.value = q; renderClients(); }
+  }
+})();
+
 // ===== CHARGEMENT =====
 async function loadClients() {
   var res = await sb.from('clients').select('*')

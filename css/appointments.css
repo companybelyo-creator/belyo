@@ -524,3 +524,5 @@
 .adp-btn-success:hover { background: #E8F5EF; }
 .adp-btn-danger  { background: transparent; color: var(--danger); border-color: var(--danger); }
 .adp-btn-danger:hover  { background: #fdf0ef; }
+.adp-btn-secondary { background: transparent; color: var(--ink-light); border-color: var(--border); }
+.adp-btn-secondary:hover { background: var(--cream); color: var(--ink); }
