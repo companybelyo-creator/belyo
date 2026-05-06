@@ -268,28 +268,18 @@ function toggleCalPicker() {
   if (calPickerOpen) {
     if (!calPickerDate) calPickerMonth = new Date();
     calPickerRender();
-    // Repositionner pour ne pas dépasser l'écran
     setTimeout(function() {
-      var rect    = popup.getBoundingClientRect();
-      var vw      = window.innerWidth;
-      var vh      = window.innerHeight;
-      // Réinitialiser
-      popup.style.left   = '';
-      popup.style.right  = '';
-      popup.style.top    = '';
-      popup.style.bottom = '';
-      // Dépasse à droite ?
-      if (rect.right > vw - 8) {
-        popup.style.left  = 'auto';
-        popup.style.right = '0';
-      }
-      // Dépasse en bas ?
+      // Réinitialiser le positionnement
+      popup.style.left = ''; popup.style.right = '';
+      popup.style.top  = ''; popup.style.bottom = '';
+      popup.style.marginTop = ''; popup.style.marginBottom = '';
+      var rect = popup.getBoundingClientRect();
+      var vw = window.innerWidth, vh = window.innerHeight;
+      if (rect.right > vw - 8) { popup.style.left = 'auto'; popup.style.right = '0'; }
       var rect2 = popup.getBoundingClientRect();
       if (rect2.bottom > vh - 8) {
-        popup.style.top    = 'auto';
-        popup.style.bottom = '100%';
-        popup.style.marginBottom = '4px';
-        popup.style.marginTop    = '0';
+        popup.style.top = 'auto'; popup.style.bottom = '100%';
+        popup.style.marginBottom = '4px'; popup.style.marginTop = '0';
       }
     }, 10);
   }
@@ -437,18 +427,15 @@ function calPickerSelectDay(year, month, day) {
       var isPast        = isToday && (hh < now.getHours() || (hh === now.getHours() && mm <= now.getMinutes()));
       var isBlocked     = congesH.some(function(c) { return slotStr >= c.h_debut && slotStr < c.h_fin; });
       var isBooked      = _booked.some(function(r) { return tm < r.e && slotEnd > r.s; });
-      // Dépasse les horaires du salon (mais on laisse choisir avec confirmation)
       var overflowsEnd  = _dur > 0 && slotEnd > endMin;
-      // Un RDV existant commence avant la fin de ce créneau → barré
       var blockedByNext = _booked.some(function(r) { return r.s >= tm && r.s < slotEnd; });
 
       hasSlots = true;
       if (isPast || isBlocked || isBooked || blockedByNext) {
         html += '<button type="button" class="cal-picker-slot slot-unavail" disabled>' + lbl + '</button>';
       } else if (overflowsEnd) {
-        // Créneau possible mais dépasse les horaires → warning à la sélection
         html += '<button type="button" class="cal-picker-slot slot-overflow"'
-             + ' data-slot="' + slotStr + '" data-overflow="1"'
+             + ' data-slot="' + slotStr + '"'
              + ' onclick="event.stopPropagation();calPickerSelectSlot(this.dataset.slot,true)">'
              + lbl + ' <span style=\'font-size:9px;opacity:.7\'>⚠</span></button>';
       } else {

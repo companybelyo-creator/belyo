@@ -604,9 +604,13 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.disabled = true; btn.textContent = 'Enregistrement...';
 
   var clientName  = document.getElementById('appt-client').value.trim();
-  var _rawDt   = document.getElementById('appt-datetime').value;
-  var _localDt = new Date(_rawDt);
-  var datetime = _localDt.toISOString();
+  var _rawDt = document.getElementById('appt-datetime').value;
+  var _d = new Date(_rawDt + ':00');
+  var _off = -_d.getTimezoneOffset();
+  var _sign = _off >= 0 ? '+' : '-';
+  var _hOff = String(Math.floor(Math.abs(_off) / 60)).padStart(2, '0');
+  var _mOff = String(Math.abs(_off) % 60).padStart(2, '0');
+  var datetime = _rawDt + ':00' + _sign + _hOff + ':' + _mOff;
   var priceVal    = document.getElementById('appt-price').value;
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';

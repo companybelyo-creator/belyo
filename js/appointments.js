@@ -9,7 +9,7 @@ var allAppts       = [];
 var allClients     = [];
 var selectedClient = null;
 var currentTab     = 'all';
-var currentView    = 'list';
+var currentView    = 'calendar';
 var weekOffset     = 0;
 
 // ===== FILTRES CALENDRIER =====
@@ -97,8 +97,15 @@ async function loadPrestationsFromSettings(userId) {
     .maybeSingle();
 
   if (res.data && res.data.prestations) {
-    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
-    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
+    // Exclure les noms génériques "Coupe" remplacés par "Coupe Homme"/"Coupe Femme"
+    var _OBSOLETE = ['coupe'];
+    function _clean(list) {
+      return (list || []).filter(function(p) {
+        return _OBSOLETE.indexOf(p.toLowerCase().trim()) === -1;
+      });
+    }
+    PRESTATIONS.homme = _clean(res.data.prestations.homme);
+    PRESTATIONS.femme = _clean(res.data.prestations.femme);
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
   if (res.data && res.data.planning)   salonPlanning = res.data.planning;
@@ -172,7 +179,7 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Première prestation non-Autre de la liste (ordre exact des paramètres)
+  // Première prestation de la liste (ordre paramètres), en ignorant 'Autre'
   var defaultOpt = options.find(function(p) { return p !== 'Autre'; }) || options[0];
   if (defaultOpt) {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
@@ -948,6 +955,11 @@ async function loadAppts() {
 
 document.getElementById('filter-date').addEventListener('change', renderList);
 
+// Vue par défaut : Semaine
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof setView === 'function') setView('calendar');
+});
+
 document.getElementById('appt-form').addEventListener('submit', async function(e) {
   e.preventDefault();
   var btn = document.getElementById('appt-submit');
@@ -955,7 +967,14 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.textContent = 'Enregistrement...';
 
   var clientName = document.getElementById('appt-client').value.trim();
-  var datetime   = document.getElementById('appt-datetime').value;
+  // Construire un ISO avec offset local explicite pour éviter le décalage UTC
+  var _rawDt = document.getElementById('appt-datetime').value; // "YYYY-MM-DDTHH:MM"
+  var _d = new Date(_rawDt + ':00'); // interprété local par le navigateur
+  var _off = -_d.getTimezoneOffset(); // offset en minutes (ex: +120 pour UTC+2)
+  var _sign = _off >= 0 ? '+' : '-';
+  var _hOff = String(Math.floor(Math.abs(_off) / 60)).padStart(2, '0');
+  var _mOff = String(Math.abs(_off) % 60).padStart(2, '0');
+  var datetime = _rawDt + ':00' + _sign + _hOff + ':' + _mOff;
   var priceVal   = document.getElementById('appt-price').value;
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
