@@ -210,7 +210,7 @@
 /* Annule - masque */
 .cal-event.status-cancelled { display: none; }
 
-/* Ligne 1 : heure à gauche + prestation à droite */
+/* Ligne 1 : heure gauche + prestation droite */
 .cal-event-row {
   display: flex;
   align-items: baseline;
@@ -219,7 +219,7 @@
   min-width: 0;
   margin-bottom: 1px;
 }
-.cal-event-left { display: none; } /* inutilisé, compat */
+.cal-event-left { display: none; }
 .cal-event-time {
   font-size: 10px;
   font-weight: 700;
@@ -228,7 +228,6 @@
   flex-shrink: 0;
   letter-spacing: .02em;
 }
-.cal-event-service { display: none; }
 .cal-event-svc-badge {
   font-size: 9.5px;
   font-weight: 500;
@@ -240,15 +239,16 @@
   flex: 1;
   min-width: 0;
 }
+.cal-event-service { display: none; }
 /* Ligne 2 : prénom en gras */
 .cal-event-name {
+  display: block;
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: .01em;
-  display: block;
 }
 
 /* RDV consécutifs reliés */
@@ -524,5 +524,3 @@
 .adp-btn-success:hover { background: #E8F5EF; }
 .adp-btn-danger  { background: transparent; color: var(--danger); border-color: var(--danger); }
 .adp-btn-danger:hover  { background: #fdf0ef; }
-.adp-btn-secondary { background: transparent; color: var(--ink-light); border-color: var(--border); }
-.adp-btn-secondary:hover { background: var(--cream); color: var(--ink); }

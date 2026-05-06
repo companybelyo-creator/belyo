@@ -667,14 +667,12 @@ function renderCalendar() {
         ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
         : rawName;
 
-      // Layout : heure + nom à gauche, prestation à droite
+      // Heure+prestation ligne 1, nom gras ligne 2
       var html = '<div class="cal-event-row">'
-        + '<div class="cal-event-left">'
-        + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
-        + '<div class="cal-event-name">' + shortName + '</div>'
-        + '</div>'
-        + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
-        + '</div>';
+          + '<span class="cal-event-time">' + formatTime(a.datetime) + '</span>'
+          + (a.service ? '<span class="cal-event-svc-badge">' + a.service + '</span>' : '')
+          + '</div>'
+          + '<div class="cal-event-name">' + shortName + '</div>';
       ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
       cell.appendChild(ev);
@@ -711,27 +709,8 @@ function showApptDetail(a) {
   document.getElementById('appt-detail-service').textContent = a.service || '\u2014';
   document.getElementById('appt-detail-date').textContent    = dateStr;
   document.getElementById('appt-detail-time').textContent    = formatTime(a.datetime);
-  // Durée
-  var dureeMin = a.duration_minutes || 30;
-  if (!a.duration_minutes && PRIX_DUREE && a.service) {
-    var _pd = (PRIX_DUREE.homme && PRIX_DUREE.homme[a.service]) || (PRIX_DUREE.femme && PRIX_DUREE.femme[a.service]);
-    if (_pd && _pd.duree) dureeMin = _pd.duree;
-  }
-  var dureeLabel = dureeMin >= 60
-    ? Math.floor(dureeMin / 60) + 'h' + (dureeMin % 60 ? String(dureeMin % 60).padStart(2,'0') : '')
-    : dureeMin + ' min';
-  var durEl = document.getElementById('appt-detail-duration');
-  if (durEl) durEl.textContent = dureeLabel;
   document.getElementById('appt-detail-price').textContent   = a.price ? parseFloat(a.price).toFixed(0) + ' \u20ac' : '\u2014';
   document.getElementById('appt-detail-notes').textContent   = a.notes || '\u2014';
-  // Profil client
-  var btnProfile = document.getElementById('appt-detail-profile');
-  if (btnProfile) {
-    btnProfile.onclick = function() {
-      closeApptDetail();
-      window.location.href = 'clients.html?search=' + encodeURIComponent(a.client_name || '');
-    };
-  }
   var badge = document.getElementById('appt-detail-status');
   badge.textContent         = statusLabels[st] || st;
   badge.style.background    = (statusColors[st] || '#888') + '18';
