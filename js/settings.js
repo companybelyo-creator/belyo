@@ -394,6 +394,18 @@ async function loadPrestations() {
     }, { onConflict: 'user_id' });
   }
 
+  // Nettoyer activePrestations : supprimer les noms qui n'existent plus dans le catalogue
+  ['homme', 'femme'].forEach(function(g) {
+    var known = getAllForGenre(g).map(function(p) { return p.name; });
+    activePrestations[g] = (activePrestations[g] || []).filter(function(n) { return known.indexOf(n) !== -1; });
+    // Nettoyer aussi prix_duree des clés orphelines
+    if (prixDuree[g]) {
+      Object.keys(prixDuree[g]).forEach(function(k) {
+        if (known.indexOf(k) === -1) delete prixDuree[g][k];
+      });
+    }
+  });
+
   renderPrestations('homme');
   renderPrestations('femme');
 }
@@ -495,18 +507,6 @@ function updatePrixDuree(genre, idx, field, value) {
   prixDuree[genre][name][field] = parseFloat(value) || 0;
 }
 
-
-function updatePrixDuree(genre, idx, field, value) {
-  var container = document.getElementById('prestations-' + genre);
-  var all  = container ? container._all : [];
-  var item = all[idx];
-  if (!item) return;
-  var name = item.name;
-  if (!prixDuree[genre]) prixDuree[genre] = {};
-  if (!prixDuree[genre][name]) prixDuree[genre][name] = {};
-  prixDuree[genre][name][field] = parseFloat(value) || 0;
-}
-
 function togglePrestation(genre, idx) {
   var container = document.getElementById('prestations-' + genre);
   var all  = container ? container._all : [];
@@ -564,7 +564,17 @@ async function savePrestations() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
-  // UPDATE avec select() pour éviter le 400 sur Prefer: return=representation
+  // Nettoyer avant sauvegarde : ne garder que les noms connus
+  ['homme', 'femme'].forEach(function(g) {
+    var known = getAllForGenre(g).map(function(p) { return p.name; });
+    activePrestations[g] = (activePrestations[g] || []).filter(function(n) { return known.indexOf(n) !== -1; });
+    if (prixDuree[g]) {
+      Object.keys(prixDuree[g]).forEach(function(k) {
+        if (known.indexOf(k) === -1) delete prixDuree[g][k];
+      });
+    }
+  });
+
   var res = await sb.from('salon_settings')
     .update({
       prestations:        activePrestations,
