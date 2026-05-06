@@ -709,6 +709,14 @@ function showApptDetail(a) {
   document.getElementById('appt-detail-service').textContent = a.service || '\u2014';
   document.getElementById('appt-detail-date').textContent    = dateStr;
   document.getElementById('appt-detail-time').textContent    = formatTime(a.datetime);
+  var _dur = a.duration_minutes || 30;
+  if (!a.duration_minutes && typeof PRIX_DUREE !== 'undefined' && PRIX_DUREE && a.service) {
+    var _pd = (PRIX_DUREE.homme && PRIX_DUREE.homme[a.service]) || (PRIX_DUREE.femme && PRIX_DUREE.femme[a.service]);
+    if (_pd && _pd.duree) _dur = _pd.duree;
+  }
+  var _durLabel = _dur >= 60 ? Math.floor(_dur/60)+'h'+(_dur%60 ? String(_dur%60).padStart(2,'0') : '') : _dur+' min';
+  var _durEl = document.getElementById('appt-detail-duration');
+  if (_durEl) _durEl.textContent = _durLabel;
   document.getElementById('appt-detail-price').textContent   = a.price ? parseFloat(a.price).toFixed(0) + ' \u20ac' : '\u2014';
   document.getElementById('appt-detail-notes').textContent   = a.notes || '\u2014';
   var badge = document.getElementById('appt-detail-status');
