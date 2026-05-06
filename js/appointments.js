@@ -661,7 +661,8 @@ function renderCalendar() {
       // Hauteur totale = somme des durées
       var totalMin = 0;
       group.forEach(function(a) { totalMin += getDuree(a); });
-      var totalH = Math.max(36, (totalMin / 60) * SLOT_H);
+      function snapTo15(px) { return Math.round(px / (SLOT_H / 4)) * (SLOT_H / 4); }
+      var totalH = Math.max(SLOT_H / 4, snapTo15((totalMin / 60) * SLOT_H));
 
       // Statut dominant
       var statusCls = 'status-' + (first.status || 'pending');
@@ -671,7 +672,7 @@ function renderCalendar() {
         var a   = group[0];
         var ev  = document.createElement('div');
         ev.className = 'cal-event ' + statusCls;
-        ev.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + Math.max(36, (getDuree(a) / 60) * SLOT_H) + 'px;';
+        ev.style.cssText = 'top:' + snapTo15((aM / 60) * SLOT_H) + 'px;height:' + Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H)) + 'px;';
         var rawName   = (a.client_name || '').trim();
         var nameParts = rawName.split(' ');
         var shortName = nameParts.length > 1
@@ -690,7 +691,7 @@ function renderCalendar() {
         // Groupe — un seul wrapper avec un item par RDV
         var wrapper = document.createElement('div');
         wrapper.className = 'cal-event-group ' + statusCls;
-        wrapper.style.cssText = 'top:' + ((aM / 60) * SLOT_H) + 'px;height:' + totalH + 'px;';
+        wrapper.style.cssText = 'top:' + snapTo15((aM / 60) * SLOT_H) + 'px;height:' + totalH + 'px;';
 
         group.forEach(function(a) {
           var rawName   = (a.client_name || '').trim();
@@ -698,7 +699,7 @@ function renderCalendar() {
           var shortName = nameParts.length > 1
             ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
             : rawName;
-          var itemH = Math.max(28, (getDuree(a) / 60) * SLOT_H);
+          var itemH = Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H));
           var item  = document.createElement('div');
           item.className = 'cal-event-group-item';
           item.style.height = itemH + 'px';
