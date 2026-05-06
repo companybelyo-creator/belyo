@@ -621,11 +621,14 @@ function renderCalendar() {
       return dt.getHours() * 60 + dt.getMinutes();
     }
 
+    // Snap height to 15-min grid
+    function snapTo15(px) { return Math.round(px / (SLOT_H / 4)) * (SLOT_H / 4); }
+
     // Trier par heure
     var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    // Grouper les RDV consécutifs (fin d'un = début du suivant, ±2 min)
-    var groups = []; // chaque groupe = tableau de RDV
+    // Grouper RDV consécutifs (fin = début suivant ± 2min)
+    var groups = [];
     var used   = {};
     sorted.forEach(function(a) {
       if (used[a.id]) return;
@@ -645,77 +648,83 @@ function renderCalendar() {
       groups.push(group);
     });
 
+    // Nom court
+    function shortName(a) {
+      var raw = (a.client_name || '').trim();
+      var parts = raw.split(' ');
+      return parts.length > 1
+        ? parts[0] + ' ' + parts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
+        : raw;
+    }
+
+    // Contenu d'un item RDV selon la hauteur disponible
+    function itemHTML(a, itemH) {
+      var time = formatTime(a.datetime);
+      var name = shortName(a);
+      var svc  = a.service || '';
+      var QUARTER = SLOT_H / 4; // ~17px
+
+      if (itemH < QUARTER * 1.5) {
+        // Très petit (< ~25px) : juste heure + nom sur une ligne, prestation à droite
+        return '<div class="ev-compact">'
+          + '<span class="ev-time-inline">' + time + '</span>'
+          + '<span class="ev-name-inline">' + name + '</span>'
+          + (svc ? '<span class="ev-svc-inline">' + svc + '</span>' : '')
+          + '</div>';
+      }
+      // Normal : heure en haut à gauche, prestation en haut à droite, nom en dessous
+      return '<div class="ev-row">'
+          + '<span class="ev-time">' + time + '</span>'
+          + (svc ? '<span class="ev-svc">' + svc + '</span>' : '')
+        + '</div>'
+        + '<div class="ev-name">' + name + '</div>';
+    }
+
     groups.forEach(function(group) {
-      var first  = group[0];
-      var dt     = new Date(first.datetime);
-      var aH     = dt.getHours();
-      var aM     = dt.getMinutes();
+      var first = group[0];
+      var dt    = new Date(first.datetime);
+      var aH    = dt.getHours();
+      var aM    = dt.getMinutes();
       if (aH < HOUR_START || aH >= HOUR_END) return;
 
-      // Cellule d'ancrage = heure du premier RDV du groupe
       var rowIndex = aH - HOUR_START;
       var cells    = grid.querySelectorAll('.cal-cell');
       var cell     = cells[rowIndex * 7 + di];
       if (!cell) return;
 
-      // Hauteur totale = somme des durées
-      var totalMin = 0;
-      group.forEach(function(a) { totalMin += getDuree(a); });
-      function snapTo15(px) { return Math.round(px / (SLOT_H / 4)) * (SLOT_H / 4); }
-      var totalH = Math.max(SLOT_H / 4, snapTo15((totalMin / 60) * SLOT_H));
-
-      // Statut dominant
       var statusCls = 'status-' + (first.status || 'pending');
+      var topPx     = snapTo15((aM / 60) * SLOT_H);
 
       if (group.length === 1) {
-        // RDV isolé — rendu classique
-        var a   = group[0];
-        var ev  = document.createElement('div');
+        // ── RDV isolé ──
+        var a    = group[0];
+        var evH  = Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H));
+        var ev   = document.createElement('div');
         ev.className = 'cal-event ' + statusCls;
-        ev.style.cssText = 'top:' + snapTo15((aM / 60) * SLOT_H) + 'px;height:' + Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H)) + 'px;';
-        var rawName   = (a.client_name || '').trim();
-        var nameParts = rawName.split(' ');
-        var shortName = nameParts.length > 1
-          ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
-          : rawName;
-        ev.innerHTML = '<div class="cal-event-row">'
-          + '<div class="cal-event-left">'
-          + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
-          + '<div class="cal-event-name">' + shortName + '</div>'
-          + '</div>'
-          + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
-          + '</div>';
+        ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;';
+        ev.innerHTML = itemHTML(a, evH);
         ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
         cell.appendChild(ev);
+
       } else {
-        // Groupe — un seul wrapper avec un item par RDV
+        // ── Groupe consécutif — un seul wrapper ──
+        var totalMin = 0;
+        group.forEach(function(a) { totalMin += getDuree(a); });
+        var totalH = Math.max(SLOT_H / 4 * group.length, snapTo15((totalMin / 60) * SLOT_H));
+
         var wrapper = document.createElement('div');
         wrapper.className = 'cal-event-group ' + statusCls;
-        wrapper.style.cssText = 'top:' + snapTo15((aM / 60) * SLOT_H) + 'px;height:' + totalH + 'px;';
+        wrapper.style.cssText = 'top:' + topPx + 'px;height:' + totalH + 'px;';
 
         group.forEach(function(a) {
-          var rawName   = (a.client_name || '').trim();
-          var nameParts = rawName.split(' ');
-          var shortName = nameParts.length > 1
-            ? nameParts[0] + ' ' + nameParts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
-            : rawName;
-          var itemH = Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H));
-          var item  = document.createElement('div');
+          var iH   = Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H));
+          var item = document.createElement('div');
           item.className = 'cal-event-group-item';
-          item.style.height = itemH + 'px';
-          item.innerHTML = '<div class="cal-event-row">'
-            + '<div class="cal-event-left">'
-            + '<div class="cal-event-time">' + formatTime(a.datetime) + '</div>'
-            + '<div class="cal-event-name">' + shortName + '</div>'
-            + '</div>'
-            + (a.service ? '<div class="cal-event-svc-badge">' + a.service + '</div>' : '')
-            + '</div>';
-          (function(appt) {
-            item.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(appt); });
-          })(a);
+          item.style.height = iH + 'px';
+          item.innerHTML = itemHTML(a, iH);
+          (function(appt){ item.addEventListener('click', function(e){ e.stopPropagation(); showApptDetail(appt); }); })(a);
           wrapper.appendChild(item);
         });
-
         cell.appendChild(wrapper);
       }
     });

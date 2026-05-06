@@ -149,8 +149,6 @@
   position: relative;
   transition: background .1s;
 }
-/* Subdivisions quarts d'heure : 15min, 30min, 45min */
-
 .cal-cell:last-child { border-right: none; }
 .cal-cell.today-col { background: rgba(196,168,122,.035); }
 .cal-cell.worked { cursor: pointer; }
@@ -212,88 +210,119 @@
 /* Annule - masque */
 .cal-event.status-cancelled { display: none; }
 
-.cal-event-row {
+/* ── Contenu des événements ── */
+
+/* Layout normal : heure + prestation sur ligne 1, nom sur ligne 2 */
+.ev-row {
   display: flex;
-  align-items: flex-start;
+  align-items: baseline;
   justify-content: space-between;
   gap: 4px;
-  height: 100%;
   min-width: 0;
-}
-.cal-event-left {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-.cal-event-time {
-  font-weight: 600;
-  font-size: 10px;
-  opacity: .65;
   margin-bottom: 1px;
-  letter-spacing: .02em;
-  white-space: nowrap;
 }
-.cal-event-name {
-  font-weight: 600;
+.ev-time {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: .7;
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+}
+.ev-svc {
+  font-size: 9.5px;
+  font-weight: 500;
+  opacity: .68;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  flex: 1;
+  min-width: 0;
+}
+.ev-name {
   font-size: 12px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: .01em;
 }
-.cal-event-service { display: none; }
-.cal-event-svc-badge {
+
+/* Layout compact (très petite hauteur) : tout sur une ligne */
+.ev-compact {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.ev-time-inline {
   font-size: 9.5px;
-  font-weight: 500;
-  opacity: .72;
+  font-weight: 700;
+  opacity: .7;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ev-name-inline {
+  font-size: 11px;
+  font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: right;
+  flex: 1;
+  min-width: 0;
+}
+.ev-svc-inline {
+  font-size: 9px;
+  opacity: .6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex-shrink: 0;
-  max-width: 46%;
-  padding-top: 1px;
-  line-height: 1.3;
+  max-width: 40%;
 }
 
-/* RDV consécutifs reliés */
-/* Premier d'une chaîne */
-.cal-event.chain-top {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  border-bottom: none;
-  padding-bottom: 3px;
-}
-/* Milieu d'une chaîne (a un précédent ET un suivant) */
-.cal-event.chain-top.chain-bottom {
-  border-radius: 0;
-  border-top: none;
-  border-bottom: none;
-  padding-top: 4px;
-  padding-bottom: 3px;
-  margin-top: -1px;
-}
-/* Dernier d'une chaîne */
-.cal-event.chain-bottom:not(.chain-top) {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-  border-top: none;
-  margin-top: -1px;
-  padding-top: 4px;
-}
-/* Séparateur visuel entre les blocs : ligne pointillée sur le bord gauche coloré */
-.cal-event.chain-top::after,
-.cal-event.chain-top.chain-bottom::after {
-  content: '';
+/* Anciens styles (compat) */
+.cal-event-row { display: none; }
+.cal-event-left { display: none; }
+.cal-event-time { display: none; }
+.cal-event-name { display: none; }
+.cal-event-service { display: none; }
+.cal-event-svc-badge { display: none; }
+
+/* ── Groupe RDV consécutifs ── */
+.cal-event-group {
   position: absolute;
-  bottom: 0; left: 0;
-  width: 3px;
-  height: 1px;
-  background: rgba(255,255,255,.55);
+  left: 4px; right: 4px;
+  z-index: 2;
+  border-radius: 7px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .12s, box-shadow .12s;
 }
-.cal-event.status-pending.chain-top::after { background: rgba(43,127,255,.35); }
-.cal-event.status-done.chain-top::after    { background: rgba(38,169,108,.35); }
+.cal-event-group:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,23,20,.18); }
+.cal-event-group.status-pending {
+  background: #E0EDFF;
+  border-left: 3px solid #2B7FFF;
+  box-shadow: 0 1px 4px rgba(43,127,255,.12);
+  color: #0A2540;
+}
+.cal-event-group.status-done {
+  background: #E8F5EF;
+  border-left: 3px solid #26A96C;
+  box-shadow: 0 1px 4px rgba(38,169,108,.1);
+  color: #135C38;
+}
+.cal-event-group-item {
+  padding: 4px 7px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.cal-event-group-item + .cal-event-group-item {
+  border-top: 1px solid rgba(0,0,0,.08);
+}
 
 .now-line { position: absolute; left: 0; right: 0; height: 2px; background: #E53935; z-index: 3; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -4px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: #E53935; }
