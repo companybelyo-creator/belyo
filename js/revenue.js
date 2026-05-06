@@ -192,7 +192,7 @@ function renderCAChart(data, prodData, now) {
 }
 
 // ===== HELPER : rendu unifié d'un top-list =====
-// items = [{ rank, label, value, sub, trend, barPct, accentColor }]
+// items = [{ rank, label, value, sub, trend, barPct, accentColor, hideBar }]
 function renderTopList(elId, items, emptyMsg) {
   var el = document.getElementById(elId);
   if (!el) return;
@@ -201,29 +201,30 @@ function renderTopList(elId, items, emptyMsg) {
     return;
   }
   el.innerHTML = items.map(function(it) {
-    var rankBg   = it.rank === 1 ? 'linear-gradient(135deg,#C4A87A,#E8D5A8)' : 'var(--cream-dark)';
-    var rankColor= it.rank === 1 ? '#fff'                                     : 'var(--ink-light)';
+    var rankBg    = it.rank === 1 ? 'linear-gradient(135deg,#C4A87A,#E8D5A8)' : 'var(--cream-dark)';
+    var rankColor = it.rank === 1 ? '#fff' : 'var(--ink-light)';
     var trendHtml = it.trend
       ? '<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;background:'+it.trend.bg+';color:'+it.trend.color+'">'+it.trend.label+'</span>'
       : '';
-    return ''
-      + '<div style="display:flex;flex-direction:column;gap:5px">'
-      +   '<div style="display:flex;align-items:center;gap:10px">'
-      +     '<div style="width:22px;height:22px;border-radius:6px;background:'+rankBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-      +       '<span style="font-size:11px;font-weight:700;color:'+rankColor+';font-family:var(--font-body)">'+it.rank+'</span>'
-      +     '</div>'
-      +     '<div style="flex:1;min-width:0">'
-      +       '<div style="font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+it.label+'</div>'
-      +       (it.sub ? '<div style="font-size:11px;color:var(--ink-light);margin-top:1px">'+it.sub+'</div>' : '')
-      +     '</div>'
-      +     '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
-      +       trendHtml
-      +       '<span style="font-size:13px;font-weight:600;color:var(--ink)">'+it.value+'</span>'
-      +     '</div>'
-      +   '</div>'
-      +   '<div style="height:3px;background:var(--cream-dark);border-radius:100px;overflow:hidden;margin-left:32px">'
-      +     '<div style="height:3px;width:'+it.barPct+'%;background:'+it.accentColor+';border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>'
-      +   '</div>'
+    // Barre courte (60px max) intégrée avant la valeur
+    var barHtml = !it.hideBar
+      ? '<div style="width:60px;height:4px;background:var(--cream-dark);border-radius:100px;overflow:hidden;flex-shrink:0">'
+      +   '<div style="height:4px;width:'+it.barPct+'%;background:'+it.accentColor+';border-radius:100px;transition:width .6s cubic-bezier(.4,0,.2,1)"></div>'
+      + '</div>'
+      : '';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:2px 0">'
+      + '<div style="width:22px;height:22px;border-radius:6px;background:'+rankBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +   '<span style="font-size:11px;font-weight:700;color:'+rankColor+';font-family:var(--font-body)">'+it.rank+'</span>'
+      + '</div>'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+it.label+'</div>'
+      +   (it.sub ? '<div style="font-size:11px;color:var(--ink-light);margin-top:1px">'+it.sub+'</div>' : '')
+      + '</div>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+      +   trendHtml
+      +   barHtml
+      +   '<span style="font-size:13px;font-weight:600;color:var(--ink);min-width:44px;text-align:right">'+it.value+'</span>'
+      + '</div>'
       + '</div>';
   }).join('');
 }
@@ -1051,9 +1052,8 @@ async function renderTopProducts(now) {
 
     var trend = null;
     if (prevQty > 0) {
-      var pct   = Math.round(Math.abs(d.qty - prevQty) / prevQty * 100);
       trend = {
-        label: (diff > 0 ? '↑ +' : diff < 0 ? '↓ -' : '→ ') + pct + '%',
+        label: diff > 0 ? '↑ Hausse' : diff < 0 ? '↓ Baisse' : '→ Stable',
         color: diff > 0 ? '#1D9E75' : diff < 0 ? '#D85A30' : '#8A817C',
         bg:    diff > 0 ? '#E8F5F0' : diff < 0 ? '#FAECE7' : '#F0EEEC',
       };
@@ -1067,8 +1067,9 @@ async function renderTopProducts(now) {
       value: d.qty + ' vente' + (d.qty > 1 ? 's' : '') + ' · ' + Math.round(d.ca) + '\u20ac',
       sub: null,
       trend: trend,
-      barPct: Math.round(d.qty / maxQty * 100),
-      accentColor: 'linear-gradient(90deg,#3B82F6,#93C5FD)',
+      barPct: 0,
+      accentColor: '',
+      hideBar: true,
     };
   }), 'Aucune vente ce mois');
 }
