@@ -245,14 +245,14 @@
         </div>
       </div>
 
-      <!-- Heatmap cohortes + Clients uniques -->
+      <!-- Diversité des services + Clients uniques -->
       <div class="chart-grid-eq" style="margin-bottom:1.5rem">
         <div class="chart-card">
           <div class="chart-head">
-            <div class="chart-title">Rétention par cohorte</div>
-            <div class="chart-sub">% de retour des nouveaux clients mois par mois</div>
+            <div class="chart-title">Diversité des prestations</div>
+            <div class="chart-sub" id="diversity-sub">services différents vendus par mois</div>
           </div>
-          <div id="cohort-heatmap" style="padding-top:.5rem;overflow-x:auto"></div>
+          <div class="chart-wrap"><canvas id="diversity-chart"></canvas></div>
         </div>
         <div class="chart-card">
           <div class="chart-head">

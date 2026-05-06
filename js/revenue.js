@@ -551,120 +551,87 @@ async function renderStatsAvancees(data, now) {
     });
   }
 
-  // Heatmap cohortes
-  renderCohortHeatmap(data);
+  // Diversité des prestations
+  renderDiversityChart(data, now);
 }
 
-// ===== HEATMAP RÉTENTION PAR COHORTE =====
-function renderCohortHeatmap(data) {
-  var el = document.getElementById('cohort-heatmap');
-  if (!el) return;
+// ===== DIVERSITÉ DES PRESTATIONS =====
+var diversityChart = null;
 
-  if (!data || data.length === 0) {
-    el.innerHTML = '<p style="font-size:13px;color:var(--ink-light)">Aucune donnée</p>';
-    return;
-  }
+function renderDiversityChart(data, now) {
+  var months = [];
+  for (var i = currentPeriod - 1; i >= 0; i--)
+    months.push(getMonthKey(new Date(now.getFullYear(), now.getMonth() - i, 1)));
 
-  // Construire les cohortes : par mois d'arrivée (1ère visite du client)
-  // On identifie la 1ère visite de chaque client dans les données
-  var firstVisit = {};
-  var allByClient = {};
+  // Prestations uniques par mois
+  var servicesByMonth = {};
+  months.forEach(function(m) { servicesByMonth[m] = new Set(); });
   data.forEach(function(a) {
     var mk = a.datetime.slice(0, 7);
-    var cn = a.client_name;
-    if (!firstVisit[cn] || mk < firstVisit[cn]) firstVisit[cn] = mk;
-    allByClient[cn] = allByClient[cn] || [];
-    allByClient[cn].push(mk);
+    if (servicesByMonth[mk] && a.service) servicesByMonth[mk].add(a.service.trim().toLowerCase());
   });
 
-  // Liste des mois présents, triés
-  var monthsSet = new Set();
-  data.forEach(function(a) { monthsSet.add(a.datetime.slice(0, 7)); });
-  var months = Array.from(monthsSet).sort();
-  // Limiter aux 6 derniers mois max pour lisibilité
-  if (months.length > 6) months = months.slice(months.length - 6);
+  var values = months.map(function(m) { return servicesByMonth[m] ? servicesByMonth[m].size : 0; });
+  var total  = new Set();
+  data.forEach(function(a) { if (a.service) total.add(a.service.trim().toLowerCase()); });
 
-  // Pour chaque cohorte (mois d'arrivée parmi les mois affichés),
-  // calculer le % de retour à M+0, M+1, M+2...
-  var cohorts = months.map(function(cohortMonth) {
-    // Clients arrivés ce mois
-    var cohortClients = Object.keys(firstVisit).filter(function(cn) {
-      return firstVisit[cn] === cohortMonth;
-    });
-    var size = cohortClients.length;
+  var sub = document.getElementById('diversity-sub');
+  if (sub) sub.textContent = total.size + ' prestation' + (total.size > 1 ? 's' : '') + ' distincte' + (total.size > 1 ? 's' : '') + ' sur la période';
 
-    // Pour chaque décalage M+0 à M+5, combien sont revenus ?
-    var rates = months.map(function(m) {
-      if (m < cohortMonth) return null; // avant la cohorte
-      var returned = cohortClients.filter(function(cn) {
-        return (allByClient[cn] || []).indexOf(m) !== -1;
-      }).length;
-      return size > 0 ? Math.round(returned / size * 100) : null;
-    });
+  if (diversityChart) diversityChart.destroy();
+  var ctx = document.getElementById('diversity-chart');
+  if (!ctx) return;
 
-    return { month: cohortMonth, size: size, rates: rates };
+  var c2d  = ctx.getContext('2d');
+  var grad = c2d.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0,   'rgba(123,97,255,0.28)');
+  grad.addColorStop(1,   'rgba(123,97,255,0.02)');
+
+  diversityChart = new Chart(c2d, {
+    type: 'line',
+    data: {
+      labels: months.map(monthLabel),
+      datasets: [{
+        data: values,
+        borderColor: '#7B61FF',
+        backgroundColor: grad,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 5,
+        pointBackgroundColor: '#7B61FF',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2.5,
+        borderWidth: 2.5,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(c) {
+              return c.raw + ' prestation' + (c.raw > 1 ? 's' : '') + ' différente' + (c.raw > 1 ? 's' : '');
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { precision: 0, color: CHART_COLORS.text, font: { size: 11 } },
+          grid: { color: CHART_COLORS.grid },
+          border: { display: false }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { color: CHART_COLORS.text, font: { size: 11 } },
+          border: { display: false }
+        }
+      }
+    }
   });
-
-  // Couleur : teal dégradé selon le taux (0%=blanc, 100%=teal foncé)
-  function rateColor(r) {
-    if (r === null) return { bg: '#F5F3F0', text: 'transparent' };
-    if (r === 0)   return { bg: '#F0EEEC', text: '#C5BEB9' };
-    // Interpolation blanc → teal
-    var t  = r / 100;
-    var rC = Math.round(255 - t * (255 - 29));
-    var gC = Math.round(255 - t * (255 - 158));
-    var bC = Math.round(255 - t * (255 - 117));
-    var textLight = t < 0.45;
-    return {
-      bg:   'rgb(' + rC + ',' + gC + ',' + bC + ')',
-      text: textLight ? '#1A1714' : '#ffffff',
-    };
-  }
-
-  // Rendu HTML : table compacte
-  var cellW = 'min-width:52px;width:52px';
-  var cellStyle = 'padding:6px 4px;text-align:center;font-size:11px;font-weight:600;border-radius:6px;';
-
-  var html = '<table style="border-collapse:separate;border-spacing:4px;width:100%">';
-
-  // Header : M+0, M+1, ...
-  html += '<tr>';
-  html += '<th style="text-align:left;font-size:11px;font-weight:500;color:var(--ink-light);padding:4px 4px 8px;white-space:nowrap">Cohorte</th>';
-  html += '<th style="font-size:11px;font-weight:500;color:var(--ink-light);padding:4px 4px 8px;text-align:center">Taille</th>';
-  months.forEach(function(m, i) {
-    html += '<th style="font-size:11px;font-weight:500;color:var(--ink-light);padding:4px 4px 8px;text-align:center;' + cellW + '">M+' + i + '</th>';
-  });
-  html += '</tr>';
-
-  // Lignes cohortes
-  cohorts.forEach(function(c) {
-    var label = new Date(c.month + '-02').toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' });
-    html += '<tr>';
-    html += '<td style="font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;padding:0 4px">' + label + '</td>';
-    html += '<td style="font-size:11px;color:var(--ink-light);text-align:center;padding:0 4px">' + c.size + '</td>';
-    c.rates.forEach(function(r) {
-      var col = rateColor(r);
-      var txt = r === null ? '' : r + '%';
-      html += '<td style="' + cellStyle + cellW + ';background:' + col.bg + ';color:' + col.text + '">' + txt + '</td>';
-    });
-    html += '</tr>';
-  });
-
-  html += '</table>';
-
-  // Légende
-  html += '<div style="display:flex;align-items:center;gap:6px;margin-top:10px;justify-content:flex-end">';
-  html += '<span style="font-size:10px;color:var(--ink-light)">0%</span>';
-  [0, 0.2, 0.4, 0.6, 0.8, 1].forEach(function(t) {
-    var r = Math.round(255 - t * (255 - 29));
-    var g = Math.round(255 - t * (255 - 158));
-    var b = Math.round(255 - t * (255 - 117));
-    html += '<div style="width:18px;height:10px;border-radius:3px;background:rgb('+r+','+g+','+b+')"></div>';
-  });
-  html += '<span style="font-size:10px;color:var(--ink-light)">100%</span>';
-  html += '</div>';
-
-  el.innerHTML = html;
 }
 
 // ===== EXPORT PDF =====
