@@ -9,6 +9,8 @@ var weekdayChart  = null;
 var hourChart     = null;
 var clientsChart  = null;
 var genreChart    = null;
+var prodChart     = null;
+var prestChart    = null;
 
 // Couleurs Chart.js
 var CHART_COLORS = {
@@ -756,6 +758,113 @@ async function exportPDF() {
   }
 }
 
+
+// ===== CA PRODUITS =====
+async function renderProdChart(now) {
+  var from = new Date(now.getFullYear(), now.getMonth() - currentPeriod + 1, 1);
+  var res  = await sb.from('product_sales')
+    .select('created_at, unit_price, quantity_sold')
+    .eq('user_id', currentUserId)
+    .gte('created_at', from.toISOString())
+    .order('created_at', { ascending: true });
+
+  var sales  = res.data || [];
+  var months = [];
+  for (var i = currentPeriod-1; i >= 0; i--)
+    months.push(getMonthKey(new Date(now.getFullYear(), now.getMonth()-i, 1)));
+
+  var caByMonth = {};
+  months.forEach(function(m) { caByMonth[m] = 0; });
+  sales.forEach(function(s) {
+    var mk = (s.created_at||'').slice(0,7);
+    if (caByMonth[mk] !== undefined)
+      caByMonth[mk] += (parseFloat(s.unit_price)||0) * (parseInt(s.quantity_sold)||1);
+  });
+
+  var totalProd = sales.reduce(function(acc,s) {
+    return acc + (parseFloat(s.unit_price)||0) * (parseInt(s.quantity_sold)||1);
+  }, 0);
+  var el = document.getElementById('prod-total-label');
+  if (el) el.textContent = Math.round(totalProd) + '\u20ac total en produits';
+
+  var values = months.map(function(m) { return Math.round(caByMonth[m]); });
+  var maxVal  = Math.max.apply(null, values) || 1;
+
+  if (prodChart) prodChart.destroy();
+  var ctx = document.getElementById('prod-chart');
+  if (!ctx) return;
+  prodChart = new Chart(ctx.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: months.map(monthLabel),
+      datasets: [{
+        data: values,
+        backgroundColor: values.map(function(v) {
+          return v === maxVal && maxVal > 0 ? CHART_COLORS.teal : 'rgba(29,158,117,0.25)';
+        }),
+        borderRadius: 6, borderSkipped: false, barPercentage: 0.45, categoryPercentage: 0.6,
+      }]
+    },
+    options: chartDefaults({
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(c) { return c.raw + '\u20ac'; } } }
+      },
+      scales: {
+        y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:11}, callback:function(v){ return v+'\u20ac'; } }, border:{display:false} },
+        x: { grid:{ display:false }, ticks:{ color:CHART_COLORS.text, font:{size:11} }, border:{display:false} }
+      }
+    })
+  });
+}
+
+// ===== CA PRESTATIONS =====
+function renderPrestChart(data, now) {
+  var months = [];
+  for (var i = currentPeriod-1; i >= 0; i--)
+    months.push(getMonthKey(new Date(now.getFullYear(), now.getMonth()-i, 1)));
+
+  var caByMonth = {};
+  months.forEach(function(m) { caByMonth[m] = 0; });
+  data.forEach(function(a) {
+    var mk = a.datetime.slice(0,7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price)||0;
+  });
+
+  var totalPrest = data.reduce(function(s,a) { return s + (parseFloat(a.price)||0); }, 0);
+  var el = document.getElementById('prest-total-label');
+  if (el) el.textContent = Math.round(totalPrest) + '\u20ac total en prestations';
+
+  var values = months.map(function(m) { return Math.round(caByMonth[m]); });
+  var maxVal  = Math.max.apply(null, values) || 1;
+
+  if (prestChart) prestChart.destroy();
+  var ctx = document.getElementById('prest-chart');
+  if (!ctx) return;
+  prestChart = new Chart(ctx.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: months.map(monthLabel),
+      datasets: [{
+        data: values,
+        backgroundColor: values.map(function(v) {
+          return v === maxVal && maxVal > 0 ? CHART_COLORS.ink : CHART_COLORS.gold;
+        }),
+        borderRadius: 6, borderSkipped: false, barPercentage: 0.45, categoryPercentage: 0.6,
+      }]
+    },
+    options: chartDefaults({
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: function(c) { return c.raw + '\u20ac'; } } }
+      },
+      scales: {
+        y: { beginAtZero:true, grid:{ color:CHART_COLORS.grid }, ticks:{ color:CHART_COLORS.text, font:{size:11}, callback:function(v){ return v+'\u20ac'; } }, border:{display:false} },
+        x: { grid:{ display:false }, ticks:{ color:CHART_COLORS.text, font:{size:11} }, border:{display:false} }
+      }
+    })
+  });
+}
 
 (async function() {
   var session = await requireSession();
