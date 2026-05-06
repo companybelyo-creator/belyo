@@ -621,107 +621,93 @@ function renderCalendar() {
       return dt.getHours() * 60 + dt.getMinutes();
     }
 
-    // Snap height to 15-min grid
-    function snapTo15(px) { return Math.round(px / (SLOT_H / 4)) * (SLOT_H / 4); }
+    // Snap à la grille 15min
+    function snapH(min) { return Math.round((min / 60) * SLOT_H / (SLOT_H/4)) * (SLOT_H/4); }
 
     // Trier par heure
     var sorted = dayAppts.slice().sort(function(a, b) { return startMin(a) - startMin(b); });
 
-    // Grouper RDV consécutifs (fin = début suivant ± 2min)
-    var groups = [];
-    var used   = {};
+    // Grouper RDV consécutifs (fin du précédent = début du suivant ± 2min)
+    var groups = [], used = {};
     sorted.forEach(function(a) {
       if (used[a.id]) return;
-      var group = [a];
-      used[a.id] = true;
-      var last = a;
+      var grp = [a]; used[a.id] = true; var last = a;
       for (var ci = 0; ci < sorted.length; ci++) {
         var nxt = sorted[ci];
         if (used[nxt.id]) continue;
-        var lastEnd = startMin(last) + getDuree(last);
-        if (Math.abs(startMin(nxt) - lastEnd) <= 2) {
-          group.push(nxt);
-          used[nxt.id] = true;
-          last = nxt;
+        if (Math.abs(startMin(nxt) - (startMin(last) + getDuree(last))) <= 2) {
+          grp.push(nxt); used[nxt.id] = true; last = nxt;
         }
       }
-      groups.push(group);
+      groups.push(grp);
     });
 
-    // Nom court
-    function shortName(a) {
-      var raw = (a.client_name || '').trim();
-      var parts = raw.split(' ');
-      return parts.length > 1
-        ? parts[0] + ' ' + parts.slice(1).map(function(n){ return n.charAt(0).toUpperCase()+'.'; }).join(' ')
-        : raw;
+    // Nom abrégé
+    function abbrev(a) {
+      var parts = (a.client_name || '').trim().split(' ');
+      return parts.length > 1 ? parts[0] + ' ' + parts[1].charAt(0).toUpperCase() + '.' : parts[0];
     }
 
-    // Contenu d'un item RDV selon la hauteur disponible
-    function itemHTML(a, itemH) {
-      var time = formatTime(a.datetime);
-      var name = shortName(a);
-      var svc  = a.service || '';
-      var QUARTER = SLOT_H / 4; // ~17px
-
-      if (itemH < QUARTER * 1.5) {
-        // Très petit (< ~25px) : juste heure + nom sur une ligne, prestation à droite
-        return '<div class="ev-compact">'
-          + '<span class="ev-time-inline">' + time + '</span>'
-          + '<span class="ev-name-inline">' + name + '</span>'
-          + (svc ? '<span class="ev-svc-inline">' + svc + '</span>' : '')
+    // HTML d'un item selon hauteur dispo
+    function evInner(a, h) {
+      var t = formatTime(a.datetime), n = abbrev(a), s = a.service || '';
+      if (h <= SLOT_H / 4) {
+        // ≤ 17px : tout sur une ligne ultra-compact
+        return '<div class="ev-line">'
+          + '<span class="ev-t">' + t + '</span>'
+          + '<span class="ev-n">' + n + '</span>'
+          + (s ? '<span class="ev-s">' + s + '</span>' : '')
           + '</div>';
       }
-      // Normal : heure en haut à gauche, prestation en haut à droite, nom en dessous
-      return '<div class="ev-row">'
-          + '<span class="ev-time">' + time + '</span>'
-          + (svc ? '<span class="ev-svc">' + svc + '</span>' : '')
-        + '</div>'
-        + '<div class="ev-name">' + name + '</div>';
+      // Normal : heure + prestation ligne 1, nom ligne 2
+      return '<div class="ev-top">'
+          + '<span class="ev-t">' + t + '</span>'
+          + (s ? '<span class="ev-s">' + s + '</span>' : '')
+          + '</div>'
+          + '<div class="ev-n ev-n-block">' + n + '</div>';
     }
 
-    groups.forEach(function(group) {
-      var first = group[0];
-      var dt    = new Date(first.datetime);
-      var aH    = dt.getHours();
-      var aM    = dt.getMinutes();
+    groups.forEach(function(grp) {
+      var first = grp[0];
+      var dt = new Date(first.datetime);
+      var aH = dt.getHours(), aM = dt.getMinutes();
       if (aH < HOUR_START || aH >= HOUR_END) return;
 
       var rowIndex = aH - HOUR_START;
-      var cells    = grid.querySelectorAll('.cal-cell');
-      var cell     = cells[rowIndex * 7 + di];
+      var cells = grid.querySelectorAll('.cal-cell');
+      var cell  = cells[rowIndex * 7 + di];
       if (!cell) return;
 
+      var topPx   = (aM / 60) * SLOT_H;
       var statusCls = 'status-' + (first.status || 'pending');
-      var topPx     = snapTo15((aM / 60) * SLOT_H);
 
-      if (group.length === 1) {
-        // ── RDV isolé ──
-        var a    = group[0];
-        var evH  = Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H));
-        var ev   = document.createElement('div');
+      if (grp.length === 1) {
+        // RDV isolé
+        var a   = grp[0];
+        var evH = Math.max(SLOT_H / 4, snapH(getDuree(a)));
+        var ev  = document.createElement('div');
         ev.className = 'cal-event ' + statusCls;
-        ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;';
-        ev.innerHTML = itemHTML(a, evH);
+        ev.style.cssText = 'top:' + topPx + 'px;height:' + evH + 'px;overflow:hidden;';
+        ev.innerHTML = evInner(a, evH);
         ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
         cell.appendChild(ev);
 
       } else {
-        // ── Groupe consécutif — un seul wrapper ──
+        // Groupe — wrapper unique, hauteur = somme
         var totalMin = 0;
-        group.forEach(function(a) { totalMin += getDuree(a); });
-        var totalH = Math.max(SLOT_H / 4 * group.length, snapTo15((totalMin / 60) * SLOT_H));
+        grp.forEach(function(a) { totalMin += getDuree(a); });
+        var totalH = Math.max(SLOT_H / 4 * grp.length, snapH(totalMin));
 
         var wrapper = document.createElement('div');
         wrapper.className = 'cal-event-group ' + statusCls;
         wrapper.style.cssText = 'top:' + topPx + 'px;height:' + totalH + 'px;';
 
-        group.forEach(function(a) {
-          var iH   = Math.max(SLOT_H / 4, snapTo15((getDuree(a) / 60) * SLOT_H));
+        grp.forEach(function(a) {
+          var iH   = Math.max(SLOT_H / 4, snapH(getDuree(a)));
           var item = document.createElement('div');
-          item.className = 'cal-event-group-item';
+          item.className = 'ev-group-item';
           item.style.height = iH + 'px';
-          item.innerHTML = itemHTML(a, iH);
+          item.innerHTML = evInner(a, iH);
           (function(appt){ item.addEventListener('click', function(e){ e.stopPropagation(); showApptDetail(appt); }); })(a);
           wrapper.appendChild(item);
         });
