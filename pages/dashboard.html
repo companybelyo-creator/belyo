@@ -773,6 +773,7 @@ var _origInit = window.onload;
 })();
 
 // ===== SPARKLINE CA : 6 barres mensuelles (mois-5 -> mois actuel) =====
+// CA = RDV done + ventes produits, identique a loadKPIs
 async function loadCaSparkline(userId) {
   var now = new Date();
   var months = [];
@@ -785,18 +786,31 @@ async function loadCaSparkline(userId) {
     });
   }
 
-  var res = await sb.from('appointments')
+  // RDV done
+  var rA = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
     .eq('status', 'done')
     .gte('datetime', months[0].start)
     .lte('datetime', months[5].end);
 
+  // Ventes produits
+  var rP = await sb.from('product_sales')
+    .select('created_at, unit_price, quantity_sold')
+    .eq('user_id', userId)
+    .gte('created_at', months[0].start)
+    .lte('created_at', months[5].end);
+
   var caByMonth = {};
   months.forEach(function(m) { caByMonth[m.key] = 0; });
-  (res.data || []).forEach(function(a) {
+
+  (rA.data || []).forEach(function(a) {
     var mk = a.datetime.slice(0, 7);
     if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price) || 0;
+  });
+  (rP.data || []).forEach(function(p) {
+    var mk = (p.created_at || '').slice(0, 7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += (parseFloat(p.unit_price) || 0) * (parseInt(p.quantity_sold) || 1);
   });
 
   var vals = months.map(function(m) { return Math.round(caByMonth[m.key]); });
