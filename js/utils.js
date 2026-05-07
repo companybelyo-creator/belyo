@@ -710,195 +710,32 @@ document.addEventListener('click', function(e) {
 });
 
 // ===== NOTIFICATIONS IN-APP =====
+// Géré par notifications.js (BNotif)
+// Les fonctions initNotifications, toggleNotifPanel, openNotifPanel,
+// closeNotifPanel et loadNotifications sont conservées pour compatibilité.
+
 var notifOpen = false;
 
 function initNotifications(userId) {
-  // Injecter la cloche dans la sidebar
-  var sidebarBottom = document.querySelector('.sidebar-bottom');
-  if (!sidebarBottom) return;
-
-  var btn = document.createElement('button');
-  btn.className = 'notif-btn';
-  btn.id = 'notif-btn';
-  btn.onclick = toggleNotifPanel;
-  btn.innerHTML = '<span class="sidebar-icon">&#9956;</span> Notifications<span class="notif-badge" id="notif-badge" style="display:none">0</span>';
-  sidebarBottom.insertBefore(btn, sidebarBottom.firstChild);
-
-  // Overlay = backdrop plein écran centré
-  var overlay = document.createElement('div');
-  overlay.id = 'notif-overlay';
-  overlay.style.cssText = [
-    'display:none',
-    'position:fixed',
-    'inset:0',
-    'z-index:9000',
-    'background:rgba(26,23,20,0.42)',
-    'backdrop-filter:blur(4px)',
-    '-webkit-backdrop-filter:blur(4px)',
-    'align-items:center',
-    'justify-content:center',
-  ].join(';');
-  overlay.onclick = function(e) { if (e.target === overlay) closeNotifPanel(); };
-
-  // Panel centré dans l'overlay
-  var panel = document.createElement('div');
-  panel.id = 'notif-panel';
-  panel.style.cssText = [
-    'width:480px',
-    'max-width:calc(100vw - 2rem)',
-    'max-height:80vh',
-    'background:var(--white,#fff)',
-    'border-radius:20px',
-    'box-shadow:0 24px 80px rgba(26,23,20,.18),0 8px 24px rgba(26,23,20,.10),0 0 0 1px rgba(26,23,20,.06)',
-    'display:flex',
-    'flex-direction:column',
-    'overflow:hidden',
-    'transform:translateY(20px) scale(.97)',
-    'opacity:0',
-    'transition:transform .25s cubic-bezier(.34,1.28,.64,1),opacity .2s ease',
-  ].join(';');
-  panel.innerHTML = ''
-    + '<div style="display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.4rem 1rem;border-bottom:1px solid rgba(26,23,20,.07);flex-shrink:0">'
-    +   '<span style="font-family:var(--font-display,serif);font-size:1.25rem;font-weight:600;color:var(--ink,#1A1714)">Notifications</span>'
-    +   '<button onclick="closeNotifPanel()" style="background:rgba(26,23,20,.06);border:none;border-radius:50%;width:30px;height:30px;font-size:18px;cursor:pointer;color:var(--ink-light,#888);display:flex;align-items:center;justify-content:center;line-height:1">&#215;</button>'
-    + '</div>'
-    + '<div class="notif-list" id="notif-list" style="overflow-y:auto;padding:1rem 1.2rem 1.2rem;flex:1;display:flex;flex-direction:column;gap:0"><div class="notif-empty">Chargement...</div></div>';
-
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
-
-  // Charger les notifications
-  loadNotifications(userId);
+  if (window.BNotif) { window.BNotif.init(userId); return; }
+  // Fallback si notifications.js non chargé
+  console.warn('[Belyo] notifications.js non chargé');
 }
 
-
-function toggleNotifPanel() {
-  if (notifOpen) closeNotifPanel();
-  else openNotifPanel();
+function toggleNotifPanel()  { if (window.BNotif) window.BNotif.toggle(); }
+function openNotifPanel()    { if (window.BNotif) window.BNotif.open(); }
+function closeNotifPanel()   { if (window.BNotif) window.BNotif.close(); }
+function loadNotifications() { if (window.BNotif) window.BNotif.refresh(); }
+function renderNotifItem()   {}
+function _timeAgo(date) {
+  var diff = Math.floor((new Date() - date) / 60000);
+  if (diff < 1)  return "À l'instant";
+  if (diff < 60) return 'Il y a ' + diff + ' min';
+  var h = Math.floor(diff / 60);
+  if (h < 24)    return 'Il y a ' + h + 'h';
+  return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
 
-function openNotifPanel() {
-  var overlay = document.getElementById('notif-overlay');
-  var panel   = document.getElementById('notif-panel');
-  if (overlay) overlay.style.display = 'flex';
-  if (panel) {
-    panel.style.transform = 'translateY(0) scale(1)';
-    panel.style.opacity   = '1';
-  }
-  notifOpen = true;
-}
-
-function closeNotifPanel() {
-  var overlay = document.getElementById('notif-overlay');
-  var panel   = document.getElementById('notif-panel');
-  if (panel) {
-    panel.style.transform = 'translateY(20px) scale(.97)';
-    panel.style.opacity   = '0';
-  }
-  setTimeout(function() {
-    if (overlay) overlay.style.display = 'none';
-  }, 220);
-  notifOpen = false;
-}
-
-async function loadNotifications(userId) {
-  var list  = document.getElementById('notif-list');
-  var badge = document.getElementById('notif-badge');
-  if (!list) return;
-
-  var notifications = [];
-  var now   = new Date();
-  var today = now.toISOString().slice(0, 10);
-
-  // 1. RDV du jour
-  var rdvRes = await sb.from('appointments')
-    .select('id, client_name, service, datetime')
-    .eq('user_id', userId)
-    .eq('status', 'pending')
-    .gte('datetime', today + 'T00:00:00')
-    .lte('datetime', today + 'T23:59:59')
-    .order('datetime', { ascending: true });
-
-  var rdvAujourdhui = rdvRes.data || [];
-
-  if (rdvAujourdhui.length > 0) {
-    rdvAujourdhui.forEach(function(a) {
-      var dt  = new Date(a.datetime);
-      var hm  = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-      var isPast = dt < now;
-      notifications.push({
-        icon: '&#9201;',
-        title: a.client_name,
-        desc: (a.service || 'RDV') + ' — ' + hm,
-        time: isPast ? 'Passe' : 'Aujourd\'hui a ' + hm,
-        unread: !isPast,
-        type: 'rdv',
-      });
-    });
-  }
-
-  // 2. Stocks en rupture/alerte
-  var stockRes = await sb.from('products')
-    .select('id, name, quantity, alert_threshold')
-    .eq('user_id', userId);
-
-  var stocksAlerte = (stockRes.data || []).filter(function(p) {
-    return p.quantity <= (p.alert_threshold || 2);
-  });
-
-  stocksAlerte.forEach(function(p) {
-    var isRupture = p.quantity === 0;
-    notifications.push({
-      icon: isRupture ? '&#9888;' : '&#9661;',
-      title: p.name,
-      desc: isRupture ? 'Rupture de stock' : 'Stock faible — ' + p.quantity + ' restant' + (p.quantity > 1 ? 's' : ''),
-      time: 'Stock',
-      unread: isRupture,
-      type: 'stock',
-    });
-  });
-
-  // Mettre à jour le badge
-  var unreadCount = notifications.filter(function(n) { return n.unread; }).length;
-  if (badge) {
-    badge.textContent = unreadCount;
-    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
-  }
-
-  // Rendre les notifications
-  if (notifications.length === 0) {
-    list.innerHTML = '<div class="notif-empty">&#10003; Tout est en ordre !</div>';
-    return;
-  }
-
-  var rdvItems   = notifications.filter(function(n) { return n.type === 'rdv'; });
-  var stockItems = notifications.filter(function(n) { return n.type === 'stock'; });
-
-  var html = '';
-
-  if (rdvItems.length > 0) {
-    html += '<div class="notif-section-label">RDV aujourd\'hui (' + rdvItems.length + ')</div>';
-    html += rdvItems.map(renderNotifItem).join('');
-  }
-
-  if (stockItems.length > 0) {
-    html += '<div class="notif-section-label" style="margin-top:8px">Alertes stock</div>';
-    html += stockItems.map(renderNotifItem).join('');
-  }
-
-  list.innerHTML = html;
-}
-
-function renderNotifItem(n) {
-  return '<div class="notif-item' + (n.unread ? ' unread' : '') + '">'
-    + '<div class="notif-icon">' + n.icon + '</div>'
-    + '<div class="notif-content">'
-    +   '<div class="notif-title">' + n.title + '</div>'
-    +   '<div class="notif-desc">' + n.desc + '</div>'
-    +   '<div class="notif-time">' + n.time + '</div>'
-    + '</div>'
-    + '</div>';
-}
 // ===== FORMAT TÉLÉPHONE =====
 function formatPhone(val) {
   // Garder uniquement les chiffres et le + initial

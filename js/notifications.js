@@ -44,33 +44,32 @@
    * ID: rdv-soon-{apptId}
    */
   async function checkUpcomingRdv(userId) {
-    var now  = new Date();
+    var now    = new Date();
+    // Uniquement les RDV pas encore commencés, dans les 20 prochaines minutes
     var plus20 = new Date(now.getTime() + 20 * 60000).toISOString();
-    var minus2 = new Date(now.getTime() -  2 * 60000).toISOString();
+    var nowISO = now.toISOString();
 
     var res = await sb.from('appointments').select('id, client_name, service, datetime')
       .eq('user_id', userId)
       .eq('status', 'pending')
-      .gte('datetime', minus2)
+      .gte('datetime', nowISO)
       .lte('datetime', plus20)
       .order('datetime', { ascending: true });
 
     if (!res.data) return [];
     return res.data.map(function(a) {
       var diffMs = new Date(a.datetime) - now;
-      var diffM  = Math.round(diffMs / 60000);
-      var id     = 'rdv-soon-' + a.id;
+      var diffM  = Math.max(1, Math.round(diffMs / 60000));
       return {
-        id:       id,
-        type:     diffM <= 0 ? 'rdv-now' : 'rdv-soon',
+        id:       'rdv-soon-' + a.id,
+        type:     'rdv-soon',
         priority: 1,
-        icon:     diffM <= 0 ? '🟢' : '⏰',
-        title:    diffM <= 0 ? 'RDV en cours' : 'RDV dans ' + diffM + ' min',
+        icon:     '⏰',
+        title:    'RDV dans ' + diffM + ' min',
         body:     a.client_name + ' — ' + (a.service || 'Prestation'),
         sub:      formatTime(a.datetime),
-        link:     null,
+        link:     'appointments.html',
         time:     new Date(),
-        _apptId:  a.id,
       };
     });
   }
@@ -82,7 +81,7 @@
   async function checkRecentRdvEvents(userId) {
     var since = new Date(Date.now() - 24 * 3600000).toISOString();
     var res   = await sb.from('appointments')
-      .select('id, client_name, service, datetime, status, updated_at, created_at')
+      .select('id, client_name, service, datetime, status, updated_at, created_at, price')
       .eq('user_id', userId)
       .gte('updated_at', since)
       .order('updated_at', { ascending: false });
@@ -91,37 +90,44 @@
     var notifs = [];
     res.data.forEach(function(a) {
       if (a.status === 'pending') {
-        var id = 'rdv-added-' + a.id;
         notifs.push({
-          id: id, type: 'rdv-added', priority: 3,
-          icon: '✅',
-          title: 'RDV confirmé',
-          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
-          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
-          link:  'appointments.html',
-          time:  new Date(a.created_at || a.updated_at),
+          id:       'rdv-added-' + a.id,
+          type:     'rdv-added',
+          priority: 3,
+          icon:     '✅',
+          title:    'Nouveau RDV',
+          body:     a.client_name + ' — ' + (a.service || 'Prestation'),
+          sub:      formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
+          link:     'appointments.html',
+          linkLabel:'Voir le RDV',
+          time:     new Date(a.created_at || a.updated_at),
         });
       } else if (a.status === 'cancelled') {
-        var id = 'rdv-cancelled-' + a.id;
         notifs.push({
-          id: id, type: 'rdv-cancelled', priority: 2,
-          icon: '❌',
-          title: 'RDV annulé',
-          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
-          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
-          link:  'appointments.html',
-          time:  new Date(a.updated_at),
+          id:       'rdv-cancelled-' + a.id,
+          type:     'rdv-cancelled',
+          priority: 2,
+          icon:     '❌',
+          title:    'RDV annulé',
+          body:     a.client_name + ' — ' + (a.service || 'Prestation'),
+          sub:      formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
+          link:     'appointments.html',
+          linkLabel:'Voir le RDV',
+          time:     new Date(a.updated_at),
         });
       } else if (a.status === 'done') {
-        var id = 'rdv-done-' + a.id;
+        var prix = a.price ? ' · ' + Math.round(parseFloat(a.price)) + '€' : '';
         notifs.push({
-          id: id, type: 'rdv-done', priority: 4,
-          icon: '🎉',
-          title: 'RDV terminé',
-          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
-          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
-          link:  'appointments.html',
-          time:  new Date(a.updated_at),
+          id:       'rdv-done-' + a.id,
+          type:     'rdv-done',
+          priority: 4,
+          icon:     '🎉',
+          title:    'RDV terminé',
+          body:     a.client_name + ' — ' + (a.service || 'Prestation') + prix,
+          sub:      formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
+          link:     'appointments.html',
+          linkLabel:'Voir le RDV',
+          time:     new Date(a.updated_at),
         });
       }
     });
