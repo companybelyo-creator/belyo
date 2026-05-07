@@ -1266,7 +1266,7 @@ async function loadPlanning() {
   if (!session) return;
   currentUser = session.user;
   initLogout();
-  initNotifications(session.user.id);
+  if (window.BNotif) BNotif.init(session.user.id);
   populateFields(currentUser);
   await loadSubscription();
   await loadPrestations();

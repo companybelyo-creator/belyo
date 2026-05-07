@@ -26,7 +26,7 @@
         <strong id="sidebar-salon">Chargement...</strong>
         <span id="sidebar-email">—</span>
       </div>
-      <a class="sidebar-link" href="#" onclick="toggleNotifPanel();return false;"><span class="sidebar-icon">🔔</span> Notifications</a>
+      <a class="sidebar-link" href="#" onclick="if(window.BNotif)BNotif.toggle();return false;"><span class="sidebar-icon">🔔</span> Notifications</a>
       <a class="sidebar-link active" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
       <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
     </div>
@@ -388,6 +388,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/notifications.js"></script>
 <script src="../js/settings.js"></script>
 </body>
 </html>

@@ -293,7 +293,7 @@ console.log('[Belyo] sb disponible ?', typeof sb);
     console.log('[Belyo] User ID:', currentUserId);
     await checkSubscription(session.user.id, session.user.created_at);
     await initPlan(session.user.id, session.user.created_at);
-    initNotifications(session.user.id);
+    if (window.BNotif) BNotif.init(session.user.id);
     var clientsRes = await sb.from('clients').select('id, name, email, phone').eq('user_id', session.user.id);
     allClients = clientsRes.data || [];
     await loadPrestationsFromSettings(session.user.id);

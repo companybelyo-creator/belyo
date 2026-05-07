@@ -823,7 +823,7 @@ async function renderTopProducts(now) {
   currentUserId = session.user.id;
   initSidebar(session.user);
   initLogout();
-  initNotifications(session.user.id);
+  if (window.BNotif) BNotif.init(session.user.id);
   await checkSubscription(session.user.id, session.user.created_at);
   await initPlan(session.user.id, session.user.created_at);
   await loadData();

@@ -26,7 +26,7 @@
         <strong id="sidebar-salon">Chargement...</strong>
         <span id="sidebar-email">—</span>
       </div>
-      <a class="sidebar-link" href="#" onclick="toggleNotifPanel();return false;"><span class="sidebar-icon">🔔</span> Notifications</a>
+      <a class="sidebar-link" href="#" onclick="if(window.BNotif)BNotif.toggle();return false;"><span class="sidebar-icon">🔔</span> Notifications</a>
       <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
       <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
     </div>
@@ -176,6 +176,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
+<script src="../js/notifications.js"></script>
 <script>
 // Guard salon — seuls les comptes role=salon accèdent au dashboard
 (async function() {
@@ -185,6 +186,7 @@
   if (meta.role !== 'salon') { window.location.href = '../client.html'; return; }
   // Créer salon_settings si pas encore fait
   await sb.rpc('create_salon_for_user', { p_user_id: s.data.session.user.id });
+  if (window.BNotif) BNotif.init(s.data.session.user.id);
 })();
 // end guard-salon
 </script>
