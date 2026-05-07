@@ -543,112 +543,79 @@ loadKPIs = async function(userId) {
   document.getElementById('kpi-month-appts').textContent = r4.count != null ? r4.count : 0;
 };
 
-// ===== GRAPHIQUE CA 6 MOIS — granularité quotidienne =====
-// Axe X : chaque jour des 6 derniers mois
-// Label : nom du mois affiché uniquement le 1er jour de chaque mois
-// Valeur : CA cumulé du jour (RDV done + ventes produits)
-// Trait plat (0) sur les jours sans CA
+// ===== GRAPHIQUE CA 6 MOIS (RDV done + produits) =====
 var _dashCaChart = null;
 async function loadDashCaChart(userId) {
   var now    = new Date();
-  // Début du mois il y a 5 mois, fin aujourd'hui
-  var startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-  var endDate   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key:   d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'),
+      label: d.toLocaleDateString('fr-FR', { month: 'short', year: '2-digit' }),
+      start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+      end:   new Date(d.getFullYear(), d.getMonth()+1, 0, 23, 59, 59).toISOString(),
+    });
+  }
 
-  var fromISO = startDate.toISOString();
-  var toISO   = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate(), 23, 59, 59).toISOString();
+  var from = months[0].start;
+  var to   = months[5].end;
 
-  // RDV done sur la période
+  // RDV done sur 6 mois
   var rA = await sb.from('appointments').select('datetime, price')
     .eq('user_id', userId).eq('status', 'done')
-    .gte('datetime', fromISO).lte('datetime', toISO);
+    .gte('datetime', from).lte('datetime', to);
 
-  // Ventes produits sur la période
+  // Ventes produits sur 6 mois
   var rP = await sb.from('product_sales').select('created_at, unit_price, quantity_sold')
-    .eq('user_id', userId).gte('created_at', fromISO).lte('created_at', toISO);
+    .eq('user_id', userId).gte('created_at', from).lte('created_at', to);
 
-  // Agréger par jour (clé : 'YYYY-MM-DD')
-  var caByDay = {};
+  // Agréger par mois
+  var caByMonth = {};
+  months.forEach(function(m) { caByMonth[m.key] = 0; });
+
   (rA.data||[]).forEach(function(a) {
-    var dk = a.datetime.slice(0,10);
-    caByDay[dk] = (caByDay[dk] || 0) + (parseFloat(a.price)||0);
+    var mk = a.datetime.slice(0,7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price)||0;
   });
   (rP.data||[]).forEach(function(p) {
-    var dk = (p.created_at||'').slice(0,10);
-    caByDay[dk] = (caByDay[dk] || 0) + (parseFloat(p.unit_price)||0) * (parseInt(p.quantity_sold)||1);
+    var mk = (p.created_at||'').slice(0,7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += (parseFloat(p.unit_price)||0) * (parseInt(p.quantity_sold)||1);
   });
 
-  // Construire la liste des jours de startDate à aujourd'hui
-  var labels = [];
-  var values = [];
-  var monthLabels = {}; // index => label du mois
-
-  var cur = new Date(startDate);
-  var idx = 0;
-  while (cur <= endDate) {
-    var yyyy = cur.getFullYear();
-    var mm   = String(cur.getMonth()+1).padStart(2,'0');
-    var dd   = String(cur.getDate()).padStart(2,'0');
-    var dk   = yyyy + '-' + mm + '-' + dd;
-
-    // Label : nom du mois uniquement au 1er jour
-    var label = '';
-    if (cur.getDate() === 1) {
-      label = cur.toLocaleDateString('fr-FR', { month: 'short' });
-      monthLabels[idx] = label;
-    }
-    labels.push(label);
-    values.push(Math.round(caByDay[dk] || 0));
-
-    cur.setDate(cur.getDate() + 1);
-    idx++;
-  }
+  var labels = months.map(function(m) { return m.label; });
+  var values = months.map(function(m) { return Math.round(caByMonth[m.key]); });
+  var maxVal = Math.max.apply(null, values) || 1;
 
   var ctx = document.getElementById('dash-ca-chart');
   if (!ctx) return;
   if (_dashCaChart) _dashCaChart.destroy();
 
-  // Gradient fill sous la courbe
-  var chartCtx = ctx.getContext('2d');
-  var grad = chartCtx.createLinearGradient(0, 0, 0, 180);
-  grad.addColorStop(0,   'rgba(196,168,122,0.28)');
-  grad.addColorStop(1,   'rgba(196,168,122,0.02)');
-
-  _dashCaChart = new Chart(chartCtx, {
-    type: 'line',
+  _dashCaChart = new Chart(ctx.getContext('2d'), {
+    type: 'bar',
     data: {
       labels: labels,
       datasets: [{
         data: values,
-        borderColor: '#C4A87A',
-        borderWidth: 2,
-        pointRadius: values.map(function(v) { return v > 0 ? 3 : 0; }),
-        pointBackgroundColor: '#C4A87A',
-        pointHoverRadius: 5,
-        fill: true,
-        backgroundColor: grad,
-        tension: 0.35,
-        spanGaps: true,
+        backgroundColor: values.map(function(v, i) {
+          // Mois courant (dernier) = couleur foncée, les autres = doré
+          return i === values.length - 1 ? '#1A1714' : '#C4A87A';
+        }),
+        borderRadius: 6,
+        borderSkipped: false,
+        barPercentage: 0.5,
+        categoryPercentage: 0.65,
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 400 },
       plugins: {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            title: function(items) {
-              // Retrouver la date réelle depuis l'index
-              var i   = items[0].dataIndex;
-              var d   = new Date(startDate);
-              d.setDate(d.getDate() + i);
-              return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-            },
             label: function(c) { return c.raw + '\u20ac'; }
-          },
-          displayColors: false,
+          }
         }
       },
       scales: {
@@ -656,25 +623,14 @@ async function loadDashCaChart(userId) {
           beginAtZero: true,
           grid: { color: 'rgba(26,23,20,0.06)' },
           ticks: {
-            color: '#5C5550',
-            font: { size: 11 },
-            maxTicksLimit: 5,
+            color: '#5C5550', font: { size: 11 },
             callback: function(v) { return v + '\u20ac'; }
           },
           border: { display: false }
         },
         x: {
           grid: { display: false },
-          ticks: {
-            color: '#5C5550',
-            font: { size: 11 },
-            maxRotation: 0,
-            autoSkip: false,
-            // N'afficher que les labels non vides (= 1er du mois)
-            callback: function(val, i) {
-              return labels[i] || null;
-            }
-          },
+          ticks: { color: '#5C5550', font: { size: 11 } },
           border: { display: false }
         }
       }
@@ -816,37 +772,38 @@ var _origInit = window.onload;
   }, 300);
 })();
 
-// ===== SPARKLINE CA : vrais calculs depuis Supabase =====
-// Charge les RDV "done" du mois en cours, regroupe par jour, génère la courbe
+// ===== SPARKLINE CA : du 1er du mois jusqu'à aujourd'hui =====
+// Chaque point = un jour. Trait plat (0) si pas de CA ce jour.
+// Le 1er point (tout à gauche) = jour 1 du mois.
 async function loadCaSparkline(userId) {
-  var now       = new Date();
-  var year      = now.getFullYear();
-  var month     = now.getMonth();
-  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var now        = new Date();
+  var year       = now.getFullYear();
+  var month      = now.getMonth();
+  var today      = now.getDate();
   var startMonth = new Date(year, month, 1).toISOString();
-  var endMonth   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  var endToday   = new Date(year, month, today, 23, 59, 59).toISOString();
 
   var res = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
     .eq('status', 'done')
     .gte('datetime', startMonth)
-    .lte('datetime', endMonth);
+    .lte('datetime', endToday);
 
-  // Agréger par jour
+  // Agréger par numéro de jour (1..today)
   var byDay = {};
-  for (var d = 1; d <= daysInMonth; d++) byDay[d] = 0;
   (res.data || []).forEach(function(a) {
     var day = new Date(a.datetime).getDate();
     byDay[day] = (byDay[day] || 0) + (parseFloat(a.price) || 0);
   });
 
-  // Prendre un point tous les ~4 jours pour avoir 7-8 points
-  var step = Math.max(1, Math.floor(daysInMonth / 7));
+  // Un point par jour du 1er jusqu'à aujourd'hui inclus
   var vals = [];
-  for (var d = 1; d <= daysInMonth; d += step) vals.push(byDay[d] || 0);
-  // S'assurer qu'on a le dernier jour
-  if (vals.length < 2) vals = [0, 0];
+  for (var d = 1; d <= today; d++) {
+    vals.push(byDay[d] || 0);
+  }
+  // Minimum 2 points pour tracer une ligne
+  if (vals.length < 2) vals = [0, vals[0] || 0];
 
   var svgEl = document.getElementById('ca-sparkline-svg');
   if (!svgEl) return;
