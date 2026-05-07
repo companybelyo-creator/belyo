@@ -81,8 +81,8 @@ document.addEventListener('click', function(e) {
 var selectedGenre = 'homme';
 
 var PRESTATIONS = {
-  homme: ['Coupe', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin', 'Autre'],
-  femme: ['Coupe', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
+  homme: ['Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin'],
+  femme: ['Brushing', 'Coloration', 'Balayage', 'Soin'],
 };
 
 var PRIX_DUREE = { homme: {}, femme: {} };
@@ -97,8 +97,8 @@ async function loadPrestationsFromSettings(userId) {
     .maybeSingle();
 
   if (res.data && res.data.prestations) {
-    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
-    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
+    PRESTATIONS.homme = (res.data.prestations.homme || []).filter(function(p) { return p !== 'Coupe' && p !== 'Autre'; });
+    PRESTATIONS.femme = (res.data.prestations.femme || []).filter(function(p) { return p !== 'Coupe' && p !== 'Autre'; });
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
   if (res.data && res.data.planning)   salonPlanning = res.data.planning;
@@ -172,9 +172,9 @@ function updateServiceOptions() {
       + '</div>';
   }).join('');
 
-  // Sélectionner la première prestation par défaut (priorité à Coupe, sinon la première)
-  var defaultOpt = options.find(function(p) { return p.toLowerCase() === 'coupe'; }) || options[0];
-  if (defaultOpt && defaultOpt !== 'Autre') {
+  // Sélectionner la première prestation par défaut
+  var defaultOpt = options[0];
+  if (defaultOpt) {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
     var prix = pd && pd.prix ? pd.prix : 0;
     if (!prix) {
