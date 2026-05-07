@@ -772,7 +772,7 @@ var _origInit = window.onload;
   }, 300);
 })();
 
-// ===== SPARKLINE CA : 6 barres mensuelles (mois-5 -> mois actuel) =====
+// ===== SPARKLINE CA : courbe 6 mois (mois-5 -> mois actuel) =====
 // CA = RDV done + ventes produits, identique a loadKPIs
 async function loadCaSparkline(userId) {
   var now = new Date();
@@ -786,7 +786,6 @@ async function loadCaSparkline(userId) {
     });
   }
 
-  // RDV done
   var rA = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
@@ -794,7 +793,6 @@ async function loadCaSparkline(userId) {
     .gte('datetime', months[0].start)
     .lte('datetime', months[5].end);
 
-  // Ventes produits
   var rP = await sb.from('product_sales')
     .select('created_at, unit_price, quantity_sold')
     .eq('user_id', userId)
@@ -814,23 +812,11 @@ async function loadCaSparkline(userId) {
   });
 
   var vals = months.map(function(m) { return Math.round(caByMonth[m.key]); });
-  var maxVal = Math.max.apply(null, vals) || 1;
-  var n = vals.length;
-  var W = 78, H = 28, pad = 3, gap = 2;
-  var barW = Math.floor((W - gap * (n - 1)) / n);
-
-  var bars = vals.map(function(v, i) {
-    var barH = v > 0 ? Math.max(3, Math.round((v / maxVal) * (H - pad))) : 2;
-    var x = i * (barW + gap);
-    var y = H - barH;
-    var fill = (i === n - 1) ? '#3D8B6F' : 'rgba(61,139,111,0.35)';
-    return '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + barH + '" rx="1.5" fill="' + fill + '"/>';
-  }).join('');
 
   var svgEl = document.getElementById('ca-sparkline-svg');
   if (!svgEl) return;
   svgEl.setAttribute('viewBox', '0 0 78 28');
-  svgEl.innerHTML = bars;
+  svgEl.innerHTML = buildSparklineSVG(vals, '#3D8B6F', 'sg-ca');
 }
 
 
