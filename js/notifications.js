@@ -434,7 +434,7 @@
       buildPanelDOM();
 
       // Wire up all trigger buttons
-      var btns = document.querySelectorAll('[data-notif-trigger], #dash-notif-btn, #sidebar-notif-btn');
+      var btns = document.querySelectorAll('[data-notif-trigger], #sidebar-notif-btn');
       btns.forEach(function(btn) {
         btn.addEventListener('click', function(e) {
           e.stopPropagation();
