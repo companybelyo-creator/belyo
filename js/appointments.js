@@ -955,6 +955,28 @@ async function updateStatus(id, status) {
   var toastMsg = status === 'done' ? 'RDV marqué terminé !' : status === 'cancelled' ? 'RDV annulé' : 'RDV remis en attente';
   showToast(toastMsg);
 
+  // Mettre à jour visit_count du client
+  if (a && a.client_name) {
+    var prevStatus = a.status;
+    var clientRes = await sb.from('clients')
+      .select('id, visit_count')
+      .eq('user_id', currentUserId)
+      .ilike('name', a.client_name.trim())
+      .maybeSingle();
+    if (clientRes.data) {
+      var currentCount = clientRes.data.visit_count || 0;
+      var newCount = currentCount;
+      if (status === 'done' && prevStatus !== 'done') {
+        newCount = currentCount + 1;
+      } else if (status !== 'done' && prevStatus === 'done') {
+        newCount = Math.max(0, currentCount - 1);
+      }
+      if (newCount !== currentCount) {
+        await sb.from('clients').update({ visit_count: newCount }).eq('id', clientRes.data.id);
+      }
+    }
+  }
+
   // Insérer une notification persistante
   var a = allAppts.find(function(x) { return x.id === id; });
   if (a && window.BNotifInsert && status !== 'pending') {
@@ -1093,7 +1115,7 @@ document.getElementById('modal-overlay').addEventListener('click', function(e) {
   if (e.target === e.currentTarget) closeModal();
 });
 
-// upsertClientFull — crée ou met à jour avec email + téléphone
+// upsertClientFull — crée ou met à jour avec email + téléphone (sans toucher visit_count)
 async function upsertClientFull(userId, clientName, apptDatetime, email, phone) {
   if (!clientName || !userId) return;
   var today = apptDatetime ? apptDatetime.slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -1104,20 +1126,18 @@ async function upsertClientFull(userId, clientName, apptDatetime, email, phone) 
     .ilike('name', clientName.trim())
     .maybeSingle();
 
-  var updateData = { visit_count: 1 };
-  if (email) updateData.email = email;
-  if (phone) updateData.phone = phone;
-
   if (res.data) {
-    var lastVisit = res.data.last_visit;
-    updateData.visit_count = (res.data.visit_count || 0) + 1;
-    if (!lastVisit || today > lastVisit) updateData.last_visit = today;
-    await sb.from('clients').update(updateData).eq('id', res.data.id);
+    var updateData = {};
+    if (email) updateData.email = email;
+    if (phone) updateData.phone = phone;
+    if (Object.keys(updateData).length > 0) {
+      await sb.from('clients').update(updateData).eq('id', res.data.id);
+    }
   } else {
-    updateData.user_id    = userId;
-    updateData.name       = clientName.trim();
-    updateData.last_visit = today;
-    await sb.from('clients').insert(updateData);
+    var insertData = { user_id: userId, name: clientName.trim(), last_visit: today, visit_count: 0 };
+    if (email) insertData.email = email;
+    if (phone) insertData.phone = phone;
+    await sb.from('clients').insert(insertData);
   }
 
   // Rafraîchir la liste locale
