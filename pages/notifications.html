@@ -136,9 +136,10 @@
     window.location.href = 'login.html';
   });
 
-  document.getElementById('clear-all-btn').addEventListener('click', function() {
+  document.getElementById('clear-all-btn').addEventListener('click', async function() {
+    await sb.from('notifications').delete().eq('user_id', userId);
+    _currentNotifs = [];
     renderNotifications([]);
-    saveDismissedAll(_currentNotifs);
   });
 
   await loadPageNotifications(userId);
@@ -155,114 +156,38 @@ function _timeAgo(date) {
   return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
 
-function _fmt(iso, opts) {
-  return new Date(iso).toLocaleDateString('fr-FR', opts);
-}
-function _fmtTime(iso) {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-}
+async function loadPageNotifications(userId) {
+  var since15 = new Date(Date.now() - 15 * 24 * 3600000).toISOString();
+  var res = await sb.from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('created_at', since15)
+    .order('created_at', { ascending: false });
 
-var _dismissedKey = 'belyo_dismissed_notifs';
-function getDismissed() {
-  try { return JSON.parse(localStorage.getItem(_dismissedKey) || '[]'); } catch(e) { return []; }
-}
-function saveDismissedAll(notifs) {
-  var d = getDismissed();
-  notifs.forEach(function(n) { if (d.indexOf(n.id) === -1) d.push(n.id); });
-  try { localStorage.setItem(_dismissedKey, JSON.stringify(d)); } catch(e) {}
-}
-function isDismissed(id) { return getDismissed().indexOf(id) !== -1; }
-function dismissOne(id) {
-  var d = getDismissed();
-  if (d.indexOf(id) === -1) { d.push(id); }
-  try { localStorage.setItem(_dismissedKey, JSON.stringify(d)); } catch(e) {}
-  _currentNotifs = _currentNotifs.filter(function(n) { return n.id !== id; });
+  _currentNotifs = (res.data || []).map(function(r) {
+    return {
+      id:         r.id,
+      type:       r.type,
+      icon:       r.icon       || '🔔',
+      title:      r.title,
+      body:       r.body       || '',
+      sub:        r.sub        || '',
+      link:       r.link       || null,
+      link_label: r.link_label || 'Voir →',
+      is_read:    r.is_read,
+      time:       new Date(r.created_at),
+    };
+  });
+
+  // Marquer tout comme lu à la visite de la page
+  await sb.from('notifications').update({ is_read: true }).eq('user_id', userId).eq('is_read', false);
+
   renderNotifications(_currentNotifs);
 }
 
-async function loadPageNotifications(userId) {
-  var now     = new Date();
-  var since24 = new Date(now.getTime() - 24 * 3600000).toISOString();
-  var notifs  = [];
-
-  // 1. Nouveaux RDV (pending créés dans les 24h)
-  var rNew = await sb.from('appointments')
-    .select('id, client_name, service, datetime, created_at')
-    .eq('user_id', userId).eq('status', 'pending')
-    .gte('created_at', since24).order('created_at', { ascending: false });
-  (rNew.data || []).forEach(function(a) {
-    notifs.push({
-      id: 'rdv-added-' + a.id, type: 'rdv-added',
-      icon: '✅', title: 'Nouveau RDV',
-      body: a.client_name + ' — ' + (a.service || 'Prestation'),
-      sub:  _fmt(a.datetime, { weekday:'short', day:'numeric', month:'short' }) + ' à ' + _fmtTime(a.datetime),
-      link: 'appointments.html', linkLabel: 'Voir le RDV',
-      time: new Date(a.created_at),
-    });
-  });
-
-  // 2. RDV annulés (24h)
-  var rCan = await sb.from('appointments')
-    .select('id, client_name, service, datetime, updated_at')
-    .eq('user_id', userId).eq('status', 'cancelled')
-    .gte('updated_at', since24).order('updated_at', { ascending: false });
-  (rCan.data || []).forEach(function(a) {
-    notifs.push({
-      id: 'rdv-cancelled-' + a.id, type: 'rdv-cancelled',
-      icon: '❌', title: 'RDV annulé',
-      body: a.client_name + ' — ' + (a.service || 'Prestation'),
-      sub:  _fmt(a.datetime, { weekday:'short', day:'numeric', month:'short' }) + ' à ' + _fmtTime(a.datetime),
-      link: 'appointments.html', linkLabel: 'Voir le RDV',
-      time: new Date(a.updated_at),
-    });
-  });
-
-  // 3. RDV terminés (24h)
-  var rDone = await sb.from('appointments')
-    .select('id, client_name, service, datetime, updated_at, price')
-    .eq('user_id', userId).eq('status', 'done')
-    .gte('updated_at', since24).order('updated_at', { ascending: false });
-  (rDone.data || []).forEach(function(a) {
-    var prix = a.price ? ' · ' + Math.round(parseFloat(a.price)) + '€' : '';
-    notifs.push({
-      id: 'rdv-done-' + a.id, type: 'rdv-done',
-      icon: '🎉', title: 'RDV terminé',
-      body: a.client_name + ' — ' + (a.service || 'Prestation') + prix,
-      sub:  _fmt(a.datetime, { weekday:'short', day:'numeric', month:'short' }) + ' à ' + _fmtTime(a.datetime),
-      link: 'appointments.html', linkLabel: 'Voir le RDV',
-      time: new Date(a.updated_at),
-    });
-  });
-
-  // 4. Stocks épuisés / faibles
-  var rStock = await sb.from('products')
-    .select('id, name, quantity, alert_threshold')
-    .eq('user_id', userId);
-  (rStock.data || []).forEach(function(p) {
-    var qty = p.quantity || 0;
-    var thr = p.alert_threshold || 2;
-    if (qty === 0) {
-      notifs.push({
-        id: 'stock-empty-' + p.id, type: 'stock-empty',
-        icon: '🚨', title: 'Stock épuisé',
-        body: p.name, sub: '0 unité restante',
-        link: 'stocks.html', linkLabel: 'Gérer les stocks',
-        time: now,
-      });
-    } else if (qty <= thr) {
-      notifs.push({
-        id: 'stock-low-' + p.id, type: 'stock-low',
-        icon: '⚠️', title: 'Stock faible',
-        body: p.name,
-        sub:  qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''),
-        link: 'stocks.html', linkLabel: 'Gérer les stocks',
-        time: now,
-      });
-    }
-  });
-
-  // Filtrer dismissées
-  _currentNotifs = notifs.filter(function(n) { return !isDismissed(n.id); });
+async function dismissOne(id) {
+  await sb.from('notifications').delete().eq('id', id);
+  _currentNotifs = _currentNotifs.filter(function(n) { return n.id !== id; });
   renderNotifications(_currentNotifs);
 }
 
@@ -283,12 +208,16 @@ function renderNotifications(notifs) {
     { label: 'RDV annulés',   types: ['rdv-cancelled'],            items: [] },
     { label: 'RDV terminés',  types: ['rdv-done'],                 items: [] },
     { label: 'Alertes stock', types: ['stock-empty', 'stock-low'], items: [] },
+    { label: 'Rapports',      types: ['rapport'],                  items: [] },
+    { label: 'Autres',        types: ['other'],                    items: [] },
   ];
 
   notifs.forEach(function(n) {
+    var placed = false;
     sections.forEach(function(s) {
-      if (s.types.indexOf(n.type) !== -1) s.items.push(n);
+      if (s.types.indexOf(n.type) !== -1) { s.items.push(n); placed = true; }
     });
+    if (!placed) sections[sections.length - 1].items.push(n);
   });
 
   var typeClass = {
@@ -305,15 +234,15 @@ function renderNotifications(notifs) {
     html += '<div class="notif-page-section">';
     html += '<div class="notif-page-section-label">' + s.label + ' (' + s.items.length + ')</div>';
     s.items.forEach(function(n) {
-      html += '<div class="notif-card ' + (typeClass[n.type] || '') + '" data-id="' + n.id + '">'
+      html += '<div class="notif-card ' + (typeClass[n.type] || '') + '" data-id="' + n.id + '" style="opacity:' + (n.is_read ? '.75' : '1') + '">'
         + '<div class="notif-card-icon">' + n.icon + '</div>'
         + '<div class="notif-card-content">'
         + '<div class="notif-card-title">' + n.title + '</div>'
         + '<div class="notif-card-body">' + n.body + '</div>'
-        + '<div class="notif-card-sub">' + n.sub + ' · ' + _timeAgo(n.time) + '</div>'
-        + (n.link ? '<div class="notif-card-action"><a href="' + n.link + '" class="notif-card-link">' + (n.linkLabel || 'Voir →') + '</a></div>' : '')
+        + '<div class="notif-card-sub">' + n.sub + (n.sub ? ' · ' : '') + _timeAgo(n.time) + '</div>'
+        + (n.link ? '<div class="notif-card-action"><a href="' + n.link + '" class="notif-card-link">' + n.link_label + '</a></div>' : '')
         + '</div>'
-        + '<button class="notif-card-dismiss" onclick="dismissOne(\'' + n.id + '\')" title="Masquer">×</button>'
+        + '<button class="notif-card-dismiss" onclick="dismissOne(\'' + n.id + '\')" title="Supprimer">×</button>'
         + '</div>';
     });
     html += '</div>';

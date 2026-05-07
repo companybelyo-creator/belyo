@@ -946,6 +946,29 @@ async function updateStatus(id, status) {
   var res = await sb.from('appointments').update({ status: status }).eq('id', id);
   if (res.error) { showToast('Erreur', 'error'); return; }
   showToast(status === 'done' ? 'RDV marqué terminé !' : 'RDV annulé');
+
+  // Insérer une notification persistante
+  var a = allAppts.find(function(x) { return x.id === id; });
+  if (a && window.BNotifInsert) {
+    var dtLabel = new Date(a.datetime).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' })
+      + ' à ' + new Date(a.datetime).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    if (status === 'done') {
+      var prix = a.price ? ' · ' + Math.round(parseFloat(a.price)) + '€' : '';
+      await window.BNotifInsert(currentUserId, {
+        type: 'rdv-done', icon: '🎉', title: 'RDV terminé',
+        body: a.client_name + ' — ' + (a.service || 'Prestation') + prix,
+        sub: dtLabel, link: 'appointments.html', link_label: 'Voir le RDV',
+      });
+    } else {
+      await window.BNotifInsert(currentUserId, {
+        type: 'rdv-cancelled', icon: '❌', title: 'RDV annulé',
+        body: a.client_name + ' — ' + (a.service || 'Prestation'),
+        sub: dtLabel, link: 'appointments.html', link_label: 'Voir le RDV',
+      });
+    }
+    if (window.BNotif) window.BNotif.refresh();
+  }
+
   await loadAppts();
 }
 
@@ -1041,6 +1064,19 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
 
   closeModal();
   showToast('Rendez-vous ajouté !');
+
+  // Insérer une notification persistante pour les nouveaux RDV uniquement
+  if (!editApptId && window.BNotifInsert) {
+    var dtLabel = new Date(datetime).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' })
+      + ' à ' + new Date(datetime).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    await window.BNotifInsert(currentUserId, {
+      type: 'rdv-added', icon: '✅', title: 'Nouveau RDV',
+      body: clientName + ' — ' + (serviceVal || 'Prestation'),
+      sub: dtLabel, link: 'appointments.html', link_label: 'Voir le RDV',
+    });
+    if (window.BNotif) window.BNotif.refresh();
+  }
+
   await loadAppts();
 });
 
