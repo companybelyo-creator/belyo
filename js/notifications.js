@@ -79,12 +79,14 @@
    * IDs: rdv-added-{id}, rdv-cancelled-{id}, rdv-done-{id}
    */
   async function checkRecentRdvEvents(userId) {
-    var since = new Date(Date.now() - 24 * 3600000).toISOString();
+    // updated_at / created_at n'existent pas dans la table — on filtre sur datetime
+    // On remonte les RDV des 7 derniers jours pour couvrir annulés et terminés récents
+    var since = new Date(Date.now() - 7 * 24 * 3600000).toISOString();
     var res   = await sb.from('appointments')
-      .select('id, client_name, service, datetime, status, updated_at, created_at, price')
+      .select('id, client_name, service, datetime, status, price')
       .eq('user_id', userId)
-      .gte('updated_at', since)
-      .order('updated_at', { ascending: false });
+      .gte('datetime', since)
+      .order('datetime', { ascending: false });
 
     if (!res.data) return [];
     var notifs = [];
@@ -100,7 +102,7 @@
           sub:      formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
           link:     'appointments.html',
           linkLabel:'Voir le RDV',
-          time:     new Date(a.created_at || a.updated_at),
+          time:     new Date(a.datetime),
         });
       } else if (a.status === 'cancelled') {
         notifs.push({
@@ -113,7 +115,7 @@
           sub:      formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
           link:     'appointments.html',
           linkLabel:'Voir le RDV',
-          time:     new Date(a.updated_at),
+          time:     new Date(a.datetime),
         });
       } else if (a.status === 'done') {
         var prix = a.price ? ' · ' + Math.round(parseFloat(a.price)) + '€' : '';
@@ -127,7 +129,7 @@
           sub:      formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
           link:     'appointments.html',
           linkLabel:'Voir le RDV',
-          time:     new Date(a.updated_at),
+          time:     new Date(a.datetime),
         });
       }
     });
