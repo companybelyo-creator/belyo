@@ -371,10 +371,12 @@
     _panelOpen = true;
     renderPanel();
 
-    overlay.classList.add('notif-overlay--open');
-    panel.classList.add('notif-panel--open');
+    overlay.style.display = 'flex';
+    setTimeout(function() {
+      panel.style.transform = 'translateY(0) scale(1)';
+      panel.style.opacity   = '1';
+    }, 10);
 
-    // Mark all as read
     _notifications.forEach(function(n) { dismiss(n.id); });
     _unreadCount = 0;
     updateBadges();
@@ -384,8 +386,13 @@
     var overlay = document.getElementById('notif-overlay');
     var panel   = document.getElementById('notif-panel');
     _panelOpen  = false;
-    if (overlay) overlay.classList.remove('notif-overlay--open');
-    if (panel)   panel.classList.remove('notif-panel--open');
+    if (panel) {
+      panel.style.transform = 'translateY(24px) scale(.96)';
+      panel.style.opacity   = '0';
+    }
+    setTimeout(function() {
+      if (overlay) overlay.style.display = 'none';
+    }, 250);
   }
 
   function togglePanel() {
@@ -396,15 +403,20 @@
   function buildPanelDOM() {
     if (document.getElementById('notif-panel')) return;
 
-    // Calculer la largeur de la sidebar pour centrer le panel dans la zone de contenu
-    var sidebar = document.querySelector('.sidebar, aside.sidebar, #sidebar');
-    var sidebarW = sidebar ? sidebar.offsetWidth : 0;
-
     // Overlay
     var overlay = document.createElement('div');
     overlay.id  = 'notif-overlay';
-    overlay.className = 'notif-overlay';
-    overlay.style.left = sidebarW + 'px';
+    overlay.style.cssText = [
+      'position:fixed',
+      'top:0', 'left:0', 'right:0', 'bottom:0',
+      'z-index:9999',
+      'background:rgba(26,23,20,0.45)',
+      'backdrop-filter:blur(6px)',
+      '-webkit-backdrop-filter:blur(6px)',
+      'display:none',
+      'align-items:center',
+      'justify-content:center',
+    ].join(';');
     overlay.addEventListener('click', function(e) {
       if (e.target === overlay) closePanel();
     });
@@ -412,20 +424,33 @@
     // Panel
     var panel = document.createElement('div');
     panel.id  = 'notif-panel';
-    panel.className = 'notif-panel';
+    panel.style.cssText = [
+      'width:480px',
+      'max-width:calc(100vw - 2rem)',
+      'max-height:80vh',
+      'background:#FDFCFA',
+      'border-radius:24px',
+      'box-shadow:0 32px 100px rgba(26,23,20,.22),0 8px 32px rgba(26,23,20,.12),0 0 0 1px rgba(26,23,20,.07)',
+      'display:flex',
+      'flex-direction:column',
+      'overflow:hidden',
+      'transform:translateY(24px) scale(.96)',
+      'opacity:0',
+      'transition:transform .3s cubic-bezier(.34,1.28,.64,1),opacity .22s ease',
+    ].join(';');
     panel.innerHTML = ''
-      + '<div class="notif-panel-head">'
-      + '  <div class="notif-panel-head-left">'
-      + '    <span class="notif-panel-title">Notifications</span>'
-      + '    <span class="notif-panel-count" id="notif-panel-count"></span>'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.5rem 1.1rem;border-bottom:1px solid rgba(26,23,20,.07);flex-shrink:0">'
+      + '  <div style="display:flex;align-items:center;gap:10px">'
+      + '    <span style="font-family:var(--font-display,serif);font-size:1.4rem;font-weight:600;color:#1A1714;letter-spacing:-.02em">Notifications</span>'
+      + '    <span id="notif-panel-count" style="display:none;font-size:10px;font-weight:700;background:#C0392B;color:#fff;border-radius:100px;padding:2px 7px"></span>'
       + '  </div>'
-      + '  <div class="notif-panel-head-right">'
-      + '    <button class="notif-clear-btn" onclick="window.BNotif.clearAll()">Tout effacer</button>'
-      + '    <button class="notif-x-btn" onclick="window.BNotif.close()">&#215;</button>'
+      + '  <div style="display:flex;align-items:center;gap:8px">'
+      + '    <button onclick="window.BNotif.clearAll()" style="background:none;border:1px solid rgba(26,23,20,.13);border-radius:100px;padding:5px 14px;font-size:11px;font-weight:500;color:#888;cursor:pointer">Tout effacer</button>'
+      + '    <button onclick="window.BNotif.close()" style="background:rgba(26,23,20,.07);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#888;cursor:pointer">&#215;</button>'
       + '  </div>'
       + '</div>'
-      + '<div class="notif-body" id="notif-panel-body">'
-      + '  <div class="notif-loading">Chargement...</div>'
+      + '<div id="notif-panel-body" style="overflow-y:auto;padding:1rem 1.2rem 1.4rem;flex:1;display:flex;flex-direction:column">'
+      + '  <div style="padding:2.5rem;text-align:center;font-size:13px;color:#999">Chargement...</div>'
       + '</div>';
 
     overlay.appendChild(panel);
