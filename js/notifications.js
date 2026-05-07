@@ -396,10 +396,15 @@
   function buildPanelDOM() {
     if (document.getElementById('notif-panel')) return;
 
+    // Calculer la largeur de la sidebar pour centrer le panel dans la zone de contenu
+    var sidebar = document.querySelector('.sidebar, aside.sidebar, #sidebar');
+    var sidebarW = sidebar ? sidebar.offsetWidth : 0;
+
     // Overlay
     var overlay = document.createElement('div');
     overlay.id  = 'notif-overlay';
     overlay.className = 'notif-overlay';
+    overlay.style.left = sidebarW + 'px';
     overlay.addEventListener('click', function(e) {
       if (e.target === overlay) closePanel();
     });
