@@ -431,6 +431,11 @@
   window.BNotif = {
     init: function(userId) {
       _userId = userId;
+
+      // Forcer la suppression de tout panel créé par utils.js
+      var old = document.getElementById('notif-overlay');
+      if (old) old.parentNode.removeChild(old);
+
       buildPanelDOM();
 
       // Wire up all trigger buttons
