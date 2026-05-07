@@ -85,6 +85,14 @@
       "dest": "/client/slug.html"
     },
     {
+      "src": "/notifications.html",
+      "dest": "/notifications.html"
+    },
+    {
+      "src": "/notifications",
+      "dest": "/notifications.html"
+    },
+    {
       "src": "/([a-z0-9-]+)",
       "dest": "/slug.html?slug=$1"
     },
