@@ -210,7 +210,7 @@ function addSaleLine() {
   var div = document.createElement('div');
   div.className = 'stk-sale-line';
   div.id = id;
-  div.innerHTML = '<select class="sale-select" onchange="updateSaleLine(\'' + id + '\')">' + buildProductOptions() + '</select>'
+  div.innerHTML = '<div class="stk-sale-line-select-wrap"><select class="sale-select" onchange="updateSaleLine(\'' + id + '\')">' + buildProductOptions() + '</select></div>'
     + '<div class="stk-sale-line-qty">'
       + '<button class="qty-btn" onclick="changeSaleLineQty(\'' + id + '\',-1)" type="button">−</button>'
       + '<span class="qty-val sale-qty-val">1</span>'
