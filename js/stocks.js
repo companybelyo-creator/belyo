@@ -388,6 +388,53 @@ async function loadProducts() {
   allProducts = res.data || [];
   updateKPIs();
   renderProducts();
+  await checkStockAlerts();
+}
+
+async function checkStockAlerts() {
+  if (!currentUserId || !window.BNotifInsert) return;
+
+  // Récupérer les notifs stock déjà envoyées aujourd'hui pour éviter le spam
+  var todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  var res = await sb.from('notifications')
+    .select('body, type')
+    .eq('user_id', currentUserId)
+    .in('type', ['stock-low', 'stock-empty'])
+    .gte('created_at', todayStart.toISOString());
+  var alreadySent = new Set((res.data || []).map(function(n) { return n.type + '|' + n.body; }));
+
+  for (var i = 0; i < allProducts.length; i++) {
+    var p = allProducts[i];
+    var label = p.name + (p.brand ? ' — ' + p.brand : '');
+    var status = getStatus(p.quantity, p.alert_threshold);
+
+    if (status === 'empty') {
+      var key = 'stock-empty|' + label;
+      if (!alreadySent.has(key)) {
+        await window.BNotifInsert(currentUserId, {
+          type: 'stock-empty', icon: '🚨', title: 'Rupture de stock',
+          body: label,
+          sub: 'Quantité : 0 unité',
+          link: 'stocks.html', link_label: 'Voir les stocks',
+        });
+        alreadySent.add(key);
+      }
+    } else if (status === 'low') {
+      var key = 'stock-low|' + label;
+      if (!alreadySent.has(key)) {
+        await window.BNotifInsert(currentUserId, {
+          type: 'stock-low', icon: '⚠️', title: 'Stock faible',
+          body: label,
+          sub: 'Quantité : ' + p.quantity + ' unité' + (p.quantity > 1 ? 's' : '') + ' (seuil : ' + p.alert_threshold + ')',
+          link: 'stocks.html', link_label: 'Voir les stocks',
+        });
+        alreadySent.add(key);
+      }
+    }
+  }
+
+  if (window.BNotif) window.BNotif.refresh();
 }
 
 async function loadSales() {
