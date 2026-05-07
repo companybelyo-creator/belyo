@@ -474,6 +474,7 @@ function renderList() {
         + (a.status === 'pending' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'done\')">Terminé</button>' : '')
         + (a.status === 'pending' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')">Annuler</button>' : '')
         + (a.status === 'done' ? '<button class="action-btn action-cancel" onclick="updateStatus(\'' + a.id + '\',\'cancelled\')" title="Annuler ce RDV (erreur ou absent)">Annuler</button>' : '')
+        + (a.status === 'cancelled' ? '<button class="action-btn action-done" onclick="updateStatus(\'' + a.id + '\',\'pending\')" title="Remettre ce RDV en attente">Remettre</button>' : '')
       + '</td></tr>';
   }).join('');
 }
@@ -733,6 +734,12 @@ function showApptDetail(a) {
     btnCancel.style.display = (st === 'pending' || st === 'done') ? 'inline-flex' : 'none';
     btnCancel.onclick = function() { updateStatus(a.id, 'cancelled'); closeApptDetail(); };
   }
+  // Bouton Remettre pour les RDV annulés
+  var btnRestore = document.getElementById('appt-detail-restore');
+  if (btnRestore) {
+    btnRestore.style.display = st === 'cancelled' ? 'inline-flex' : 'none';
+    btnRestore.onclick = function() { updateStatus(a.id, 'pending'); closeApptDetail(); };
+  }
   panel.classList.add('open');
   document.getElementById('appt-detail-overlay').style.display = 'block';
 }
@@ -945,11 +952,12 @@ async function updateStatus(id, status) {
 
   var res = await sb.from('appointments').update({ status: status }).eq('id', id);
   if (res.error) { showToast('Erreur', 'error'); return; }
-  showToast(status === 'done' ? 'RDV marqué terminé !' : 'RDV annulé');
+  var toastMsg = status === 'done' ? 'RDV marqué terminé !' : status === 'cancelled' ? 'RDV annulé' : 'RDV remis en attente';
+  showToast(toastMsg);
 
   // Insérer une notification persistante
   var a = allAppts.find(function(x) { return x.id === id; });
-  if (a && window.BNotifInsert) {
+  if (a && window.BNotifInsert && status !== 'pending') {
     var dtLabel = new Date(a.datetime).toLocaleDateString('fr-FR', { weekday:'short', day:'numeric', month:'short' })
       + ' à ' + new Date(a.datetime).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
     if (status === 'done') {
@@ -991,7 +999,8 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
   btn.textContent = 'Enregistrement...';
 
   var clientName = document.getElementById('appt-client').value.trim();
-  var datetime   = document.getElementById('appt-datetime').value;
+  // Convertir la valeur locale (YYYY-MM-DDTHH:mm) en ISO UTC pour éviter le décalage horaire
+  var datetime   = new Date(document.getElementById('appt-datetime').value).toISOString();
   var priceVal   = document.getElementById('appt-price').value;
   var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
   var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
