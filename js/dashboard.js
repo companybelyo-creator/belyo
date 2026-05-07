@@ -352,21 +352,22 @@ console.log('[Belyo] sb disponible ?', typeof sb);
 })();
 
 // Marque automatiquement "done" les RDV pending dont l'heure de fin est passée
+// Heure de fin = datetime + duration_minutes (ou 60min par défaut)
 async function autoMarkDone() {
   if (!currentUserId) return;
-  var now = new Date().toISOString();
-  // Récupère les pending d'aujourd'hui dont la datetime est dans le passé
-  var today = new Date().toISOString().split('T')[0];
+  var now = new Date();
+  // Récupère tous les RDV pending dont la datetime est déjà passée
   var res = await sb.from('appointments')
-    .select('id, datetime, duration_minutes, service')
+    .select('id, datetime, duration_minutes')
     .eq('user_id', currentUserId)
     .eq('status', 'pending')
-    .lte('datetime', new Date(Date.now() - 30*60000).toISOString()); // au moins 30min passées
+    .lte('datetime', now.toISOString());
   if (!res.data || res.data.length === 0) return;
+  // Ne marquer done que ceux dont l'heure de FIN est passée
   var toMark = res.data.filter(function(a) {
     var dur = a.duration_minutes || 60;
     var end = new Date(new Date(a.datetime).getTime() + dur * 60000);
-    return end <= new Date();
+    return end <= now;
   });
   if (!toMark.length) return;
   var ids = toMark.map(function(a) { return a.id; });
