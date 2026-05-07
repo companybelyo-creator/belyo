@@ -289,15 +289,15 @@
     var panel = document.getElementById('notif-panel');
     if (!panel) return;
 
-    var body  = panel.querySelector('.notif-panel-body');
+    var body = document.getElementById('notif-panel-body');
     if (!body) return;
 
     var visible = _notifications.filter(function(n) { return !isDismissed(n.id); });
 
     if (visible.length === 0) {
-      body.innerHTML = '<div class="notif-empty">'
+      body.innerHTML = '<div class="notif-empty-state">'
         + '<div class="notif-empty-icon">🔔</div>'
-        + '<div class="notif-empty-text">Tout est à jour</div>'
+        + '<div class="notif-empty-label">Tout est à jour</div>'
         + '<div class="notif-empty-sub">Aucune notification pour le moment</div>'
         + '</div>';
       return;
@@ -322,8 +322,8 @@
     ['urgent', 'rdv', 'stock', 'rapport'].forEach(function(key) {
       var g = groups[key];
       if (g.items.length === 0) return;
-      html += '<div class="notif-group">';
-      html += '<div class="notif-group-label">' + g.label + '</div>';
+      html += '<div class="notif-section">';
+      html += '<div class="notif-section-label">' + g.label + '</div>';
       g.items.forEach(function(n) {
         html += renderNotifCard(n);
       });
@@ -334,32 +334,31 @@
   }
 
   function renderNotifCard(n) {
-    var typeClass = {
-      'rdv-now':       'notif-card--urgent',
-      'rdv-soon':      'notif-card--soon',
-      'rdv-added':     'notif-card--added',
-      'rdv-cancelled': 'notif-card--cancelled',
-      'rdv-done':      'notif-card--done',
-      'stock-low':     'notif-card--stock-low',
-      'stock-empty':   'notif-card--stock-empty',
-      'rapport':       'notif-card--rapport',
-    }[n.type] || '';
+    var stripeColor = {
+      'rdv-now':       '#C0392B',
+      'rdv-soon':      '#E67E22',
+      'rdv-added':     '#4EA685',
+      'rdv-cancelled': '#D85A30',
+      'rdv-done':      '#4EA685',
+      'stock-low':     '#C4A87A',
+      'stock-empty':   '#C0392B',
+      'rapport':       '#7D7CBD',
+    }[n.type] || '#C4A87A';
 
     var linkHtml = n.link
-      ? '<a href="' + n.link + '" class="notif-card-link">' + (n.linkLabel || 'Voir →') + '</a>'
+      ? '<a href="' + n.link + '" class="notif-card-arrow">→</a>'
       : '';
 
-    var dismissHtml = '<button class="notif-card-dismiss" onclick="window.BNotif.dismiss(\'' + n.id + '\')" title="Masquer">×</button>';
-
-    return '<div class="notif-card ' + typeClass + '" data-id="' + n.id + '">'
+    return '<div class="notif-card" data-id="' + n.id + '">'
+      + '<div class="notif-card-stripe" style="background:' + stripeColor + '"></div>'
       + '<div class="notif-card-icon">' + n.icon + '</div>'
-      + '<div class="notif-card-content">'
+      + '<div class="notif-card-content" style="flex:1;min-width:0">'
       + '<div class="notif-card-title">' + n.title + '</div>'
       + '<div class="notif-card-body">' + n.body + '</div>'
       + '<div class="notif-card-sub">' + n.sub + '</div>'
-      + (linkHtml ? '<div class="notif-card-action">' + linkHtml + '</div>' : '')
       + '</div>'
-      + dismissHtml
+      + linkHtml
+      + '<button style="background:none;border:none;font-size:16px;color:var(--ink-light,#aaa);cursor:pointer;padding:4px 8px;line-height:1;flex-shrink:0" onclick="window.BNotif.dismiss(\'' + n.id + '\')" title="Masquer">×</button>'
       + '</div>';
   }
 
@@ -372,8 +371,8 @@
     _panelOpen = true;
     renderPanel();
 
-    overlay.classList.add('notif-overlay--visible');
-    panel.classList.add('notif-panel--visible');
+    overlay.classList.add('notif-overlay--open');
+    panel.classList.add('notif-panel--open');
 
     // Mark all as read
     _notifications.forEach(function(n) { dismiss(n.id); });
@@ -385,8 +384,8 @@
     var overlay = document.getElementById('notif-overlay');
     var panel   = document.getElementById('notif-panel');
     _panelOpen  = false;
-    if (overlay) overlay.classList.remove('notif-overlay--visible');
-    if (panel)   panel.classList.remove('notif-panel--visible');
+    if (overlay) overlay.classList.remove('notif-overlay--open');
+    if (panel)   panel.classList.remove('notif-panel--open');
   }
 
   function togglePanel() {
@@ -410,17 +409,17 @@
     panel.id  = 'notif-panel';
     panel.className = 'notif-panel';
     panel.innerHTML = ''
-      + '<div class="notif-panel-header">'
-      + '  <div class="notif-panel-header-left">'
+      + '<div class="notif-panel-head">'
+      + '  <div class="notif-panel-head-left">'
       + '    <span class="notif-panel-title">Notifications</span>'
       + '    <span class="notif-panel-count" id="notif-panel-count"></span>'
       + '  </div>'
-      + '  <div class="notif-panel-header-right">'
-      + '    <button class="notif-clear-all" onclick="window.BNotif.clearAll()">Tout effacer</button>'
-      + '    <button class="notif-panel-close" onclick="window.BNotif.close()">×</button>'
+      + '  <div class="notif-panel-head-right">'
+      + '    <button class="notif-clear-btn" onclick="window.BNotif.clearAll()">Tout effacer</button>'
+      + '    <button class="notif-x-btn" onclick="window.BNotif.close()">&#215;</button>'
       + '  </div>'
       + '</div>'
-      + '<div class="notif-panel-body" id="notif-panel-body">'
+      + '<div class="notif-body" id="notif-panel-body">'
       + '  <div class="notif-loading">Chargement...</div>'
       + '</div>';
 
