@@ -9,6 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="../css/main.css" />
   <link rel="stylesheet" href="../css/appointments.css" />
+  <link rel="stylesheet" href="../css/notifications.css" />
 </head>
 <body>
 <div class="app-layout">
@@ -21,7 +22,7 @@
     <a class="sidebar-link" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
     <div class="sidebar-bottom">
       <div class="sidebar-user"><strong id="sidebar-salon">Chargement...</strong><span id="sidebar-email">—</span></div>
-      <a class="sidebar-link" href="notifications.html"><span class="sidebar-icon">🔔</span> Notifications</a>
+      <a class="sidebar-link" href="#" onclick="toggleNotifPanel();return false;"><span class="sidebar-icon">🔔</span> Notifications</a>
       <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
       <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
     </div>

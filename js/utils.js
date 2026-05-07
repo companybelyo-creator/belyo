@@ -710,31 +710,234 @@ document.addEventListener('click', function(e) {
 });
 
 // ===== NOTIFICATIONS IN-APP =====
-// Géré par notifications.js (BNotif)
-// Les fonctions initNotifications, toggleNotifPanel, openNotifPanel,
-// closeNotifPanel et loadNotifications sont conservées pour compatibilité.
-
 var notifOpen = false;
+var _notifUserId = null;
 
 function initNotifications(userId) {
-  if (window.BNotif) { window.BNotif.init(userId); return; }
-  // Fallback si notifications.js non chargé
-  console.warn('[Belyo] notifications.js non chargé');
+  _notifUserId = userId;
+
+  // Créer overlay + panel s'ils n'existent pas
+  if (!document.getElementById('notif-overlay')) {
+    var overlay = document.createElement('div');
+    overlay.id = 'notif-overlay';
+    overlay.className = 'notif-overlay';
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeNotifPanel();
+    });
+
+    var panel = document.createElement('div');
+    panel.id = 'notif-panel';
+    panel.className = 'notif-panel';
+    panel.innerHTML = ''
+      + '<div class="notif-panel-head">'
+      +   '<div class="notif-panel-head-left">'
+      +     '<span class="notif-panel-title">Notifications</span>'
+      +     '<span class="notif-panel-count" id="notif-panel-count" style="display:none"></span>'
+      +   '</div>'
+      +   '<div class="notif-panel-head-right">'
+      +     '<button class="notif-clear-btn" onclick="clearAllNotifs()">Tout effacer</button>'
+      +     '<button class="notif-x-btn" onclick="closeNotifPanel()">&#215;</button>'
+      +   '</div>'
+      + '</div>'
+      + '<div class="notif-body" id="notif-list">'
+      +   '<div class="notif-loading">Chargement\u2026</div>'
+      + '</div>';
+
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && notifOpen) closeNotifPanel();
+  });
+
+  // Wirer tous les boutons cloche (sidebar + topbar dashboard)
+  document.querySelectorAll('#dash-notif-btn, #notif-btn, [data-notif-trigger]').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      toggleNotifPanel();
+    });
+  });
+
+  loadNotifications(userId);
 }
 
-function toggleNotifPanel()  { if (window.BNotif) window.BNotif.toggle(); }
-function openNotifPanel()    { if (window.BNotif) window.BNotif.open(); }
-function closeNotifPanel()   { if (window.BNotif) window.BNotif.close(); }
-function loadNotifications() { if (window.BNotif) window.BNotif.refresh(); }
-function renderNotifItem()   {}
+function toggleNotifPanel() {
+  if (notifOpen) closeNotifPanel(); else openNotifPanel();
+}
+
+function openNotifPanel() {
+  var overlay = document.getElementById('notif-overlay');
+  var panel   = document.getElementById('notif-panel');
+  if (!overlay) return;
+  overlay.classList.add('notif-overlay--open');
+  if (panel) {
+    panel.classList.add('notif-panel--open');
+  }
+  notifOpen = true;
+  if (_notifUserId) loadNotifications(_notifUserId);
+}
+
+function closeNotifPanel() {
+  var overlay = document.getElementById('notif-overlay');
+  var panel   = document.getElementById('notif-panel');
+  if (overlay) overlay.classList.remove('notif-overlay--open');
+  if (panel)   panel.classList.remove('notif-panel--open');
+  notifOpen = false;
+}
+
+function clearAllNotifs() {
+  var list = document.getElementById('notif-list');
+  if (list) list.innerHTML = '<div class="notif-empty-state"><div class="notif-empty-icon">🔔</div><div class="notif-empty-label">Tout est à jour</div><div class="notif-empty-sub">Aucune notification</div></div>';
+  var cnt = document.getElementById('notif-panel-count');
+  if (cnt) cnt.style.display = 'none';
+  // Badge
+  ['notif-badge', 'sidebar-notif-badge'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) b.style.display = 'none';
+  });
+}
+
+async function loadNotifications(userId) {
+  var list  = document.getElementById('notif-list');
+  var badge = document.getElementById('notif-badge');
+  var cnt   = document.getElementById('notif-panel-count');
+  if (!list) return;
+
+  var notifs = [];
+  var now     = new Date();
+  var since24 = new Date(now.getTime() - 24 * 3600000).toISOString();
+  var today   = now.toISOString().slice(0, 10);
+
+  // 1. Nouveaux RDV (pending, créés dans les 24h)
+  var rNew = await sb.from('appointments')
+    .select('id, client_name, service, datetime, created_at')
+    .eq('user_id', userId).eq('status', 'pending')
+    .gte('created_at', since24).order('created_at', { ascending: false });
+  (rNew.data || []).forEach(function(a) {
+    notifs.push({
+      type: 'rdv-added', icon: '✅',
+      title: 'Nouveau RDV',
+      body:  a.client_name + ' \u2014 ' + (a.service || 'Prestation'),
+      sub:   _fmtDate(a.datetime) + ' \u00e0 ' + _fmtTime(a.datetime),
+      time:  new Date(a.created_at),
+      link:  'appointments.html',
+    });
+  });
+
+  // 2. RDV annulés (24h)
+  var rCan = await sb.from('appointments')
+    .select('id, client_name, service, datetime, updated_at')
+    .eq('user_id', userId).eq('status', 'cancelled')
+    .gte('updated_at', since24).order('updated_at', { ascending: false });
+  (rCan.data || []).forEach(function(a) {
+    notifs.push({
+      type: 'rdv-cancelled', icon: '❌',
+      title: 'RDV annulé',
+      body:  a.client_name + ' \u2014 ' + (a.service || 'Prestation'),
+      sub:   _fmtDate(a.datetime) + ' \u00e0 ' + _fmtTime(a.datetime),
+      time:  new Date(a.updated_at),
+      link:  'appointments.html',
+    });
+  });
+
+  // 3. RDV terminés (24h)
+  var rDone = await sb.from('appointments')
+    .select('id, client_name, service, datetime, updated_at, price')
+    .eq('user_id', userId).eq('status', 'done')
+    .gte('updated_at', since24).order('updated_at', { ascending: false });
+  (rDone.data || []).forEach(function(a) {
+    var prix = a.price ? ' \u00b7 ' + Math.round(parseFloat(a.price)) + '\u20ac' : '';
+    notifs.push({
+      type: 'rdv-done', icon: '🎉',
+      title: 'RDV terminé',
+      body:  a.client_name + ' \u2014 ' + (a.service || 'Prestation') + prix,
+      sub:   _fmtDate(a.datetime) + ' \u00e0 ' + _fmtTime(a.datetime),
+      time:  new Date(a.updated_at),
+      link:  'appointments.html',
+    });
+  });
+
+  // 4. Stocks
+  var rStock = await sb.from('products')
+    .select('id, name, quantity, alert_threshold')
+    .eq('user_id', userId);
+  (rStock.data || []).forEach(function(p) {
+    var qty = p.quantity || 0, thr = p.alert_threshold || 2;
+    if (qty === 0) {
+      notifs.push({ type: 'stock-empty', icon: '🚨', title: 'Stock épuisé', body: p.name, sub: '0 unité restante', time: now, link: 'stocks.html' });
+    } else if (qty <= thr) {
+      notifs.push({ type: 'stock-low', icon: '⚠️', title: 'Stock faible', body: p.name, sub: qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''), time: now, link: 'stocks.html' });
+    }
+  });
+
+  // Badge
+  var unread = notifs.length;
+  if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
+  if (cnt)   { cnt.textContent = unread;   cnt.style.display   = unread > 0 ? 'flex' : 'none'; }
+
+  if (notifs.length === 0) {
+    list.innerHTML = '<div class="notif-empty-state"><div class="notif-empty-icon">🔔</div><div class="notif-empty-label">Tout est à jour</div><div class="notif-empty-sub">Aucune notification pour le moment</div></div>';
+    return;
+  }
+
+  var sections = [
+    { label: 'Rendez-vous',  types: ['rdv-added','rdv-cancelled','rdv-done'], items: [] },
+    { label: 'Stock',        types: ['stock-empty','stock-low'],              items: [] },
+  ];
+  notifs.forEach(function(n) {
+    sections.forEach(function(s) { if (s.types.indexOf(n.type) !== -1) s.items.push(n); });
+  });
+
+  var accentMap = {
+    'rdv-added':     '#4EA685',
+    'rdv-cancelled': '#D85A30',
+    'rdv-done':      '#7D7CBD',
+    'stock-empty':   '#C0392B',
+    'stock-low':     '#E89020',
+  };
+
+  var html = '';
+  sections.forEach(function(s) {
+    if (!s.items.length) return;
+    html += '<div class="notif-section">';
+    html += '<div class="notif-section-label">' + s.label + '</div>';
+    s.items.forEach(function(n) {
+      var accent = accentMap[n.type] || '#888';
+      html += '<div class="notif-card" style="--accent:' + accent + '">'
+        + '<div class="notif-card-stripe"></div>'
+        + '<div class="notif-card-icon">' + n.icon + '</div>'
+        + '<div class="notif-card-content">'
+        +   '<div class="notif-card-title">' + n.title + '</div>'
+        +   '<div class="notif-card-body">' + n.body + '</div>'
+        +   '<div class="notif-card-sub">' + n.sub + ' &middot; ' + _timeAgo(n.time) + '</div>'
+        + '</div>'
+        + (n.link ? '<a href="' + n.link + '" class="notif-card-arrow">\u2192</a>' : '')
+        + '</div>';
+    });
+    html += '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+function _fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+function _fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
 function _timeAgo(date) {
   var diff = Math.floor((new Date() - date) / 60000);
   if (diff < 1)  return "À l'instant";
-  if (diff < 60) return 'Il y a ' + diff + ' min';
+  if (diff < 60) return 'Il y a ' + diff + 'min';
   var h = Math.floor(diff / 60);
   if (h < 24)    return 'Il y a ' + h + 'h';
   return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
+
+function renderNotifItem() {}
+
 
 // ===== FORMAT TÉLÉPHONE =====
 function formatPhone(val) {
