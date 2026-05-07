@@ -302,6 +302,9 @@
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
 <script>
+// initNotifications gere le panel (notifications.js)
+</script>
+<script>
 (async function() {
   var s = await sb.auth.getSession();
   if (!s.data.session) { window.location.href = 'login.html'; return; }
@@ -753,37 +756,46 @@ var _origInit = window.onload;
   }, 300);
 })();
 
-// ===== SPARKLINE CA : vrais calculs depuis Supabase =====
-// Charge les RDV "done" du mois en cours, regroupe par jour, génère la courbe
+// ===== SPARKLINE CA : courbe 6 mois (mois-5 -> mois actuel) =====
+// CA = RDV done + ventes produits, identique a loadKPIs
 async function loadCaSparkline(userId) {
-  var now       = new Date();
-  var year      = now.getFullYear();
-  var month     = now.getMonth();
-  var daysInMonth = new Date(year, month + 1, 0).getDate();
-  var startMonth = new Date(year, month, 1).toISOString();
-  var endMonth   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  var now = new Date();
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key:   d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'),
+      start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+      end:   new Date(d.getFullYear(), d.getMonth()+1, 0, 23, 59, 59).toISOString(),
+    });
+  }
 
-  var res = await sb.from('appointments')
+  var rA = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
     .eq('status', 'done')
-    .gte('datetime', startMonth)
-    .lte('datetime', endMonth);
+    .gte('datetime', months[0].start)
+    .lte('datetime', months[5].end);
 
-  // Agréger par jour
-  var byDay = {};
-  for (var d = 1; d <= daysInMonth; d++) byDay[d] = 0;
-  (res.data || []).forEach(function(a) {
-    var day = new Date(a.datetime).getDate();
-    byDay[day] = (byDay[day] || 0) + (parseFloat(a.price) || 0);
+  var rP = await sb.from('product_sales')
+    .select('created_at, unit_price, quantity_sold')
+    .eq('user_id', userId)
+    .gte('created_at', months[0].start)
+    .lte('created_at', months[5].end);
+
+  var caByMonth = {};
+  months.forEach(function(m) { caByMonth[m.key] = 0; });
+
+  (rA.data || []).forEach(function(a) {
+    var mk = a.datetime.slice(0, 7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price) || 0;
+  });
+  (rP.data || []).forEach(function(p) {
+    var mk = (p.created_at || '').slice(0, 7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += (parseFloat(p.unit_price) || 0) * (parseInt(p.quantity_sold) || 1);
   });
 
-  // Prendre un point tous les ~4 jours pour avoir 7-8 points
-  var step = Math.max(1, Math.floor(daysInMonth / 7));
-  var vals = [];
-  for (var d = 1; d <= daysInMonth; d += step) vals.push(byDay[d] || 0);
-  // S'assurer qu'on a le dernier jour
-  if (vals.length < 2) vals = [0, 0];
+  var vals = months.map(function(m) { return Math.round(caByMonth[m.key]); });
 
   var svgEl = document.getElementById('ca-sparkline-svg');
   if (!svgEl) return;

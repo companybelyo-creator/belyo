@@ -1,474 +1,668 @@
-// ============================================================
-// NOTIFICATIONS.JS — Belyo Notification Center
-// ============================================================
+// ===== GENRE + PRESTATION =====
+var selectedGenre = 'homme';
 
-(function() {
-  'use strict';
+var PRESTATIONS = {
+  homme: ['Coupe Homme', 'Dégradé', 'Barbe', 'Coupe + Barbe', 'Soin', 'Autre'],
+  femme: ['Coupe Femme', 'Brushing', 'Coloration', 'Balayage', 'Soin', 'Autre'],
+};
 
-  // ─── State ──────────────────────────────────────────────────
-  var _notifications  = [];
-  var _unreadCount    = 0;
-  var _panelOpen      = false;
-  var _userId         = null;
-  var _pollInterval   = null;
-  var _dismissedKey   = 'belyo_dismissed_notifs';
+var PRIX_DUREE = { homme: {}, femme: {} };
+var salonPlanning = null;
 
-  // ─── Helpers ────────────────────────────────────────────────
-  function getDismissed() {
-    try { return JSON.parse(localStorage.getItem(_dismissedKey) || '[]'); }
-    catch(e) { return []; }
+async function loadPrestationsFromSettings(userId) {
+  var res = await sb.from('salon_settings')
+    .select('prestations, custom_prestations, prix_duree, planning')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (res.data && res.data.prestations) {
+    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
+    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
   }
-  function saveDismissed(ids) {
-    try { localStorage.setItem(_dismissedKey, JSON.stringify(ids)); }
-    catch(e) {}
-  }
-  function isDismissed(id) { return getDismissed().indexOf(id) !== -1; }
-  function dismiss(id) {
-    var d = getDismissed();
-    if (d.indexOf(id) === -1) { d.push(id); saveDismissed(d); }
-  }
+  if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
+  if (res.data && res.data.planning)   salonPlanning = res.data.planning;
+  updateServiceOptions();
+}
 
-  function formatTime(iso) {
-    var d = new Date(iso);
-    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  }
-  function formatDate(iso) {
-    var d = new Date(iso);
-    return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-  }
+var DAY_MAP_DASH = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5};
 
-  // ─── Notification Builders ───────────────────────────────────
+function setGenre(genre) {
+  selectedGenre = genre;
+  document.getElementById('genre-homme').classList.toggle('active', genre === 'homme');
+  document.getElementById('genre-femme').classList.toggle('active', genre === 'femme');
+  updateServiceOptions();
+  // Reset prestation
+  var sel = document.getElementById('appt-service-select');
+  var inp = document.getElementById('appt-service');
+  if (sel) sel.value = '';
+  if (inp) { inp.style.display = 'none'; inp.value = ''; inp.required = false; }
+}
 
-  /**
-   * Upcoming RDV (15 min) — checks every minute
-   * ID: rdv-soon-{apptId}
-   */
-  async function checkUpcomingRdv(userId) {
-    var now    = new Date();
-    // Notif "RDV bientôt" uniquement pour les RDV dans les 20 prochaines minutes (pas encore commencés)
-    var plus20 = new Date(now.getTime() + 20 * 60000).toISOString();
-    var nowISO = now.toISOString();
+var serviceDropdownOpen = false;
 
-    var res = await sb.from('appointments').select('id, client_name, service, datetime')
-      .eq('user_id', userId)
-      .eq('status', 'pending')
-      .gte('datetime', nowISO)
-      .lte('datetime', plus20)
-      .order('datetime', { ascending: true });
+function updateServiceOptions() {
+  var dropdown = document.getElementById('service-select-dropdown');
+  if (!dropdown) return;
+  var options = PRESTATIONS[selectedGenre] || [];
 
-    if (!res.data) return [];
-    return res.data.map(function(a) {
-      var diffMs = new Date(a.datetime) - now;
-      var diffM  = Math.round(diffMs / 60000);
-      return {
-        id:       'rdv-soon-' + a.id,
-        type:     'rdv-soon',
-        priority: 1,
-        icon:     '⏰',
-        title:    'RDV dans ' + diffM + ' min',
-        body:     a.client_name + ' — ' + (a.service || 'Prestation'),
-        sub:      formatTime(a.datetime),
-        link:     null,
-        time:     new Date(),
-        _apptId:  a.id,
+  // Stocker les options pour selectServiceByIndex
+  window._serviceOptions = options;
+
+  dropdown.innerHTML = options.map(function(p, idx) {
+    var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][p];
+    var prix = pd && pd.prix ? pd.prix : 0;
+    return '<div class="service-option" onclick="selectServiceByIndex(' + idx + ')">'
+      + '<span class="service-option-name">' + p + '</span>'
+      + (prix ? '<span class="service-option-prix">' + prix + '€</span>' : '')
+      + '</div>';
+  }).join('');
+
+  // Première prestation par défaut
+  var defaultOpt = options.find(function(p) { return p.toLowerCase().startsWith('coupe'); }) || options[0];
+  if (defaultOpt && defaultOpt !== 'Autre') {
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
+    var prix = pd && pd.prix ? pd.prix : 0;
+    if (!prix) {
+      var defs = {
+        homme: { 'Coupe Homme':20,'Dégradé':20,'Barbe':10,'Coupe + Barbe':28,'Soin':15 },
+        femme:  { 'Coupe Femme':30,'Brushing':25,'Coloration':60,'Balayage':80,'Soin':20 }
       };
-    });
+      prix = (defs[selectedGenre] && defs[selectedGenre][defaultOpt]) || 0;
+    }
+    selectService(defaultOpt, prix);
+  }
+  checkFormValidity();
+}
+
+function selectServiceByIndex(idx) {
+  var options = window._serviceOptions || [];
+  var name    = options[idx];
+  if (!name) return;
+  var pd   = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
+  var prix = 0;
+  if (pd && pd.prix) {
+    prix = pd.prix;
+  } else {
+    var defaults = {
+      homme: { 'Coupe Homme': 20, 'Dégradé': 20, 'Barbe': 10, 'Coupe + Barbe': 28, 'Estompage': 18, 'Soin': 15, 'Coloration': 35 },
+      femme: { 'Coupe Femme': 30, 'Brushing': 25, 'Coloration': 60, 'Balayage': 80, 'Mèches': 70, 'Soin': 20, 'Lissage': 80, 'Permanente': 70 },
+    };
+    prix = (defaults[selectedGenre] && defaults[selectedGenre][name]) || 0;
+  }
+  selectService(name, prix);
+}
+
+function toggleServiceDropdown() {
+  var dd = document.getElementById('service-select-dropdown');
+  if (!dd) return;
+  serviceDropdownOpen = !serviceDropdownOpen;
+  dd.style.display = serviceDropdownOpen ? 'block' : 'none';
+}
+
+function selectService(name, prix) {
+  // Fermer le dropdown
+  var dd = document.getElementById('service-select-dropdown');
+  if (dd) dd.style.display = 'none';
+  serviceDropdownOpen = false;
+
+  // Mettre à jour le trigger
+  var label = document.getElementById('service-select-label');
+  var hidden = document.getElementById('appt-service-select');
+  if (label) {
+    label.style.color = 'var(--ink)';
+    label.textContent = name;
+  }
+  if (hidden) hidden.value = name;
+
+  // Remplir le champ service caché
+  var inp = document.getElementById('appt-service');
+  if (inp) { inp.value = name; inp.style.display = 'none'; inp.required = false; }
+
+  // Remplir le prix
+  var priceInput = document.getElementById('appt-price');
+  if (priceInput) priceInput.value = prix || '';
+}
+
+// Fermer si clic ailleurs
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('service-select-wrap');
+  if (wrap && !wrap.contains(e.target) && serviceDropdownOpen) {
+    document.getElementById('service-select-dropdown').style.display = 'none';
+    serviceDropdownOpen = false;
+  }
+});
+
+function onServiceSelect(val) {
+  // Gardé pour compatibilité — le vrai select utilise selectService()
+  selectService(val, 0);
+}
+
+// ===== AUTOCOMPLETE CLIENT =====
+async function loadClients() {
+  var res = await sb.from('clients').select('id, name, email, phone')
+    .eq('user_id', currentUserId)
+    .order('name', { ascending: true });
+  allClients = res.data || [];
+}
+
+function onClientInput(val) {
+  selectedClient = null;
+  checkFormValidity();
+  var block = document.getElementById('client-info-block');
+  var suggestions = document.getElementById('client-suggestions');
+
+  if (!val.trim()) {
+    suggestions.style.display = 'none';
+    block.style.display = 'none';
+    return;
   }
 
-  /**
-   * RDV ajouté / annulé / terminé récemment (< 24h)
-   * IDs: rdv-added-{id}, rdv-cancelled-{id}, rdv-done-{id}
-   */
-  async function checkRecentRdvEvents(userId) {
-    var since = new Date(Date.now() - 24 * 3600000).toISOString();
-    var res   = await sb.from('appointments')
-      .select('id, client_name, service, datetime, status, updated_at, created_at')
-      .eq('user_id', userId)
-      .gte('updated_at', since)
-      .order('updated_at', { ascending: false });
+  var q = val.toLowerCase();
+  var matches = allClients.filter(function(c) {
+    return c.name.toLowerCase().includes(q);
+  });
 
-    if (!res.data) return [];
-    var notifs = [];
-    res.data.forEach(function(a) {
-      if (a.status === 'pending') {
-        var id = 'rdv-added-' + a.id;
-        notifs.push({
-          id: id, type: 'rdv-added', priority: 3,
-          icon: '✅',
-          title: 'RDV confirmé',
-          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
-          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
-          link:  'appointments.html',
-          time:  new Date(a.created_at || a.updated_at),
-        });
-      } else if (a.status === 'cancelled') {
-        var id = 'rdv-cancelled-' + a.id;
-        notifs.push({
-          id: id, type: 'rdv-cancelled', priority: 2,
-          icon: '❌',
-          title: 'RDV annulé',
-          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
-          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
-          link:  'appointments.html',
-          time:  new Date(a.updated_at),
-        });
-      } else if (a.status === 'done') {
-        var id = 'rdv-done-' + a.id;
-        notifs.push({
-          id: id, type: 'rdv-done', priority: 4,
-          icon: '🎉',
-          title: 'RDV terminé',
-          body:  a.client_name + ' — ' + (a.service || 'Prestation'),
-          sub:   formatDate(a.datetime) + ' à ' + formatTime(a.datetime),
-          link:  'appointments.html',
-          time:  new Date(a.updated_at),
-        });
-      }
-    });
-    return notifs;
+  if (matches.length === 0) {
+    suggestions.style.display = 'none';
+    showClientInfo(null, val.trim());
+    return;
   }
 
-  /**
-   * Stocks faibles / vides
-   * IDs: stock-low-{id}, stock-empty-{id}
-   */
-  async function checkStocks(userId) {
-    var res = await sb.from('products')
-      .select('id, name, quantity, alert_threshold')
-      .eq('user_id', userId);
+  suggestions.style.display = 'block';
+  suggestions.innerHTML = matches.map(function(c) {
+    return '<div onclick="selectClient(\'' + c.id + '\')" style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<strong style="color:var(--ink)">' + c.name + '</strong>'
+      + (c.phone ? '<span style="color:var(--ink-light);margin-left:8px">' + c.phone + '</span>' : '')
+      + (c.email ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.email + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
 
-    if (!res.data) return [];
-    var notifs = [];
-    res.data.forEach(function(p) {
-      var qty = p.quantity || 0;
-      var thr = p.alert_threshold || 2;
-      if (qty === 0) {
-        notifs.push({
-          id:       'stock-empty-' + p.id,
-          type:     'stock-empty',
-          priority: 1,
-          icon:     '🚨',
-          title:    'Rupture de stock',
-          body:     p.name,
-          sub:      '0 unité restante',
-          link:     'stocks.html',
-          linkLabel:'Voir les stocks',
-          time:     new Date(),
-        });
-      } else if (qty <= thr) {
-        notifs.push({
-          id:       'stock-low-' + p.id,
-          type:     'stock-low',
-          priority: 2,
-          icon:     '⚠️',
-          title:    'Stock faible',
-          body:     p.name,
-          sub:      qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''),
-          link:     'stocks.html',
-          linkLabel:'Voir les stocks',
-          time:     new Date(),
-        });
-      }
-    });
-    return notifs;
+function selectClient(id) {
+  var client = allClients.find(function(c) { return c.id === id; });
+  if (!client) return;
+  selectedClient = client;
+  document.getElementById('appt-client').value = client.name;
+  document.getElementById('client-suggestions').style.display = 'none';
+  showClientInfo(client, null);
+}
+
+function showClientInfo(client, newName) {
+  var block = document.getElementById('client-info-block');
+  var badge = document.getElementById('client-new-badge');
+  var label = document.getElementById('client-info-label');
+  var email = document.getElementById('client-email');
+  var phone = document.getElementById('client-phone');
+  block.style.display = 'block';
+  if (client) {
+    badge.style.display = 'none';
+    label.textContent   = client.name;
+    email.value         = client.email || '';
+    phone.value         = client.phone || '';
+  } else {
+    badge.style.display = 'inline-block';
+    label.textContent   = newName || 'Nouveau client';
+    email.value         = '';
+    phone.value         = '';
   }
+}
 
-  /**
-   * Rapport disponible — vérifie quels mois complets ont des données
-   * ID: rapport-{YYYY}-{MM}
-   */
-  async function checkRapports(userId) {
-    var now         = new Date();
-    var currentYear = now.getFullYear();
-    var currentMon  = now.getMonth(); // 0-based
-
-    // Fetch all done appointments to find months with data
-    var res = await sb.from('appointments')
-      .select('datetime')
-      .eq('user_id', userId)
-      .eq('status', 'done')
-      .order('datetime', { ascending: false });
-
-    if (!res.data || res.data.length === 0) return [];
-
-    // Collect distinct completed months (not current month)
-    var seen = {};
-    var notifs = [];
-    res.data.forEach(function(a) {
-      var d   = new Date(a.datetime);
-      var y   = d.getFullYear();
-      var m   = d.getMonth(); // 0-based
-      var key = y + '-' + m;
-      // Skip current month
-      if (y === currentYear && m === currentMon) return;
-      if (seen[key]) return;
-      seen[key] = true;
-
-      var monthNames = ['Janvier','Février','Mars','Avril','Mai','Juin',
-                        'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-      var id = 'rapport-' + y + '-' + (m + 1);
-      notifs.push({
-        id:       id,
-        type:     'rapport',
-        priority: 5,
-        icon:     '📊',
-        title:    'Rapport disponible',
-        body:     monthNames[m] + ' ' + y,
-        sub:      'Consultez votre chiffre d\'affaires',
-        link:     'revenue.html?month=' + (m + 1) + '&year=' + y,
-        linkLabel:'Voir le rapport',
-        time:     new Date(y, m + 1, 1), // first day of *next* month = month completed
-      });
-    });
-
-    // Only push the 3 most recent months
-    return notifs.slice(0, 3);
+document.addEventListener('click', function(e) {
+  var s = document.getElementById('client-suggestions');
+  if (s && !s.contains(e.target) && e.target.id !== 'appt-client') {
+    s.style.display = 'none';
+    var val = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+    if (val && !selectedClient) showClientInfo(null, val);
   }
+});
 
-  // ─── Aggregation ────────────────────────────────────────────
-  async function loadAllNotifications(userId) {
-    var results = await Promise.allSettled([
-      checkUpcomingRdv(userId),
-      checkRecentRdvEvents(userId),
-      checkStocks(userId),
-      checkRapports(userId),
-    ]);
 
-    var all = [];
-    results.forEach(function(r) {
-      if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-        all = all.concat(r.value);
-      }
-    });
+console.log('[Belyo] dashboard.js charge');
 
-    // Deduplicate by id
-    var seen = {};
-    all = all.filter(function(n) {
-      if (seen[n.id]) return false;
-      seen[n.id] = true;
-      return true;
-    });
+// ===== HELPERS =====
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = type === 'error' ? '#991b1b' : 'var(--ink)';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
 
-    // Sort: priority asc, then time desc
-    all.sort(function(a, b) {
-      if (a.priority !== b.priority) return a.priority - b.priority;
-      return b.time - a.time;
-    });
+function openModal() {
+  var now = new Date();
+  now.setMinutes(0, 0, 0);
+  now.setHours(now.getHours() + 1);
+  var dt    = now.toISOString().slice(0, 16);
+  var minDt = new Date();
+  minDt.setMinutes(0,0,0);
+  var minStr = minDt.getFullYear() + '-'
+    + String(minDt.getMonth()+1).padStart(2,'0') + '-'
+    + String(minDt.getDate()).padStart(2,'0') + 'T'
+    + String(minDt.getHours()).padStart(2,'0') + ':00';
+  var input = document.getElementById('appt-datetime');
+  if (input) { input.min = minStr; input.value = dt; }
+  document.getElementById('modal-overlay').classList.add('open');
+  updateServiceOptions();
+  var btn = document.getElementById('appt-submit');
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
+  checkFormValidity();
+}
 
-    _notifications = all;
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('appt-form').reset();
+}
 
-    // Unread = not dismissed
-    _unreadCount = all.filter(function(n) { return !isDismissed(n.id); }).length;
-    updateBadges();
-    if (_panelOpen) renderPanel();
-  }
+function formatTime(datetimeStr) {
+  return new Date(datetimeStr).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
 
-  // ─── Badge Update ────────────────────────────────────────────
-  function updateBadges() {
-    var badges = document.querySelectorAll('.dash-notif-badge, .sidebar-notif-badge');
-    badges.forEach(function(b) {
-      if (_unreadCount > 0) {
-        b.style.display = 'flex';
-        b.textContent   = _unreadCount > 9 ? '9+' : _unreadCount;
-      } else {
-        b.style.display = 'none';
-      }
-    });
-  }
+function formatDate(datetimeStr) {
+  return new Date(datetimeStr).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
 
-  // ─── Panel Render ────────────────────────────────────────────
-  function renderPanel() {
-    var panel = document.getElementById('notif-panel');
-    if (!panel) return;
+function statusBadge(status) {
+  var map = {
+    done:      ['badge-done',      'Termine'],
+    pending:   ['badge-pending',   'A venir'],
+    cancelled: ['badge-cancelled', 'Annule'],
+  };
+  var entry = map[status] || map['pending'];
+  return '<span class="badge-status ' + entry[0] + '">' + entry[1] + '</span>';
+}
 
-    var body  = panel.querySelector('.notif-panel-body');
-    if (!body) return;
+// ===== INIT =====
+var currentUserId = null;
 
-    var visible = _notifications.filter(function(n) { return !isDismissed(n.id); });
+console.log('[Belyo] Verification session...');
+console.log('[Belyo] sb disponible ?', typeof sb);
 
-    if (visible.length === 0) {
-      body.innerHTML = '<div class="notif-empty">'
-        + '<div class="notif-empty-icon">🔔</div>'
-        + '<div class="notif-empty-text">Tout est à jour</div>'
-        + '<div class="notif-empty-sub">Aucune notification pour le moment</div>'
-        + '</div>';
+(async function() {
+  try {
+    var res = await sb.auth.getSession();
+    console.log('[Belyo] Session:', res.data.session ? 'connecte' : 'non connecte');
+
+    var session = res.data.session;
+    if (!session) {
+      console.log('[Belyo] Redirection vers login');
+      window.location.href = 'login.html';
       return;
     }
 
-    // Group by type category
-    var groups = {
-      urgent:  { label: 'Urgent', items: [] },
-      rdv:     { label: 'Rendez-vous', items: [] },
-      stock:   { label: 'Stocks', items: [] },
-      rapport: { label: 'Rapports', items: [] },
-    };
+    currentUserId = session.user.id;
+    console.log('[Belyo] User ID:', currentUserId);
+    await checkSubscription(session.user.id, session.user.created_at);
+    await initPlan(session.user.id, session.user.created_at);
+    initNotifications(session.user.id);
+    var clientsRes = await sb.from('clients').select('id, name, email, phone').eq('user_id', session.user.id);
+    allClients = clientsRes.data || [];
+    await loadPrestationsFromSettings(session.user.id);
 
-    visible.forEach(function(n) {
-      if (n.type === 'rdv-now' || n.type === 'rdv-soon') groups.urgent.items.push(n);
-      else if (n.type === 'rdv-added' || n.type === 'rdv-cancelled' || n.type === 'rdv-done') groups.rdv.items.push(n);
-      else if (n.type === 'stock-empty' || n.type === 'stock-low') groups.stock.items.push(n);
-      else if (n.type === 'rapport') groups.rapport.items.push(n);
-    });
+    var meta = session.user.user_metadata || {};
+    document.getElementById('greeting-name').textContent = meta.first_name || 'vous';
+    document.getElementById('sidebar-salon').textContent = meta.salon_name || 'Mon salon';
+    document.getElementById('sidebar-email').textContent = session.user.email;
 
-    var html = '';
-    ['urgent', 'rdv', 'stock', 'rapport'].forEach(function(key) {
-      var g = groups[key];
-      if (g.items.length === 0) return;
-      html += '<div class="notif-group">';
-      html += '<div class="notif-group-label">' + g.label + '</div>';
-      g.items.forEach(function(n) {
-        html += renderNotifCard(n);
+    // Date du jour
+    var dateEl = document.getElementById('dash-date');
+    if (dateEl) {
+      dateEl.textContent = new Date().toLocaleDateString('fr-FR', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
       });
-      html += '</div>';
-    });
+    }
 
-    body.innerHTML = html;
+    console.log('[Belyo] Chargement des donnees...');
+    await Promise.all([
+      loadPrestationsFromSettings(currentUserId),
+      loadKPIs(currentUserId),
+      loadTodayAppointments(currentUserId),
+      loadRecentClients(currentUserId),
+      loadNextAppt(currentUserId),
+      loadActivity(currentUserId),
+    ]);
+    console.log('[Belyo] Donnees chargees');
+
+    // ===== REALTIME — CA incremental =====
+    // Écoute les INSERT/UPDATE/DELETE sur appointments pour mettre à jour le CA
+    // sans recharger toute la page d'un coup.
+    sb.channel('dash-appointments-' + currentUserId)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'appointments',
+        filter: 'user_id=eq.' + currentUserId,
+      }, function(payload) {
+        // Mise à jour légère : recalcule juste les KPIs + rdv du jour
+        loadKPIs(currentUserId);
+        loadTodayAppointments(currentUserId);
+        loadNextAppt(currentUserId);
+        loadActivity(currentUserId);
+        if (typeof loadDashCaChart === 'function') loadDashCaChart(currentUserId);
+      })
+      .subscribe();
+
+    // ===== AUTO-TERMINATION — marque en "done" les RDV dont l'heure est passée =====
+    // Vérifie toutes les 60 secondes si des RDV pending sont terminés
+    setInterval(autoMarkDone, 60000);
+    autoMarkDone(); // run immédiatement
+
+  } catch(err) {
+    console.error('[Belyo] ERREUR init:', err);
   }
-
-  function renderNotifCard(n) {
-    var typeClass = {
-      'rdv-now':       'notif-card--urgent',
-      'rdv-soon':      'notif-card--soon',
-      'rdv-added':     'notif-card--added',
-      'rdv-cancelled': 'notif-card--cancelled',
-      'rdv-done':      'notif-card--done',
-      'stock-low':     'notif-card--stock-low',
-      'stock-empty':   'notif-card--stock-empty',
-      'rapport':       'notif-card--rapport',
-    }[n.type] || '';
-
-    var linkHtml = n.link
-      ? '<a href="' + n.link + '" class="notif-card-link">' + (n.linkLabel || 'Voir →') + '</a>'
-      : '';
-
-    var dismissHtml = '<button class="notif-card-dismiss" onclick="window.BNotif.dismiss(\'' + n.id + '\')" title="Masquer">×</button>';
-
-    return '<div class="notif-card ' + typeClass + '" data-id="' + n.id + '">'
-      + '<div class="notif-card-icon">' + n.icon + '</div>'
-      + '<div class="notif-card-content">'
-      + '<div class="notif-card-title">' + n.title + '</div>'
-      + '<div class="notif-card-body">' + n.body + '</div>'
-      + '<div class="notif-card-sub">' + n.sub + '</div>'
-      + (linkHtml ? '<div class="notif-card-action">' + linkHtml + '</div>' : '')
-      + '</div>'
-      + dismissHtml
-      + '</div>';
-  }
-
-  // ─── Panel Open / Close ─────────────────────────────────────
-  function openPanel() {
-    var overlay = document.getElementById('notif-overlay');
-    var panel   = document.getElementById('notif-panel');
-    if (!overlay || !panel) { buildPanelDOM(); openPanel(); return; }
-
-    _panelOpen = true;
-    renderPanel();
-
-    overlay.classList.add('notif-overlay--visible');
-    panel.classList.add('notif-panel--visible');
-
-    // Mark all as read
-    _notifications.forEach(function(n) { dismiss(n.id); });
-    _unreadCount = 0;
-    updateBadges();
-  }
-
-  function closePanel() {
-    var overlay = document.getElementById('notif-overlay');
-    var panel   = document.getElementById('notif-panel');
-    _panelOpen  = false;
-    if (overlay) overlay.classList.remove('notif-overlay--visible');
-    if (panel)   panel.classList.remove('notif-panel--visible');
-  }
-
-  function togglePanel() {
-    if (_panelOpen) closePanel(); else openPanel();
-  }
-
-  // ─── DOM Construction ────────────────────────────────────────
-  function buildPanelDOM() {
-    if (document.getElementById('notif-panel')) return;
-
-    // Overlay
-    var overlay = document.createElement('div');
-    overlay.id  = 'notif-overlay';
-    overlay.className = 'notif-overlay';
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) closePanel();
-    });
-
-    // Panel
-    var panel = document.createElement('div');
-    panel.id  = 'notif-panel';
-    panel.className = 'notif-panel';
-    panel.innerHTML = ''
-      + '<div class="notif-panel-header">'
-      + '  <div class="notif-panel-header-left">'
-      + '    <span class="notif-panel-title">Notifications</span>'
-      + '    <span class="notif-panel-count" id="notif-panel-count"></span>'
-      + '  </div>'
-      + '  <div class="notif-panel-header-right">'
-      + '    <button class="notif-clear-all" onclick="window.BNotif.clearAll()">Tout effacer</button>'
-      + '    <button class="notif-panel-close" onclick="window.BNotif.close()">×</button>'
-      + '  </div>'
-      + '</div>'
-      + '<div class="notif-panel-body" id="notif-panel-body">'
-      + '  <div class="notif-loading">Chargement...</div>'
-      + '</div>';
-
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-  }
-
-  // ─── Public API ──────────────────────────────────────────────
-  window.BNotif = {
-    init: function(userId) {
-      _userId = userId;
-      buildPanelDOM();
-
-      // Wire up all trigger buttons
-      var btns = document.querySelectorAll('[data-notif-trigger], #dash-notif-btn, #sidebar-notif-btn');
-      btns.forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          togglePanel();
-        });
-      });
-
-      // Close on Escape
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && _panelOpen) closePanel();
-      });
-
-      // Initial load
-      loadAllNotifications(userId);
-
-      // Poll every 60 seconds
-      _pollInterval = setInterval(function() {
-        loadAllNotifications(userId);
-      }, 60000);
-    },
-
-    open:    openPanel,
-    close:   closePanel,
-    toggle:  togglePanel,
-    refresh: function() { if (_userId) loadAllNotifications(_userId); },
-
-    dismiss: function(id) {
-      dismiss(id);
-      _notifications = _notifications.filter(function(n) { return n.id !== id; });
-      _unreadCount   = Math.max(0, _unreadCount - 1);
-      updateBadges();
-      if (_panelOpen) renderPanel();
-    },
-
-    clearAll: function() {
-      _notifications.forEach(function(n) { dismiss(n.id); });
-      _notifications = [];
-      _unreadCount   = 0;
-      updateBadges();
-      if (_panelOpen) renderPanel();
-    },
-  };
-
 })();
+
+// Marque automatiquement "done" les RDV pending dont l'heure de fin est passée
+// Heure de fin = datetime + duration_minutes (ou 60min par défaut)
+async function autoMarkDone() {
+  if (!currentUserId) return;
+  var now = new Date();
+  // Récupère tous les RDV pending dont la datetime est déjà passée
+  var res = await sb.from('appointments')
+    .select('id, datetime, duration_minutes')
+    .eq('user_id', currentUserId)
+    .eq('status', 'pending')
+    .lte('datetime', now.toISOString());
+  if (!res.data || res.data.length === 0) return;
+  // Ne marquer done que ceux dont l'heure de FIN est passée
+  var toMark = res.data.filter(function(a) {
+    var dur = a.duration_minutes || 60;
+    var end = new Date(new Date(a.datetime).getTime() + dur * 60000);
+    return end <= now;
+  });
+  if (!toMark.length) return;
+  var ids = toMark.map(function(a) { return a.id; });
+  await sb.from('appointments').update({ status: 'done' }).in('id', ids);
+}
+
+// ===== DECONNEXION =====
+document.getElementById('logout-btn').addEventListener('click', async function(e) {
+  e.preventDefault();
+  await sb.auth.signOut();
+  window.location.href = 'login.html';
+});
+
+// ===== KPIs =====
+async function loadKPIs(userId) {
+  var now          = new Date();
+  var today        = now.toISOString().split('T')[0];
+  var startMonth   = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  var startLastM   = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+  var endLastM     = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+
+  // RDV aujourd'hui
+  var r1 = await sb.from('appointments').select('id, status')
+    .eq('user_id', userId)
+    .gte('datetime', today + 'T00:00:00')
+    .lte('datetime', today + 'T23:59:59');
+  var todayAppts = r1.data || [];
+  document.getElementById('kpi-today').textContent = todayAppts.length;
+  var done = todayAppts.filter(function(a){ return a.status==='done'; }).length;
+  var sub1 = document.getElementById('kpi-today-sub');
+  if (sub1) sub1.textContent = done > 0 ? done + ' terminé' + (done>1?'s':'') : 'Aucun terminé';
+
+  // CA ce mois + tendance vs mois dernier
+  var r2 = await sb.from('appointments').select('price')
+    .eq('user_id', userId).eq('status', 'done').gte('datetime', startMonth);
+  var ca = (r2.data||[]).reduce(function(s,a){ return s+(parseFloat(a.price)||0); }, 0);
+  document.getElementById('kpi-month').textContent = Math.round(ca) + '€';
+
+  var r2b = await sb.from('appointments').select('price')
+    .eq('user_id', userId).eq('status', 'done')
+    .gte('datetime', startLastM).lte('datetime', endLastM);
+  var caLast = (r2b.data||[]).reduce(function(s,a){ return s+(parseFloat(a.price)||0); }, 0);
+  var trendEl = document.getElementById('kpi-month-trend');
+  if (trendEl) {
+    if (caLast > 0) {
+      var diff = Math.round((ca - caLast) / caLast * 100);
+      trendEl.textContent = (diff>=0?'+':'')+diff+'%';
+      trendEl.className = 'dash-kpi-trend ' + (diff>0?'trend-up':diff<0?'trend-down':'trend-flat');
+    } else {
+      trendEl.textContent = ''; trendEl.className = 'dash-kpi-trend';
+    }
+  }
+
+  // Total clients
+  var r3 = await sb.from('clients').select('id', { count:'exact', head:true }).eq('user_id', userId);
+  document.getElementById('kpi-clients').textContent = r3.count != null ? r3.count : 0;
+
+  // RDV ce mois
+  var r4 = await sb.from('appointments').select('id', { count:'exact', head:true })
+    .eq('user_id', userId).gte('datetime', startMonth);
+  document.getElementById('kpi-month-appts').textContent = r4.count != null ? r4.count : 0;
+}
+
+// ===== RDV DU JOUR =====
+async function loadTodayAppointments(userId) {
+  var today = new Date().toISOString().split('T')[0];
+  var now   = new Date();
+  var res = await sb.from('appointments').select('*')
+    .eq('user_id', userId)
+    .gte('datetime', today + 'T00:00:00')
+    .lte('datetime', today + 'T23:59:59')
+    .order('datetime', { ascending: true });
+
+  var el = document.getElementById('today-appts');
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun rendez-vous aujourd\'hui</div>';
+    return;
+  }
+
+  el.innerHTML = res.data.map(function(a) {
+    var dt    = new Date(a.datetime);
+    var isNow = Math.abs(now - dt) < 60*60*1000 && now >= dt;
+    var nowCls = isNow ? ' now' : '';
+    return '<div class="appt-row">'
+      + '<div class="appt-time-block">'
+      + '<div class="appt-time' + nowCls + '">' + formatTime(a.datetime) + '</div>'
+      + '<div class="appt-dot' + nowCls + '"></div>'
+      + '</div>'
+      + '<div class="appt-info">'
+      + '<div class="appt-client">' + a.client_name + '</div>'
+      + '<div class="appt-service-label">' + (a.service||'—') + '</div>'
+      + '</div>'
+      + '<div class="appt-right">'
+      + statusBadge(a.status)
+      + (a.price ? '<span class="appt-price">' + Math.round(parseFloat(a.price)) + '€</span>' : '')
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ===== PROCHAIN RDV =====
+async function loadNextAppt(userId) {
+  var now = new Date().toISOString();
+  var res = await sb.from('appointments').select('*')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .gte('datetime', now)
+    .order('datetime', { ascending: true })
+    .limit(1);
+
+  var el = document.getElementById('next-appt');
+  if (!el) return;
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div style="text-align:center;color:var(--ink-light);font-size:13px;padding:1rem 0">Aucun prochain RDV</div>';
+    return;
+  }
+  var a  = res.data[0];
+  var dt = new Date(a.datetime);
+  var diffMs = dt - new Date();
+  var diffH  = Math.floor(diffMs / 3600000);
+  var diffM  = Math.floor((diffMs % 3600000) / 60000);
+  var dans   = diffMs < 0 ? 'En cours' : diffH > 0 ? 'Dans ' + diffH + 'h' + (diffM>0?diffM+'min':'') : 'Dans ' + diffM + ' min';
+
+  el.innerHTML = ''
+    + '<div style="text-align:center;margin-bottom:1rem">'
+    + '<div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-light);margin-bottom:.3rem">' + dans + '</div>'
+    + '<div style="font-family:var(--font-display);font-size:2rem;font-weight:300;color:var(--ink)">' + formatTime(a.datetime) + '</div>'
+    + '<div style="font-size:12px;color:var(--ink-light)">' + dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}) + '</div>'
+    + '</div>'
+    + '<div style="border-top:1px solid var(--border);padding-top:1rem;display:flex;flex-direction:column;gap:6px">'
+    + '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink-light)">Client</span><span style="font-weight:500">' + a.client_name + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink-light)">Prestation</span><span style="font-weight:500">' + (a.service||'—') + '</span></div>'
+    + (a.price ? '<div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--ink-light)">Prix</span><span style="font-weight:500;color:var(--gold)">' + Math.round(parseFloat(a.price)) + '€</span></div>' : '')
+    + '</div>'
+    + '<a href="appointments.html" style="display:block;text-align:center;margin-top:1rem;font-size:12px;color:var(--ink-light)">Voir tous les RDV →</a>';
+}
+
+// ===== DERNIERS CLIENTS =====
+async function loadRecentClients(userId) {
+  var res = await sb.from('clients').select('*')
+    .eq('user_id', userId)
+    .order('last_visit', { ascending: false, nullsFirst: false })
+    .limit(6);
+
+  var el = document.getElementById('recent-clients');
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun client</div>';
+    return;
+  }
+  el.innerHTML = res.data.map(function(c) {
+    var parts = (c.name||'').trim().split(' ');
+    var av    = (parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+    return '<div class="client-mini-row">'
+      + '<div class="client-mini-avatar">' + av + '</div>'
+      + '<div class="client-mini-info">'
+      + '<div class="client-mini-name">' + c.name + '</div>'
+      + '<div class="client-mini-sub">' + (c.last_visit ? 'Dernière visite : ' + formatDate(c.last_visit) : c.phone ? formatPhone(c.phone) : 'Nouveau client') + '</div>'
+      + '</div>'
+      + '<div class="client-mini-visits">' + (c.visit_count||0) + ' visite' + ((c.visit_count||0)>1?'s':'') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ===== ACTIVITÉ RÉCENTE =====
+async function loadActivity(userId) {
+  var res = await sb.from('appointments').select('client_name, service, datetime, status, price')
+    .eq('user_id', userId)
+    .order('datetime', { ascending: false })
+    .limit(8);
+
+  var el = document.getElementById('activity-list');
+  if (!res.data || res.data.length === 0) {
+    el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucune activité</div>';
+    return;
+  }
+
+  var colors = { done:'#1D9E75', pending:'#C4A87A', cancelled:'#D85A30' };
+  var labels = { done:'RDV terminé', pending:'RDV prévu', cancelled:'RDV annulé' };
+
+  el.innerHTML = res.data.map(function(a) {
+    var dt    = new Date(a.datetime);
+    var color = colors[a.status] || '#888';
+    var label = labels[a.status] || a.status;
+    var timeStr = dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'}) + ' ' + formatTime(a.datetime);
+    return '<div class="activity-item">'
+      + '<div class="activity-dot" style="background:' + color + '"></div>'
+      + '<div class="activity-text"><strong>' + a.client_name + '</strong> — ' + (a.service||'—') + (a.price?' (' + Math.round(parseFloat(a.price)) + '€)':'') + '<br><span style="font-size:11px;color:var(--ink-light)">' + label + '</span></div>'
+      + '<div class="activity-time">' + timeStr + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+
+// ===== UPSERT CLIENT =====
+async function upsertClientFull(userId, clientName, apptDatetime, email, phone) {
+  if (!clientName || !userId) return;
+  var today = apptDatetime ? apptDatetime.slice(0, 10) : new Date().toISOString().slice(0, 10);
+  var res = await sb.from('clients')
+    .select('id, visit_count, last_visit')
+    .eq('user_id', userId)
+    .ilike('name', clientName.trim())
+    .maybeSingle();
+  var updateData = { visit_count: 1 };
+  if (email) updateData.email = email;
+  if (phone) updateData.phone = phone;
+  if (res.data) {
+    updateData.visit_count = (res.data.visit_count || 0) + 1;
+    var lastVisit = res.data.last_visit;
+    if (!lastVisit || today > lastVisit) updateData.last_visit = today;
+    await sb.from('clients').update(updateData).eq('id', res.data.id);
+  } else {
+    updateData.user_id    = userId;
+    updateData.name       = clientName.trim();
+    updateData.last_visit = today;
+    await sb.from('clients').insert(updateData);
+  }
+}
+
+// ===== NOUVEAU RDV =====
+function checkFormValidity() {
+  var btn         = document.getElementById('appt-submit');
+  if (!btn) return;
+  var clientVal   = document.getElementById('appt-client') ? document.getElementById('appt-client').value.trim() : '';
+  var serviceVal  = document.getElementById('appt-service-select') ? document.getElementById('appt-service-select').value.trim() : '';
+  var datetimeVal = document.getElementById('appt-datetime') ? document.getElementById('appt-datetime').value.trim() : '';
+  var isValid = clientVal && serviceVal && datetimeVal;
+  btn.disabled      = !isValid;
+  btn.style.opacity = isValid ? '1' : '0.45';
+  btn.style.cursor  = isValid ? 'pointer' : 'not-allowed';
+}
+
+document.getElementById('appt-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = document.getElementById('appt-submit');
+  btn.disabled = true; btn.textContent = 'Enregistrement...';
+
+  var clientName  = document.getElementById('appt-client').value.trim();
+  var _rawDt = document.getElementById('appt-datetime').value;
+  var _d = new Date(_rawDt + ':00');
+  var _off = -_d.getTimezoneOffset();
+  var _sign = _off >= 0 ? '+' : '-';
+  var _hOff = String(Math.floor(Math.abs(_off) / 60)).padStart(2, '0');
+  var _mOff = String(Math.abs(_off) % 60).padStart(2, '0');
+  var datetime = _rawDt + ':00' + _sign + _hOff + ':' + _mOff;
+  var priceVal    = document.getElementById('appt-price').value;
+  var clientEmail = document.getElementById('client-email') ? document.getElementById('client-email').value.trim() : '';
+  var clientPhone = document.getElementById('client-phone') ? document.getElementById('client-phone').value.trim() : '';
+  var notesVal    = document.getElementById('appt-notes').value.trim() || null;
+
+  var serviceVal = (function() {
+    var hidden = document.getElementById('appt-service-select');
+    var inp    = document.getElementById('appt-service');
+    if (hidden && hidden.value) return hidden.value;
+    return inp ? inp.value.trim() : '';
+  })();
+
+  var durationVal = (function() {
+    var name = serviceVal;
+    if (!name) return null;
+    var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][name];
+    return pd && pd.duree ? pd.duree : null;
+  })();
+
+  var res = await sb.from('appointments').insert({
+    user_id:          currentUserId,
+    client_name:      clientName,
+    service:          serviceVal,
+    duration_minutes: durationVal,
+    datetime:         datetime,
+    price:            priceVal ? parseFloat(priceVal) : null,
+    notes:            notesVal,
+    status:           'pending',
+    genre:            selectedGenre,
+  });
+
+  btn.disabled = false; btn.textContent = 'Enregistrer le RDV';
+
+  if (res.error) {
+    showToast('Erreur : ' + res.error.message, 'error');
+    return;
+  }
+
+  // Créer/mettre à jour le client avec email et téléphone
+  await upsertClientFull(currentUserId, clientName, datetime, clientEmail, clientPhone);
+
+  closeModal();
+  showToast('Rendez-vous ajouté !');
+  await Promise.all([
+    loadKPIs(currentUserId),
+    loadTodayAppointments(currentUserId),
+    loadNextAppt(currentUserId),
+    loadActivity(currentUserId),
+  ]);
+});
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === e.currentTarget) closeModal();
+});

@@ -724,23 +724,25 @@ function initNotifications(userId) {
   btn.innerHTML = '<span class="sidebar-icon">&#9956;</span> Notifications<span class="notif-badge" id="notif-badge" style="display:none">0</span>';
   sidebarBottom.insertBefore(btn, sidebarBottom.firstChild);
 
-  // Injecter le panel
+  // Overlay centré (backdrop)
+  var overlay = document.createElement('div');
+  overlay.id = 'notif-overlay';
+  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:9000;background:rgba(26,23,20,0.38);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if (e.target === overlay) closeNotifPanel(); };
+
+  // Panel centré dans l'overlay
   var panel = document.createElement('div');
   panel.className = 'notif-panel';
   panel.id = 'notif-panel';
+  panel.style.cssText = 'width:480px;max-width:calc(100vw - 2rem);max-height:80vh;background:var(--white,#fff);border-radius:20px;box-shadow:0 24px 80px rgba(26,23,20,.18),0 8px 24px rgba(26,23,20,.10),0 0 0 1px rgba(26,23,20,.06);display:flex;flex-direction:column;overflow:hidden;transform:translateY(16px) scale(.97);opacity:0;transition:transform .25s cubic-bezier(.34,1.28,.64,1),opacity .2s ease;';
   panel.innerHTML = ''
     + '<div class="notif-panel-header">'
     +   '<span class="notif-panel-title">Notifications</span>'
     +   '<button class="notif-close" onclick="closeNotifPanel()">&#215;</button>'
     + '</div>'
     + '<div class="notif-list" id="notif-list"><div class="notif-empty">Chargement...</div></div>';
-  document.body.appendChild(panel);
 
-  // Overlay pour fermer en cliquant dehors
-  var overlay = document.createElement('div');
-  overlay.className = 'notif-overlay';
-  overlay.id = 'notif-overlay';
-  overlay.onclick = closeNotifPanel;
+  overlay.appendChild(panel);
   document.body.appendChild(overlay);
 
   // Charger les notifications
@@ -755,16 +757,24 @@ function toggleNotifPanel() {
 function openNotifPanel() {
   var panel   = document.getElementById('notif-panel');
   var overlay = document.getElementById('notif-overlay');
-  if (panel)   panel.classList.add('open');
-  if (overlay) overlay.style.display = 'block';
+  if (overlay) overlay.style.display = 'flex';
+  if (panel) {
+    panel.style.transform = 'translateY(0) scale(1)';
+    panel.style.opacity   = '1';
+  }
   notifOpen = true;
 }
 
 function closeNotifPanel() {
   var panel   = document.getElementById('notif-panel');
   var overlay = document.getElementById('notif-overlay');
-  if (panel)   panel.classList.remove('open');
-  if (overlay) overlay.style.display = 'none';
+  if (panel) {
+    panel.style.transform = 'translateY(16px) scale(.97)';
+    panel.style.opacity   = '0';
+  }
+  setTimeout(function() {
+    if (overlay) overlay.style.display = 'none';
+  }, 220);
   notifOpen = false;
 }
 
@@ -777,28 +787,32 @@ async function loadNotifications(userId) {
   var now   = new Date();
   var today = now.toISOString().slice(0, 10);
 
-  // 1. RDV du jour
+  // 1. RDV du jour (pending, dont la fin n'est pas encore passée)
   var rdvRes = await sb.from('appointments')
-    .select('id, client_name, service, datetime')
+    .select('id, client_name, service, datetime, duration_minutes')
     .eq('user_id', userId)
     .eq('status', 'pending')
     .gte('datetime', today + 'T00:00:00')
     .lte('datetime', today + 'T23:59:59')
     .order('datetime', { ascending: true });
 
-  var rdvAujourdhui = rdvRes.data || [];
+  var rdvAujourdhui = (rdvRes.data || []).filter(function(a) {
+    var dur = a.duration_minutes || 60;
+    var end = new Date(new Date(a.datetime).getTime() + dur * 60000);
+    return end > now;
+  });
 
   if (rdvAujourdhui.length > 0) {
     rdvAujourdhui.forEach(function(a) {
-      var dt  = new Date(a.datetime);
-      var hm  = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
-      var isPast = dt < now;
+      var dt        = new Date(a.datetime);
+      var hm        = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+      var isStarted = dt <= now;
       notifications.push({
         icon: '&#9201;',
         title: a.client_name,
         desc: (a.service || 'RDV') + ' — ' + hm,
-        time: isPast ? 'Passe' : 'Aujourd\'hui a ' + hm,
-        unread: !isPast,
+        time: isStarted ? 'En cours' : "Aujourd'hui à " + hm,
+        unread: !isStarted,
         type: 'rdv',
       });
     });
