@@ -711,234 +711,174 @@ document.addEventListener('click', function(e) {
 
 // ===== NOTIFICATIONS IN-APP =====
 var notifOpen = false;
-var _notifUserId = null;
 
 function initNotifications(userId) {
-  _notifUserId = userId;
+  // Injecter la cloche dans la sidebar
+  var sidebarBottom = document.querySelector('.sidebar-bottom');
+  if (!sidebarBottom) return;
 
-  // Créer overlay + panel s'ils n'existent pas
-  if (!document.getElementById('notif-overlay')) {
-    var overlay = document.createElement('div');
-    overlay.id = 'notif-overlay';
-    overlay.className = 'notif-overlay';
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) closeNotifPanel();
-    });
+  var btn = document.createElement('button');
+  btn.className = 'notif-btn';
+  btn.id = 'notif-btn';
+  btn.onclick = toggleNotifPanel;
+  btn.innerHTML = '<span class="sidebar-icon">&#9956;</span> Notifications<span class="notif-badge" id="notif-badge" style="display:none">0</span>';
+  sidebarBottom.insertBefore(btn, sidebarBottom.firstChild);
 
-    var panel = document.createElement('div');
-    panel.id = 'notif-panel';
-    panel.className = 'notif-panel';
-    panel.innerHTML = ''
-      + '<div class="notif-panel-head">'
-      +   '<div class="notif-panel-head-left">'
-      +     '<span class="notif-panel-title">Notifications</span>'
-      +     '<span class="notif-panel-count" id="notif-panel-count" style="display:none"></span>'
-      +   '</div>'
-      +   '<div class="notif-panel-head-right">'
-      +     '<button class="notif-clear-btn" onclick="clearAllNotifs()">Tout effacer</button>'
-      +     '<button class="notif-x-btn" onclick="closeNotifPanel()">&#215;</button>'
-      +   '</div>'
-      + '</div>'
-      + '<div class="notif-body" id="notif-list">'
-      +   '<div class="notif-loading">Chargement\u2026</div>'
-      + '</div>';
+  // Injecter le panel
+  var panel = document.createElement('div');
+  panel.className = 'notif-panel';
+  panel.id = 'notif-panel';
+  panel.innerHTML = ''
+    + '<div class="notif-panel-header">'
+    +   '<span class="notif-panel-title">Notifications</span>'
+    +   '<button class="notif-close" onclick="closeNotifPanel()">&#215;</button>'
+    + '</div>'
+    + '<div class="notif-list" id="notif-list"><div class="notif-empty">Chargement...</div></div>';
+  document.body.appendChild(panel);
 
-    overlay.appendChild(panel);
-    document.body.appendChild(overlay);
-  }
+  // Overlay pour fermer en cliquant dehors
+  var overlay = document.createElement('div');
+  overlay.className = 'notif-overlay';
+  overlay.id = 'notif-overlay';
+  overlay.onclick = closeNotifPanel;
+  document.body.appendChild(overlay);
 
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && notifOpen) closeNotifPanel();
-  });
-
-  // Wirer tous les boutons cloche (sidebar + topbar dashboard)
-  document.querySelectorAll('#dash-notif-btn, #notif-btn, [data-notif-trigger]').forEach(function(btn) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      toggleNotifPanel();
-    });
-  });
-
+  // Charger les notifications
   loadNotifications(userId);
 }
 
 function toggleNotifPanel() {
-  if (notifOpen) closeNotifPanel(); else openNotifPanel();
+  if (notifOpen) closeNotifPanel();
+  else openNotifPanel();
 }
 
 function openNotifPanel() {
-  var overlay = document.getElementById('notif-overlay');
   var panel   = document.getElementById('notif-panel');
-  if (!overlay) return;
-  overlay.classList.add('notif-overlay--open');
-  if (panel) {
-    panel.classList.add('notif-panel--open');
+  var overlay = document.getElementById('notif-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
   }
-  notifOpen = true;
+  if (panel) {
+    panel.style.transform = 'translateY(0) scale(1)';
+    panel.style.opacity = '1';
+  }
   if (_notifUserId) loadNotifications(_notifUserId);
+  notifOpen = true;
 }
 
 function closeNotifPanel() {
-  var overlay = document.getElementById('notif-overlay');
   var panel   = document.getElementById('notif-panel');
-  if (overlay) overlay.classList.remove('notif-overlay--open');
-  if (panel)   panel.classList.remove('notif-panel--open');
+  var overlay = document.getElementById('notif-overlay');
+  if (panel) {
+    panel.style.transform = 'translateY(18px) scale(.97)';
+    panel.style.opacity = '0';
+  }
+  setTimeout(function() {
+    if (overlay) overlay.style.display = 'none';
+  }, 220);
   notifOpen = false;
-}
-
-function clearAllNotifs() {
-  var list = document.getElementById('notif-list');
-  if (list) list.innerHTML = '<div class="notif-empty-state"><div class="notif-empty-icon">🔔</div><div class="notif-empty-label">Tout est à jour</div><div class="notif-empty-sub">Aucune notification</div></div>';
-  var cnt = document.getElementById('notif-panel-count');
-  if (cnt) cnt.style.display = 'none';
-  // Badge
-  ['notif-badge', 'sidebar-notif-badge'].forEach(function(id) {
-    var b = document.getElementById(id);
-    if (b) b.style.display = 'none';
-  });
 }
 
 async function loadNotifications(userId) {
   var list  = document.getElementById('notif-list');
   var badge = document.getElementById('notif-badge');
-  var cnt   = document.getElementById('notif-panel-count');
   if (!list) return;
 
-  var notifs = [];
-  var now     = new Date();
-  var since24 = new Date(now.getTime() - 24 * 3600000).toISOString();
-  var today   = now.toISOString().slice(0, 10);
+  var notifications = [];
+  var now   = new Date();
+  var today = now.toISOString().slice(0, 10);
 
-  // 1. Nouveaux RDV (pending, créés dans les 24h)
-  var rNew = await sb.from('appointments')
-    .select('id, client_name, service, datetime, created_at')
-    .eq('user_id', userId).eq('status', 'pending')
-    .gte('created_at', since24).order('created_at', { ascending: false });
-  (rNew.data || []).forEach(function(a) {
-    notifs.push({
-      type: 'rdv-added', icon: '✅',
-      title: 'Nouveau RDV',
-      body:  a.client_name + ' \u2014 ' + (a.service || 'Prestation'),
-      sub:   _fmtDate(a.datetime) + ' \u00e0 ' + _fmtTime(a.datetime),
-      time:  new Date(a.created_at),
-      link:  'appointments.html',
+  // 1. RDV du jour
+  var rdvRes = await sb.from('appointments')
+    .select('id, client_name, service, datetime')
+    .eq('user_id', userId)
+    .eq('status', 'pending')
+    .gte('datetime', today + 'T00:00:00')
+    .lte('datetime', today + 'T23:59:59')
+    .order('datetime', { ascending: true });
+
+  var rdvAujourdhui = rdvRes.data || [];
+
+  if (rdvAujourdhui.length > 0) {
+    rdvAujourdhui.forEach(function(a) {
+      var dt  = new Date(a.datetime);
+      var hm  = String(dt.getHours()).padStart(2,'0') + 'h' + String(dt.getMinutes()).padStart(2,'0');
+      var isPast = dt < now;
+      notifications.push({
+        icon: '&#9201;',
+        title: a.client_name,
+        desc: (a.service || 'RDV') + ' — ' + hm,
+        time: isPast ? 'Passe' : 'Aujourd\'hui a ' + hm,
+        unread: !isPast,
+        type: 'rdv',
+      });
     });
-  });
+  }
 
-  // 2. RDV annulés (24h)
-  var rCan = await sb.from('appointments')
-    .select('id, client_name, service, datetime, updated_at')
-    .eq('user_id', userId).eq('status', 'cancelled')
-    .gte('updated_at', since24).order('updated_at', { ascending: false });
-  (rCan.data || []).forEach(function(a) {
-    notifs.push({
-      type: 'rdv-cancelled', icon: '❌',
-      title: 'RDV annulé',
-      body:  a.client_name + ' \u2014 ' + (a.service || 'Prestation'),
-      sub:   _fmtDate(a.datetime) + ' \u00e0 ' + _fmtTime(a.datetime),
-      time:  new Date(a.updated_at),
-      link:  'appointments.html',
-    });
-  });
-
-  // 3. RDV terminés (24h)
-  var rDone = await sb.from('appointments')
-    .select('id, client_name, service, datetime, updated_at, price')
-    .eq('user_id', userId).eq('status', 'done')
-    .gte('updated_at', since24).order('updated_at', { ascending: false });
-  (rDone.data || []).forEach(function(a) {
-    var prix = a.price ? ' \u00b7 ' + Math.round(parseFloat(a.price)) + '\u20ac' : '';
-    notifs.push({
-      type: 'rdv-done', icon: '🎉',
-      title: 'RDV terminé',
-      body:  a.client_name + ' \u2014 ' + (a.service || 'Prestation') + prix,
-      sub:   _fmtDate(a.datetime) + ' \u00e0 ' + _fmtTime(a.datetime),
-      time:  new Date(a.updated_at),
-      link:  'appointments.html',
-    });
-  });
-
-  // 4. Stocks
-  var rStock = await sb.from('products')
+  // 2. Stocks en rupture/alerte
+  var stockRes = await sb.from('products')
     .select('id, name, quantity, alert_threshold')
     .eq('user_id', userId);
-  (rStock.data || []).forEach(function(p) {
-    var qty = p.quantity || 0, thr = p.alert_threshold || 2;
-    if (qty === 0) {
-      notifs.push({ type: 'stock-empty', icon: '🚨', title: 'Stock épuisé', body: p.name, sub: '0 unité restante', time: now, link: 'stocks.html' });
-    } else if (qty <= thr) {
-      notifs.push({ type: 'stock-low', icon: '⚠️', title: 'Stock faible', body: p.name, sub: qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''), time: now, link: 'stocks.html' });
-    }
+
+  var stocksAlerte = (stockRes.data || []).filter(function(p) {
+    return p.quantity <= (p.alert_threshold || 2);
   });
 
-  // Badge
-  var unread = notifs.length;
-  if (badge) { badge.textContent = unread; badge.style.display = unread > 0 ? 'flex' : 'none'; }
-  if (cnt)   { cnt.textContent = unread;   cnt.style.display   = unread > 0 ? 'flex' : 'none'; }
+  stocksAlerte.forEach(function(p) {
+    var isRupture = p.quantity === 0;
+    notifications.push({
+      icon: isRupture ? '&#9888;' : '&#9661;',
+      title: p.name,
+      desc: isRupture ? 'Rupture de stock' : 'Stock faible — ' + p.quantity + ' restant' + (p.quantity > 1 ? 's' : ''),
+      time: 'Stock',
+      unread: isRupture,
+      type: 'stock',
+    });
+  });
 
-  if (notifs.length === 0) {
-    list.innerHTML = '<div class="notif-empty-state"><div class="notif-empty-icon">🔔</div><div class="notif-empty-label">Tout est à jour</div><div class="notif-empty-sub">Aucune notification pour le moment</div></div>';
+  // Mettre à jour le badge
+  var unreadCount = notifications.filter(function(n) { return n.unread; }).length;
+  if (badge) {
+    badge.textContent = unreadCount;
+    badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+  }
+
+  // Rendre les notifications
+  if (notifications.length === 0) {
+    list.innerHTML = '<div class="notif-empty">&#10003; Tout est en ordre !</div>';
     return;
   }
 
-  var sections = [
-    { label: 'Rendez-vous',  types: ['rdv-added','rdv-cancelled','rdv-done'], items: [] },
-    { label: 'Stock',        types: ['stock-empty','stock-low'],              items: [] },
-  ];
-  notifs.forEach(function(n) {
-    sections.forEach(function(s) { if (s.types.indexOf(n.type) !== -1) s.items.push(n); });
-  });
-
-  var accentMap = {
-    'rdv-added':     '#4EA685',
-    'rdv-cancelled': '#D85A30',
-    'rdv-done':      '#7D7CBD',
-    'stock-empty':   '#C0392B',
-    'stock-low':     '#E89020',
-  };
+  var rdvItems   = notifications.filter(function(n) { return n.type === 'rdv'; });
+  var stockItems = notifications.filter(function(n) { return n.type === 'stock'; });
 
   var html = '';
-  sections.forEach(function(s) {
-    if (!s.items.length) return;
-    html += '<div class="notif-section">';
-    html += '<div class="notif-section-label">' + s.label + '</div>';
-    s.items.forEach(function(n) {
-      var accent = accentMap[n.type] || '#888';
-      html += '<div class="notif-card" style="--accent:' + accent + '">'
-        + '<div class="notif-card-stripe"></div>'
-        + '<div class="notif-card-icon">' + n.icon + '</div>'
-        + '<div class="notif-card-content">'
-        +   '<div class="notif-card-title">' + n.title + '</div>'
-        +   '<div class="notif-card-body">' + n.body + '</div>'
-        +   '<div class="notif-card-sub">' + n.sub + ' &middot; ' + _timeAgo(n.time) + '</div>'
-        + '</div>'
-        + (n.link ? '<a href="' + n.link + '" class="notif-card-arrow">\u2192</a>' : '')
-        + '</div>';
-    });
-    html += '</div>';
-  });
+
+  if (rdvItems.length > 0) {
+    html += '<div class="notif-section-label">RDV aujourd\'hui (' + rdvItems.length + ')</div>';
+    html += rdvItems.map(renderNotifItem).join('');
+  }
+
+  if (stockItems.length > 0) {
+    html += '<div class="notif-section-label" style="margin-top:8px">Alertes stock</div>';
+    html += stockItems.map(renderNotifItem).join('');
+  }
 
   list.innerHTML = html;
 }
 
-function _fmtTime(iso) {
-  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+function renderNotifItem(n) {
+  return '<div class="notif-item' + (n.unread ? ' unread' : '') + '">'
+    + '<div class="notif-icon">' + n.icon + '</div>'
+    + '<div class="notif-content">'
+    +   '<div class="notif-title">' + n.title + '</div>'
+    +   '<div class="notif-desc">' + n.desc + '</div>'
+    +   '<div class="notif-time">' + n.time + '</div>'
+    + '</div>'
+    + '</div>';
 }
-function _fmtDate(iso) {
-  return new Date(iso).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-function _timeAgo(date) {
-  var diff = Math.floor((new Date() - date) / 60000);
-  if (diff < 1)  return "À l'instant";
-  if (diff < 60) return 'Il y a ' + diff + 'min';
-  var h = Math.floor(diff / 60);
-  if (h < 24)    return 'Il y a ' + h + 'h';
-  return 'Il y a ' + Math.floor(h / 24) + 'j';
-}
-
-function renderNotifItem() {}
-
-
 // ===== FORMAT TÉLÉPHONE =====
 function formatPhone(val) {
   // Garder uniquement les chiffres et le + initial
