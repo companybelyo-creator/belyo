@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notifications — Belyo</title>
+  <link rel="icon" href="data:,">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/notifications.css" />
+  <style>
+    .notif-page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    .notif-page-title {
+      font-family: var(--font-display, serif);
+      font-size: 2rem;
+      font-weight: 300;
+      color: var(--ink);
+    }
+    .notif-page-title em { font-style: italic; }
+    .notif-clear-btn {
+      background: none;
+      border: 1px solid rgba(26,23,20,0.15);
+      border-radius: 100px;
+      padding: 7px 16px;
+      font-family: var(--font-body, sans-serif);
+      font-size: 12px;
+      color: var(--ink-light, #888);
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .notif-clear-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+    .notif-page-body {
+      max-width: 640px;
+    }
+
+    /* Section label inline page */
+    .notif-page-section {
+      margin-bottom: 2rem;
+    }
+    .notif-page-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--ink-light, #888);
+      margin-bottom: 10px;
+      padding-left: 2px;
+    }
+
+    .notif-empty-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 5rem 1rem;
+      text-align: center;
+      color: var(--ink-light, #888);
+    }
+    .notif-empty-page-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+    .notif-empty-page-text {
+      font-family: var(--font-display, serif);
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: .4rem;
+    }
+    .notif-empty-page-sub { font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">Belyo</div>
+    <a class="sidebar-link" href="dashboard.html"><span class="sidebar-icon">◎</span> Tableau de bord</a>
+    <a class="sidebar-link" href="appointments.html"><span class="sidebar-icon">◈</span> Rendez-vous</a>
+    <a class="sidebar-link" href="clients.html"><span class="sidebar-icon">◇</span> Clients</a>
+    <a class="sidebar-link" href="revenue.html"><span class="sidebar-icon">◉</span> Chiffre d'affaires</a>
+    <a class="sidebar-link" href="stocks.html"><span class="sidebar-icon">◫</span> Stocks</a>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <strong id="sidebar-salon">Chargement...</strong>
+        <span id="sidebar-email">—</span>
+      </div>
+      <a class="sidebar-link active" href="notifications.html"><span class="sidebar-icon">🔔</span> Notifications</a>
+      <a class="sidebar-link" href="settings.html"><span class="sidebar-icon">⚙</span> Paramètres</a>
+      <a class="sidebar-link" id="logout-btn" href="#"><span class="sidebar-icon">↩</span> Déconnexion</a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <div class="notif-page-header">
+      <h1 class="notif-page-title">Notifi<em>cations</em></h1>
+      <button class="notif-clear-btn" id="clear-all-btn">Tout effacer</button>
+    </div>
+
+    <div class="notif-page-body" id="notif-page-body">
+      <div class="notif-empty-page">
+        <div class="notif-empty-page-icon">🔔</div>
+        <div class="notif-empty-page-text">Chargement...</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+(async function() {
+  var res = await sb.auth.getSession();
+  if (!res.data.session) { window.location.href = 'login.html'; return; }
+
+  var session = res.data.session;
+  var userId  = session.user.id;
+  var meta    = session.user.user_metadata || {};
+
+  document.getElementById('sidebar-salon').textContent = meta.salon_name || 'Mon salon';
+  document.getElementById('sidebar-email').textContent = session.user.email;
+
+  document.getElementById('logout-btn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    await sb.auth.signOut();
+    window.location.href = 'login.html';
+  });
+
+  document.getElementById('clear-all-btn').addEventListener('click', function() {
+    renderNotifications([]);
+    saveDismissedAll(_currentNotifs);
+  });
+
+  await loadPageNotifications(userId);
+})();
+
+var _currentNotifs = [];
+
+function _timeAgo(date) {
+  var diff = Math.floor((new Date() - date) / 60000);
+  if (diff < 1)  return "À l'instant";
+  if (diff < 60) return 'Il y a ' + diff + ' min';
+  var h = Math.floor(diff / 60);
+  if (h < 24)    return 'Il y a ' + h + 'h';
+  return 'Il y a ' + Math.floor(h / 24) + 'j';
+}
+
+function _fmt(iso, opts) {
+  return new Date(iso).toLocaleDateString('fr-FR', opts);
+}
+function _fmtTime(iso) {
+  return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+var _dismissedKey = 'belyo_dismissed_notifs';
+function getDismissed() {
+  try { return JSON.parse(localStorage.getItem(_dismissedKey) || '[]'); } catch(e) { return []; }
+}
+function saveDismissedAll(notifs) {
+  var d = getDismissed();
+  notifs.forEach(function(n) { if (d.indexOf(n.id) === -1) d.push(n.id); });
+  try { localStorage.setItem(_dismissedKey, JSON.stringify(d)); } catch(e) {}
+}
+function isDismissed(id) { return getDismissed().indexOf(id) !== -1; }
+function dismissOne(id) {
+  var d = getDismissed();
+  if (d.indexOf(id) === -1) { d.push(id); }
+  try { localStorage.setItem(_dismissedKey, JSON.stringify(d)); } catch(e) {}
+  _currentNotifs = _currentNotifs.filter(function(n) { return n.id !== id; });
+  renderNotifications(_currentNotifs);
+}
+
+async function loadPageNotifications(userId) {
+  var now     = new Date();
+  var since24 = new Date(now.getTime() - 24 * 3600000).toISOString();
+  var notifs  = [];
+
+  // 1. Nouveaux RDV (pending créés dans les 24h)
+  var rNew = await sb.from('appointments')
+    .select('id, client_name, service, datetime, created_at')
+    .eq('user_id', userId).eq('status', 'pending')
+    .gte('created_at', since24).order('created_at', { ascending: false });
+  (rNew.data || []).forEach(function(a) {
+    notifs.push({
+      id: 'rdv-added-' + a.id, type: 'rdv-added',
+      icon: '✅', title: 'Nouveau RDV',
+      body: a.client_name + ' — ' + (a.service || 'Prestation'),
+      sub:  _fmt(a.datetime, { weekday:'short', day:'numeric', month:'short' }) + ' à ' + _fmtTime(a.datetime),
+      link: 'appointments.html', linkLabel: 'Voir le RDV',
+      time: new Date(a.created_at),
+    });
+  });
+
+  // 2. RDV annulés (24h)
+  var rCan = await sb.from('appointments')
+    .select('id, client_name, service, datetime, updated_at')
+    .eq('user_id', userId).eq('status', 'cancelled')
+    .gte('updated_at', since24).order('updated_at', { ascending: false });
+  (rCan.data || []).forEach(function(a) {
+    notifs.push({
+      id: 'rdv-cancelled-' + a.id, type: 'rdv-cancelled',
+      icon: '❌', title: 'RDV annulé',
+      body: a.client_name + ' — ' + (a.service || 'Prestation'),
+      sub:  _fmt(a.datetime, { weekday:'short', day:'numeric', month:'short' }) + ' à ' + _fmtTime(a.datetime),
+      link: 'appointments.html', linkLabel: 'Voir le RDV',
+      time: new Date(a.updated_at),
+    });
+  });
+
+  // 3. RDV terminés (24h)
+  var rDone = await sb.from('appointments')
+    .select('id, client_name, service, datetime, updated_at, price')
+    .eq('user_id', userId).eq('status', 'done')
+    .gte('updated_at', since24).order('updated_at', { ascending: false });
+  (rDone.data || []).forEach(function(a) {
+    var prix = a.price ? ' · ' + Math.round(parseFloat(a.price)) + '€' : '';
+    notifs.push({
+      id: 'rdv-done-' + a.id, type: 'rdv-done',
+      icon: '🎉', title: 'RDV terminé',
+      body: a.client_name + ' — ' + (a.service || 'Prestation') + prix,
+      sub:  _fmt(a.datetime, { weekday:'short', day:'numeric', month:'short' }) + ' à ' + _fmtTime(a.datetime),
+      link: 'appointments.html', linkLabel: 'Voir le RDV',
+      time: new Date(a.updated_at),
+    });
+  });
+
+  // 4. Stocks épuisés / faibles
+  var rStock = await sb.from('products')
+    .select('id, name, quantity, alert_threshold')
+    .eq('user_id', userId);
+  (rStock.data || []).forEach(function(p) {
+    var qty = p.quantity || 0;
+    var thr = p.alert_threshold || 2;
+    if (qty === 0) {
+      notifs.push({
+        id: 'stock-empty-' + p.id, type: 'stock-empty',
+        icon: '🚨', title: 'Stock épuisé',
+        body: p.name, sub: '0 unité restante',
+        link: 'stocks.html', linkLabel: 'Gérer les stocks',
+        time: now,
+      });
+    } else if (qty <= thr) {
+      notifs.push({
+        id: 'stock-low-' + p.id, type: 'stock-low',
+        icon: '⚠️', title: 'Stock faible',
+        body: p.name,
+        sub:  qty + ' unité' + (qty > 1 ? 's' : '') + ' restante' + (qty > 1 ? 's' : ''),
+        link: 'stocks.html', linkLabel: 'Gérer les stocks',
+        time: now,
+      });
+    }
+  });
+
+  // Filtrer dismissées
+  _currentNotifs = notifs.filter(function(n) { return !isDismissed(n.id); });
+  renderNotifications(_currentNotifs);
+}
+
+function renderNotifications(notifs) {
+  var el = document.getElementById('notif-page-body');
+
+  if (notifs.length === 0) {
+    el.innerHTML = '<div class="notif-empty-page">'
+      + '<div class="notif-empty-page-icon">🔔</div>'
+      + '<div class="notif-empty-page-text">Tout est à jour</div>'
+      + '<div class="notif-empty-page-sub">Aucune notification pour le moment</div>'
+      + '</div>';
+    return;
+  }
+
+  var sections = [
+    { label: 'Nouveaux RDV',  types: ['rdv-added'],               items: [] },
+    { label: 'RDV annulés',   types: ['rdv-cancelled'],            items: [] },
+    { label: 'RDV terminés',  types: ['rdv-done'],                 items: [] },
+    { label: 'Alertes stock', types: ['stock-empty', 'stock-low'], items: [] },
+  ];
+
+  notifs.forEach(function(n) {
+    sections.forEach(function(s) {
+      if (s.types.indexOf(n.type) !== -1) s.items.push(n);
+    });
+  });
+
+  var typeClass = {
+    'rdv-added':     'notif-card--added',
+    'rdv-cancelled': 'notif-card--cancelled',
+    'rdv-done':      'notif-card--done',
+    'stock-empty':   'notif-card--stock-empty',
+    'stock-low':     'notif-card--stock-low',
+  };
+
+  var html = '';
+  sections.forEach(function(s) {
+    if (s.items.length === 0) return;
+    html += '<div class="notif-page-section">';
+    html += '<div class="notif-page-section-label">' + s.label + ' (' + s.items.length + ')</div>';
+    s.items.forEach(function(n) {
+      html += '<div class="notif-card ' + (typeClass[n.type] || '') + '" data-id="' + n.id + '">'
+        + '<div class="notif-card-icon">' + n.icon + '</div>'
+        + '<div class="notif-card-content">'
+        + '<div class="notif-card-title">' + n.title + '</div>'
+        + '<div class="notif-card-body">' + n.body + '</div>'
+        + '<div class="notif-card-sub">' + n.sub + ' · ' + _timeAgo(n.time) + '</div>'
+        + (n.link ? '<div class="notif-card-action"><a href="' + n.link + '" class="notif-card-link">' + (n.linkLabel || 'Voir →') + '</a></div>' : '')
+        + '</div>'
+        + '<button class="notif-card-dismiss" onclick="dismissOne(\'' + n.id + '\')" title="Masquer">×</button>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+
+  el.innerHTML = html;
+}
+</script>
+</body>
+</html>
