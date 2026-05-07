@@ -302,25 +302,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>
-<script>
-// Dashboard: pas de bouton notif dans la sidebar, on utilise la cloche en haut à droite
-var _origInitNotifications = initNotifications;
-initNotifications = function(userId) {
-  _notifUserId = userId;
-  var overlay = document.createElement('div');
-  overlay.id = 'notif-overlay';
-  overlay.style.cssText = 'display:none;position:fixed;inset:0;z-index:9000;background:rgba(26,23,20,0.38);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);align-items:center;justify-content:center;';
-  overlay.onclick = function(e) { if (e.target === overlay) closeNotifPanel(); };
-  var panel = document.createElement('div');
-  panel.id = 'notif-panel';
-  panel.style.cssText = 'width:500px;max-width:calc(100vw - 2rem);max-height:82vh;background:var(--white,#fff);border-radius:20px;box-shadow:0 24px 80px rgba(26,23,20,.20),0 8px 24px rgba(26,23,20,.10),0 0 0 1px rgba(26,23,20,.06);display:flex;flex-direction:column;overflow:hidden;transform:translateY(18px) scale(.97);opacity:0;transition:transform .26s cubic-bezier(.34,1.28,.64,1),opacity .2s ease;pointer-events:all;';
-  panel.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;padding:1.2rem 1.4rem 1rem;border-bottom:1px solid rgba(26,23,20,.07);flex-shrink:0"><div style="display:flex;align-items:center;gap:10px"><span style="font-family:var(--font-display,serif);font-size:1.3rem;font-weight:600;color:var(--ink,#1A1714);letter-spacing:-.01em">Notifications</span><span id="notif-count-badge" style="display:none;font-size:11px;font-weight:700;background:#C0392B;color:#fff;border-radius:100px;padding:2px 8px;min-width:18px;text-align:center"></span></div><div style="display:flex;align-items:center;gap:8px"><button onclick="clearAllNotifs()" style="background:none;border:1px solid rgba(26,23,20,.12);border-radius:100px;padding:5px 13px;font-family:var(--font-body,sans-serif);font-size:12px;color:var(--ink-light,#888);cursor:pointer">Tout effacer</button><button onclick="closeNotifPanel()" style="background:rgba(26,23,20,.06);border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px;color:var(--ink-light,#888);cursor:pointer;line-height:1">&#215;</button></div></div><div id="notif-list" style="overflow-y:auto;padding:1rem 1.2rem 1.2rem;flex:1;display:flex;flex-direction:column;gap:0"><div class="notif-empty">Chargement...</div></div>';
-  overlay.appendChild(panel);
-  document.body.appendChild(overlay);
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && notifOpen) closeNotifPanel(); });
-  loadNotifications(userId);
-};
-</script>
+
 <script>
 (async function() {
   var s = await sb.auth.getSession();
@@ -775,35 +757,41 @@ var _origInit = window.onload;
 
 // ===== SPARKLINE CA : vrais calculs depuis Supabase =====
 // Charge les RDV "done" du mois en cours, regroupe par jour, génère la courbe
+// Sparkline CA : courbe 6 mois (RDV done + ventes produits)
 async function loadCaSparkline(userId) {
-  var now       = new Date();
-  var year      = now.getFullYear();
-  var month     = now.getMonth();
-  var daysInMonth = new Date(year, month + 1, 0).getDate();
-  var startMonth = new Date(year, month, 1).toISOString();
-  var endMonth   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  var now = new Date();
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key:   d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'),
+      start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+      end:   new Date(d.getFullYear(), d.getMonth()+1, 0, 23, 59, 59).toISOString(),
+    });
+  }
 
-  var res = await sb.from('appointments')
+  var rA = await sb.from('appointments')
     .select('datetime, price')
-    .eq('user_id', userId)
-    .eq('status', 'done')
-    .gte('datetime', startMonth)
-    .lte('datetime', endMonth);
+    .eq('user_id', userId).eq('status', 'done')
+    .gte('datetime', months[0].start).lte('datetime', months[5].end);
 
-  // Agréger par jour
-  var byDay = {};
-  for (var d = 1; d <= daysInMonth; d++) byDay[d] = 0;
-  (res.data || []).forEach(function(a) {
-    var day = new Date(a.datetime).getDate();
-    byDay[day] = (byDay[day] || 0) + (parseFloat(a.price) || 0);
+  var rP = await sb.from('product_sales')
+    .select('created_at, unit_price, quantity_sold')
+    .eq('user_id', userId)
+    .gte('created_at', months[0].start).lte('created_at', months[5].end);
+
+  var caByMonth = {};
+  months.forEach(function(m) { caByMonth[m.key] = 0; });
+  (rA.data || []).forEach(function(a) {
+    var mk = a.datetime.slice(0, 7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price) || 0;
+  });
+  (rP.data || []).forEach(function(p) {
+    var mk = (p.created_at || '').slice(0, 7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += (parseFloat(p.unit_price)||0) * (parseInt(p.quantity_sold)||1);
   });
 
-  // Prendre un point tous les ~4 jours pour avoir 7-8 points
-  var step = Math.max(1, Math.floor(daysInMonth / 7));
-  var vals = [];
-  for (var d = 1; d <= daysInMonth; d += step) vals.push(byDay[d] || 0);
-  // S'assurer qu'on a le dernier jour
-  if (vals.length < 2) vals = [0, 0];
+  var vals = months.map(function(m) { return Math.round(caByMonth[m.key]); });
 
   var svgEl = document.getElementById('ca-sparkline-svg');
   if (!svgEl) return;
