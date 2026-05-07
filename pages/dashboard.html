@@ -772,43 +772,51 @@ var _origInit = window.onload;
   }, 300);
 })();
 
-// ===== SPARKLINE CA : du 1er du mois jusqu'à aujourd'hui =====
-// Chaque point = un jour. Trait plat (0) si pas de CA ce jour.
-// Le 1er point (tout à gauche) = jour 1 du mois.
+// ===== SPARKLINE CA : 6 barres mensuelles (mois-5 -> mois actuel) =====
 async function loadCaSparkline(userId) {
-  var now        = new Date();
-  var year       = now.getFullYear();
-  var month      = now.getMonth();
-  var today      = now.getDate();
-  var startMonth = new Date(year, month, 1).toISOString();
-  var endToday   = new Date(year, month, today, 23, 59, 59).toISOString();
+  var now = new Date();
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key:   d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'),
+      start: new Date(d.getFullYear(), d.getMonth(), 1).toISOString(),
+      end:   new Date(d.getFullYear(), d.getMonth()+1, 0, 23, 59, 59).toISOString(),
+    });
+  }
 
   var res = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
     .eq('status', 'done')
-    .gte('datetime', startMonth)
-    .lte('datetime', endToday);
+    .gte('datetime', months[0].start)
+    .lte('datetime', months[5].end);
 
-  // Agréger par numéro de jour (1..today)
-  var byDay = {};
+  var caByMonth = {};
+  months.forEach(function(m) { caByMonth[m.key] = 0; });
   (res.data || []).forEach(function(a) {
-    var day = new Date(a.datetime).getDate();
-    byDay[day] = (byDay[day] || 0) + (parseFloat(a.price) || 0);
+    var mk = a.datetime.slice(0, 7);
+    if (caByMonth[mk] !== undefined) caByMonth[mk] += parseFloat(a.price) || 0;
   });
 
-  // Un point par jour du 1er jusqu'à aujourd'hui inclus
-  var vals = [];
-  for (var d = 1; d <= today; d++) {
-    vals.push(byDay[d] || 0);
-  }
-  // Minimum 2 points pour tracer une ligne
-  if (vals.length < 2) vals = [0, vals[0] || 0];
+  var vals = months.map(function(m) { return Math.round(caByMonth[m.key]); });
+  var maxVal = Math.max.apply(null, vals) || 1;
+  var n = vals.length;
+  var W = 78, H = 28, pad = 3, gap = 2;
+  var barW = Math.floor((W - gap * (n - 1)) / n);
+
+  var bars = vals.map(function(v, i) {
+    var barH = v > 0 ? Math.max(3, Math.round((v / maxVal) * (H - pad))) : 2;
+    var x = i * (barW + gap);
+    var y = H - barH;
+    var fill = (i === n - 1) ? '#3D8B6F' : 'rgba(61,139,111,0.35)';
+    return '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + barH + '" rx="1.5" fill="' + fill + '"/>';
+  }).join('');
 
   var svgEl = document.getElementById('ca-sparkline-svg');
   if (!svgEl) return;
   svgEl.setAttribute('viewBox', '0 0 78 28');
-  svgEl.innerHTML = buildSparklineSVG(vals, '#3D8B6F', 'sg-ca');
+  svgEl.innerHTML = bars;
 }
 
 
