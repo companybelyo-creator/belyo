@@ -130,12 +130,15 @@ var PRESTATIONS = {
 var PRIX_DUREE = { homme: {}, femme: {} };
 
 var salonPlanning = null;
-var salonCollaborateurs = []; // [{id, name, role}]
+var salonCollaborateurs = []; // [{id, name, role, is_owner, planning}]
+var selectedCollabId = null; // UUID du collab sélectionné dans le formulaire
+var collabFormDropdownOpen = false;
 var DAY_MAP_APT = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5}; // JS→planning index
 
 async function loadPrestationsFromSettings(userId) {
+  // Charger prestations, prix_duree, planning depuis salon_settings
   var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations, prix_duree, planning, collaborateurs')
+    .select('prestations, custom_prestations, prix_duree, planning')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -144,11 +147,82 @@ async function loadPrestationsFromSettings(userId) {
     PRESTATIONS.femme = (res.data.prestations.femme || []).filter(function(p) { return p !== 'Coupe' && p !== 'Autre'; });
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
-  if (res.data && res.data.planning)   salonPlanning = res.data.planning;
-  if (res.data && res.data.collaborateurs) salonCollaborateurs = res.data.collaborateurs || [];
+
+  // Charger les collaborateurs depuis leur table dédiée
+  var cRes = await sb.from('collaborateurs')
+    .select('id, name, role, is_owner, planning')
+    .eq('user_id', userId)
+    .order('created_at');
+  salonCollaborateurs = cRes.data || [];
+
+  // Sélectionner le patron par défaut
+  var owner = salonCollaborateurs.find(function(c) { return c.is_owner; });
+  if (!owner && salonCollaborateurs.length) owner = salonCollaborateurs[0];
+
+  if (owner) {
+    selectedCollabId = owner.id;
+    // Planning du patron : depuis collaborateurs.planning ou fallback salon_settings.planning
+    salonPlanning = owner.planning || (res.data && res.data.planning) || null;
+  } else {
+    salonPlanning = (res.data && res.data.planning) || null;
+  }
+
   updateServiceOptions();
-  populateCollabSelect();
+  populateCollabFormDropdown();
 }
+
+// ---- Dropdown collaborateur dans le formulaire ----
+function populateCollabFormDropdown() {
+  var wrap = document.getElementById('collab-field-wrap');
+  if (!salonCollaborateurs.length) { if (wrap) wrap.style.display = 'none'; return; }
+  if (wrap) wrap.style.display = '';
+
+  // Pré-afficher le sélectionné
+  var current = salonCollaborateurs.find(function(c) { return c.id === selectedCollabId; }) || salonCollaborateurs[0];
+  if (current && !selectedCollabId) selectedCollabId = current.id;
+  var lbl = document.getElementById('collab-select-label');
+  if (lbl) lbl.textContent = current ? current.name + (current.role ? ' · ' + current.role : '') : '—';
+  renderCollabOptions();
+}
+
+function renderCollabOptions() {
+  var list = document.getElementById('collab-options-list');
+  if (!list) return;
+  list.innerHTML = salonCollaborateurs.map(function(c) {
+    var active = selectedCollabId === c.id;
+    return '<div onclick="pickCollabForm(\'' + c.id + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (active?'var(--ink)':'transparent') + ';color:' + (active?'var(--white)':'var(--ink)') + ';transition:background .12s" onmouseover="if(\'' + c.id + '\'!==window._selCollabId)this.style.background=\'var(--cream)\'" onmouseout="if(\'' + c.id + '\'!==window._selCollabId)this.style.background=\'transparent\'">'
+      + c.name + (c.role ? '<span style="font-size:11px;opacity:.6;margin-left:5px">· ' + c.role + '</span>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function toggleCollabFormDropdown() {
+  collabFormDropdownOpen = !collabFormDropdownOpen;
+  var dd = document.getElementById('collab-select-dropdown');
+  if (!dd) return;
+  if (collabFormDropdownOpen) { renderCollabOptions(); dd.style.display = 'block'; }
+  else dd.style.display = 'none';
+}
+
+function pickCollabForm(id) {
+  selectedCollabId = id;
+  window._selCollabId = id;
+  var c = salonCollaborateurs.find(function(x) { return x.id === id; });
+  var lbl = document.getElementById('collab-select-label');
+  if (lbl && c) lbl.textContent = c.name + (c.role ? ' · ' + c.role : '');
+  var dd = document.getElementById('collab-select-dropdown');
+  if (dd) dd.style.display = 'none';
+  collabFormDropdownOpen = false;
+  // Mettre à jour le planning affiché pour ce collab
+  salonPlanning = c && c.planning ? c.planning : salonPlanning;
+  renderCalendar();
+}
+
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('collab-select-wrap');
+  var dd   = document.getElementById('collab-select-dropdown');
+  if (dd && wrap && !wrap.contains(e.target)) { dd.style.display = 'none'; collabFormDropdownOpen = false; }
+});
 
 function isHourWorked(date, h) {
   if (!salonPlanning) return true;
@@ -299,24 +373,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-function populateCollabSelect() {
-  var sel = document.getElementById('appt-collab');
-  var wrap = document.getElementById('collab-field-wrap');
-  if (!sel) return;
-  // Vider sauf la première option (moi-même)
-  while (sel.options.length > 1) sel.remove(1);
-  if (!salonCollaborateurs.length) {
-    if (wrap) wrap.style.display = 'none';
-    return;
-  }
-  salonCollaborateurs.forEach(function(c) {
-    var opt = document.createElement('option');
-    opt.value = c.name;
-    opt.textContent = c.name + (c.role ? ' — ' + c.role : '');
-    sel.appendChild(opt);
-  });
-  if (wrap) wrap.style.display = '';
-}
+function populateCollabSelect() { /* remplacé par populateCollabFormDropdown */ }
 
 function onServiceSelect(val) {
   // Gardé pour compatibilité — le vrai select utilise selectService()
@@ -846,7 +903,7 @@ function openModal(presetDatetime) {
   }
   document.getElementById('modal-overlay').classList.add('open');
   updateServiceOptions();
-  populateCollabSelect();
+  populateCollabFormDropdown();
   // Désactiver le submit jusqu'à ce que tout soit rempli
   var btn = document.getElementById('appt-submit');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
@@ -886,8 +943,14 @@ function closeModal() {
   if (input) { input.style.display = 'none'; input.value = ''; }
   var select = document.getElementById('appt-service-select');
   if (select) select.value = '';
-  var collabSel = document.getElementById('appt-collab');
-  if (collabSel) collabSel.value = '';
+  // Reset collab au patron par défaut
+  var owner = salonCollaborateurs.find(function(c) { return c.is_owner; }) || salonCollaborateurs[0];
+  if (owner) {
+    selectedCollabId = owner.id;
+    window._selCollabId = owner.id;
+    var lbl = document.getElementById('collab-select-label');
+    if (lbl) lbl.textContent = owner.name + (owner.role ? ' · ' + owner.role : '');
+  }
 }
 
 function toggleRow(id, checked) {
@@ -995,8 +1058,19 @@ function openEditModal(id) {
   if (notesInput) notesInput.value = a.notes || '';
 
   // Pré-remplir le collaborateur
-  var collabSel = document.getElementById('appt-collab');
-  if (collabSel && a.collaborateur) collabSel.value = a.collaborateur;
+  if (a.collaborateur_id) {
+    selectedCollabId = a.collaborateur_id;
+    window._selCollabId = a.collaborateur_id;
+    var c = salonCollaborateurs.find(function(x) { return x.id === a.collaborateur_id; });
+    var lbl = document.getElementById('collab-select-label');
+    if (lbl && c) lbl.textContent = c.name + (c.role ? ' · ' + c.role : '');
+  } else if (a.collaborateur) {
+    // Fallback: chercher par nom
+    var c = salonCollaborateurs.find(function(x) { return x.name === a.collaborateur; });
+    if (c) { selectedCollabId = c.id; window._selCollabId = c.id; }
+    var lbl = document.getElementById('collab-select-label');
+    if (lbl) lbl.textContent = a.collaborateur;
+  }
 
   // Changer le titre et le bouton
   var title = document.querySelector('.modal-title');
@@ -1122,9 +1196,11 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     return pd && pd.duree ? pd.duree : null;
   })();
   var notesVal = document.getElementById('appt-notes').value.trim() || null;
-  var collabVal = (function() {
-    var sel = document.getElementById('appt-collab');
-    return sel && sel.value ? sel.value : null;
+  var collabId = selectedCollabId || null;
+  var collabName = (function() {
+    if (!collabId) return null;
+    var c = salonCollaborateurs.find(function(x) { return x.id === collabId; });
+    return c ? c.name : null;
   })();
 
   var res;
@@ -1155,7 +1231,8 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       price:            priceVal ? parseFloat(priceVal) : null,
       notes:            notesVal,
       genre:            selectedGenre,
-      collaborateur:    collabVal,
+      collaborateur:    collabName,
+      collaborateur_id: collabId,
     }).eq('id', editApptId);
   } else {
     // Mode création
@@ -1169,7 +1246,8 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       notes:            notesVal,
       status:           'pending',
       genre:            selectedGenre,
-      collaborateur:    collabVal,
+      collaborateur:    collabName,
+      collaborateur_id: collabId,
     });
   }
 

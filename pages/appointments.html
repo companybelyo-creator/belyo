@@ -147,6 +147,20 @@
         </div>
       </div>
 
+      <!-- Collaborateur (dropdown style prestation) -->
+      <div class="form-group" id="collab-field-wrap">
+        <label class="form-label">Collaborateur</label>
+        <div style="position:relative" id="collab-select-wrap">
+          <div id="collab-select-trigger" onclick="toggleCollabFormDropdown()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);cursor:pointer;font-size:13px;font-family:var(--font-body);user-select:none">
+            <span id="collab-select-label" style="color:var(--ink)">—</span>
+            <span style="font-size:10px;color:var(--ink-light)">▾</span>
+          </div>
+          <div id="collab-select-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(26,23,20,.10);z-index:100;overflow:hidden;max-height:180px;overflow-y:auto">
+            <div id="collab-options-list"></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Genre + Prestation -->
       <div class="form-group">
         <label class="form-label">Genre</label>
@@ -197,12 +211,6 @@
       </div>
       <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
       <!-- Collaborateur -->
-      <div class="form-group" id="collab-field-wrap" style="display:none">
-        <label class="form-label">Collaborateur</label>
-        <select class="form-input" id="appt-collab" style="font-size:13px;padding:9px 12px;cursor:pointer">
-          <option value="">— Moi-même —</option>
-        </select>
-      </div>
       <button type="submit" class="btn-submit" id="appt-submit">Enregistrer</button>
     </form>
   </div>
