@@ -395,27 +395,31 @@
               <div class="error-msg"   id="collabs-err" style="margin-bottom:.8rem"></div>
 
               <div style="display:flex;flex-direction:column;gap:12px">
-                <div class="form-group" style="margin:0">
-                  <label class="form-label" style="font-size:12px">Prénom &amp; Nom</label>
-                  <input type="text" class="form-input" id="new-collab-name" placeholder="Ex : Sophie Martin" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
+
+                <!-- Nom + Rôle côte à côte -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label" style="font-size:12px">Prénom &amp; Nom</label>
+                    <input type="text" class="form-input" id="new-collab-name" placeholder="Sophie Martin" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
+                  </div>
+                  <div class="form-group" style="margin:0">
+                    <label class="form-label" style="font-size:12px">Rôle</label>
+                    <!-- Boîte scrollable — affiche 1 seul rôle à la fois -->
+                    <div id="roles-scroll-box" style="border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);overflow-y:auto;height:40px;padding:4px 6px;display:flex;flex-direction:column;gap:3px"></div>
+                  </div>
                 </div>
 
-                <div class="form-group" style="margin:0">
-                  <label class="form-label" style="font-size:12px">Rôle</label>
-                  <!-- Boîte scrollable de rôles -->
-                  <div style="border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);overflow-y:auto;max-height:130px;padding:6px;display:flex;flex-direction:column;gap:4px;margin-bottom:8px">
-                    <button type="button" onclick="pickRole('Patron')"    class="role-chip">Patron</button>
-                    <button type="button" onclick="pickRole('Manager')"   class="role-chip">Manager</button>
-                    <button type="button" onclick="pickRole('Coiffeur')"  class="role-chip">Coiffeur</button>
-                    <button type="button" onclick="pickRole('Coloriste')" class="role-chip">Coloriste</button>
-                    <button type="button" onclick="pickRole('Barbier')"   class="role-chip">Barbier</button>
-                    <button type="button" onclick="pickRole('Apprenti')"  class="role-chip">Apprenti</button>
+                <!-- Créer un nouveau rôle -->
+                <div>
+                  <label class="form-label" style="font-size:12px">Créer un rôle</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="text" class="form-input" id="new-role-input" placeholder="Ex : Réceptionniste…" style="font-size:13px;padding:9px 12px;flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();createRole()}" />
+                    <button type="button" onclick="createRole()" style="padding:9px 14px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;color:var(--ink);white-space:nowrap">+ Rôle</button>
                   </div>
-                  <input type="text" class="form-input" id="new-collab-role" placeholder="Ou saisir un rôle libre…" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
                 </div>
 
                 <!-- Ajouter + Enregistrer côte à côte -->
-                <div style="display:flex;gap:8px;margin-top:4px">
+                <div style="display:flex;gap:8px;margin-top:2px">
                   <button onclick="addCollab()" style="flex:1;padding:10px 0;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer">+ Ajouter</button>
                   <button onclick="saveCollabs()" id="btn-save-collabs" style="flex:1;padding:10px 0;border-radius:100px;border:1px solid var(--border);background:var(--white);color:var(--ink);font-family:var(--font-body);font-size:13px;cursor:pointer;font-weight:500">Enregistrer</button>
                 </div>

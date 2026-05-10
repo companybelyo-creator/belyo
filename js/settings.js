@@ -1266,6 +1266,9 @@ async function loadPlanning() {
 
 var collaborateurs = []; // [{id, name, role}]
 
+var ROLES_LIST = ['Patron', 'Manager', 'Coiffeur', 'Coloriste', 'Barbier', 'Apprenti'];
+var selectedRole = 'Apprenti'; // défaut : le rôle le plus faible
+
 var ROLE_COLORS = {
   'Patron':    { bg: '#FFF3CD', color: '#856404' },
   'Manager':   { bg: '#D1ECF1', color: '#0C5460' },
@@ -1281,12 +1284,33 @@ function getRoleBadgeStyle(role) {
   return 'background:' + c.bg + ';color:' + c.color;
 }
 
+function renderRolesBox() {
+  var box = document.getElementById('roles-scroll-box');
+  if (!box) return;
+  box.innerHTML = ROLES_LIST.map(function(r) {
+    var isActive = selectedRole === r;
+    return '<button type="button" onclick="pickRole(\'' + r.replace(/'/g, "\\'") + '\')" class="role-chip' + (isActive ? ' active' : '') + '">' + r + '</button>';
+  }).join('');
+  // Ajuster la hauteur : afficher 1 rôle visible, les autres scrollables
+  box.style.height = '36px';
+}
+
 function pickRole(role) {
-  var inp = document.getElementById('new-collab-role');
-  if (inp) inp.value = role;
-  document.querySelectorAll('.role-chip').forEach(function(el) {
-    el.classList.toggle('active', el.textContent.trim().includes(role));
-  });
+  selectedRole = role;
+  renderRolesBox();
+}
+
+function createRole() {
+  var inp = document.getElementById('new-role-input');
+  if (!inp) return;
+  var name = inp.value.trim();
+  if (!name) { showToast('Entrez un nom de rôle', 'error'); return; }
+  if (ROLES_LIST.indexOf(name) !== -1) { showToast('Ce rôle existe déjà', 'error'); return; }
+  ROLES_LIST.push(name);
+  inp.value = '';
+  selectedRole = name;
+  renderRolesBox();
+  showToast('Rôle "' + name + '" créé !');
 }
 
 function renderCollabs() {
@@ -1320,16 +1344,14 @@ function renderCollabs() {
 
 function addCollab() {
   var nameEl = document.getElementById('new-collab-name');
-  var roleEl = document.getElementById('new-collab-role');
   if (!nameEl) return;
   var name = nameEl.value.trim();
   if (!name) { showToast('Entrez un nom', 'error'); return; }
-  var role = roleEl ? roleEl.value.trim() : '';
   var id = 'c_' + Date.now();
-  collaborateurs.push({ id: id, name: name, role: role });
+  collaborateurs.push({ id: id, name: name, role: selectedRole });
   nameEl.value = '';
-  if (roleEl) roleEl.value = '';
-  document.querySelectorAll('.role-chip').forEach(function(el) { el.classList.remove('active'); });
+  selectedRole = 'Apprenti';
+  renderRolesBox();
   renderCollabs();
 }
 
@@ -1342,19 +1364,14 @@ function editCollab(i) {
   var c = collaborateurs[i];
   if (!c) return;
   var nameEl = document.getElementById('new-collab-name');
-  var roleEl = document.getElementById('new-collab-role');
   if (nameEl) nameEl.value = c.name;
-  if (roleEl) roleEl.value = c.role || '';
-  // Activer le chip correspondant
-  document.querySelectorAll('.role-chip').forEach(function(el) {
-    el.classList.toggle('active', el.textContent.trim() === c.role);
-  });
-  // Supprimer l'entrée pour qu'elle soit recréée au prochain addCollab
+  selectedRole = c.role || 'Apprenti';
+  // S'assurer que le rôle existe dans la liste
+  if (ROLES_LIST.indexOf(selectedRole) === -1) ROLES_LIST.push(selectedRole);
   collaborateurs.splice(i, 1);
   renderCollabs();
-  // Scroll vers le formulaire
-  var nameInput = document.getElementById('new-collab-name');
-  if (nameInput) nameInput.focus();
+  renderRolesBox();
+  if (nameEl) nameEl.focus();
 }
 
 async function saveCollabs() {
@@ -1381,6 +1398,7 @@ async function loadCollabs() {
   } else {
     collaborateurs = [];
   }
+  renderRolesBox();
   renderCollabs();
 }
 
