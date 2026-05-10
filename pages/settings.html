@@ -402,8 +402,8 @@
 
                 <div class="form-group" style="margin:0">
                   <label class="form-label" style="font-size:12px">Rôle</label>
-                  <!-- Grille de rôles -->
-                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px">
+                  <!-- Boîte scrollable de rôles -->
+                  <div style="border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);overflow-y:auto;max-height:130px;padding:6px;display:flex;flex-direction:column;gap:4px;margin-bottom:8px">
                     <button type="button" onclick="pickRole('Patron')"    class="role-chip">Patron</button>
                     <button type="button" onclick="pickRole('Manager')"   class="role-chip">Manager</button>
                     <button type="button" onclick="pickRole('Coiffeur')"  class="role-chip">Coiffeur</button>
@@ -414,18 +414,18 @@
                   <input type="text" class="form-input" id="new-collab-role" placeholder="Ou saisir un rôle libre…" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
                 </div>
 
-                <button onclick="addCollab()" style="padding:10px 0;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;width:100%;margin-top:4px">+ Ajouter</button>
-              </div>
-
-              <div style="margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1rem">
-                <button onclick="saveCollabs()" class="btn-save" id="btn-save-collabs">Enregistrer</button>
-                <div class="success-msg" id="collabs-save-ok" style="margin:0">Collaborateurs enregistrés !</div>
-              </div>
+                <!-- Ajouter + Enregistrer côte à côte -->
+                <div style="display:flex;gap:8px;margin-top:4px">
+                  <button onclick="addCollab()" style="flex:1;padding:10px 0;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer">+ Ajouter</button>
+                  <button onclick="saveCollabs()" id="btn-save-collabs" style="flex:1;padding:10px 0;border-radius:100px;border:1px solid var(--border);background:var(--white);color:var(--ink);font-family:var(--font-body);font-size:13px;cursor:pointer;font-weight:500">Enregistrer</button>
+                </div>
+                <div class="success-msg" id="collabs-save-ok" style="margin:0;text-align:center">Collaborateurs enregistrés !</div>
+              </div><!-- fin flex-col gap-12 -->
 
               <div style="margin-top:1rem;font-size:11px;color:var(--ink-light);line-height:1.5">
                 Tarif : <strong>+12 €/mois</strong> (Starter) · <strong>+19 €/mois</strong> (Pro) par collaborateur.
               </div>
-            </div>
+            </div><!-- fin padding gauche -->
 
             <!-- SÉPARATEUR vertical -->
             <div style="background:var(--border)"></div>
@@ -443,17 +443,18 @@
 
           <style>
             .role-chip {
-              padding: 7px 10px;
+              width: 100%;
+              padding: 7px 12px;
               border-radius: var(--radius-sm);
-              border: 1px solid var(--border);
-              background: var(--cream);
+              border: 1px solid transparent;
+              background: transparent;
               font-family: var(--font-body);
               font-size: 12px;
               font-weight: 500;
               color: var(--ink);
               cursor: pointer;
-              transition: background .12s, border-color .12s, color .12s;
-              text-align: center;
+              transition: background .12s, color .12s;
+              text-align: left;
             }
             .role-chip:hover { background: var(--cream-dark); }
             .role-chip.active {
