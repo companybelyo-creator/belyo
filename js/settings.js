@@ -1454,7 +1454,7 @@ function renderCollabs() {
       + '<div style="width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0">' + initials + '</div>'
       + '<div>'
       + '<div style="font-size:13px;font-weight:500">' + c.name + '</div>'
-      + (c.role ? '<span style="display:inline-block;margin-top:3px;font-size:11px;padding:1px 8px;border-radius:100px;font-weight:500;' + badgeStyle + '">' + c.role + '</span>' : '')
+      + (c.role ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.role + '</div>' : '')
       + '</div></div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
       + '<button onclick="openEditCollabModal(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
