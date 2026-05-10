@@ -515,6 +515,18 @@
   </div>
 </div>
 
+<!-- MODAL CONFIRMATION SUPPRESSION COLLABORATEUR -->
+<div id="delete-collab-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,.45);z-index:600;align-items:center;justify-content:center">
+  <div style="background:var(--white);border-radius:var(--radius);padding:2rem;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(26,23,20,.18)">
+    <div style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:.6rem">Supprimer le collaborateur</div>
+    <p style="font-size:13px;color:var(--ink-light);margin-bottom:1.6rem">Voulez-vous vraiment supprimer <strong id="delete-collab-name"></strong> ? Cette action est irréversible.</p>
+    <div style="display:flex;gap:8px">
+      <button onclick="removeCollab(_removeCollabId)" style="flex:1;padding:10px 0;border-radius:100px;border:none;background:#993C1D;color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;font-weight:500">Supprimer</button>
+      <button onclick="closeDeleteCollabModal()" style="flex:1;padding:10px 0;border-radius:100px;border:1px solid var(--border);background:var(--white);color:var(--ink);font-family:var(--font-body);font-size:13px;cursor:pointer">Annuler</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/supabase.js"></script>
 <script src="../js/utils.js"></script>

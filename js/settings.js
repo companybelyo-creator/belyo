@@ -1531,7 +1531,7 @@ function renderCollabs() {
       + '</div></div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
       + '<button onclick="openEditCollabModal(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
-      + (!c.is_owner ? '<button onclick="removeCollab(\'' + c.id + '\')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>' : '')
+      + (!c.is_owner ? '<button onclick="confirmRemoveCollab(\'' + c.id + '\')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>' : '')
       + '</div></div>';
   }).join('');
 }
@@ -1556,15 +1556,29 @@ async function addCollab() {
   showToast('Collaborateur ajouté !');
 }
 
+var _removeCollabId = null;
+function confirmRemoveCollab(id) {
+  var c = collaborateurs.find(function(x){ return x.id === id; });
+  var nameEl = document.getElementById('delete-collab-name');
+  if (nameEl) nameEl.textContent = c ? c.name : 'ce collaborateur';
+  _removeCollabId = id;
+  var o = document.getElementById('delete-collab-overlay');
+  if (o) o.style.display = 'flex';
+}
+function closeDeleteCollabModal() {
+  _removeCollabId = null;
+  var o = document.getElementById('delete-collab-overlay');
+  if (o) o.style.display = 'none';
+}
 async function removeCollab(id) {
   var res = await sb.from('collaborateurs').delete().eq('id', id).eq('user_id', currentUser.id);
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
   collaborateurs = collaborateurs.filter(function(c){ return c.id !== id; });
+  closeDeleteCollabModal();
   renderCollabs();
   renderPlanningCollabSelector();
   showToast('Collaborateur supprimé.');
 }
-
 async function saveCollabs() {
   // Rien à faire : chaque action est déjà persistée individuellement
   showToast('Équipe à jour !');
