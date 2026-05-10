@@ -434,34 +434,91 @@ async function loadKPIs(userId) {
 async function loadTodayAppointments(userId) {
   var today = new Date().toISOString().split('T')[0];
   var now   = new Date();
-  var res = await sb.from('appointments').select('*')
-    .eq('user_id', userId)
-    .gte('datetime', today + 'T00:00:00')
-    .lte('datetime', today + 'T23:59:59')
-    .order('datetime', { ascending: true });
+
+  // Charger RDV + collaborateurs en parallèle
+  var [apptRes, collabRes] = await Promise.all([
+    sb.from('appointments').select('*')
+      .eq('user_id', userId)
+      .gte('datetime', today + 'T00:00:00')
+      .lte('datetime', today + 'T23:59:59')
+      .neq('status', 'cancelled')
+      .order('datetime', { ascending: true }),
+    sb.from('collaborateurs').select('id, name, role, is_owner')
+      .eq('user_id', userId)
+      .order('created_at')
+  ]);
 
   var el = document.getElementById('today-appts');
-  if (!res.data || res.data.length === 0) {
+  var appts    = apptRes.data  || [];
+  var collabs  = collabRes.data || [];
+
+  if (!appts.length) {
     el.innerHTML = '<div style="padding:2rem 0;text-align:center;color:var(--ink-light);font-size:14px">Aucun rendez-vous aujourd\'hui</div>';
     return;
   }
 
-  el.innerHTML = res.data.map(function(a) {
-    var dt    = new Date(a.datetime);
-    var isNow = Math.abs(now - dt) < 60*60*1000 && now >= dt;
-    var nowCls = isNow ? ' now' : '';
-    return '<div class="appt-row">'
-      + '<div class="appt-time-block">'
-      + '<div class="appt-time' + nowCls + '">' + formatTime(a.datetime) + '</div>'
-      + '<div class="appt-dot' + nowCls + '"></div>'
-      + '</div>'
-      + '<div class="appt-info">'
-      + '<div class="appt-client">' + a.client_name + '</div>'
-      + '<div class="appt-service-label">' + (a.service||'—') + '</div>'
-      + '</div>'
-      + '<div class="appt-right">'
-      + statusBadge(a.status)
-      + (a.price ? '<span class="appt-price">' + Math.round(parseFloat(a.price)) + '€</span>' : '')
+  // Construire un map id→collab
+  var collabMap = {};
+  collabs.forEach(function(c) { collabMap[c.id] = c; });
+
+  // Grouper les RDV par collaborateur
+  var groups = []; // [{collab, appts}]
+  var seen   = {};
+  appts.forEach(function(a) {
+    var key = a.collaborateur_id || '__none__';
+    if (!seen[key]) {
+      seen[key] = true;
+      var c = a.collaborateur_id ? collabMap[a.collaborateur_id] : null;
+      // Pas de collab trouvé → patron par défaut
+      if (!c) c = collabs.find(function(x) { return x.is_owner; }) || null;
+      groups.push({ collab: c, appts: [] });
+    }
+    groups[groups.findIndex(function(g) {
+      var k = g.collab ? g.collab.id : '__none__';
+      return k === (a.collaborateur_id || '__none__');
+    })].appts.push(a);
+  });
+
+  // Rendre les groupes
+  el.innerHTML = groups.map(function(g) {
+    var c = g.collab;
+    var initials = c ? (c.name || '').trim().split(' ').map(function(p){return p[0]||'';}).slice(0,2).join('').toUpperCase() : '?';
+    var collabHeader = c
+      ? '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px">'
+        + '<div style="width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0">' + initials + '</div>'
+        + '<span style="font-size:13px;font-weight:500">' + c.name + '</span>'
+        + (c.role ? '<span style="font-size:11px;color:var(--ink-light)">· ' + c.role + '</span>' : '')
+        + '<span style="margin-left:auto;font-size:11px;color:var(--ink-light)">' + g.appts.length + ' RDV</span>'
+        + '</div>'
+      : '';
+
+    var rows = g.appts.map(function(a) {
+      var dt    = new Date(a.datetime);
+      var isNow = Math.abs(now - dt) < 60*60*1000 && now >= dt;
+      var nowCls = isNow ? ' now' : '';
+      return '<div class="appt-row">'
+        + '<div class="appt-time-block">'
+        + '<div class="appt-time' + nowCls + '">' + formatTime(a.datetime) + '</div>'
+        + '<div class="appt-dot' + nowCls + '"></div>'
+        + '</div>'
+        + '<div class="appt-info">'
+        + '<div class="appt-client">' + a.client_name + '</div>'
+        + '<div class="appt-service-label">' + (a.service||'—') + '</div>'
+        + '</div>'
+        + '<div class="appt-right">'
+        + statusBadge(a.status)
+        + (a.price ? '<span class="appt-price">' + Math.round(parseFloat(a.price)) + '€</span>' : '')
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    // Max 6 visibles, scroll si plus
+    var maxHeight = g.appts.length > 6 ? 'max-height:' + (6 * 64) + 'px;overflow-y:auto;' : '';
+
+    return '<div style="margin-bottom:' + (groups.length > 1 ? '1rem' : '0') + '">'
+      + collabHeader
+      + '<div style="' + maxHeight + 'padding-right:' + (g.appts.length > 6 ? '4px' : '0') + '">'
+      + rows
       + '</div>'
       + '</div>';
   }).join('');
