@@ -1529,7 +1529,7 @@ function renderCollabs() {
       + '</div></div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
       + '<button onclick="openEditCollabModal(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
-      + '<button onclick="removeCollab(\'' + c.id + '\')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      + (!c.is_owner ? '<button onclick="removeCollab(\'' + c.id + '\')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>' : '')
       + '</div></div>';
   }).join('');
 }
@@ -1578,30 +1578,33 @@ async function loadCollabs() {
       if (ROLES_LIST.indexOf(r.name) === -1) ROLES_LIST.push(r.name);
     });
   }
+
   // Charger les collaborateurs
   var cRes = await sb.from('collaborateurs').select('*').eq('user_id', currentUser.id).order('created_at');
   collaborateurs = cRes.data || [];
 
-  // Créer automatiquement le profil patron si aucun collaborateur n'existe encore
-  if (collaborateurs.length === 0) {
-    // Récupérer le nom du salon pour nommer le patron
-    var settRes = await sb.from('salon_settings').select('salon_name').eq('user_id', currentUser.id).maybeSingle();
-    var patronName = (settRes.data && settRes.data.salon_name) ? settRes.data.salon_name : (currentUser.email || 'Patron');
-    // Utiliser le prénom/nom du compte si disponible
+  // Créer le profil patron si aucun entrée is_owner n'existe
+  var hasOwner = collaborateurs.some(function(c) { return c.is_owner === true; });
+  if (!hasOwner) {
+    // Nom : full_name du compte > email (partie avant @)
     var userMeta = currentUser.user_metadata || {};
-    if (userMeta.full_name) patronName = userMeta.full_name;
-    else if (userMeta.name) patronName = userMeta.name;
-
+    var patronName = userMeta.full_name || userMeta.name || '';
+    if (!patronName) {
+      var email = currentUser.email || '';
+      patronName = email.split('@')[0] || 'Patron';
+      // Capitaliser
+      patronName = patronName.charAt(0).toUpperCase() + patronName.slice(1);
+    }
     var ins = await sb.from('collaborateurs').insert({
-      user_id: currentUser.id,
-      name: patronName,
-      role: 'Patron',
+      user_id:  currentUser.id,
+      name:     patronName,
+      role:     'Patron',
+      is_owner: true,
     }).select().single();
-    if (!ins.error && ins.data) collaborateurs = [ins.data];
+    if (!ins.error && ins.data) collaborateurs.unshift(ins.data);
   }
 
   pickRole('Apprenti');
-  // Sélectionner le premier collaborateur par défaut pour le planning
   if (collaborateurs.length && selectedPlanningCollabId === null) {
     selectedPlanningCollabId = collaborateurs[0].id;
   }
