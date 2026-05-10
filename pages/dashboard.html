@@ -752,37 +752,41 @@ var _origInit = window.onload;
   }, 300);
 })();
 
-// ===== SPARKLINE CA : vrais calculs depuis Supabase =====
-// Charge les RDV "done" du mois en cours, regroupe par jour, génère la courbe
+// ===== SPARKLINE CA : 6 derniers mois (mois le plus ancien à gauche, mois en cours à droite) =====
 async function loadCaSparkline(userId) {
-  var now       = new Date();
-  var year      = now.getFullYear();
-  var month     = now.getMonth();
-  var daysInMonth = new Date(year, month + 1, 0).getDate();
-  var startMonth = new Date(year, month, 1).toISOString();
-  var endMonth   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  var now   = new Date();
+  var year  = now.getFullYear();
+  var month = now.getMonth(); // 0-based
+
+  // Construire les 6 mois : de (month-5) à (month), du plus ancien au plus récent
+  var months = [];
+  for (var i = 5; i >= 0; i--) {
+    var m = month - i;
+    var y = year;
+    if (m < 0) { m += 12; y -= 1; }
+    months.push({ year: y, month: m });
+  }
+
+  var start = new Date(months[0].year, months[0].month, 1).toISOString();
+  var end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
   var res = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
     .eq('status', 'done')
-    .gte('datetime', startMonth)
-    .lte('datetime', endMonth);
+    .gte('datetime', start)
+    .lte('datetime', end);
 
-  // Agréger par jour
-  var byDay = {};
-  for (var d = 1; d <= daysInMonth; d++) byDay[d] = 0;
+  // Agréger par mois (clé "YYYY-M")
+  var byMonth = {};
+  months.forEach(function(m) { byMonth[m.year + '-' + m.month] = 0; });
   (res.data || []).forEach(function(a) {
-    var day = new Date(a.datetime).getDate();
-    byDay[day] = (byDay[day] || 0) + (parseFloat(a.price) || 0);
+    var d = new Date(a.datetime);
+    var key = d.getFullYear() + '-' + d.getMonth();
+    if (key in byMonth) byMonth[key] += (parseFloat(a.price) || 0);
   });
 
-  // Prendre un point tous les ~4 jours pour avoir 7-8 points
-  var step = Math.max(1, Math.floor(daysInMonth / 7));
-  var vals = [];
-  for (var d = 1; d <= daysInMonth; d += step) vals.push(byDay[d] || 0);
-  // S'assurer qu'on a le dernier jour
-  if (vals.length < 2) vals = [0, 0];
+  var vals = months.map(function(m) { return byMonth[m.year + '-' + m.month] || 0; });
 
   var svgEl = document.getElementById('ca-sparkline-svg');
   if (!svgEl) return;
