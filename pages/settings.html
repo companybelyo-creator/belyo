@@ -384,30 +384,38 @@
         <div class="settings-section" id="section-collaborateurs">
           <div class="section-title">Mes <em>collaborateurs</em></div>
           <p class="section-sub">Gérez les coiffeurs de votre salon. Chaque collaborateur peut être assigné à un rendez-vous.</p>
-          <div class="settings-card">
+          <div class="settings-card" style="max-width:560px">
             <div class="settings-card-title">Équipe</div>
             <div class="success-msg" id="collabs-ok">✓ Collaborateurs enregistrés !</div>
             <div class="error-msg" id="collabs-err"></div>
 
             <!-- Liste des collaborateurs existants -->
-            <div id="collabs-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.4rem"></div>
+            <div id="collabs-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:1.4rem"></div>
 
             <!-- Formulaire ajout -->
             <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem">
               <div style="font-size:13px;font-weight:500;margin-bottom:.8rem;color:var(--ink)">Ajouter un collaborateur</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
+              <div style="display:flex;flex-direction:column;gap:10px">
                 <div class="form-group" style="margin:0">
                   <label class="form-label" style="font-size:12px">Prénom &amp; Nom</label>
                   <input type="text" class="form-input" id="new-collab-name" placeholder="Ex : Sophie Martin" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
                 </div>
                 <div class="form-group" style="margin:0">
-                  <label class="form-label" style="font-size:12px">Rôle / Poste</label>
-                  <input type="text" class="form-input" id="new-collab-role" placeholder="Ex : Coloriste" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
+                  <label class="form-label" style="font-size:12px">Rôle</label>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px" id="role-chips">
+                    <button type="button" onclick="pickRole('Patron')"      class="role-chip">👑 Patron</button>
+                    <button type="button" onclick="pickRole('Manager')"     class="role-chip">🗂 Manager</button>
+                    <button type="button" onclick="pickRole('Coiffeur')"    class="role-chip">✂️ Coiffeur</button>
+                    <button type="button" onclick="pickRole('Coloriste')"   class="role-chip">🎨 Coloriste</button>
+                    <button type="button" onclick="pickRole('Barbier')"     class="role-chip">🪒 Barbier</button>
+                    <button type="button" onclick="pickRole('Apprenti')"    class="role-chip">📚 Apprenti</button>
+                  </div>
+                  <input type="text" class="form-input" id="new-collab-role" placeholder="Ou saisir un rôle libre…" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
                 </div>
-                <button onclick="addCollab()" style="padding:9px 18px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap;height:fit-content">+ Ajouter</button>
+                <button onclick="addCollab()" style="align-self:flex-start;padding:9px 20px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer">+ Ajouter</button>
               </div>
-              <div style="margin-top:.6rem;font-size:11px;color:var(--ink-light)">
-                Tarif supplémentaire : <strong>+12 €/mois</strong> (Starter) · <strong>+19 €/mois</strong> (Pro) par collaborateur additionnel.
+              <div style="margin-top:.8rem;font-size:11px;color:var(--ink-light)">
+                Tarif supplémentaire : <strong>+12 €/mois</strong> (Starter) · <strong>+19 €/mois</strong> (Pro) par collaborateur.
               </div>
             </div>
 
@@ -416,6 +424,25 @@
               <div class="success-msg" id="collabs-save-ok" style="margin:0">Collaborateurs enregistrés !</div>
             </div>
           </div>
+
+          <style>
+            .role-chip {
+              padding: 5px 12px;
+              border-radius: 100px;
+              border: 1px solid var(--border);
+              background: var(--white);
+              font-family: var(--font-body);
+              font-size: 12px;
+              color: var(--ink);
+              cursor: pointer;
+              transition: background .12s, border-color .12s;
+            }
+            .role-chip:hover, .role-chip.active {
+              background: var(--ink);
+              color: var(--white);
+              border-color: var(--ink);
+            }
+          </style>
         </div>
 
       </div><!-- fin settings-content -->

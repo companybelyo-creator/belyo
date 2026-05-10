@@ -1266,6 +1266,29 @@ async function loadPlanning() {
 
 var collaborateurs = []; // [{id, name, role}]
 
+var ROLE_COLORS = {
+  'Patron':    { bg: '#FFF3CD', color: '#856404' },
+  'Manager':   { bg: '#D1ECF1', color: '#0C5460' },
+  'Coiffeur':  { bg: '#E0EDFF', color: '#2B7FFF' },
+  'Coloriste': { bg: '#F3E8FF', color: '#7C3AED' },
+  'Barbier':   { bg: '#D4EDDA', color: '#155724' },
+  'Apprenti':  { bg: '#F3F0ED', color: '#6c757d' },
+};
+
+function getRoleBadgeStyle(role) {
+  var c = ROLE_COLORS[role];
+  if (!c) return 'background:#F3F0ED;color:var(--ink-light)';
+  return 'background:' + c.bg + ';color:' + c.color;
+}
+
+function pickRole(role) {
+  var inp = document.getElementById('new-collab-role');
+  if (inp) inp.value = role;
+  document.querySelectorAll('.role-chip').forEach(function(el) {
+    el.classList.toggle('active', el.textContent.trim().includes(role));
+  });
+}
+
 function renderCollabs() {
   var el = document.getElementById('collabs-list');
   if (!el) return;
@@ -1275,12 +1298,13 @@ function renderCollabs() {
   }
   el.innerHTML = collaborateurs.map(function(c, i) {
     var initials = (c.name || '').trim().split(' ').map(function(p) { return p[0] || ''; }).slice(0,2).join('').toUpperCase() || '?';
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
+    var badgeStyle = getRoleBadgeStyle(c.role);
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
       + '<div style="display:flex;align-items:center;gap:12px">'
       + '<div style="width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0">' + initials + '</div>'
       + '<div>'
       + '<div style="font-size:13px;font-weight:500">' + c.name + '</div>'
-      + (c.role ? '<div style="font-size:11px;color:var(--ink-light);margin-top:1px">' + c.role + '</div>' : '')
+      + (c.role ? '<span style="display:inline-block;margin-top:3px;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;' + badgeStyle + '">' + c.role + '</span>' : '')
       + '</div>'
       + '</div>'
       + '<button onclick="removeCollab(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
@@ -1299,6 +1323,7 @@ function addCollab() {
   collaborateurs.push({ id: id, name: name, role: role });
   nameEl.value = '';
   if (roleEl) roleEl.value = '';
+  document.querySelectorAll('.role-chip').forEach(function(el) { el.classList.remove('active'); });
   renderCollabs();
 }
 
