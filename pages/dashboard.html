@@ -752,13 +752,13 @@ var _origInit = window.onload;
   }, 300);
 })();
 
-// ===== SPARKLINE CA : 6 derniers mois (mois le plus ancien à gauche, mois en cours à droite) =====
+// ===== SPARKLINE CA : 6 derniers mois — prestations + ventes produits =====
 async function loadCaSparkline(userId) {
   var now   = new Date();
   var year  = now.getFullYear();
-  var month = now.getMonth(); // 0-based
+  var month = now.getMonth();
 
-  // Construire les 6 mois : de (month-5) à (month), du plus ancien au plus récent
+  // Construire les 6 mois : du plus ancien (gauche) au mois en cours (droite)
   var months = [];
   for (var i = 5; i >= 0; i--) {
     var m = month - i;
@@ -768,22 +768,35 @@ async function loadCaSparkline(userId) {
   }
 
   var start = new Date(months[0].year, months[0].month, 1).toISOString();
-  var end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+  var end   = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
 
-  var res = await sb.from('appointments')
+  // Initialiser byMonth à 0
+  var byMonth = {};
+  months.forEach(function(m) { byMonth[m.year + '-' + m.month] = 0; });
+
+  // 1. CA prestations (appointments done)
+  var resAppts = await sb.from('appointments')
     .select('datetime, price')
     .eq('user_id', userId)
     .eq('status', 'done')
     .gte('datetime', start)
     .lte('datetime', end);
-
-  // Agréger par mois (clé "YYYY-M")
-  var byMonth = {};
-  months.forEach(function(m) { byMonth[m.year + '-' + m.month] = 0; });
-  (res.data || []).forEach(function(a) {
+  (resAppts.data || []).forEach(function(a) {
     var d = new Date(a.datetime);
     var key = d.getFullYear() + '-' + d.getMonth();
     if (key in byMonth) byMonth[key] += (parseFloat(a.price) || 0);
+  });
+
+  // 2. CA produits (product_sales)
+  var resSales = await sb.from('product_sales')
+    .select('created_at, quantity_sold, unit_price')
+    .eq('user_id', userId)
+    .gte('created_at', start)
+    .lte('created_at', end);
+  (resSales.data || []).forEach(function(s) {
+    var d = new Date(s.created_at);
+    var key = d.getFullYear() + '-' + d.getMonth();
+    if (key in byMonth) byMonth[key] += (parseFloat(s.unit_price) || 0) * (parseInt(s.quantity_sold) || 0);
   });
 
   var vals = months.map(function(m) { return byMonth[m.year + '-' + m.month] || 0; });
