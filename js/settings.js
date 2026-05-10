@@ -131,12 +131,17 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+function formatPhone(raw) {
+  var digits = (raw || '').replace(/\D/g, '').slice(0, 10);
+  return digits.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+}
+
 function populateFields(user) {
   var meta = user.user_metadata || {};
   document.getElementById('sidebar-salon').textContent = meta.salon_name || 'Mon salon';
   document.getElementById('sidebar-email').textContent = user.email;
   document.getElementById('salon-name').value    = meta.salon_name    || '';
-  document.getElementById('salon-phone').value   = meta.salon_phone   || '';
+  document.getElementById('salon-phone').value   = formatPhone(meta.salon_phone || '');
   document.getElementById('salon-city').value    = meta.salon_city    || '';
   document.getElementById('salon-address').value = meta.salon_address || '';
   document.getElementById('first-name').value    = meta.first_name    || '';
@@ -146,9 +151,16 @@ function populateFields(user) {
   document.getElementById('profile-fullname').textContent      = fullname;
   document.getElementById('profile-email-display').textContent = user.email;
   document.getElementById('profile-since').textContent         = formatDate(user.created_at);
-  document.getElementById('avatar-initials').textContent       = initials(fullname);
   document.getElementById('security-email').textContent        = user.email;
   document.getElementById('last-signin').textContent           = formatDate(user.last_sign_in_at);
+
+  // Avatar photo de profil
+  var avatarEl = document.getElementById('avatar-initials');
+  if (meta.avatar_url) {
+    avatarEl.innerHTML = '<img src="' + meta.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+  } else {
+    avatarEl.textContent = initials(fullname);
+  }
 
   var created  = new Date(user.created_at);
   var trialEnd = new Date(created.getTime() + 14 * 24 * 60 * 60 * 1000);
@@ -157,26 +169,90 @@ function populateFields(user) {
 }
 
 // ===== SALON =====
+async function uploadSalonPhoto(file) {
+  var ext  = file.name.split('.').pop();
+  var path = 'salon/' + currentUser.id + '/photo.' + ext;
+  var up   = await sb.storage.from('salon-images').upload(path, file, { upsert: true, contentType: file.type });
+  if (up.error) { showToast('Erreur upload : ' + up.error.message, 'error'); return null; }
+  var pub  = sb.storage.from('salon-images').getPublicUrl(path);
+  return pub.data.publicUrl + '?t=' + Date.now();
+}
+
+async function loadSalonPhoto() {
+  var res = await sb.from('salon_settings').select('photo_url').eq('user_id', currentUser.id).maybeSingle();
+  if (res.data && res.data.photo_url) {
+    var img  = document.getElementById('salon-img-display');
+    var ph   = document.getElementById('salon-img-placeholder');
+    if (img) { img.src = res.data.photo_url; img.style.display = 'block'; }
+    if (ph)  { ph.style.display = 'none'; }
+  }
+}
+
+function previewSalonImg(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var img = document.getElementById('salon-img-display');
+    var ph  = document.getElementById('salon-img-placeholder');
+    if (img) { img.src = e.target.result; img.style.display = 'block'; }
+    if (ph)  { ph.style.display = 'none'; }
+  };
+  reader.readAsDataURL(file);
+}
+
 async function saveSalon() {
   var btn = document.getElementById('salon-save-btn');
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('salon-ok', false); showMsg('salon-err', false);
 
+  // Upload photo si un fichier a été sélectionné
+  var photoInput = document.getElementById('salon-img-input');
+  var photoUrl   = null;
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    photoUrl = await uploadSalonPhoto(photoInput.files[0]);
+  }
+
   var res = await sb.auth.updateUser({ data: {
     salon_name:    document.getElementById('salon-name').value.trim(),
-    salon_phone:   document.getElementById('salon-phone').value.trim(),
+    salon_phone:   formatPhone(document.getElementById('salon-phone').value),
     salon_city:    document.getElementById('salon-city').value.trim(),
     salon_address: document.getElementById('salon-address').value.trim(),
   }});
 
-  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
-  if (res.error) { document.getElementById('salon-err').textContent = res.error.message; showMsg('salon-err', true); return; }
+  if (res.error) { document.getElementById('salon-err').textContent = res.error.message; showMsg('salon-err', true); btn.disabled = false; btn.textContent = 'Enregistrer'; return; }
   document.getElementById('sidebar-salon').textContent = res.data.user.user_metadata.salon_name || 'Mon salon';
+
+  if (photoUrl) {
+    await sb.from('salon_settings').update({ photo_url: photoUrl }).eq('user_id', currentUser.id);
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   showMsg('salon-ok', true);
   setTimeout(function() { showMsg('salon-ok', false); }, 3000);
 }
 
 // ===== COMPTE =====
+async function uploadAvatar(file) {
+  var ext  = file.name.split('.').pop();
+  var path = 'users/' + currentUser.id + '/avatar.' + ext;
+  var up   = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+  if (up.error) { showToast('Erreur upload : ' + up.error.message, 'error'); return null; }
+  var pub  = sb.storage.from('avatars').getPublicUrl(path);
+  return pub.data.publicUrl + '?t=' + Date.now();
+}
+
+function previewAvatar(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var el = document.getElementById('avatar-initials');
+    if (el) el.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+  };
+  reader.readAsDataURL(file);
+}
+
 async function saveCompte() {
   var btn = document.getElementById('compte-save-btn');
   btn.disabled = true; btn.textContent = 'Enregistrement...';
@@ -184,13 +260,30 @@ async function saveCompte() {
 
   var firstName = document.getElementById('first-name').value.trim();
   var lastName  = document.getElementById('last-name').value.trim();
-  var res = await sb.auth.updateUser({ data: { first_name: firstName, last_name: lastName } });
+
+  // Upload avatar si fichier sélectionné
+  var avatarInput = document.getElementById('avatar-input');
+  var avatarUrl   = null;
+  if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+    avatarUrl = await uploadAvatar(avatarInput.files[0]);
+  }
+
+  var data = { first_name: firstName, last_name: lastName };
+  if (avatarUrl) data.avatar_url = avatarUrl;
+
+  var res = await sb.auth.updateUser({ data: data });
 
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { document.getElementById('compte-err').textContent = res.error.message; showMsg('compte-err', true); return; }
   var fullname = [firstName, lastName].filter(Boolean).join(' ');
   document.getElementById('profile-fullname').textContent = fullname || res.data.user.email;
-  document.getElementById('avatar-initials').textContent  = initials(fullname || res.data.user.email);
+  var avatarEl = document.getElementById('avatar-initials');
+  var finalUrl = avatarUrl || (res.data.user.user_metadata && res.data.user.user_metadata.avatar_url);
+  if (finalUrl) {
+    avatarEl.innerHTML = '<img src="' + finalUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+  } else {
+    avatarEl.textContent = initials(fullname || res.data.user.email);
+  }
   showMsg('compte-ok', true);
   setTimeout(function() { showMsg('compte-ok', false); }, 3000);
 }
@@ -1567,6 +1660,16 @@ function openEditCollabModal(i) {
   document.getElementById('edit-collab-index').value = i;
   var nameEl = document.getElementById('edit-collab-name');
   if (nameEl) nameEl.value = c.name;
+  // Pré-remplir avatar
+  var previewEl = document.getElementById('edit-collab-avatar-preview');
+  if (previewEl) {
+    var ini = (c.name||'').trim().split(' ').map(function(p){return p[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
+    previewEl.innerHTML = c.avatar_url
+      ? '<img src="' + c.avatar_url + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />'
+      : ini;
+  }
+  var avatarInp = document.getElementById('edit-collab-avatar-input');
+  if (avatarInp) avatarInp.value = '';
   if (ROLES_LIST.indexOf(c.role) === -1 && c.role) ROLES_LIST.push(c.role);
   editSelectedRole = c.role || 'Apprenti';
   window._editSelRole = editSelectedRole;
@@ -1579,6 +1682,26 @@ function closeEditCollabModal() {
   var o = document.getElementById('edit-collab-modal-overlay');
   if (o) o.style.display = 'none';
 }
+async function uploadCollabAvatar(file, collabId) {
+  var ext  = file.name.split('.').pop();
+  var path = 'collabs/' + currentUser.id + '/' + collabId + '.' + ext;
+  var up   = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+  if (up.error) { showToast('Erreur upload : ' + up.error.message, 'error'); return null; }
+  var pub  = sb.storage.from('avatars').getPublicUrl(path);
+  return pub.data.publicUrl + '?t=' + Date.now();
+}
+
+function previewCollabAvatar(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var el = document.getElementById('edit-collab-avatar-preview');
+    if (el) el.innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />';
+  };
+  reader.readAsDataURL(file);
+}
+
 async function confirmEditCollab() {
   var i = parseInt(document.getElementById('edit-collab-index').value);
   var c = collaborateurs[i];
@@ -1586,14 +1709,25 @@ async function confirmEditCollab() {
   var nameEl = document.getElementById('edit-collab-name');
   var newName = nameEl ? nameEl.value.trim() : c.name;
   if (!newName) { showToast('Entrez un nom', 'error'); return; }
-  // Update en base
+
+  // Upload avatar collab si fichier sélectionné
+  var avatarInput = document.getElementById('edit-collab-avatar-input');
+  var avatarUrl   = null;
+  if (avatarInput && avatarInput.files && avatarInput.files[0]) {
+    avatarUrl = await uploadCollabAvatar(avatarInput.files[0], c.id);
+  }
+
+  var payload = { name: newName, role: editSelectedRole };
+  if (avatarUrl) payload.avatar_url = avatarUrl;
+
   var res = await sb.from('collaborateurs')
-    .update({ name: newName, role: editSelectedRole })
+    .update(payload)
     .eq('id', c.id)
     .eq('user_id', currentUser.id);
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
   collaborateurs[i].name = newName;
   collaborateurs[i].role = editSelectedRole;
+  if (avatarUrl) collaborateurs[i].avatar_url = avatarUrl;
   closeEditCollabModal();
   renderCollabs();
   showToast('Collaborateur mis à jour !');
@@ -1611,17 +1745,19 @@ function renderCollabs() {
     return;
   }
   el.innerHTML = collaborateurs.map(function(c, i) {
-    var initials = (c.name||'').trim().split(' ').map(function(p){return p[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
-    var badgeStyle = getRoleBadgeStyle(c.role);
+    var ini = (c.name||'').trim().split(' ').map(function(p){return p[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
+    var avatarHtml = c.avatar_url
+      ? '<img src="' + c.avatar_url + '" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0" />'
+      : '<div style="width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0">' + ini + '</div>';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)">'
       + '<div style="display:flex;align-items:center;gap:10px">'
-      + '<div style="width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0">' + initials + '</div>'
+      + avatarHtml
       + '<div>'
       + '<div style="font-size:13px;font-weight:500">' + c.name + '</div>'
       + (c.role ? '<div style="font-size:11px;color:var(--ink-light);margin-top:2px">' + c.role + '</div>' : '')
       + '</div></div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
-      + '<button onclick="openEditCollabModal(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
+      + (!c.is_owner ? '<button onclick="openEditCollabModal(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>' : '')
       + (!c.is_owner ? '<button onclick="confirmRemoveCollab(\'' + c.id + '\')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>' : '')
       + '</div></div>';
   }).join('');
@@ -1734,6 +1870,8 @@ async function loadCollabs() {
   if (window.BNotif) BNotif.init(session.user.id);
   populateFields(currentUser);
   await loadSubscription();
+  await loadSalonPhoto();
+  await loadSlug(currentUser.id);
   await loadCollabs();   // charge collabs + initialise selectedPlanningCollabId + selectedPrestCollabId
   await loadPrestations(); // charge les prestations du collab sélectionné
   await loadPlanning();  // charge le planning du collab sélectionné

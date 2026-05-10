@@ -91,7 +91,7 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Téléphone</label>
-                    <input type="tel" class="form-input" id="salon-phone" placeholder="02 40 00 00 00" />
+                    <input type="tel" class="form-input" id="salon-phone" placeholder="02 40 00 00 00" oninput="this.value=formatPhone(this.value)" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Ville</label>
@@ -130,7 +130,11 @@
             <div class="compte-inner">
               <!-- GAUCHE : avatar + identité -->
               <div class="compte-left">
-                <div class="avatar-big" id="avatar-initials">—</div>
+                <div style="position:relative;cursor:pointer" onclick="document.getElementById('avatar-input').click()" title="Changer la photo">
+                  <div class="avatar-big" id="avatar-initials">—</div>
+                  <div style="position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid var(--white)">✎</div>
+                </div>
+                <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="previewAvatar(event)" />
                 <div class="compte-identity">
                   <strong id="profile-fullname" style="font-size:15px">—</strong>
                   <span id="profile-email-display" style="font-size:13px;color:var(--ink-light)">—</span>
@@ -491,6 +495,15 @@
     </div>
     <div style="display:flex;flex-direction:column;gap:14px">
       <input type="hidden" id="edit-collab-index" value="" />
+      <!-- Avatar collab -->
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="position:relative;cursor:pointer" onclick="document.getElementById('edit-collab-avatar-input').click()" title="Changer la photo">
+          <div id="edit-collab-avatar-preview" style="width:52px;height:52px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;overflow:hidden;flex-shrink:0">?</div>
+          <div style="position:absolute;bottom:0;right:0;width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:10px;border:2px solid var(--white)">✎</div>
+        </div>
+        <input type="file" id="edit-collab-avatar-input" accept="image/*" style="display:none" onchange="previewCollabAvatar(event)" />
+        <span style="font-size:12px;color:var(--ink-light)">Cliquez pour changer la photo</span>
+      </div>
       <div class="form-group" style="margin:0">
         <label class="form-label" style="font-size:12px">Prénom &amp; Nom</label>
         <input type="text" class="form-input" id="edit-collab-name" placeholder="Sophie Martin" style="font-size:13px;padding:9px 12px" />
