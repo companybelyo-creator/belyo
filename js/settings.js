@@ -1264,12 +1264,30 @@ async function loadPlanning() {
 // COLLABORATEURS
 // ============================================================
 
-var collaborateurs = []; // [{id, name, role}]
+// ============================================================
+// COLLABORATEURS & RÔLES — tables Supabase dédiées
+// SQL à exécuter dans Supabase :
+//   create table roles (
+//     id uuid primary key default gen_random_uuid(),
+//     user_id uuid references auth.users not null,
+//     name text not null,
+//     created_at timestamptz default now()
+//   );
+//   create table collaborateurs (
+//     id uuid primary key default gen_random_uuid(),
+//     user_id uuid references auth.users not null,
+//     name text not null,
+//     role text,
+//     created_at timestamptz default now()
+//   );
+// ============================================================
 
+var collaborateurs = [];
 var ROLES_LIST = ['Patron', 'Manager', 'Coiffeur', 'Coloriste', 'Barbier', 'Apprenti'];
-var ROLES_PERMS = {}; // {roleName: {rdv, clients, revenue, stocks, settings}}
 var selectedRole = 'Apprenti';
 var roleDropdownOpen = false;
+var editRoleDropdownOpen = false;
+var editSelectedRole = 'Apprenti';
 
 var ROLE_COLORS = {
   'Patron':    { bg: '#FFF3CD', color: '#856404' },
@@ -1286,12 +1304,13 @@ function getRoleBadgeStyle(role) {
   return 'background:' + c.bg + ';color:' + c.color;
 }
 
+// ---- Dropdown rôle (formulaire ajout) ----
 function renderRoleOptions() {
   var list = document.getElementById('role-options-list');
   if (!list) return;
   list.innerHTML = ROLES_LIST.map(function(r) {
-    var isActive = selectedRole === r;
-    return '<div onclick="pickRole(\'' + r.replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (isActive ? 'var(--ink)' : 'transparent') + ';color:' + (isActive ? 'var(--white)' : 'var(--ink)') + ';transition:background .1s" onmouseover="if(\'' + r + '\'!==window._selRole){this.style.background=\'var(--cream)\'}" onmouseout="if(\'' + r + '\'!==window._selRole){this.style.background=\'transparent\'}">' + r + '</div>';
+    var active = selectedRole === r;
+    return '<div onclick="pickRole(\'' + r.replace(/'/g,"\\'")+  '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (active?'var(--ink)':'transparent') + ';color:' + (active?'var(--white)':'var(--ink)') + ';transition:background .1s" onmouseover="if(\''+r+'\'!==window._selRole)this.style.background=\'var(--cream)\'" onmouseout="if(\''+r+'\'!==window._selRole)this.style.background=\'transparent\'">' + r + '</div>';
   }).join('');
 }
 
@@ -1299,17 +1318,12 @@ function toggleRoleDropdown() {
   roleDropdownOpen = !roleDropdownOpen;
   var dd = document.getElementById('role-select-dropdown');
   if (!dd) return;
-  if (roleDropdownOpen) {
-    renderRoleOptions();
-    dd.style.display = 'block';
-  } else {
-    dd.style.display = 'none';
-  }
+  if (roleDropdownOpen) { renderRoleOptions(); dd.style.display = 'block'; }
+  else dd.style.display = 'none';
 }
 
 function pickRole(role) {
-  selectedRole = role;
-  window._selRole = role;
+  selectedRole = role; window._selRole = role;
   var label = document.getElementById('role-select-label');
   if (label) label.textContent = role;
   var dd = document.getElementById('role-select-dropdown');
@@ -1317,55 +1331,111 @@ function pickRole(role) {
   roleDropdownOpen = false;
 }
 
-// Fermer dropdown rôle si clic extérieur
+// ---- Dropdown rôle (modal édition) ----
+function renderEditRoleOptions() {
+  var list = document.getElementById('edit-role-options');
+  if (!list) return;
+  list.innerHTML = ROLES_LIST.map(function(r) {
+    var active = editSelectedRole === r;
+    return '<div onclick="pickEditRole(\'' + r.replace(/'/g,"\\'")+  '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (active?'var(--ink)':'transparent') + ';color:' + (active?'var(--white)':'var(--ink)') + ';transition:background .1s" onmouseover="if(\''+r+'\'!==window._editSelRole)this.style.background=\'var(--cream)\'" onmouseout="if(\''+r+'\'!==window._editSelRole)this.style.background=\'transparent\'">' + r + '</div>';
+  }).join('');
+}
+
+function toggleEditRoleDropdown() {
+  editRoleDropdownOpen = !editRoleDropdownOpen;
+  var dd = document.getElementById('edit-role-dropdown');
+  if (!dd) return;
+  if (editRoleDropdownOpen) { renderEditRoleOptions(); dd.style.display = 'block'; }
+  else dd.style.display = 'none';
+}
+
+function pickEditRole(role) {
+  editSelectedRole = role; window._editSelRole = role;
+  var label = document.getElementById('edit-role-label');
+  if (label) label.textContent = role;
+  var dd = document.getElementById('edit-role-dropdown');
+  if (dd) dd.style.display = 'none';
+  editRoleDropdownOpen = false;
+}
+
+// Fermer dropdowns si clic extérieur
 document.addEventListener('click', function(e) {
-  var trigger = document.getElementById('role-select-trigger');
-  var dd = document.getElementById('role-select-dropdown');
-  if (dd && trigger && !trigger.contains(e.target) && !dd.contains(e.target)) {
-    dd.style.display = 'none';
-    roleDropdownOpen = false;
-  }
+  var t1 = document.getElementById('role-select-trigger');
+  var d1 = document.getElementById('role-select-dropdown');
+  if (d1 && t1 && !t1.contains(e.target) && !d1.contains(e.target)) { d1.style.display='none'; roleDropdownOpen=false; }
+  var t2 = document.getElementById('edit-role-trigger');
+  var d2 = document.getElementById('edit-role-dropdown');
+  if (d2 && t2 && !t2.contains(e.target) && !d2.contains(e.target)) { d2.style.display='none'; editRoleDropdownOpen=false; }
 });
 
 // ---- Modal création de rôle ----
 function openRoleModal() {
-  var overlay = document.getElementById('role-modal-overlay');
-  if (!overlay) return;
-  overlay.style.display = 'flex';
+  var o = document.getElementById('role-modal-overlay');
+  if (o) { o.style.display = 'flex'; }
   var inp = document.getElementById('modal-role-name');
-  if (inp) { inp.value = ''; inp.focus(); }
-  ['perm-rdv','perm-clients','perm-revenue','perm-stocks','perm-settings'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.checked = false;
-  });
+  if (inp) { inp.value = ''; setTimeout(function(){inp.focus();},50); }
 }
-
 function closeRoleModal() {
-  var overlay = document.getElementById('role-modal-overlay');
-  if (overlay) overlay.style.display = 'none';
+  var o = document.getElementById('role-modal-overlay');
+  if (o) o.style.display = 'none';
 }
-
-function confirmCreateRole() {
+async function confirmCreateRole() {
   var inp = document.getElementById('modal-role-name');
   if (!inp) return;
   var name = inp.value.trim();
   if (!name) { showToast('Entrez un nom de rôle', 'error'); return; }
   if (ROLES_LIST.indexOf(name) !== -1) { showToast('Ce rôle existe déjà', 'error'); return; }
-
-  var perms = {
-    rdv:      document.getElementById('perm-rdv')      ? document.getElementById('perm-rdv').checked      : false,
-    clients:  document.getElementById('perm-clients')  ? document.getElementById('perm-clients').checked  : false,
-    revenue:  document.getElementById('perm-revenue')  ? document.getElementById('perm-revenue').checked  : false,
-    stocks:   document.getElementById('perm-stocks')   ? document.getElementById('perm-stocks').checked   : false,
-    settings: document.getElementById('perm-settings') ? document.getElementById('perm-settings').checked : false,
-  };
+  // Enregistrer dans la table roles
+  var res = await sb.from('roles').insert({ user_id: currentUser.id, name: name });
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
   ROLES_LIST.push(name);
-  ROLES_PERMS[name] = perms;
   pickRole(name);
   closeRoleModal();
   showToast('Rôle "' + name + '" créé !');
 }
 
+// ---- Modal modifier collaborateur ----
+function openEditCollabModal(i) {
+  var c = collaborateurs[i];
+  if (!c) return;
+  var o = document.getElementById('edit-collab-modal-overlay');
+  if (o) o.style.display = 'flex';
+  document.getElementById('edit-collab-index').value = i;
+  var nameEl = document.getElementById('edit-collab-name');
+  if (nameEl) nameEl.value = c.name;
+  if (ROLES_LIST.indexOf(c.role) === -1 && c.role) ROLES_LIST.push(c.role);
+  editSelectedRole = c.role || 'Apprenti';
+  window._editSelRole = editSelectedRole;
+  var label = document.getElementById('edit-role-label');
+  if (label) label.textContent = editSelectedRole;
+  var dd = document.getElementById('edit-role-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+function closeEditCollabModal() {
+  var o = document.getElementById('edit-collab-modal-overlay');
+  if (o) o.style.display = 'none';
+}
+async function confirmEditCollab() {
+  var i = parseInt(document.getElementById('edit-collab-index').value);
+  var c = collaborateurs[i];
+  if (!c) return;
+  var nameEl = document.getElementById('edit-collab-name');
+  var newName = nameEl ? nameEl.value.trim() : c.name;
+  if (!newName) { showToast('Entrez un nom', 'error'); return; }
+  // Update en base
+  var res = await sb.from('collaborateurs')
+    .update({ name: newName, role: editSelectedRole })
+    .eq('id', c.id)
+    .eq('user_id', currentUser.id);
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  collaborateurs[i].name = newName;
+  collaborateurs[i].role = editSelectedRole;
+  closeEditCollabModal();
+  renderCollabs();
+  showToast('Collaborateur mis à jour !');
+}
+
+// ---- Rendu liste ----
 function renderCollabs() {
   var el = document.getElementById('collabs-list');
   var counter = document.getElementById('collabs-count');
@@ -1377,7 +1447,7 @@ function renderCollabs() {
     return;
   }
   el.innerHTML = collaborateurs.map(function(c, i) {
-    var initials = (c.name || '').trim().split(' ').map(function(p) { return p[0] || ''; }).slice(0,2).join('').toUpperCase() || '?';
+    var initials = (c.name||'').trim().split(' ').map(function(p){return p[0]||'';}).slice(0,2).join('').toUpperCase()||'?';
     var badgeStyle = getRoleBadgeStyle(c.role);
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)">'
       + '<div style="display:flex;align-items:center;gap:10px">'
@@ -1385,70 +1455,59 @@ function renderCollabs() {
       + '<div>'
       + '<div style="font-size:13px;font-weight:500">' + c.name + '</div>'
       + (c.role ? '<span style="display:inline-block;margin-top:3px;font-size:11px;padding:1px 8px;border-radius:100px;font-weight:500;' + badgeStyle + '">' + c.role + '</span>' : '')
-      + '</div>'
-      + '</div>'
+      + '</div></div>'
       + '<div style="display:flex;align-items:center;gap:6px">'
-      + '<button onclick="editCollab(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
-      + '<button onclick="removeCollab(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;transition:color .15s;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
-      + '</div>'
-      + '</div>';
+      + '<button onclick="openEditCollabModal(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
+      + '<button onclick="removeCollab(\'' + c.id + '\')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      + '</div></div>';
   }).join('');
 }
 
-function addCollab() {
+// ---- CRUD ----
+async function addCollab() {
   var nameEl = document.getElementById('new-collab-name');
   if (!nameEl) return;
   var name = nameEl.value.trim();
   if (!name) { showToast('Entrez un nom', 'error'); return; }
-  var id = 'c_' + Date.now();
-  collaborateurs.push({ id: id, name: name, role: selectedRole });
+  var res = await sb.from('collaborateurs').insert({
+    user_id: currentUser.id,
+    name: name,
+    role: selectedRole,
+  }).select().single();
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  collaborateurs.push(res.data);
   nameEl.value = '';
-  selectedRole = 'Apprenti';
   pickRole('Apprenti');
   renderCollabs();
+  showToast('Collaborateur ajouté !');
 }
 
-function removeCollab(i) {
-  collaborateurs.splice(i, 1);
+async function removeCollab(id) {
+  var res = await sb.from('collaborateurs').delete().eq('id', id).eq('user_id', currentUser.id);
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  collaborateurs = collaborateurs.filter(function(c){ return c.id !== id; });
   renderCollabs();
-}
-
-function editCollab(i) {
-  var c = collaborateurs[i];
-  if (!c) return;
-  var nameEl = document.getElementById('new-collab-name');
-  if (nameEl) nameEl.value = c.name;
-  if (ROLES_LIST.indexOf(c.role) === -1 && c.role) ROLES_LIST.push(c.role);
-  collaborateurs.splice(i, 1);
-  renderCollabs();
-  pickRole(c.role || 'Apprenti');
-  if (nameEl) nameEl.focus();
+  showToast('Collaborateur supprimé.');
 }
 
 async function saveCollabs() {
-  var btn = document.getElementById('btn-save-collabs');
-  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
-  var res = await sb.from('salon_settings')
-    .update({ collaborateurs: collaborateurs })
-    .eq('user_id', currentUser.id)
-    .select();
-  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
-  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
-  showMsg('collabs-save-ok', true);
-  setTimeout(function() { showMsg('collabs-save-ok', false); }, 3000);
-  showToast('Collaborateurs enregistrés !');
+  // Rien à faire : chaque action est déjà persistée individuellement
+  showToast('Équipe à jour !');
+  var ok = document.getElementById('collabs-save-ok');
+  if (ok) { ok.style.display = 'block'; setTimeout(function(){ ok.style.display='none'; }, 3000); }
 }
 
 async function loadCollabs() {
-  var res = await sb.from('salon_settings')
-    .select('collaborateurs')
-    .eq('user_id', currentUser.id)
-    .maybeSingle();
-  if (res.data && res.data.collaborateurs) {
-    collaborateurs = res.data.collaborateurs;
-  } else {
-    collaborateurs = [];
+  // Charger les rôles personnalisés
+  var rRes = await sb.from('roles').select('name').eq('user_id', currentUser.id);
+  if (rRes.data) {
+    rRes.data.forEach(function(r) {
+      if (ROLES_LIST.indexOf(r.name) === -1) ROLES_LIST.push(r.name);
+    });
   }
+  // Charger les collaborateurs
+  var cRes = await sb.from('collaborateurs').select('*').eq('user_id', currentUser.id).order('created_at');
+  collaborateurs = cRes.data || [];
   pickRole('Apprenti');
   renderCollabs();
 }
