@@ -1267,7 +1267,9 @@ async function loadPlanning() {
 var collaborateurs = []; // [{id, name, role}]
 
 var ROLES_LIST = ['Patron', 'Manager', 'Coiffeur', 'Coloriste', 'Barbier', 'Apprenti'];
-var selectedRole = 'Apprenti'; // défaut : le rôle le plus faible
+var ROLES_PERMS = {}; // {roleName: {rdv, clients, revenue, stocks, settings}}
+var selectedRole = 'Apprenti';
+var roleDropdownOpen = false;
 
 var ROLE_COLORS = {
   'Patron':    { bg: '#FFF3CD', color: '#856404' },
@@ -1284,32 +1286,83 @@ function getRoleBadgeStyle(role) {
   return 'background:' + c.bg + ';color:' + c.color;
 }
 
-function renderRolesBox() {
-  var box = document.getElementById('roles-scroll-box');
-  if (!box) return;
-  box.innerHTML = ROLES_LIST.map(function(r) {
+function renderRoleOptions() {
+  var list = document.getElementById('role-options-list');
+  if (!list) return;
+  list.innerHTML = ROLES_LIST.map(function(r) {
     var isActive = selectedRole === r;
-    return '<button type="button" onclick="pickRole(\'' + r.replace(/'/g, "\\'") + '\')" class="role-chip' + (isActive ? ' active' : '') + '">' + r + '</button>';
+    return '<div onclick="pickRole(\'' + r.replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (isActive ? 'var(--ink)' : 'transparent') + ';color:' + (isActive ? 'var(--white)' : 'var(--ink)') + ';transition:background .1s" onmouseover="if(\'' + r + '\'!==window._selRole){this.style.background=\'var(--cream)\'}" onmouseout="if(\'' + r + '\'!==window._selRole){this.style.background=\'transparent\'}">' + r + '</div>';
   }).join('');
-  // Ajuster la hauteur : afficher 1 rôle visible, les autres scrollables
-  box.style.height = '36px';
+}
+
+function toggleRoleDropdown() {
+  roleDropdownOpen = !roleDropdownOpen;
+  var dd = document.getElementById('role-select-dropdown');
+  if (!dd) return;
+  if (roleDropdownOpen) {
+    renderRoleOptions();
+    dd.style.display = 'block';
+  } else {
+    dd.style.display = 'none';
+  }
 }
 
 function pickRole(role) {
   selectedRole = role;
-  renderRolesBox();
+  window._selRole = role;
+  var label = document.getElementById('role-select-label');
+  if (label) label.textContent = role;
+  var dd = document.getElementById('role-select-dropdown');
+  if (dd) dd.style.display = 'none';
+  roleDropdownOpen = false;
 }
 
-function createRole() {
-  var inp = document.getElementById('new-role-input');
+// Fermer dropdown rôle si clic extérieur
+document.addEventListener('click', function(e) {
+  var trigger = document.getElementById('role-select-trigger');
+  var dd = document.getElementById('role-select-dropdown');
+  if (dd && trigger && !trigger.contains(e.target) && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+    roleDropdownOpen = false;
+  }
+});
+
+// ---- Modal création de rôle ----
+function openRoleModal() {
+  var overlay = document.getElementById('role-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  var inp = document.getElementById('modal-role-name');
+  if (inp) { inp.value = ''; inp.focus(); }
+  ['perm-rdv','perm-clients','perm-revenue','perm-stocks','perm-settings'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+}
+
+function closeRoleModal() {
+  var overlay = document.getElementById('role-modal-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+function confirmCreateRole() {
+  var inp = document.getElementById('modal-role-name');
   if (!inp) return;
   var name = inp.value.trim();
   if (!name) { showToast('Entrez un nom de rôle', 'error'); return; }
   if (ROLES_LIST.indexOf(name) !== -1) { showToast('Ce rôle existe déjà', 'error'); return; }
+
+  var perms = {
+    rdv:      document.getElementById('perm-rdv')      ? document.getElementById('perm-rdv').checked      : false,
+    clients:  document.getElementById('perm-clients')  ? document.getElementById('perm-clients').checked  : false,
+    revenue:  document.getElementById('perm-revenue')  ? document.getElementById('perm-revenue').checked  : false,
+    stocks:   document.getElementById('perm-stocks')   ? document.getElementById('perm-stocks').checked   : false,
+    settings: document.getElementById('perm-settings') ? document.getElementById('perm-settings').checked : false,
+  };
   ROLES_LIST.push(name);
-  inp.value = '';
-  selectedRole = name;
-  renderRolesBox();
+  ROLES_PERMS[name] = perms;
+  pickRole(name);
+  closeRoleModal();
   showToast('Rôle "' + name + '" créé !');
 }
 
@@ -1351,7 +1404,7 @@ function addCollab() {
   collaborateurs.push({ id: id, name: name, role: selectedRole });
   nameEl.value = '';
   selectedRole = 'Apprenti';
-  renderRolesBox();
+  pickRole('Apprenti');
   renderCollabs();
 }
 
@@ -1365,12 +1418,10 @@ function editCollab(i) {
   if (!c) return;
   var nameEl = document.getElementById('new-collab-name');
   if (nameEl) nameEl.value = c.name;
-  selectedRole = c.role || 'Apprenti';
-  // S'assurer que le rôle existe dans la liste
-  if (ROLES_LIST.indexOf(selectedRole) === -1) ROLES_LIST.push(selectedRole);
+  if (ROLES_LIST.indexOf(c.role) === -1 && c.role) ROLES_LIST.push(c.role);
   collaborateurs.splice(i, 1);
   renderCollabs();
-  renderRolesBox();
+  pickRole(c.role || 'Apprenti');
   if (nameEl) nameEl.focus();
 }
 
@@ -1398,7 +1449,7 @@ async function loadCollabs() {
   } else {
     collaborateurs = [];
   }
-  renderRolesBox();
+  pickRole('Apprenti');
   renderCollabs();
 }
 
