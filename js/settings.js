@@ -1155,7 +1155,6 @@ async function savePlanning() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('planning-ok', false);
 
-  // Lire tous les inputs DOM — les clés sont des strings en JSON
   var heuresPayload = {};
   var joursPayload  = {};
 
@@ -1191,14 +1190,24 @@ async function savePlanning() {
     conges: planningData.conges || []
   };
 
-  // Mettre à jour planningData local aussi
   planningData.jours  = joursPayload;
   planningData.heures = heuresPayload;
 
-  var res = await sb.from('salon_settings')
-    .update({ planning: payload })
-    .eq('user_id', currentUser.id)
-    .select();
+  var res;
+  if (selectedPlanningCollabId) {
+    // Sauvegarder dans collaborateurs.planning
+    res = await sb.from('collaborateurs')
+      .update({ planning: payload })
+      .eq('id', selectedPlanningCollabId)
+      .eq('user_id', currentUser.id)
+      .select();
+  } else {
+    // Sauvegarder dans salon_settings.planning
+    res = await sb.from('salon_settings')
+      .update({ planning: payload })
+      .eq('user_id', currentUser.id)
+      .select();
+  }
 
   btn.disabled = false; btn.textContent = 'Enregistrer';
   if (res.error) { showToast('Erreur : '+res.error.message, 'error'); return; }
@@ -1230,16 +1239,29 @@ function renderConges() {
 
 
 async function loadPlanning() {
-  var res = await sb.from('salon_settings')
-    .select('planning').eq('user_id', currentUser.id).maybeSingle();
-  if (res.data && res.data.planning) {
-    var p = res.data.planning;
-    // Supabase renvoie les clés JSON comme strings ("0","1"...)
-    // On stocke en string ET en number pour compatibilité
+  var planningSource = null;
+
+  if (selectedPlanningCollabId) {
+    // Charger depuis la table collaborateurs
+    var cRes = await sb.from('collaborateurs')
+      .select('planning').eq('id', selectedPlanningCollabId).eq('user_id', currentUser.id).maybeSingle();
+    if (cRes.data && cRes.data.planning) planningSource = cRes.data.planning;
+  } else {
+    // Charger depuis salon_settings (planning principal)
+    var sRes = await sb.from('salon_settings')
+      .select('planning').eq('user_id', currentUser.id).maybeSingle();
+    if (sRes.data && sRes.data.planning) planningSource = sRes.data.planning;
+  }
+
+  // Reset
+  planningData.jours = {}; planningData.heures = {}; planningData.conges = [];
+
+  if (planningSource) {
+    var p = planningSource;
     if (p.jours) {
       planningData.jours = {};
       Object.keys(p.jours).forEach(function(k) {
-        planningData.jours[k]        = p.jours[k];
+        planningData.jours[k]           = p.jours[k];
         planningData.jours[parseInt(k)] = p.jours[k];
       });
     }
@@ -1247,7 +1269,7 @@ async function loadPlanning() {
       planningData.heures = {};
       Object.keys(p.heures).forEach(function(k) {
         var val = Array.isArray(p.heures[k]) ? p.heures[k] : [p.heures[k]];
-        planningData.heures[k]        = val;
+        planningData.heures[k]           = val;
         planningData.heures[parseInt(k)] = val;
       });
     }
@@ -1261,8 +1283,57 @@ async function loadPlanning() {
 }
 
 // ============================================================
-// COLLABORATEURS
+// PLANNING PAR COLLABORATEUR
 // ============================================================
+
+var selectedPlanningCollabId = null; // null = planning principal (salon_settings)
+var planningCollabDropdownOpen = false;
+
+function renderPlanningCollabSelector() {
+  var wrap = document.getElementById('planning-collab-selector');
+  if (!wrap) return;
+  if (!collaborateurs.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+
+  var current = collaborateurs.find(function(c) { return c.id === selectedPlanningCollabId; });
+  var label = current ? current.name : (collaborateurs[0] ? collaborateurs[0].name : 'Moi');
+
+  wrap.innerHTML = '<div style="position:relative">'
+    + '<div onclick="togglePlanningCollabDropdown()" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--border);border-radius:100px;background:var(--white);cursor:pointer;font-size:12px;font-family:var(--font-body);font-weight:500;color:var(--ink)">'
+    + '<span id="planning-collab-label">' + label + '</span>'
+    + '<span style="font-size:9px;color:var(--ink-light)">▾</span>'
+    + '</div>'
+    + '<div id="planning-collab-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(26,23,20,.10);z-index:200;min-width:160px;overflow:hidden">'
+    + collaborateurs.map(function(c) {
+        var active = selectedPlanningCollabId === c.id;
+        return '<div onclick="pickPlanningCollab(\'' + c.id + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (active?'var(--ink)':'transparent') + ';color:' + (active?'var(--white)':'var(--ink)') + ';transition:background .1s" onmouseover="if(!this.dataset.active)this.style.background=\'var(--cream)\'" onmouseout="if(!this.dataset.active)this.style.background=\'transparent\'"' + (active?' data-active="1"':'') + '>' + c.name + (c.role ? ' <span style="font-size:11px;opacity:.6">· ' + c.role + '</span>' : '') + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+
+function togglePlanningCollabDropdown() {
+  planningCollabDropdownOpen = !planningCollabDropdownOpen;
+  var dd = document.getElementById('planning-collab-dropdown');
+  if (dd) dd.style.display = planningCollabDropdownOpen ? 'block' : 'none';
+}
+
+async function pickPlanningCollab(id) {
+  selectedPlanningCollabId = id;
+  planningCollabDropdownOpen = false;
+  var dd = document.getElementById('planning-collab-dropdown');
+  if (dd) dd.style.display = 'none';
+  renderPlanningCollabSelector();
+  await loadPlanning();
+}
+
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('planning-collab-selector');
+  if (wrap && !wrap.contains(e.target)) {
+    planningCollabDropdownOpen = false;
+    var dd = document.getElementById('planning-collab-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
 
 // ============================================================
 // COLLABORATEURS & RÔLES — tables Supabase dédiées
@@ -1479,6 +1550,7 @@ async function addCollab() {
   nameEl.value = '';
   pickRole('Apprenti');
   renderCollabs();
+  renderPlanningCollabSelector();
   showToast('Collaborateur ajouté !');
 }
 
@@ -1487,6 +1559,7 @@ async function removeCollab(id) {
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
   collaborateurs = collaborateurs.filter(function(c){ return c.id !== id; });
   renderCollabs();
+  renderPlanningCollabSelector();
   showToast('Collaborateur supprimé.');
 }
 
@@ -1508,8 +1581,32 @@ async function loadCollabs() {
   // Charger les collaborateurs
   var cRes = await sb.from('collaborateurs').select('*').eq('user_id', currentUser.id).order('created_at');
   collaborateurs = cRes.data || [];
+
+  // Créer automatiquement le profil patron si aucun collaborateur n'existe encore
+  if (collaborateurs.length === 0) {
+    // Récupérer le nom du salon pour nommer le patron
+    var settRes = await sb.from('salon_settings').select('salon_name').eq('user_id', currentUser.id).maybeSingle();
+    var patronName = (settRes.data && settRes.data.salon_name) ? settRes.data.salon_name : (currentUser.email || 'Patron');
+    // Utiliser le prénom/nom du compte si disponible
+    var userMeta = currentUser.user_metadata || {};
+    if (userMeta.full_name) patronName = userMeta.full_name;
+    else if (userMeta.name) patronName = userMeta.name;
+
+    var ins = await sb.from('collaborateurs').insert({
+      user_id: currentUser.id,
+      name: patronName,
+      role: 'Patron',
+    }).select().single();
+    if (!ins.error && ins.data) collaborateurs = [ins.data];
+  }
+
   pickRole('Apprenti');
+  // Sélectionner le premier collaborateur par défaut pour le planning
+  if (collaborateurs.length && selectedPlanningCollabId === null) {
+    selectedPlanningCollabId = collaborateurs[0].id;
+  }
   renderCollabs();
+  renderPlanningCollabSelector();
 }
 
 // ===== INIT =====
@@ -1522,8 +1619,8 @@ async function loadCollabs() {
   populateFields(currentUser);
   await loadSubscription();
   await loadPrestations();
-  await loadPlanning();
-  await loadCollabs();
+  await loadCollabs();   // charge collabs + initialise selectedPlanningCollabId
+  await loadPlanning();  // charge le planning du collab sélectionné
 
   if (window.location.search.includes('subscribed=1')) {
     showToast('Abonnement active ! Bienvenue sur Belyo.');
