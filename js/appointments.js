@@ -55,6 +55,31 @@ function renderCalFilters() {
   if (label) label.textContent = calFilterService || 'Services';
   var btn = document.getElementById('cal-svc-btn');
   if (btn) btn.classList.toggle('active', !!calFilterService);
+
+  // Filtre collaborateurs
+  var collabList  = document.getElementById('cal-collab-list');
+  var collabLabel = document.getElementById('cal-collab-label');
+  var collabWrap  = document.getElementById('cal-collab-wrap');
+  var collabs = buildAllCollabs();
+
+  if (collabWrap) collabWrap.style.display = (salonCollaborateurs.length || collabs.length) ? '' : 'none';
+
+  if (collabList) {
+    var collabItems = [{ val: '', label: 'Tous les collaborateurs' }].concat(collabs.map(function(c) { return { val: c, label: c }; }));
+    collabList.innerHTML = collabItems.map(function(item) {
+      var isActive = calFilterCollab === item.val;
+      return '<div onclick="pickCollabFilter(\'' + item.val.replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);'
+        + (isActive ? 'background:var(--ink);color:var(--white);' : 'color:var(--ink);')
+        + 'transition:background .1s" onmouseover="this.style.background=\''
+        + (isActive ? 'var(--ink)' : 'var(--cream)') + '\'}" onmouseout="this.style.background=\''
+        + (isActive ? 'var(--ink)' : 'transparent') + '\'">'
+        + item.label + '</div>';
+    }).join('');
+  }
+
+  if (collabLabel) collabLabel.textContent = calFilterCollab || 'Collaborateur';
+  var collabBtn = document.getElementById('cal-collab-btn');
+  if (collabBtn) collabBtn.classList.toggle('active', !!calFilterCollab);
 }
 
 function toggleSvcDropdown(e) {
@@ -62,6 +87,20 @@ function toggleSvcDropdown(e) {
   var dd = document.getElementById('cal-svc-dropdown');
   if (!dd) return;
   dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function toggleCollabDropdown(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('cal-collab-dropdown');
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function pickCollabFilter(val) {
+  calFilterCollab = val;
+  var dd = document.getElementById('cal-collab-dropdown');
+  if (dd) dd.style.display = 'none';
+  renderCalendar();
 }
 
 function pickSvcFilter(val) {
@@ -75,6 +114,9 @@ document.addEventListener('click', function(e) {
   var dd = document.getElementById('cal-svc-dropdown');
   var wrap = document.getElementById('cal-filters');
   if (dd && wrap && !wrap.contains(e.target)) dd.style.display = 'none';
+  var ddC = document.getElementById('cal-collab-dropdown');
+  var wrapC = document.getElementById('cal-collab-wrap');
+  if (ddC && wrapC && !wrapC.contains(e.target)) ddC.style.display = 'none';
 });
 
 // ===== GENRE + PRESTATION =====
@@ -88,11 +130,12 @@ var PRESTATIONS = {
 var PRIX_DUREE = { homme: {}, femme: {} };
 
 var salonPlanning = null;
+var salonCollaborateurs = []; // [{id, name, role}]
 var DAY_MAP_APT = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5}; // JS→planning index
 
 async function loadPrestationsFromSettings(userId) {
   var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations, prix_duree, planning')
+    .select('prestations, custom_prestations, prix_duree, planning, collaborateurs')
     .eq('user_id', userId)
     .maybeSingle();
 
@@ -102,7 +145,9 @@ async function loadPrestationsFromSettings(userId) {
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
   if (res.data && res.data.planning)   salonPlanning = res.data.planning;
+  if (res.data && res.data.collaborateurs) salonCollaborateurs = res.data.collaborateurs || [];
   updateServiceOptions();
+  populateCollabSelect();
 }
 
 function isHourWorked(date, h) {
@@ -253,6 +298,25 @@ document.addEventListener('click', function(e) {
     serviceDropdownOpen = false;
   }
 });
+
+function populateCollabSelect() {
+  var sel = document.getElementById('appt-collab');
+  var wrap = document.getElementById('collab-field-wrap');
+  if (!sel) return;
+  // Vider sauf la première option (moi-même)
+  while (sel.options.length > 1) sel.remove(1);
+  if (!salonCollaborateurs.length) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+  salonCollaborateurs.forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.name;
+    opt.textContent = c.name + (c.role ? ' — ' + c.role : '');
+    sel.appendChild(opt);
+  });
+  if (wrap) wrap.style.display = '';
+}
 
 function onServiceSelect(val) {
   // Gardé pour compatibilité — le vrai select utilise selectService()
@@ -673,7 +737,8 @@ function renderCalendar() {
           + '<span class="cal-event-time">' + formatTime(a.datetime) + '</span>'
           + (a.service ? '<span class="cal-event-svc-badge">' + a.service + '</span>' : '')
           + '</div>'
-          + '<div class="cal-event-name">' + shortName + '</div>';
+          + '<div class="cal-event-name">' + shortName + '</div>'
+          + (a.collaborateur ? '<div style="font-size:10px;opacity:.7;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + a.collaborateur + '</div>' : '');
       ev.innerHTML = html;
       ev.addEventListener('click', function(e) { e.stopPropagation(); showApptDetail(a); });
       cell.appendChild(ev);
@@ -720,6 +785,16 @@ function showApptDetail(a) {
   if (_durEl) _durEl.textContent = _durLabel;
   document.getElementById('appt-detail-price').textContent   = a.price ? parseFloat(a.price).toFixed(0) + ' \u20ac' : '\u2014';
   document.getElementById('appt-detail-notes').textContent   = a.notes || '\u2014';
+  var collabRow = document.getElementById('appt-detail-collab-row');
+  var collabEl  = document.getElementById('appt-detail-collab');
+  if (collabRow && collabEl) {
+    if (a.collaborateur) {
+      collabEl.textContent = a.collaborateur;
+      collabRow.style.display = '';
+    } else {
+      collabRow.style.display = 'none';
+    }
+  }
   var badge = document.getElementById('appt-detail-status');
   badge.textContent         = statusLabels[st] || st;
   badge.style.background    = (statusColors[st] || '#888') + '18';
@@ -771,6 +846,7 @@ function openModal(presetDatetime) {
   }
   document.getElementById('modal-overlay').classList.add('open');
   updateServiceOptions();
+  populateCollabSelect();
   // Désactiver le submit jusqu'à ce que tout soit rempli
   var btn = document.getElementById('appt-submit');
   if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; btn.style.cursor = 'not-allowed'; }
@@ -810,7 +886,8 @@ function closeModal() {
   if (input) { input.style.display = 'none'; input.value = ''; }
   var select = document.getElementById('appt-service-select');
   if (select) select.value = '';
-
+  var collabSel = document.getElementById('appt-collab');
+  if (collabSel) collabSel.value = '';
 }
 
 function toggleRow(id, checked) {
@@ -916,6 +993,10 @@ function openEditModal(id) {
   // Pré-remplir les notes
   var notesInput = document.getElementById('appt-notes');
   if (notesInput) notesInput.value = a.notes || '';
+
+  // Pré-remplir le collaborateur
+  var collabSel = document.getElementById('appt-collab');
+  if (collabSel && a.collaborateur) collabSel.value = a.collaborateur;
 
   // Changer le titre et le bouton
   var title = document.querySelector('.modal-title');
@@ -1041,6 +1122,10 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     return pd && pd.duree ? pd.duree : null;
   })();
   var notesVal = document.getElementById('appt-notes').value.trim() || null;
+  var collabVal = (function() {
+    var sel = document.getElementById('appt-collab');
+    return sel && sel.value ? sel.value : null;
+  })();
 
   var res;
   // Vérifier la limite Starter (100 RDV/mois)
@@ -1070,6 +1155,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       price:            priceVal ? parseFloat(priceVal) : null,
       notes:            notesVal,
       genre:            selectedGenre,
+      collaborateur:    collabVal,
     }).eq('id', editApptId);
   } else {
     // Mode création
@@ -1083,6 +1169,7 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
       notes:            notesVal,
       status:           'pending',
       genre:            selectedGenre,
+      collaborateur:    collabVal,
     });
   }
 

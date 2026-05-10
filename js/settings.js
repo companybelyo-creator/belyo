@@ -1260,6 +1260,80 @@ async function loadPlanning() {
   initCongeHoursInputs();
 }
 
+// ============================================================
+// COLLABORATEURS
+// ============================================================
+
+var collaborateurs = []; // [{id, name, role}]
+
+function renderCollabs() {
+  var el = document.getElementById('collabs-list');
+  if (!el) return;
+  if (!collaborateurs.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:6px 0">Aucun collaborateur. Vous êtes seul(e) pour l\'instant.</div>';
+    return;
+  }
+  el.innerHTML = collaborateurs.map(function(c, i) {
+    var initials = (c.name || '').trim().split(' ').map(function(p) { return p[0] || ''; }).slice(0,2).join('').toUpperCase() || '?';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
+      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<div style="width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0">' + initials + '</div>'
+      + '<div>'
+      + '<div style="font-size:13px;font-weight:500">' + c.name + '</div>'
+      + (c.role ? '<div style="font-size:11px;color:var(--ink-light);margin-top:1px">' + c.role + '</div>' : '')
+      + '</div>'
+      + '</div>'
+      + '<button onclick="removeCollab(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      + '</div>';
+  }).join('');
+}
+
+function addCollab() {
+  var nameEl = document.getElementById('new-collab-name');
+  var roleEl = document.getElementById('new-collab-role');
+  if (!nameEl) return;
+  var name = nameEl.value.trim();
+  if (!name) { showToast('Entrez un nom', 'error'); return; }
+  var role = roleEl ? roleEl.value.trim() : '';
+  var id = 'c_' + Date.now();
+  collaborateurs.push({ id: id, name: name, role: role });
+  nameEl.value = '';
+  if (roleEl) roleEl.value = '';
+  renderCollabs();
+}
+
+function removeCollab(i) {
+  collaborateurs.splice(i, 1);
+  renderCollabs();
+}
+
+async function saveCollabs() {
+  var btn = document.getElementById('btn-save-collabs');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement...'; }
+  var res = await sb.from('salon_settings')
+    .update({ collaborateurs: collaborateurs })
+    .eq('user_id', currentUser.id)
+    .select();
+  if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
+  if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
+  showMsg('collabs-save-ok', true);
+  setTimeout(function() { showMsg('collabs-save-ok', false); }, 3000);
+  showToast('Collaborateurs enregistrés !');
+}
+
+async function loadCollabs() {
+  var res = await sb.from('salon_settings')
+    .select('collaborateurs')
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+  if (res.data && res.data.collaborateurs) {
+    collaborateurs = res.data.collaborateurs;
+  } else {
+    collaborateurs = [];
+  }
+  renderCollabs();
+}
+
 // ===== INIT =====
 (async function() {
   var session = await requireSession();
@@ -1271,6 +1345,7 @@ async function loadPlanning() {
   await loadSubscription();
   await loadPrestations();
   await loadPlanning();
+  await loadCollabs();
 
   if (window.location.search.includes('subscribed=1')) {
     showToast('Abonnement active ! Bienvenue sur Belyo.');

@@ -65,6 +65,10 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           Planning
         </button>
+        <button class="settings-nav-item" onclick="showSection('collaborateurs', this)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Collaborateurs
+        </button>
       </nav>
 
       <!-- CONTENU DROITE -->
@@ -377,6 +381,44 @@
         </div>
 
       </div><!-- fin settings-content -->
+
+        <!-- COLLABORATEURS -->
+        <div class="settings-section" id="section-collaborateurs">
+          <div class="section-title">Mes <em>collaborateurs</em></div>
+          <p class="section-sub">Gérez les coiffeurs de votre salon. Chaque collaborateur peut être assigné à un rendez-vous.</p>
+          <div class="settings-card">
+            <div class="settings-card-title">Équipe</div>
+            <div class="success-msg" id="collabs-ok">✓ Collaborateurs enregistrés !</div>
+            <div class="error-msg" id="collabs-err"></div>
+
+            <!-- Liste des collaborateurs existants -->
+            <div id="collabs-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:1.4rem"></div>
+
+            <!-- Formulaire ajout -->
+            <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1.2rem">
+              <div style="font-size:13px;font-weight:500;margin-bottom:.8rem;color:var(--ink)">Ajouter un collaborateur</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end">
+                <div class="form-group" style="margin:0">
+                  <label class="form-label" style="font-size:12px">Prénom &amp; Nom</label>
+                  <input type="text" class="form-input" id="new-collab-name" placeholder="Ex : Sophie Martin" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label class="form-label" style="font-size:12px">Rôle / Poste</label>
+                  <input type="text" class="form-input" id="new-collab-role" placeholder="Ex : Coloriste" style="font-size:13px;padding:9px 12px" onkeydown="if(event.key==='Enter'){event.preventDefault();addCollab()}" />
+                </div>
+                <button onclick="addCollab()" style="padding:9px 18px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:13px;cursor:pointer;white-space:nowrap;height:fit-content">+ Ajouter</button>
+              </div>
+              <div style="margin-top:.6rem;font-size:11px;color:var(--ink-light)">
+                Tarif supplémentaire : <strong>+12 €/mois</strong> (Starter) · <strong>+19 €/mois</strong> (Pro) par collaborateur additionnel.
+              </div>
+            </div>
+
+            <div style="margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--border);display:flex;align-items:center;gap:1rem">
+              <button onclick="saveCollabs()" class="btn-save" id="btn-save-collabs">Enregistrer</button>
+              <div class="success-msg" id="collabs-save-ok" style="margin:0">Collaborateurs enregistrés !</div>
+            </div>
+          </div>
+        </div>
     </div><!-- fin settings-layout -->
   </main>
 </div>

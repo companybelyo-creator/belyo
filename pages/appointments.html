@@ -50,6 +50,14 @@
         <div id="cal-svc-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(26,23,20,.10);z-index:200;min-width:160px;overflow:hidden">
           <div id="cal-svc-list"></div>
         </div>
+        <div style="position:relative" id="cal-collab-wrap">
+          <button class="tab" id="cal-collab-btn" onclick="toggleCollabDropdown(event)" style="padding:6px 14px;font-size:12px;display:flex;align-items:center;gap:5px">
+            <span id="cal-collab-label">Collaborateur</span><span style="font-size:9px;opacity:.6">&#9660;</span>
+          </button>
+          <div id="cal-collab-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(26,23,20,.10);z-index:200;min-width:160px;overflow:hidden">
+            <div id="cal-collab-list"></div>
+          </div>
+        </div>
       </div>
       <div id="list-filters" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <div class="cal-picker-wrap" id="cal-filter-wrap" style="position:relative">
@@ -188,6 +196,13 @@
         <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" readonly style="cursor:default;background:var(--cream-dark);color:var(--ink);pointer-events:none" />
       </div>
       <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
+      <!-- Collaborateur -->
+      <div class="form-group" id="collab-field-wrap" style="display:none">
+        <label class="form-label">Collaborateur</label>
+        <select class="form-input" id="appt-collab" style="font-size:13px;padding:9px 12px;cursor:pointer">
+          <option value="">— Moi-même —</option>
+        </select>
+      </div>
       <button type="submit" class="btn-submit" id="appt-submit">Enregistrer</button>
     </form>
   </div>
@@ -229,6 +244,10 @@
     <div class="adp-row">
       <span class="adp-label">Notes</span>
       <span id="appt-detail-notes" class="adp-value adp-notes"></span>
+    </div>
+    <div class="adp-row" id="appt-detail-collab-row" style="display:none">
+      <span class="adp-label">Collaborateur</span>
+      <span id="appt-detail-collab" class="adp-value"></span>
     </div>
   </div>
   <div class="adp-actions">
