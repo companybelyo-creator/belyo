@@ -363,29 +363,49 @@ function switchGenre(genre) {
 }
 
 async function loadPrestations() {
-  var res = await sb.from('salon_settings')
-    .select('prestations, custom_prestations, prix_duree')
-    .eq('user_id', currentUser.id)
-    .maybeSingle();
+  var data = null;
+  var collab = selectedPrestCollabId
+    ? collaborateurs.find(function(c) { return c.id === selectedPrestCollabId; })
+    : null;
+  var isOwner = collab && collab.is_owner === true;
 
-  if (res.data) {
-    activePrestations = res.data.prestations       || buildDefaultActive();
-    customPrestations = res.data.custom_prestations || { homme: [], femme: [] };
-    // Merger : les défauts du catalogue comblent les prix/durées manquants en base
-    prixDuree = mergeWithDefaults(res.data.prix_duree || {});
+  if (selectedPrestCollabId) {
+    var cRes = await sb.from('collaborateurs')
+      .select('prestations').eq('id', selectedPrestCollabId).eq('user_id', currentUser.id).maybeSingle();
+    // Si le collab a ses propres prestations, on les utilise
+    if (cRes.data && cRes.data.prestations) {
+      data = cRes.data.prestations;
+    }
+  }
+
+  // Pas de données collab (ou collab sans prestations) : fallback salon_settings
+  // C'est le comportement par défaut pour le patron et tout nouveau collab
+  if (!data) {
+    var sRes = await sb.from('salon_settings')
+      .select('prestations, custom_prestations, prix_duree')
+      .eq('user_id', currentUser.id).maybeSingle();
+    if (sRes.data) data = sRes.data;
+  }
+
+  if (data) {
+    activePrestations = data.prestations       || buildDefaultActive();
+    customPrestations = data.custom_prestations || { homme: [], femme: [] };
+    prixDuree         = mergeWithDefaults(data.prix_duree || {});
   } else {
     activePrestations = buildDefaultActive();
     customPrestations = { homme: [], femme: [] };
     prixDuree         = buildDefaultPrixDuree();
   }
 
-  // Toujours sauvegarder prix_duree complet (comble les manquants)
-  await sb.from('salon_settings').upsert({
-    user_id:    currentUser.id,
-    prestations:        activePrestations,
-    custom_prestations: customPrestations,
-    prix_duree:         prixDuree,
-  }, { onConflict: 'user_id' });
+  // Upsert dans salon_settings seulement pour le patron (is_owner) ou sans collab sélectionné
+  if (!selectedPrestCollabId || isOwner) {
+    await sb.from('salon_settings').upsert({
+      user_id:            currentUser.id,
+      prestations:        activePrestations,
+      custom_prestations: customPrestations,
+      prix_duree:         prixDuree,
+    }, { onConflict: 'user_id' });
+  }
 
   renderPrestations('homme');
   renderPrestations('femme');
@@ -579,15 +599,32 @@ async function savePrestations() {
   btn.disabled = true; btn.textContent = 'Enregistrement...';
   showMsg('prestations-ok', false);
 
-  // UPDATE avec select() pour éviter le 400 sur Prefer: return=representation
-  var res = await sb.from('salon_settings')
-    .update({
-      prestations:        activePrestations,
-      custom_prestations: customPrestations,
-      prix_duree:         prixDuree,
-    })
-    .eq('user_id', currentUser.id)
-    .select();
+  var payload = {
+    prestations:        activePrestations,
+    custom_prestations: customPrestations,
+    prix_duree:         prixDuree,
+  };
+
+  var collab = selectedPrestCollabId
+    ? collaborateurs.find(function(c) { return c.id === selectedPrestCollabId; })
+    : null;
+  var isOwner = collab && collab.is_owner === true;
+
+  var res;
+  if (selectedPrestCollabId && !isOwner) {
+    // Collaborateur non-patron : sauvegarde dans collaborateurs.prestations
+    res = await sb.from('collaborateurs')
+      .update({ prestations: payload })
+      .eq('id', selectedPrestCollabId)
+      .eq('user_id', currentUser.id)
+      .select();
+  } else {
+    // Patron ou aucun collab sélectionné : sauvegarde dans salon_settings
+    res = await sb.from('salon_settings')
+      .update(payload)
+      .eq('user_id', currentUser.id)
+      .select();
+  }
 
   if (btn) { btn.disabled = false; btn.textContent = 'Enregistrer'; }
   if (res.error) { showToast('Erreur : ' + res.error.message, 'error'); return; }
@@ -1285,6 +1322,59 @@ async function loadPlanning() {
 }
 
 // ============================================================
+// PRESTATIONS PAR COLLABORATEUR
+// ============================================================
+
+var selectedPrestCollabId = null;
+var prestCollabDropdownOpen = false;
+
+function renderPrestCollabSelector() {
+  var wrap = document.getElementById('prest-collab-selector');
+  if (!wrap) return;
+  if (!collaborateurs.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+
+  var current = collaborateurs.find(function(c) { return c.id === selectedPrestCollabId; });
+  var label = current ? current.name : (collaborateurs[0] ? collaborateurs[0].name : 'Moi');
+
+  wrap.innerHTML = '<div style="position:relative">'
+    + '<div onclick="togglePrestCollabDropdown()" style="display:flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--border);border-radius:100px;background:var(--white);cursor:pointer;font-size:12px;font-family:var(--font-body);font-weight:500;color:var(--ink)">'
+    + '<span id="prest-collab-label">' + label + '</span>'
+    + '<span style="font-size:9px;color:var(--ink-light)">▾</span>'
+    + '</div>'
+    + '<div id="prest-collab-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(26,23,20,.10);z-index:200;min-width:160px;overflow:hidden">'
+    + collaborateurs.map(function(c) {
+        var active = selectedPrestCollabId === c.id;
+        return '<div onclick="pickPrestCollab(\'' + c.id + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (active?'var(--ink)':'transparent') + ';color:' + (active?'var(--white)':'var(--ink)') + ';transition:background .1s" onmouseover="if(!this.dataset.active)this.style.background=\'var(--cream)\'" onmouseout="if(!this.dataset.active)this.style.background=\'transparent\'"' + (active?' data-active="1"':'') + '>' + c.name + (c.role ? ' <span style="font-size:11px;opacity:.6">\u00b7 ' + c.role + '</span>' : '') + '</div>';
+      }).join('')
+    + '</div></div>';
+}
+
+function togglePrestCollabDropdown() {
+  prestCollabDropdownOpen = !prestCollabDropdownOpen;
+  var dd = document.getElementById('prest-collab-dropdown');
+  if (dd) dd.style.display = prestCollabDropdownOpen ? 'block' : 'none';
+}
+
+async function pickPrestCollab(id) {
+  selectedPrestCollabId = id;
+  prestCollabDropdownOpen = false;
+  var dd = document.getElementById('prest-collab-dropdown');
+  if (dd) dd.style.display = 'none';
+  renderPrestCollabSelector();
+  await loadPrestations();
+}
+
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('prest-collab-selector');
+  if (wrap && !wrap.contains(e.target)) {
+    prestCollabDropdownOpen = false;
+    var dd = document.getElementById('prest-collab-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+// ============================================================
 // PLANNING PAR COLLABORATEUR
 // ============================================================
 
@@ -1325,6 +1415,7 @@ async function pickPlanningCollab(id) {
   var dd = document.getElementById('planning-collab-dropdown');
   if (dd) dd.style.display = 'none';
   renderPlanningCollabSelector();
+  renderPrestCollabSelector();
   await loadPlanning();
 }
 
@@ -1553,6 +1644,7 @@ async function addCollab() {
   pickRole('Apprenti');
   renderCollabs();
   renderPlanningCollabSelector();
+  renderPrestCollabSelector();
   showToast('Collaborateur ajouté !');
 }
 
@@ -1577,6 +1669,7 @@ async function removeCollab(id) {
   closeDeleteCollabModal();
   renderCollabs();
   renderPlanningCollabSelector();
+  renderPrestCollabSelector();
   showToast('Collaborateur supprimé.');
 }
 async function saveCollabs() {
@@ -1624,8 +1717,12 @@ async function loadCollabs() {
   if (collaborateurs.length && selectedPlanningCollabId === null) {
     selectedPlanningCollabId = collaborateurs[0].id;
   }
+  if (collaborateurs.length && selectedPrestCollabId === null) {
+    selectedPrestCollabId = collaborateurs[0].id;
+  }
   renderCollabs();
   renderPlanningCollabSelector();
+  renderPrestCollabSelector();
 }
 
 // ===== INIT =====
@@ -1637,8 +1734,8 @@ async function loadCollabs() {
   if (window.BNotif) BNotif.init(session.user.id);
   populateFields(currentUser);
   await loadSubscription();
-  await loadPrestations();
-  await loadCollabs();   // charge collabs + initialise selectedPlanningCollabId
+  await loadCollabs();   // charge collabs + initialise selectedPlanningCollabId + selectedPrestCollabId
+  await loadPrestations(); // charge les prestations du collab sélectionné
   await loadPlanning();  // charge le planning du collab sélectionné
 
   if (window.location.search.includes('subscribed=1')) {
