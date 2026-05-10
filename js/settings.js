@@ -816,9 +816,15 @@ function renderPlanningDays() {
     // ── Body : plages horaires empilées + bouton pause ────────────────────────
     if (actif) {
       var body = document.createElement('div');
-      body.style.cssText = 'padding:10px 14px;display:flex;flex-direction:column;gap:6px';
+      body.style.cssText = 'padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:6px';
 
       var baseStyle = 'width:58px;padding:5px 8px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font-body);font-size:13px;font-weight:500;background:var(--cream);color:var(--ink);text-align:center;outline:none';
+
+      // Bouton + pause (créé ici, inséré en position 2)
+      var pauseBtn = document.createElement('button');
+      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);margin-top:0';
+      pauseBtn.textContent='+ pause';
+      (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
 
       plages.forEach(function(p, pi) {
         var wrap = document.createElement('div');
@@ -850,20 +856,16 @@ function renderPlanningDays() {
 
         if (plages.length > 1) {
           var rm = document.createElement('button');
-          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;line-height:1;margin-left:auto';
+          rm.style.cssText='background:none;border:none;cursor:pointer;font-size:16px;color:var(--ink-light);padding:0 2px;line-height:1';
           rm.textContent='×';
           (function(ii,pii){ rm.addEventListener('click', function(){ removePlage(ii,pii); }); })(i,pi);
           wrap.appendChild(rm);
         }
         body.appendChild(wrap);
-      });
 
-      // Bouton + pause
-      var pauseBtn = document.createElement('button');
-      pauseBtn.style.cssText='padding:4px 10px;border-radius:100px;border:1px dashed var(--border);background:none;font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink-light);align-self:flex-start;margin-top:2px';
-      pauseBtn.textContent='+ pause';
-      (function(ii){ pauseBtn.addEventListener('click', function(){ addPlage(ii); }); })(i);
-      body.appendChild(pauseBtn);
+        // Insérer le bouton + pause juste après la première plage
+        if (pi === 0) body.appendChild(pauseBtn);
+      });
 
       row.appendChild(body);
     }
