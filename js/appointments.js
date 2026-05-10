@@ -14,11 +14,10 @@ var weekOffset     = 0;
 
 // ===== FILTRES CALENDRIER =====
 var calFilterService = '';
-var calFilterCollab  = '';
+var calViewCollabId  = null; // UUID du collab dont on affiche le planning + RDV
 
 function setCalFilter(type, val) {
   if (type === 'service') calFilterService = val;
-  if (type === 'collab')  calFilterCollab  = val;
   renderCalendar();
 }
 
@@ -28,58 +27,44 @@ function buildAllServices() {
   return Object.keys(svcs).sort();
 }
 
-function buildAllCollabs() {
-  var cols = {};
-  allAppts.forEach(function(a) { if (a.collaborateur) cols[a.collaborateur] = true; });
-  return Object.keys(cols).sort();
-}
-
 function renderCalFilters() {
-  var list = document.getElementById('cal-svc-list');
+  // --- Sélecteur collaborateur (vue unique) ---
+  var collabList  = document.getElementById('cal-collab-list');
+  var collabLabel = document.getElementById('cal-collab-label');
+  var collabWrap  = document.getElementById('cal-collab-wrap');
+
+  if (collabWrap) collabWrap.style.display = salonCollaborateurs.length > 1 ? '' : 'none';
+
+  if (collabList) {
+    collabList.innerHTML = salonCollaborateurs.map(function(c) {
+      var active = calViewCollabId === c.id;
+      return '<div onclick="pickCalCollab(\'' + c.id + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);background:' + (active?'var(--ink)':'transparent') + ';color:' + (active?'var(--white)':'var(--ink)') + ';transition:background .1s" onmouseover="if(\'' + c.id + '\'!==window._calCollabId)this.style.background=\'var(--cream)\'" onmouseout="if(\'' + c.id + '\'!==window._calCollabId)this.style.background=\'transparent\'">'
+        + c.name + (c.role ? '<span style="font-size:11px;opacity:.6;margin-left:4px">· ' + c.role + '</span>' : '')
+        + '</div>';
+    }).join('');
+  }
+
+  var current = salonCollaborateurs.find(function(c) { return c.id === calViewCollabId; });
+  if (collabLabel) collabLabel.textContent = current ? current.name : '—';
+
+  // --- Filtre services ---
+  var list  = document.getElementById('cal-svc-list');
   var label = document.getElementById('cal-svc-label');
   if (!list) return;
 
-  var svcs = buildAllServices();
+  var svcs  = buildAllServices();
   var items = [{ val: '', label: 'Tous les services' }].concat(svcs.map(function(s) { return { val: s, label: s }; }));
-
   list.innerHTML = items.map(function(item) {
     var isActive = calFilterService === item.val;
     return '<div onclick="pickSvcFilter(\'' + item.val.replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);'
       + (isActive ? 'background:var(--ink);color:var(--white);' : 'color:var(--ink);')
-      + 'transition:background .1s" onmouseover="if(!this.classList.contains(\'active-svc\')){this.style.background=\''
-      + (isActive ? 'var(--ink)' : 'var(--cream)') + '\'}" onmouseout="this.style.background=\''
-      + (isActive ? 'var(--ink)' : 'transparent') + '\'">'
+      + 'transition:background .1s" onmouseover="this.style.background=\'' + (isActive?'var(--ink)':'var(--cream)') + '\'" onmouseout="this.style.background=\'' + (isActive?'var(--ink)':'transparent') + '\'">'
       + item.label + '</div>';
   }).join('');
 
   if (label) label.textContent = calFilterService || 'Services';
   var btn = document.getElementById('cal-svc-btn');
   if (btn) btn.classList.toggle('active', !!calFilterService);
-
-  // Filtre collaborateurs
-  var collabList  = document.getElementById('cal-collab-list');
-  var collabLabel = document.getElementById('cal-collab-label');
-  var collabWrap  = document.getElementById('cal-collab-wrap');
-  var collabs = buildAllCollabs();
-
-  if (collabWrap) collabWrap.style.display = (salonCollaborateurs.length || collabs.length) ? '' : 'none';
-
-  if (collabList) {
-    var collabItems = [{ val: '', label: 'Tous les collaborateurs' }].concat(collabs.map(function(c) { return { val: c, label: c }; }));
-    collabList.innerHTML = collabItems.map(function(item) {
-      var isActive = calFilterCollab === item.val;
-      return '<div onclick="pickCollabFilter(\'' + item.val.replace(/'/g, "\\'") + '\')" style="padding:9px 14px;font-size:13px;cursor:pointer;font-family:var(--font-body);'
-        + (isActive ? 'background:var(--ink);color:var(--white);' : 'color:var(--ink);')
-        + 'transition:background .1s" onmouseover="this.style.background=\''
-        + (isActive ? 'var(--ink)' : 'var(--cream)') + '\'}" onmouseout="this.style.background=\''
-        + (isActive ? 'var(--ink)' : 'transparent') + '\'">'
-        + item.label + '</div>';
-    }).join('');
-  }
-
-  if (collabLabel) collabLabel.textContent = calFilterCollab || 'Collaborateur';
-  var collabBtn = document.getElementById('cal-collab-btn');
-  if (collabBtn) collabBtn.classList.toggle('active', !!calFilterCollab);
 }
 
 function toggleSvcDropdown(e) {
@@ -96,8 +81,17 @@ function toggleCollabDropdown(e) {
   dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
 }
 
-function pickCollabFilter(val) {
-  calFilterCollab = val;
+function pickCalCollab(id) {
+  calViewCollabId  = id;
+  window._calCollabId = id;
+  selectedCollabId = id;
+  window._selCollabId = id;
+  var c = salonCollaborateurs.find(function(x) { return x.id === id; });
+  // Mettre à jour salonPlanning avec le planning de ce collab
+  if (c) salonPlanning = c.planning || null;
+  // Mettre à jour le label du sélecteur formulaire aussi
+  var lbl = document.getElementById('collab-select-label');
+  if (lbl && c) lbl.textContent = c.name + (c.role ? ' · ' + c.role : '');
   var dd = document.getElementById('cal-collab-dropdown');
   if (dd) dd.style.display = 'none';
   renderCalendar();
@@ -118,8 +112,6 @@ document.addEventListener('click', function(e) {
   var wrapC = document.getElementById('cal-collab-wrap');
   if (ddC && wrapC && !wrapC.contains(e.target)) ddC.style.display = 'none';
 });
-
-// ===== GENRE + PRESTATION =====
 var selectedGenre = 'homme';
 
 var PRESTATIONS = {
@@ -161,7 +153,8 @@ async function loadPrestationsFromSettings(userId) {
 
   if (owner) {
     selectedCollabId = owner.id;
-    // Planning du patron : depuis collaborateurs.planning ou fallback salon_settings.planning
+    calViewCollabId  = owner.id;
+    window._calCollabId = owner.id;
     salonPlanning = owner.planning || (res.data && res.data.planning) || null;
   } else {
     salonPlanning = (res.data && res.data.planning) || null;
@@ -207,6 +200,8 @@ function toggleCollabFormDropdown() {
 function pickCollabForm(id) {
   selectedCollabId = id;
   window._selCollabId = id;
+  calViewCollabId = id;
+  window._calCollabId = id;
   var c = salonCollaborateurs.find(function(x) { return x.id === id; });
   var lbl = document.getElementById('collab-select-label');
   if (lbl && c) lbl.textContent = c.name + (c.role ? ' · ' + c.role : '');
@@ -723,7 +718,16 @@ function renderCalendar() {
 
     // Appliquer filtres
     if (calFilterService) dayAppts = dayAppts.filter(function(a) { return a.service === calFilterService; });
-    if (calFilterCollab)  dayAppts = dayAppts.filter(function(a) { return a.collaborateur === calFilterCollab; });
+    if (calViewCollabId) {
+      var viewCollab = salonCollaborateurs.find(function(c) { return c.id === calViewCollabId; });
+      var isOwner = viewCollab && viewCollab.is_owner;
+      dayAppts = dayAppts.filter(function(a) {
+        if (a.collaborateur_id === calViewCollabId) return true;
+        // Si c'est le patron, inclure aussi les RDV sans collaborateur assigné
+        if (isOwner && !a.collaborateur_id) return true;
+        return false;
+      });
+    }
 
     // Calculer durée effective de chaque RDV
     function getDuree(a) {
