@@ -1291,23 +1291,29 @@ function pickRole(role) {
 
 function renderCollabs() {
   var el = document.getElementById('collabs-list');
+  var counter = document.getElementById('collabs-count');
   if (!el) return;
-  if (!collaborateurs.length) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:6px 0">Aucun collaborateur. Vous êtes seul(e) pour l\'instant.</div>';
+  var n = collaborateurs.length;
+  if (counter) counter.textContent = n + ' personne' + (n > 1 ? 's' : '');
+  if (!n) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--ink-light);padding:6px 0">Aucun collaborateur pour l\'instant.</div>';
     return;
   }
   el.innerHTML = collaborateurs.map(function(c, i) {
     var initials = (c.name || '').trim().split(' ').map(function(p) { return p[0] || ''; }).slice(0,2).join('').toUpperCase() || '?';
     var badgeStyle = getRoleBadgeStyle(c.role);
-    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm)">'
-      + '<div style="display:flex;align-items:center;gap:12px">'
-      + '<div style="width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;flex-shrink:0">' + initials + '</div>'
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm)">'
+      + '<div style="display:flex;align-items:center;gap:10px">'
+      + '<div style="width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--white);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0">' + initials + '</div>'
       + '<div>'
       + '<div style="font-size:13px;font-weight:500">' + c.name + '</div>'
-      + (c.role ? '<span style="display:inline-block;margin-top:3px;font-size:11px;padding:2px 8px;border-radius:100px;font-weight:500;' + badgeStyle + '">' + c.role + '</span>' : '')
+      + (c.role ? '<span style="display:inline-block;margin-top:3px;font-size:11px;padding:1px 8px;border-radius:100px;font-weight:500;' + badgeStyle + '">' + c.role + '</span>' : '')
       + '</div>'
       + '</div>'
-      + '<button onclick="removeCollab(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--ink-light);padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      + '<div style="display:flex;align-items:center;gap:6px">'
+      + '<button onclick="editCollab(' + i + ')" style="padding:4px 10px;border-radius:100px;border:1px solid var(--border);background:var(--white);font-family:var(--font-body);font-size:11px;cursor:pointer;color:var(--ink)">Modifier</button>'
+      + '<button onclick="removeCollab(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:17px;color:var(--ink-light);padding:0 3px;transition:color .15s;line-height:1" onmouseover="this.style.color=\'#993C1D\'" onmouseout="this.style.color=\'var(--ink-light)\'">×</button>'
+      + '</div>'
       + '</div>';
   }).join('');
 }
@@ -1330,6 +1336,25 @@ function addCollab() {
 function removeCollab(i) {
   collaborateurs.splice(i, 1);
   renderCollabs();
+}
+
+function editCollab(i) {
+  var c = collaborateurs[i];
+  if (!c) return;
+  var nameEl = document.getElementById('new-collab-name');
+  var roleEl = document.getElementById('new-collab-role');
+  if (nameEl) nameEl.value = c.name;
+  if (roleEl) roleEl.value = c.role || '';
+  // Activer le chip correspondant
+  document.querySelectorAll('.role-chip').forEach(function(el) {
+    el.classList.toggle('active', el.textContent.trim() === c.role);
+  });
+  // Supprimer l'entrée pour qu'elle soit recréée au prochain addCollab
+  collaborateurs.splice(i, 1);
+  renderCollabs();
+  // Scroll vers le formulaire
+  var nameInput = document.getElementById('new-collab-name');
+  if (nameInput) nameInput.focus();
 }
 
 async function saveCollabs() {
