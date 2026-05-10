@@ -864,11 +864,8 @@ function renderPlanningDays() {
         body.appendChild(wrap);
       });
 
-      // Bouton + pause toujours sur la deuxième ligne (après les plages)
-      var pauseRow = document.createElement('div');
-      pauseRow.style.cssText = 'width:100%;margin-top:2px';
-      pauseRow.appendChild(pauseBtn);
-      body.appendChild(pauseRow);
+      // Bouton + pause inline, collé après la dernière plage
+      body.appendChild(pauseBtn);
 
       row.appendChild(body);
     }
