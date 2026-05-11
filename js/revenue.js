@@ -351,15 +351,15 @@ function renderRetentionGauge(data) {
   var x0 = cx - r;
   var x1 = cx + r;
 
-  // Arc de track (complet, gris)
-  track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
+  // Arc de track (complet, gris) — descend vers le bas
+  track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 0 '+x1+' '+cy);
 
   if (rate <= 0) {
     // Aucun fill
     fill.setAttribute('d', '');
   } else if (rate >= 100) {
     // Fill complet = arc complet
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 0 '+x1+' '+cy);
   } else {
     // Arc partiel basé sur le taux
     // De 180° à (180 - rate% de 180°)
@@ -371,7 +371,7 @@ function renderRetentionGauge(data) {
     var fy = (cy - r * Math.sin(angleRad)).toFixed(2);
     
     var largeArc = rate > 50 ? 1 : 0;
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 0 '+fx+' '+fy);
   }
 }
 
