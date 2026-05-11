@@ -322,56 +322,48 @@ function renderRetentionGauge(data) {
   var newC     = total - returned;
   var rate     = total > 0 ? Math.round(returned/total*100) : 0;
   var newPct   = total > 0 ? Math.round(newC/total*100) : 0;
-  var existPct = rate;
 
   // Labels texte
   var elNew   = document.getElementById('retention-new-pct');
   var elExist = document.getElementById('retention-exist-pct');
   if (elNew)   elNew.textContent   = newPct + '%';
-  if (elExist) elExist.textContent = existPct + '%';
+  if (elExist) elExist.textContent = rate + '%';
 
-  // Barres horizontales — s'assurer que les deux totalisent 100%
+  // Barres horizontales
   var barNew   = document.getElementById('retention-bar-new');
   var barExist = document.getElementById('retention-bar-exist');
   if (barNew)   barNew.style.width   = newPct + '%';
-  if (barExist) barExist.style.width = existPct + '%';
+  if (barExist) barExist.style.width = rate + '%';
 
   // Label SVG "Taux : X%"
   var labelTaux = document.getElementById('ret-label-taux');
   if (labelTaux) labelTaux.textContent = 'Taux : ' + rate + '%';
 
   // Arc SVG demi-cercle
-  // Centre cx=100, cy=100, rayon r=60
-  // Angle de 180° (gauche) à 0° (droite)
+  // Centre cx=100, cy=105, rayon r=72
+  // Départ gauche : (cx-r, cy) → arc vers la droite en passant par le haut → sweep-flag=1
+  // Point intermédiaire pour le fill : angle trig 180°→0°, avec y SVG inversé (cy - r*sin)
   var track = document.getElementById('ret-track');
   var fill  = document.getElementById('ret-fill');
   if (!track || !fill) return;
 
-  var cx = 100, cy = 100, r = 60;
+  var cx = 100, cy = 105, r = 72;
   var x0 = cx - r;
   var x1 = cx + r;
 
-  // Arc de track (complet, gris) — descend vers le bas
-  track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 0 '+x1+' '+cy);
+  track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
 
   if (rate <= 0) {
-    // Aucun fill
     fill.setAttribute('d', '');
   } else if (rate >= 100) {
-    // Fill complet = arc complet
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 0 '+x1+' '+cy);
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
   } else {
-    // Arc partiel basé sur le taux
-    // De 180° à (180 - rate% de 180°)
-    var anglePercent = (rate / 100) * 180;  // Angle à parcourir
-    var angleDeg = 180 - anglePercent;      // Angle de fin en degrés
+    var angleDeg = 180 - (rate / 100) * 180;
     var angleRad = angleDeg * Math.PI / 180;
-    
     var fx = (cx + r * Math.cos(angleRad)).toFixed(2);
     var fy = (cy - r * Math.sin(angleRad)).toFixed(2);
-    
     var largeArc = rate > 50 ? 1 : 0;
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 0 '+fx+' '+fy);
+    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
   }
 }
 
