@@ -322,18 +322,19 @@ function renderRetentionGauge(data) {
   var newC     = total - returned;
   var rate     = total > 0 ? Math.round(returned/total*100) : 0;
   var newPct   = total > 0 ? Math.round(newC/total*100) : 0;
+  var existPct = rate;
 
   // Labels texte
   var elNew   = document.getElementById('retention-new-pct');
   var elExist = document.getElementById('retention-exist-pct');
   if (elNew)   elNew.textContent   = newPct + '%';
-  if (elExist) elExist.textContent = rate + '%';
+  if (elExist) elExist.textContent = existPct + '%';
 
-  // Barres horizontales
+  // Barres horizontales — s'assurer que les deux totalisent 100%
   var barNew   = document.getElementById('retention-bar-new');
   var barExist = document.getElementById('retention-bar-exist');
   if (barNew)   barNew.style.width   = newPct + '%';
-  if (barExist) barExist.style.width = rate + '%';
+  if (barExist) barExist.style.width = existPct + '%';
 
   // Label SVG "Taux : X%"
   var labelTaux = document.getElementById('ret-label-taux');
@@ -341,8 +342,7 @@ function renderRetentionGauge(data) {
 
   // Arc SVG demi-cercle
   // Centre cx=100, cy=105, rayon r=72
-  // Départ gauche : (cx-r, cy) → arc vers la droite en passant par le haut → sweep-flag=1
-  // Point intermédiaire pour le fill : angle trig 180°→0°, avec y SVG inversé (cy - r*sin)
+  // Angle de 0° à 180° (demi-cercle de gauche à droite)
   var track = document.getElementById('ret-track');
   var fill  = document.getElementById('ret-fill');
   if (!track || !fill) return;
@@ -358,7 +358,10 @@ function renderRetentionGauge(data) {
   } else if (rate >= 100) {
     fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
   } else {
-    var angleDeg = 180 - (rate / 100) * 180;
+    // Angle en degrés : 180° (gauche) → 0° (droite)
+    // Pour un taux de X%, parcourir X% de 180° en partant de 180°
+    var anglePercent = (rate / 100) * 180;
+    var angleDeg = 180 - anglePercent;
     var angleRad = angleDeg * Math.PI / 180;
     var fx = (cx + r * Math.cos(angleRad)).toFixed(2);
     var fy = (cy - r * Math.sin(angleRad)).toFixed(2);
