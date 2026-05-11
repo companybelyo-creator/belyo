@@ -339,32 +339,25 @@ function renderRetentionGauge(data) {
   var labelTaux = document.getElementById('ret-label-taux');
   if (labelTaux) labelTaux.textContent = 'Taux : ' + rate + '%';
 
-  // Arc SVG demi-cercle
-  // Centre cx=100, cy=105, rayon r=72
-  // Départ gauche : (cx-r, cy) → arc vers la droite en passant par le haut → sweep-flag=1
-  // Point intermédiaire pour le fill : angle trig 180°→0°, avec y SVG inversé (cy - r*sin)
+  // Arc SVG via stroke-dasharray sur un cercle complet
+  // On utilise un <circle> dont on ne montre que la moitié du haut
+  // r=72, circonférence=2πr, demi-cercle=πr
   var track = document.getElementById('ret-track');
   var fill  = document.getElementById('ret-fill');
   if (!track || !fill) return;
 
-  var cx = 100, cy = 105, r = 72;
-  var x0 = cx - r;
-  var x1 = cx + r;
+  var r = 72;
+  var circ     = 2 * Math.PI * r;      // circonférence totale
+  var halfCirc = Math.PI * r;          // longueur du demi-cercle visible
 
-  track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
+  // Track : demi-cercle complet (haut du cercle visible, bas caché)
+  track.setAttribute('stroke-dasharray', halfCirc + ' ' + circ);
+  track.setAttribute('stroke-dashoffset', halfCirc);
 
-  if (rate <= 0) {
-    fill.setAttribute('d', '');
-  } else if (rate >= 100) {
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
-  } else {
-    var angleDeg = 180 - (rate / 100) * 180;
-    var angleRad = angleDeg * Math.PI / 180;
-    var fx = (cx + r * Math.cos(angleRad)).toFixed(2);
-    var fy = (cy - r * Math.sin(angleRad)).toFixed(2);
-    var largeArc = rate > 50 ? 1 : 0;
-    fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
-  }
+  // Fill : portion selon le taux, même rotation
+  var fillLen = (rate / 100) * halfCirc;
+  fill.setAttribute('stroke-dasharray', fillLen + ' ' + circ);
+  fill.setAttribute('stroke-dashoffset', halfCirc);
 }
 
 // ===== STATS AVANCÉES =====
