@@ -173,7 +173,7 @@ async function uploadSalonPhoto(file) {
   var ext  = file.name.split('.').pop();
   var path = 'salon/' + currentUser.id + '/photo.' + ext;
   var up   = await sb.storage.from('salon-images').upload(path, file, { upsert: true, contentType: file.type });
-  if (up.error) { showToast('Erreur upload : ' + up.error.message, 'error'); return null; }
+  if (up.error) { console.error('Storage error:', JSON.stringify(up.error)); showToast('Erreur upload : ' + up.error.message, 'error'); return null; }
   var pub  = sb.storage.from('salon-images').getPublicUrl(path);
   return pub.data.publicUrl + '?t=' + Date.now();
 }
