@@ -35,7 +35,20 @@
   <main class="main-content">
     <div class="page-header">
       <h1 class="page-title">Chiffre d'<em>affaires</em></h1>
-      <button class="btn-action" onclick="exportPDF()" id="btn-export">&#8595; Exporter PDF</button>
+      <button class="btn-action" onclick="openPdfModal()" id="btn-export">&#8595; Exporter PDF</button>
+    </div>
+
+    <!-- Modale export PDF -->
+    <div id="pdf-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(26,23,20,0.45);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closePdfModal()">
+      <div style="background:var(--white);border-radius:16px;padding:2rem;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(26,23,20,0.2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.4rem;">
+          <div style="font-size:15px;font-weight:500;color:var(--ink)">Exporter un rapport PDF</div>
+          <button onclick="closePdfModal()" style="background:none;border:none;cursor:pointer;color:var(--ink-light);font-size:18px;line-height:1;padding:0">&#x2715;</button>
+        </div>
+        <div style="font-size:12px;color:var(--ink-light);margin-bottom:1rem;">Sélectionnez le mois à exporter. Le mois en cours n'est pas disponible car il n'est pas terminé.</div>
+        <div id="pdf-month-list" style="display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;"></div>
+        <button id="pdf-modal-btn" onclick="exportPDFForMonth()" style="margin-top:1.4rem;width:100%;padding:11px;background:var(--ink);color:var(--white);border:none;border-radius:100px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body)">&#8595; Télécharger le rapport</button>
+      </div>
     </div>
 
     <!-- Période + KPIs -->
