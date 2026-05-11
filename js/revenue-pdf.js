@@ -2,8 +2,72 @@
 // REVENUE-PDF.JS — Rapport CA Complet avec Analyses — Belyo
 // ============================================================
 
-async function exportPDF() {
+var pdfSelectedMonth = null;
+
+function openPdfModal() {
   if (!canAccess('export')) { showPlanWall('pro'); return; }
+
+  var now = new Date();
+  var list = document.getElementById('pdf-month-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+  pdfSelectedMonth = null;
+
+  // Générer les 12 derniers mois hors mois en cours
+  var months = [];
+  for (var i = 1; i <= 12; i++) {
+    var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+      label: d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+      year: d.getFullYear(),
+      month: d.getMonth(),
+    });
+  }
+
+  months.forEach(function(m) {
+    var item = document.createElement('div');
+    item.dataset.key = m.key;
+    item.dataset.year = m.year;
+    item.dataset.month = m.month;
+    item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;';
+    item.textContent = m.label.charAt(0).toUpperCase() + m.label.slice(1);
+    item.addEventListener('click', function() {
+      list.querySelectorAll('[data-key]').forEach(function(el) {
+        el.style.background = '';
+        el.style.borderColor = 'var(--border)';
+        el.style.fontWeight = '400';
+      });
+      item.style.background = 'var(--ink)';
+      item.style.borderColor = 'var(--ink)';
+      item.style.color = 'var(--white)';
+      item.style.fontWeight = '500';
+      pdfSelectedMonth = { key: m.key, year: parseInt(m.year), month: parseInt(m.month), label: m.label };
+    });
+    list.appendChild(item);
+  });
+
+  var overlay = document.getElementById('pdf-modal-overlay');
+  overlay.style.display = 'flex';
+}
+
+function closePdfModal() {
+  var overlay = document.getElementById('pdf-modal-overlay');
+  if (overlay) overlay.style.display = 'none';
+  pdfSelectedMonth = null;
+}
+
+async function exportPDFForMonth() {
+  if (!pdfSelectedMonth) {
+    showToast('Veuillez sélectionner un mois', 'error');
+    return;
+  }
+  closePdfModal();
+  await exportPDF(pdfSelectedMonth.year, pdfSelectedMonth.month, pdfSelectedMonth.label);
+}
+
+async function exportPDF(targetYear, targetMonth, targetLabel) {
   var btn = document.getElementById('btn-export');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Génération...'; }
 
@@ -28,10 +92,11 @@ async function exportPDF() {
     var GREEN_BG = [232,245,240]; var GREEN_TX = [15,110,86];
     var RED_BG   = [250,236,231]; var RED_TX   = [153,60,29];
 
-    var now        = new Date();
+    // Mois cible : le mois sélectionné dans la modale
+    var targetDate = new Date(targetYear, targetMonth, 1);
     var salonName  = ((document.getElementById('sidebar-salon')||{}).textContent||'Mon salon').trim();
-    var dateStr    = now.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    var periodeStr = currentPeriod + ' mois';
+    var dateStr    = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    var periodeStr = targetLabel ? (targetLabel.charAt(0).toUpperCase() + targetLabel.slice(1)) : (targetDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}));
 
     function checkPage(n) { if (y+(n||20) > H-18) { doc.addPage(); y = 20; } }
 
@@ -90,20 +155,23 @@ async function exportPDF() {
       y = 20;
     }
 
-    // ── Données Supabase ──────────────────────────────────────
-    var fromDate      = new Date(now.getFullYear(), now.getMonth()-currentPeriod+1, 1);
-    var lastMonthStart= new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
-    var lastMonthEnd  = new Date(now.getFullYear(), now.getMonth(), 0, 23,59,59).toISOString();
+    // ── Données Supabase — mois sélectionné uniquement ───────
+    var fromDate       = new Date(targetYear, targetMonth, 1);
+    var toDate         = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
+    var prevMonthStart = new Date(targetYear, targetMonth - 1, 1).toISOString();
+    var prevMonthEnd   = new Date(targetYear, targetMonth, 0, 23, 59, 59).toISOString();
 
     var results = await Promise.all([
       sb.from('appointments').select('datetime,price,service,client_name')
         .eq('user_id',currentUserId).eq('status','done')
-        .gte('datetime',fromDate.toISOString()).order('datetime',{ascending:true}),
+        .gte('datetime',fromDate.toISOString()).lte('datetime',toDate.toISOString())
+        .order('datetime',{ascending:true}),
       sb.from('product_sales').select('created_at,product_name,unit_price,quantity_sold')
-        .eq('user_id',currentUserId).gte('created_at',fromDate.toISOString()),
+        .eq('user_id',currentUserId)
+        .gte('created_at',fromDate.toISOString()).lte('created_at',toDate.toISOString()),
       sb.from('appointments').select('price')
         .eq('user_id',currentUserId).eq('status','done')
-        .gte('datetime',lastMonthStart).lte('datetime',lastMonthEnd),
+        .gte('datetime',prevMonthStart).lte('datetime',prevMonthEnd),
     ]);
 
     var appts     = results[0].data || [];
@@ -125,10 +193,10 @@ async function exportPDF() {
     var totalCA    = allMonths.reduce(function(s,m){ return s+caByMonth[m].appts+caByMonth[m].prod; },0);
     var totalAppts = allMonths.reduce(function(s,m){ return s+caByMonth[m].appts; },0);
     var totalProd  = allMonths.reduce(function(s,m){ return s+caByMonth[m].prod; },0);
-    var thisKey    = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+    var thisKey    = targetYear+'-'+String(targetMonth+1).padStart(2,'0');
     var thisCA     = caByMonth[thisKey]||{appts:0,prod:0};
     var thisCAtot  = thisCA.appts+thisCA.prod;
-    var lastCAtot  = lastAppts.reduce(function(s,a){ return s+(parseFloat(a.price)||0); },0);
+    var lastCAtot  = results[2].data ? results[2].data.reduce(function(s,a){ return s+(parseFloat(a.price)||0); },0) : 0;
     var avgCA      = appts.length>0 ? totalAppts/appts.length : 0;
     var caValues   = allMonths.map(function(m){ return caByMonth[m].appts+caByMonth[m].prod; });
     var bestIdx    = caValues.indexOf(Math.max.apply(null,caValues));
@@ -500,7 +568,7 @@ async function exportPDF() {
       doc.text(dateStr,W/2,H-5,{align:'center'});
     }
 
-    var fileName='belyo-rapport-CA-'+now.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}).replace(' ','-')+'.pdf';
+    var fileName='belyo-rapport-CA-'+periodeStr.toLowerCase().replace(' ','-')+'.pdf';
     doc.save(fileName);
     showToast('PDF exporté avec succès !');
 
