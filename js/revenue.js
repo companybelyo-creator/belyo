@@ -341,30 +341,35 @@ function renderRetentionGauge(data) {
   if (labelTaux) labelTaux.textContent = 'Taux : ' + rate + '%';
 
   // Arc SVG demi-cercle
-  // Centre cx=100, cy=105, rayon r=72
-  // Angle de 0° à 180° (demi-cercle de gauche à droite)
+  // Centre cx=100, cy=100, rayon r=60
+  // Angle de 180° (gauche) à 0° (droite)
   var track = document.getElementById('ret-track');
   var fill  = document.getElementById('ret-fill');
   if (!track || !fill) return;
 
-  var cx = 100, cy = 105, r = 72;
+  var cx = 100, cy = 100, r = 60;
   var x0 = cx - r;
   var x1 = cx + r;
 
+  // Arc de track (complet, gris)
   track.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
 
   if (rate <= 0) {
+    // Aucun fill
     fill.setAttribute('d', '');
   } else if (rate >= 100) {
+    // Fill complet = arc complet
     fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 0 1 '+x1+' '+cy);
   } else {
-    // Angle en degrés : 180° (gauche) → 0° (droite)
-    // Pour un taux de X%, parcourir X% de 180° en partant de 180°
-    var anglePercent = (rate / 100) * 180;
-    var angleDeg = 180 - anglePercent;
+    // Arc partiel basé sur le taux
+    // De 180° à (180 - rate% de 180°)
+    var anglePercent = (rate / 100) * 180;  // Angle à parcourir
+    var angleDeg = 180 - anglePercent;      // Angle de fin en degrés
     var angleRad = angleDeg * Math.PI / 180;
+    
     var fx = (cx + r * Math.cos(angleRad)).toFixed(2);
     var fy = (cy - r * Math.sin(angleRad)).toFixed(2);
+    
     var largeArc = rate > 50 ? 1 : 0;
     fill.setAttribute('d', 'M '+x0+' '+cy+' A '+r+' '+r+' 0 '+largeArc+' 1 '+fx+' '+fy);
   }
