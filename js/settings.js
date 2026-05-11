@@ -1849,6 +1849,13 @@ async function loadCollabs() {
     if (!ins.error && ins.data) collaborateurs.unshift(ins.data);
   }
 
+  // Injecter l'avatar du patron depuis user_metadata
+  var ownerCollab = collaborateurs.find(function(c) { return c.is_owner === true; });
+  if (ownerCollab && !ownerCollab.avatar_url) {
+    var ownerMeta = currentUser.user_metadata || {};
+    if (ownerMeta.avatar_url) ownerCollab.avatar_url = ownerMeta.avatar_url;
+  }
+
   pickRole('Apprenti');
   if (collaborateurs.length && selectedPlanningCollabId === null) {
     selectedPlanningCollabId = collaborateurs[0].id;
