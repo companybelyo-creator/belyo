@@ -741,64 +741,41 @@ function renderPrestChart(data, now) {
 
 // ===== TOP PRODUITS VENDUS =====
 async function renderTopProducts(now) {
-  var startThis = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-  var startLast = new Date(now.getFullYear(), now.getMonth()-1, 1).toISOString();
+  var from = new Date(now.getFullYear(), now.getMonth() - currentPeriod + 1, 1);
 
   var res = await sb.from('product_sales')
     .select('product_name, quantity_sold, unit_price, created_at')
     .eq('user_id', currentUserId)
-    .gte('created_at', startLast);
+    .gte('created_at', from.toISOString());
 
   var sales = res.data || [];
-  var thisMonth = {};
-  var lastMonth = {};
+  var byProduct = {};
 
   sales.forEach(function(s) {
     var name = s.product_name || 'Produit';
     var qty  = parseInt(s.quantity_sold) || 1;
     var ca   = (parseFloat(s.unit_price) || 0) * qty;
-    if (s.created_at >= startThis) {
-      thisMonth[name] = thisMonth[name] || { qty:0, ca:0 };
-      thisMonth[name].qty += qty;
-      thisMonth[name].ca  += ca;
-    } else {
-      lastMonth[name] = lastMonth[name] || { qty:0, ca:0 };
-      lastMonth[name].qty += qty;
-      lastMonth[name].ca  += ca;
-    }
+    byProduct[name] = byProduct[name] || { qty:0, ca:0 };
+    byProduct[name].qty += qty;
+    byProduct[name].ca  += ca;
   });
 
-  var sorted = Object.entries(thisMonth).sort(function(a,b){ return b[1].qty - a[1].qty; }).slice(0, 5);
-  var maxQty = sorted.length > 0 ? sorted[0][1].qty : 1;
+  var sorted = Object.entries(byProduct).sort(function(a,b){ return b[1].qty - a[1].qty; }).slice(0, 5);
 
   renderTopList('top-products-list', sorted.map(function(entry, i) {
-    var name    = entry[0];
-    var d       = entry[1];
-    var prevQty = lastMonth[name] ? lastMonth[name].qty : 0;
-    var diff    = d.qty - prevQty;
-
-    var trend = null;
-    if (prevQty > 0) {
-      trend = {
-        label: diff > 0 ? '↑ Hausse' : diff < 0 ? '↓ Baisse' : '→ Stable',
-        color: diff > 0 ? '#1D9E75' : diff < 0 ? '#D85A30' : '#8A817C',
-        bg:    diff > 0 ? '#E8F5F0' : diff < 0 ? '#FAECE7' : '#F0EEEC',
-      };
-    } else if (d.qty > 0) {
-      trend = { label: 'Nouveau', color: '#C4A87A', bg: '#F9F4E9' };
-    }
-
+    var name = entry[0];
+    var d    = entry[1];
     return {
       rank: i+1,
       label: name,
       value: d.qty + ' vente' + (d.qty > 1 ? 's' : '') + ' · ' + Math.round(d.ca) + '\u20ac',
       sub: null,
-      trend: trend,
+      trend: null,
       barPct: 0,
       accentColor: '',
       hideBar: true,
     };
-  }), 'Aucune vente ce mois');
+  }), 'Aucune vente sur la période');
 }
 
 (async function() {
