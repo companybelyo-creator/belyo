@@ -339,25 +339,16 @@ function renderRetentionGauge(data) {
   var labelTaux = document.getElementById('ret-label-taux');
   if (labelTaux) labelTaux.textContent = 'Taux : ' + rate + '%';
 
-  // Arc SVG via stroke-dasharray sur un cercle complet
-  // On utilise un <circle> dont on ne montre que la moitié du haut
-  // r=72, circonférence=2πr, demi-cercle=πr
+  // Arc SVG via stroke-dasharray sur un circle
+  // r=60, circumference=376.99, demi-cercle=188.5
   var track = document.getElementById('ret-track');
   var fill  = document.getElementById('ret-fill');
   if (!track || !fill) return;
 
-  var r = 72;
-  var circ     = 2 * Math.PI * r;      // circonférence totale
-  var halfCirc = Math.PI * r;          // longueur du demi-cercle visible
-
-  // Track : demi-cercle complet (haut du cercle visible, bas caché)
-  track.setAttribute('stroke-dasharray', halfCirc + ' ' + circ);
-  track.setAttribute('stroke-dashoffset', halfCirc);
-
-  // Fill : portion selon le taux, même rotation
-  var fillLen = (rate / 100) * halfCirc;
-  fill.setAttribute('stroke-dasharray', fillLen + ' ' + circ);
-  fill.setAttribute('stroke-dashoffset', halfCirc);
+  var halfCirc = 188.5;
+  var circ     = 376.99;
+  var fillLen  = (rate / 100) * halfCirc;
+  fill.setAttribute('stroke-dasharray', fillLen.toFixed(2) + ' ' + circ);
 }
 
 // ===== STATS AVANCÉES =====
