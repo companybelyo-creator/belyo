@@ -410,60 +410,51 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     y=wrapText('Synthèse de l\'activité pour '+periodeStr+'. Chaque indicateur inclut son évolution vs le mois précédent.',M,y,CW,5,8,'normal',MUTED); y+=6;
 
-    // ── Données pour mini graphes (semaines du mois) ──────────
-    // Découper le mois en 4-5 semaines (par groupe de ~7j)
-    var daysInMonth = new Date(targetYear, targetMonth+1, 0).getDate();
-    var weekCount = 4;
-    var weekSize  = Math.ceil(daysInMonth / weekCount);
-
-    // CA par semaine
+    // ── Données semaines fixes : 1-8, 9-15, 16-23, 24-fin ────
+    var weekRanges = [[1,8],[9,15],[16,23],[24,daysInMonth]];
     var caByWeek   = [0,0,0,0];
     var rdvByWeek  = [0,0,0,0];
     var avgByWeek  = [0,0,0,0];
     var rdvCount   = [0,0,0,0];
+
     appts.forEach(function(a) {
-      var d   = new Date(a.datetime);
-      var day = d.getDate();
-      var wi  = Math.min(Math.floor((day-1)/weekSize), 3);
+      var day = new Date(a.datetime).getDate();
+      var wi  = 0;
+      if      (day <= 8)             wi = 0;
+      else if (day <= 15)            wi = 1;
+      else if (day <= 23)            wi = 2;
+      else                           wi = 3;
       caByWeek[wi]  += parseFloat(a.price)||0;
       rdvByWeek[wi] += 1;
       rdvCount[wi]  += 1;
     });
     avgByWeek = caByWeek.map(function(ca,i){ return rdvCount[i]>0 ? ca/rdvCount[i] : 0; });
-    var wLabels = ['S1','S2','S3','S4'];
+    var wLabels = ['1-8','9-15','16-23','24-'+daysInMonth];
 
     // Panier moyen par semaine
     var avgPrev = lastCAtot > 0 && lastAppts.length > 0 ? lastCAtot/lastAppts.length : null;
     var rdvPrev = lastAppts.length;
 
-    // ── Fonction sparkline natif jsPDF ───────────────────────
+    // ── Sparkline — base à 0, reste dans les limites ─────────
     function sparkLine(x, y, w, h, values, color) {
       var max = Math.max.apply(null, values) || 1;
-      var min = Math.min.apply(null, values.filter(function(v){return v>0;})) || 0;
-      var range = max - min || 1;
       var step2 = w / (values.length - 1);
 
-      // Zone de remplissage (dégradé simulé par polygone clair)
-      var pts = [];
-      values.forEach(function(v, i) {
-        var px = x + i * step2;
-        var py = y + h - ((v - min) / range) * h;
-        pts.push([px, py]);
+      var pts = values.map(function(v, i) {
+        return [
+          x + i * step2,
+          y + h - (v / max) * h   // base = 0, plafond = max
+        ];
       });
-      // Polygone de remplissage (fond semi-transparent simulé)
-      doc.setFillColor(color[0], color[1], color[2]);
-      // Dessin du fill comme suite de triangles fins vers le bas
+
+      // Fill léger sous la courbe
+      doc.setGState(doc.GState({opacity: 0.08}));
       for (var i = 0; i < pts.length - 1; i++) {
-        doc.setFillColor(color[0], color[1], color[2]);
-        // On utilise un rectangle ultra-fin pour simuler le fill
-        var py1 = pts[i][1], py2 = pts[i+1][1];
-        var minPy = Math.min(py1, py2);
-        var fillH = (y + h) - minPy;
-        doc.setGState(doc.GState({opacity: 0.08}));
-        doc.triangle(pts[i][0], py1, pts[i+1][0], py2, pts[i][0], y+h, 'F');
-        doc.triangle(pts[i+1][0], py2, pts[i+1][0], y+h, pts[i][0], y+h, 'F');
-        doc.setGState(doc.GState({opacity: 1}));
+        doc.setFillColor.apply(doc, color);
+        doc.triangle(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1], pts[i][0], y+h, 'F');
+        doc.triangle(pts[i+1][0], pts[i+1][1], pts[i+1][0], y+h, pts[i][0], y+h, 'F');
       }
+      doc.setGState(doc.GState({opacity: 1}));
 
       // Ligne principale
       doc.setDrawColor.apply(doc, color);
@@ -522,9 +513,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         doc.text((isPos?'▲ +':'▼ ')+Math.abs(delta)+'% '+deltaLabel, M+27, cy+37.3, {align:'center'});
       }
 
-      // Sparkline — droite
+      // Sparkline — droite, dans les limites de la carte
       if (chartVals && chartVals.length >= 2) {
-        var sX = M+CW-68, sY = cy+8, sW = 62, sH = 22;
+        var sX = M+CW-66, sY = cy+6, sW = 60, sH = cardH-12;
         sparkLine(sX, sY, sW, sH, chartVals, accentColor);
       }
     }
@@ -556,58 +547,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     insightBox('', kpiAnalysis,
       trendPct===null?OFFWHITE:trendPct>=0?UP_BG:DN_BG,
       trendPct===null?GOLD:trendPct>=0?UP_TX:DN_TX);
-
-    // Répartition — barre + donut natif jsPDF
-    divider();
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-    doc.text('Répartition Prestations / Produits',M,y); y+=7;
-
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-    doc.text('Prestations '+apptPct+'%',M,y); doc.text('Produits '+prodPct+'%',M+CW/2,y); y+=4;
-    doc.setFillColor.apply(doc,INK);  doc.roundedRect(M,y,CW*apptPct/100,6,1,1,'F');
-    doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M+CW*apptPct/100,y,CW*prodPct/100,6,1,1,'F');
-    y+=10;
-
-    // Donut
-    var dCx = M+28, dCy = y+22, dR = 18, dRi = 11;
-    var aStart = -Math.PI/2;
-    var aAppt  = aStart + (apptPct/100)*2*Math.PI;
-    var step = Math.PI/30;
-    for(var a=aStart; a<aAppt-0.01; a+=step){
-      var a2=Math.min(a+step,aAppt);
-      doc.setFillColor.apply(doc,INK);
-      doc.triangle(dCx,dCy, dCx+dR*Math.cos(a),dCy+dR*Math.sin(a), dCx+dR*Math.cos(a2),dCy+dR*Math.sin(a2),'F');
-    }
-    for(var a=aAppt; a<aStart+2*Math.PI-0.01; a+=step){
-      var a2=Math.min(a+step,aStart+2*Math.PI);
-      doc.setFillColor.apply(doc,GOLD);
-      doc.triangle(dCx,dCy, dCx+dR*Math.cos(a),dCy+dR*Math.sin(a), dCx+dR*Math.cos(a2),dCy+dR*Math.sin(a2),'F');
-    }
-    doc.setFillColor.apply(doc,WHITE); doc.circle(dCx,dCy,dRi,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-    doc.text(apptPct+'%',dCx,dCy+1.5,{align:'center'});
-    doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor.apply(doc,MUTED);
-    doc.text('prest.',dCx,dCy+5.5,{align:'center'});
-
-    var lx = M+62, ly = y+8;
-    doc.setFillColor.apply(doc,INK); doc.roundedRect(lx,ly,8,4,1,1,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-    doc.text(Math.round(totalAppts)+'€',lx+12,ly+4);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-    doc.text('Prestations ('+apptPct+'%)',lx+12,ly+9);
-    ly+=18;
-    doc.setFillColor.apply(doc,GOLD); doc.roundedRect(lx,ly,8,4,1,1,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-    doc.text(Math.round(totalProd)+'€',lx+12,ly+4);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-    doc.text('Produits ('+prodPct+'%)',lx+12,ly+9);
-    y+=50;
-
-    var repTxt = apptPct>85
-      ? 'Les prestations dominent ('+apptPct+'%). Proposer un produit en fin de prestation peut renforcer les revenus produits.'
-      : apptPct>60 ? 'Bonne répartition entre prestations ('+apptPct+'%) et produits ('+prodPct+'%).'
-      : 'Les produits représentent une part significative ('+prodPct+'%) — votre boutique est un vrai levier de revenus.';
-    insightBox('', repTxt, OFFWHITE, GOLD);
 
     // ══════════════════════════════════════════════════════════
     // PAGE 3 — CA + GRAPHIQUES SOURCES
