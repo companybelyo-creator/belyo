@@ -411,6 +411,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     y=wrapText('Synthèse de l\'activité pour '+periodeStr+'. Chaque indicateur inclut son évolution vs le mois précédent.',M,y,CW,5,8,'normal',MUTED); y+=6;
 
     // ── Données semaines fixes : 1-8, 9-15, 16-23, 24-fin ────
+    var daysInMonth = new Date(targetYear, targetMonth+1, 0).getDate();
     var weekRanges = [[1,8],[9,15],[16,23],[24,daysInMonth]];
     var caByWeek   = [0,0,0,0];
     var rdvByWeek  = [0,0,0,0];
