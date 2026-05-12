@@ -371,7 +371,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
 
     var svcMap={};
     appts.forEach(function(a){ if(a.service) svcMap[a.service]=(svcMap[a.service]||0)+(parseFloat(a.price)||0); });
-    var topSvc=Object.entries(svcMap).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var topSvc=Object.entries(svcMap).sort(function(a,b){return b[1]-a[1];}).slice(0,isPro?5:3);
 
     var cliMap={};
     appts.forEach(function(a){ cliMap[a.client_name]=(cliMap[a.client_name]||0)+(parseFloat(a.price)||0); });
@@ -385,7 +385,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
 
     var prodMap={};
     prodSales.forEach(function(p){ var n=p.product_name||'Produit'; prodMap[n]=prodMap[n]||{qty:0,ca:0}; prodMap[n].qty+=parseInt(p.quantity_sold)||1; prodMap[n].ca+=(parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1); });
-    var topProd=Object.entries(prodMap).sort(function(a,b){return b[1].ca-a[1].ca;}).slice(0,5);
+    var topProd=Object.entries(prodMap).sort(function(a,b){return b[1].ca-a[1].ca;}).slice(0,isPro?5:3);
 
     // ══════════════════════════════════════════════════════════
     // PAGE DE GARDE — centré, simple, grand
@@ -1133,7 +1133,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
     }
 
     divider();
-    sectionTitle(isPro ? '5.2 — Top clients' : '5.2 — Top 3 clients');
+    sectionTitle('5.2 — Top clients');
     y+=1;
 
     if(topCli.length>0){
