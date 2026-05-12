@@ -567,7 +567,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       var mxS=topSvc[0][1];
       doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
-      doc.text('#',M+3,y+5.5); doc.text('Prestation',M+11,y+5.5); doc.text('Part',M+CW-42,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
+      doc.text('#',M+3,y+5.5); doc.text('Prestation',M+11,y+5.5); doc.text('Part',M+CW-32,y+5.5,{align:'right'}); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
       y+=8;
       topSvc.forEach(function(s,i){
         checkPage(10);
@@ -578,11 +578,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var nm=s[0].length>36?s[0].slice(0,36)+'…':s[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(nm,M+11,y+6);
-        var bW=38,bX=M+CW-bW-26;
+        // barre centrée dans la zone droite, texte % à gauche de la barre
+        var bW=28, bX=M+CW-bW-22;
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
+        doc.text(sPct+'%', bX-3, y+6, {align:'right'});
         doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
         doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
-        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-        doc.text(sPct+'%',M+CW-25,y+6,{align:'right'});
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(Math.round(val)+'€',M+CW-2,y+6,{align:'right'});
         y+=9;
@@ -611,9 +612,10 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var nm=c2[0].length>30?c2[0].slice(0,30)+'…':c2[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(nm,M+11,y+6);
+        // visites à gauche de la barre
+        var bW=28, bX=M+CW-bW-22;
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-        doc.text(vis+' visite'+(vis>1?'s':''),M+CW-52,y+6);
-        var bW=30,bX=M+CW-bW-22;
+        doc.text(vis+' visite'+(vis>1?'s':''), bX-3, y+6, {align:'right'});
         doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
         doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
@@ -643,9 +645,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var nm=p[0].length>32?p[0].slice(0,32)+'…':p[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(nm,M+11,y+6);
+        var bW=28, bX=M+CW-bW-22;
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-        doc.text(d.qty+' vente'+(d.qty>1?'s':''),M+CW-52,y+6);
-        var bW=30,bX=M+CW-bW-22;
+        doc.text(d.qty+' vente'+(d.qty>1?'s':''), bX-3, y+6, {align:'right'});
         doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
         doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
