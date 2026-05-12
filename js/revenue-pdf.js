@@ -232,6 +232,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var prevMonthStart = new Date(targetYear, targetMonth - 1, 1).toISOString();
     var prevMonthEnd   = new Date(targetYear, targetMonth, 0, 23, 59, 59).toISOString();
 
+    // ── Forcer les graphes sur 1 mois (le mois cible) ────────
+    var savedPeriod = currentPeriod;
+    currentPeriod = 1;
+    // Recalculer "now" sur le mois cible pour que les graphes pointent le bon mois
+    var pdfNow = new Date(targetYear, targetMonth + 1, 0); // dernier jour du mois cible
+
     var results = await Promise.all([
       sb.from('appointments').select('datetime,price,service,client_name')
         .eq('user_id',currentUserId).eq('status','done')
@@ -248,6 +254,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var appts     = results[0].data || [];
     var prodSales = results[1].data || [];
     var lastAppts = results[2].data || [];
+
+    // Reconstruire les graphes sur le mois cible
+    renderCAChart(appts, prodSales, pdfNow);
+    renderPrestChart(appts, pdfNow);
+    await renderProdChart(pdfNow);
+    await renderStatsAvancees(appts, pdfNow);
 
     var monthsSet = new Set();
     appts.forEach(function(a) { monthsSet.add(a.datetime.slice(0,7)); });
@@ -709,6 +721,13 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     console.error('[PDF]',err);
     showToast('Erreur export : '+err.message,'error');
   } finally {
+    // Restaurer les graphes sur la période d'origine
+    if (typeof savedPeriod !== 'undefined') {
+      currentPeriod = savedPeriod;
+      var now = new Date();
+      renderCAChart([], [], now); // sera rechargé par loadData
+      loadData();
+    }
     if(btn){btn.disabled=false;btn.innerHTML='&#8595; Exporter PDF';}
   }
 }
