@@ -522,7 +522,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // PAGE 4 — CA PAR SOURCE (graphiques)
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Analyse par source de revenus');
-    sectionTitle('CA Prestations et CA Produits', null, PURPLE);
+    sectionTitle('CA Prestations et CA Produits');
 
     y=wrapText('Double vue sur vos deux sources de revenus. Si l\'une baisse pendant que l\'autre progresse, vous pouvez agir en conséquence.',M,y,CW,5,8,'normal',MUTED);
     y+=6;
