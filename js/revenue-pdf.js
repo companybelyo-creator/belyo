@@ -391,14 +391,14 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       },
       {
         num: '2',
-        title: 'Chiffre d\'affaires & Répartition',
+        title: 'Chiffre d\'affaires — '+periodeStr,
         subs: ['CA semaine par semaine vs '+prevMonthLabel, 'Prestations vs Produits · Comparaison détaillée'],
         page: '3'
       },
       {
         num: '3',
-        title: 'Analyse des rendez-vous',
-        subs: ['RDV par jour de la semaine — '+periodeStr],
+        title: 'Analyse des rendez-vous — '+periodeStr,
+        subs: ['RDV par jour de la semaine'],
         page: '4'
       },
       {
@@ -410,7 +410,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       {
         num: '5',
         title: 'Tops & Performance',
-        subs: ['Top 5 prestations · Top 5 clients'+(topProd.length>0?' · Top 5 produits vendus':'')],
+        subs: ['5.1 Top prestations · 5.2 Top clients'+(topProd.length>0?' · 5.3 Top produits vendus':'')],
         page: '6'
       },
     ];
@@ -446,7 +446,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // PAGE 2 — KPIs ENRICHIS
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Indicateurs clés du mois');
-    sectionTitle('Indicateurs clés — '+periodeStr);
+    sectionTitle('1 — Indicateurs clés — '+periodeStr);
 
     y=wrapText('Synthèse de l\'activité pour '+periodeStr+'. Chaque indicateur inclut son évolution vs le mois précédent.',M,y,CW,5,8,'normal',MUTED); y+=6;
 
@@ -587,7 +587,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // PAGE 3 — CHIFFRE D'AFFAIRES
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Chiffre d\'affaires & Répartition');
-    sectionTitle('Chiffre d\'affaires — '+periodeStr);
+    sectionTitle('2 — Chiffre d\'affaires — '+periodeStr);
 
     // ── Rappel CA ────────────────────────────────────────────
     var prevMonthLabel = new Date(targetYear, targetMonth-1, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
@@ -744,7 +744,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // PAGE 4 — RDV PAR JOUR DE LA SEMAINE
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Analyse des rendez-vous');
-    sectionTitle('RDV par jour de la semaine — '+periodeStr);
+    sectionTitle('3 — RDV par jour de la semaine — '+periodeStr);
 
     var wdEl = document.getElementById('weekday-chart');
     if (wdEl) {
@@ -778,7 +778,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // ══════════════════════════════════════════════════════════
     if(currentPlan==='pro'||currentPlan==='trial'){
       doc.addPage(); pageHeader('Analyses avancées Pro');
-      sectionTitle('Analyses avancées', 'PRO');
+      sectionTitle('4 — Analyses avancées', 'PRO');
 
       // ── Fonction graphe à barres natif ──────────────────────
       function nativeBarChart(x, y, w, h, values, labels, colorTop, colorBot, tooltipSuffix) {
@@ -1035,62 +1035,62 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Tops & Performance');
 
-    sectionTitle('Top prestations');
+    sectionTitle('5.1 — Top prestations');
     y+=1;
 
     if(topSvc.length>0){
       var mxS=topSvc[0][1];
       doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
-      doc.text('#',M+3,y+5.5); doc.text('Prestation',M+11,y+5.5); doc.text('Part',M+CW-32,y+5.5,{align:'right'}); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
+      doc.text('#',M+4,y+4.8,{align:'center'}); doc.text('Prestation',M+11,y+4.8); doc.text('Part',M+CW-32,y+4.8,{align:'right'}); doc.text('CA',M+CW-2,y+4.8,{align:'right'});
       y+=8;
       topSvc.forEach(function(s,i){
         checkPage(10);
         var val=s[1], pct=mxS>0?val/mxS:0, sPct=totalAppts>0?Math.round(val/totalAppts*100):0;
         doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,9,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?GOLD:MUTED);
-        doc.text(String(i+1),M+3.5,y+6,{align:'center'});
+        doc.text(String(i+1),M+4,y+5.5,{align:'center'});
         var nm=s[0].length>36?s[0].slice(0,36)+'…':s[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-        doc.text(nm,M+11,y+6);
+        doc.text(nm,M+11,y+5.5);
         var bW=28, bX=M+CW-bW-22;
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-        doc.text(sPct+'%', bX-3, y+6, {align:'right'});
-        doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
-        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
+        doc.text(sPct+'%', bX-3, y+5.5, {align:'right'});
+        doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3.2,bW,2.5,1,1,'F');
+        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3.2,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-        doc.text(Math.round(val)+'€',M+CW-2,y+6,{align:'right'});
+        doc.text(Math.round(val)+'€',M+CW-2,y+5.5,{align:'right'});
         y+=9;
       });
       y+=4;
     }
 
     divider();
-    sectionTitle('Top clients');
+    sectionTitle('5.2 — Top clients');
     y+=1;
 
     if(topCli.length>0){
       var mxC=topCli[0][1];
       doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
-      doc.text('#',M+3,y+5.5); doc.text('Client',M+11,y+5.5); doc.text('Visites',M+CW-52,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
+      doc.text('#',M+4,y+4.8,{align:'center'}); doc.text('Client',M+11,y+4.8); doc.text('Visites',M+CW-52,y+4.8); doc.text('CA',M+CW-2,y+4.8,{align:'right'});
       y+=8;
       topCli.forEach(function(c2,i){
         checkPage(10);
         var val=c2[1],pct=mxC>0?val/mxC:0,vis=visitMap[c2[0]]||0;
         doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,9,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?GOLD:MUTED);
-        doc.text(String(i+1),M+3.5,y+6,{align:'center'});
+        doc.text(String(i+1),M+4,y+5.5,{align:'center'});
         var nm=c2[0].length>30?c2[0].slice(0,30)+'…':c2[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-        doc.text(nm,M+11,y+6);
+        doc.text(nm,M+11,y+5.5);
         var bW=28, bX=M+CW-bW-22;
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-        doc.text(vis+' visite'+(vis>1?'s':''), bX-3, y+6, {align:'right'});
-        doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
-        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
+        doc.text(vis+' visite'+(vis>1?'s':''), bX-3, y+5.5, {align:'right'});
+        doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3.2,bW,2.5,1,1,'F');
+        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3.2,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-        doc.text(Math.round(val)+'€',M+CW-2,y+6,{align:'right'});
+        doc.text(Math.round(val)+'€',M+CW-2,y+5.5,{align:'right'});
         y+=9;
       });
       y+=4;
@@ -1098,11 +1098,11 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     if(topProd.length>0){
       divider();
-      sectionTitle('Top produits vendus');
+      sectionTitle('5.3 — Top produits vendus');
       y+=1;
       doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
-      doc.text('#',M+3,y+5.5); doc.text('Produit',M+11,y+5.5); doc.text('Ventes',M+CW-52,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
+      doc.text('#',M+4,y+4.8,{align:'center'}); doc.text('Produit',M+11,y+4.8); doc.text('Ventes',M+CW-52,y+4.8); doc.text('CA',M+CW-2,y+4.8,{align:'right'});
       y+=8;
       var mxP=topProd[0][1].ca;
       topProd.forEach(function(p,i){
@@ -1110,17 +1110,17 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var d=p[1],pct=mxP>0?d.ca/mxP:0;
         doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,9,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?GOLD:MUTED);
-        doc.text(String(i+1),M+3.5,y+6,{align:'center'});
+        doc.text(String(i+1),M+4,y+5.5,{align:'center'});
         var nm=p[0].length>32?p[0].slice(0,32)+'…':p[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-        doc.text(nm,M+11,y+6);
+        doc.text(nm,M+11,y+5.5);
         var bW=28, bX=M+CW-bW-22;
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-        doc.text(d.qty+' vente'+(d.qty>1?'s':''), bX-3, y+6, {align:'right'});
-        doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
-        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
+        doc.text(d.qty+' vente'+(d.qty>1?'s':''), bX-3, y+5.5, {align:'right'});
+        doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3.2,bW,2.5,1,1,'F');
+        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3.2,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-        doc.text(Math.round(d.ca)+'€',M+CW-2,y+6,{align:'right'});
+        doc.text(Math.round(d.ca)+'€',M+CW-2,y+5.5,{align:'right'});
         y+=9;
       });
       y+=4;
