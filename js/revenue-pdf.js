@@ -11,7 +11,7 @@ function openPdfModal() {
   var list = document.getElementById('pdf-month-list');
   if (!list) return;
 
-  list.innerHTML = '<div style="font-size:12px;color:var(--ink-light);padding:8px 0">Vérification de l\'activité...</div>';
+  list.innerHTML = '<div style="font-size:12px;color:var(--ink-light);padding:12px 0;display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-light);display:inline-block;animation:pulse 1s infinite;"></span>Vérification de l\'activité...</div>';
   pdfSelectedMonth = null;
 
   var overlay = document.getElementById('pdf-modal-overlay');
@@ -55,11 +55,17 @@ function openPdfModal() {
     var currentLabel = dCurrent.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
     var itemCurrent = document.createElement('div');
-    itemCurrent.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;';
-    var lblC = document.createElement('span');
-    lblC.textContent = currentLabel.charAt(0).toUpperCase() + currentLabel.slice(1);
+    itemCurrent.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;opacity:0.7;';
+    var lblC = document.createElement('div');
+    lblC.style.cssText = 'display:flex;align-items:center;gap:8px;';
+    var dotC = document.createElement('span');
+    dotC.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#E8E4DE;flex-shrink:0;display:inline-block;';
+    var txtC = document.createElement('span');
+    txtC.textContent = currentLabel.charAt(0).toUpperCase() + currentLabel.slice(1);
+    lblC.appendChild(dotC);
+    lblC.appendChild(txtC);
     var badgeC = document.createElement('span');
-    badgeC.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:2px 8px;border-radius:100px;';
+    badgeC.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:3px 9px;border-radius:100px;white-space:nowrap;';
     badgeC.textContent = daysLeft + 'j restants';
     itemCurrent.appendChild(lblC);
     itemCurrent.appendChild(badgeC);
@@ -73,17 +79,35 @@ function openPdfModal() {
       var capLabel = m.label.charAt(0).toUpperCase() + m.label.slice(1);
 
       if (!hasActivity) {
-        item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;';
-        var lbl = document.createElement('span');
-        lbl.textContent = capLabel;
+        item.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;opacity:0.6;';
+        var lbl = document.createElement('div');
+        lbl.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        var dot = document.createElement('span');
+        dot.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#E8E4DE;flex-shrink:0;display:inline-block;';
+        var txt = document.createElement('span');
+        txt.textContent = capLabel;
+        lbl.appendChild(dot);
+        lbl.appendChild(txt);
         var badge = document.createElement('span');
-        badge.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:2px 8px;border-radius:100px;';
+        badge.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:3px 9px;border-radius:100px;white-space:nowrap;';
         badge.textContent = 'Aucune activité';
         item.appendChild(lbl);
         item.appendChild(badge);
       } else {
-        item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;';
-        item.textContent = capLabel;
+        item.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;display:flex;align-items:center;justify-content:space-between;';
+        var lbl2 = document.createElement('div');
+        lbl2.style.cssText = 'display:flex;align-items:center;gap:8px;';
+        var dot2 = document.createElement('span');
+        dot2.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#4EA685;flex-shrink:0;display:inline-block;transition:all .15s;';
+        var txt2 = document.createElement('span');
+        txt2.textContent = capLabel;
+        lbl2.appendChild(dot2);
+        lbl2.appendChild(txt2);
+        var arrow = document.createElement('span');
+        arrow.style.cssText = 'font-size:12px;color:var(--ink-light);transition:all .15s;';
+        arrow.textContent = '↓';
+        item.appendChild(lbl2);
+        item.appendChild(arrow);
         item.addEventListener('click', function() {
           list.querySelectorAll('[data-key]').forEach(function(el) {
             el.style.background = '';
@@ -95,6 +119,8 @@ function openPdfModal() {
           item.style.borderColor = 'var(--ink)';
           item.style.color = 'var(--white)';
           item.style.fontWeight = '500';
+          dot2.style.background = 'var(--white)';
+          arrow.style.color = 'var(--white)';
           pdfSelectedMonth = { key: m.key, year: m.year, month: m.month, label: m.label };
         });
       }
@@ -333,7 +359,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     var kW=(CW-9)/4;
     var kpis=[
-      {label:'CA ce mois',val:Math.round(thisCAtot)+'€',sub:'Prestations + produits',color:TEAL},
+      {label:'CA du mois',val:Math.round(thisCAtot)+'€',sub:'Prestations + produits',color:TEAL},
       {label:'CA total période',val:Math.round(totalCA)+'€',sub:periodeStr,color:GOLD},
       {label:'Panier moyen',val:Math.round(avgCA)+'€',sub:'Par RDV terminé',color:PURPLE},
       {label:'RDV terminés',val:String(appts.length),sub:'Sur la période',color:INK},
