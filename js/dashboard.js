@@ -31,12 +31,60 @@ var allCollabs = [];
 var selectedCollabId = null;
 var collabDropdownOpen = false;
 
+// Prestations du salon (fallback global)
+var _salonPrestations = null;
+var _salonPrixDuree   = null;
+
 async function loadCollabsForModal(userId) {
-  var res = await sb.from('collaborateurs').select('id, name, role, is_owner')
+  // Charger les collabs avec leur champ prestations
+  var res = await sb.from('collaborateurs').select('id, name, role, is_owner, prestations')
     .eq('user_id', userId)
     .order('created_at');
   allCollabs = res.data || [];
+
+  // Charger les prestations globales du salon (fallback)
+  var sRes = await sb.from('salon_settings')
+    .select('prestations, custom_prestations, prix_duree')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (sRes.data) {
+    _salonPrestations = sRes.data.prestations || null;
+    _salonPrixDuree   = sRes.data.prix_duree   || null;
+  }
+
+  // Appliquer les prestations du patron par défaut
+  var owner = allCollabs.find(function(c) { return c.is_owner; }) || allCollabs[0];
+  if (owner) {
+    selectedCollabId = owner.id;
+    applyCollabPrestations(owner);
+  } else if (_salonPrestations) {
+    applyGlobalPrestations();
+  }
+
   renderCollabOptions();
+}
+
+function applyCollabPrestations(collab) {
+  // Si le collab a ses propres prestations, les utiliser ; sinon fallback salon
+  var data = collab && collab.prestations ? collab.prestations : null;
+  if (data && data.prestations) {
+    PRESTATIONS.homme = (data.prestations.homme || []).concat(['Autre']);
+    PRESTATIONS.femme = (data.prestations.femme || []).concat(['Autre']);
+    if (data.prix_duree) PRIX_DUREE = data.prix_duree;
+    else if (_salonPrixDuree) PRIX_DUREE = _salonPrixDuree;
+  } else {
+    applyGlobalPrestations();
+  }
+  updateServiceOptions();
+}
+
+function applyGlobalPrestations() {
+  if (_salonPrestations) {
+    PRESTATIONS.homme = (_salonPrestations.homme || []).concat(['Autre']);
+    PRESTATIONS.femme = (_salonPrestations.femme || []).concat(['Autre']);
+  }
+  if (_salonPrixDuree) PRIX_DUREE = _salonPrixDuree;
+  updateServiceOptions();
 }
 
 function renderCollabOptions() {
@@ -50,22 +98,20 @@ function renderCollabOptions() {
   }
   if (wrap) wrap.style.display = 'block';
 
-  // Sélectionner le patron par défaut
-  if (!selectedCollabId) {
-    var owner = allCollabs.find(function(c) { return c.is_owner; }) || allCollabs[0];
-    if (owner) {
-      selectedCollabId = owner.id;
-      var lbl = document.getElementById('collab-select-label');
-      if (lbl) lbl.textContent = owner.name + (owner.role ? ' · ' + owner.role : '');
-    }
+  // Afficher le nom du collab sélectionné
+  var current = allCollabs.find(function(c) { return c.id === selectedCollabId; }) || allCollabs[0];
+  if (current) {
+    var lbl = document.getElementById('collab-select-label');
+    if (lbl) lbl.textContent = current.name + (current.role ? ' · ' + current.role : '');
   }
 
   list.innerHTML = allCollabs.map(function(c) {
-    return '<div onclick="selectCollab(\'' + c.id + '\', \'' + (c.name + (c.role ? ' · ' + c.role : '')).replace(/'/g, "\\'") + '\')" '
-      + 'style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" '
-      + 'onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
-      + '<strong style="color:var(--ink)">' + c.name + '</strong>'
-      + (c.role ? '<span style="color:var(--ink-light);margin-left:6px;font-size:12px">' + c.role + '</span>' : '')
+    var active = c.id === selectedCollabId;
+    return '<div onclick="selectCollab(\'' + c.id + '\')" '
+      + 'style="padding:9px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s;background:' + (active ? 'var(--ink)' : 'transparent') + ';color:' + (active ? 'var(--white)' : 'var(--ink)') + '" '
+      + 'onmouseover="if(\'' + c.id + '\'!==window._dashSelCollab)this.style.background=\'var(--cream)\'" onmouseout="if(\'' + c.id + '\'!==window._dashSelCollab)this.style.background=\'transparent\'">'
+      + '<strong>' + c.name + '</strong>'
+      + (c.role ? '<span style="font-size:11px;opacity:.6;margin-left:5px">· ' + c.role + '</span>' : '')
       + '</div>';
   }).join('');
 }
@@ -74,16 +120,26 @@ function toggleCollabFormDropdown() {
   var dd = document.getElementById('collab-select-dropdown');
   if (!dd) return;
   collabDropdownOpen = !collabDropdownOpen;
-  dd.style.display = collabDropdownOpen ? 'block' : 'none';
+  if (collabDropdownOpen) { renderCollabOptions(); dd.style.display = 'block'; }
+  else dd.style.display = 'none';
 }
 
-function selectCollab(id, label) {
+function selectCollab(id) {
   selectedCollabId = id;
+  window._dashSelCollab = id;
+  var c = allCollabs.find(function(x) { return x.id === id; });
   var lbl = document.getElementById('collab-select-label');
-  if (lbl) lbl.textContent = label;
+  if (lbl && c) lbl.textContent = c.name + (c.role ? ' · ' + c.role : '');
   var dd = document.getElementById('collab-select-dropdown');
   if (dd) dd.style.display = 'none';
   collabDropdownOpen = false;
+  // Mettre à jour les prestations selon ce collab
+  applyCollabPrestations(c || null);
+  // Reset la prestation sélectionnée
+  var sel = document.getElementById('appt-service-select');
+  var inp = document.getElementById('appt-service');
+  if (sel) sel.value = '';
+  if (inp) { inp.style.display = 'none'; inp.value = ''; inp.required = false; }
 }
 
 document.addEventListener('click', function(e) {
@@ -320,7 +376,13 @@ function openModal() {
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.getElementById('appt-form').reset();
-  selectedCollabId = null;
+  // Remettre le patron par défaut
+  var owner = allCollabs.find(function(c) { return c.is_owner; }) || allCollabs[0];
+  if (owner) {
+    selectedCollabId = owner.id;
+    window._dashSelCollab = owner.id;
+    applyCollabPrestations(owner);
+  }
   renderCollabOptions();
 }
 
