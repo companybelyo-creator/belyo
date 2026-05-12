@@ -3,6 +3,7 @@
 // ============================================================
 
 var pdfSelectedMonth = null;
+
 function openPdfModal() {
   if (!canAccess('export')) { showPlanWall('pro'); return; }
 
@@ -12,8 +13,6 @@ function openPdfModal() {
 
   list.innerHTML = '<div style="font-size:12px;color:var(--ink-light);padding:12px 0;display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-light);display:inline-block;animation:pulse 1s infinite;"></span>Vérification de l\'activité...</div>';
   pdfSelectedMonth = null;
-  var toggleContainer = document.getElementById('pdf-plan-toggle');
-  if (toggleContainer) toggleContainer.style.display = 'none';
 
   var overlay = document.getElementById('pdf-modal-overlay');
   overlay.style.display = 'flex';
@@ -51,6 +50,7 @@ function openPdfModal() {
     // Mois en cours — indisponible
     var dCurrent  = new Date(now.getFullYear(), now.getMonth(), 1);
     var dNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    var daysLeft  = Math.ceil((dNextMonth - now) / (1000 * 60 * 60 * 24));
     var currentKey = dCurrent.getFullYear() + '-' + String(dCurrent.getMonth() + 1).padStart(2, '0');
     var currentLabel = dCurrent.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
