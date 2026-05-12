@@ -174,6 +174,17 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var dateStr    = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
     var periodeStr = targetLabel ? (targetLabel.charAt(0).toUpperCase() + targetLabel.slice(1)) : (targetDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}));
 
+    // Récupérer le prénom/nom de l'utilisateur
+    var userFullName = '';
+    try {
+      var userRes = await sb.auth.getUser();
+      if (userRes.data && userRes.data.user) {
+        var meta = userRes.data.user.user_metadata || {};
+        userFullName = [meta.first_name, meta.last_name].filter(Boolean).join(' ');
+        if (!userFullName) userFullName = userRes.data.user.email || '';
+      }
+    } catch(e) {}
+
     function checkPage(n) { if (y+(n||20) > H-18) { doc.addPage(); y = 20; } }
 
     function wrapText(text, x, startY, maxW, lh, sz, style, color) {
@@ -324,60 +335,36 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var topProd=Object.entries(prodMap).sort(function(a,b){return b[1].ca-a[1].ca;}).slice(0,5);
 
     // ══════════════════════════════════════════════════════════
-    // PAGE DE GARDE — simple et grand
+    // PAGE DE GARDE — centré, simple, grand
     // ══════════════════════════════════════════════════════════
     doc.setFillColor.apply(doc, WHITE); doc.rect(0, 0, W, H, 'F');
 
     // Ligne dorée haut
-    doc.setFillColor.apply(doc, GOLD); doc.rect(M, 0, CW, 1, 'F');
+    doc.setFillColor.apply(doc, GOLD); doc.rect(0, 0, W, 1.5, 'F');
 
-    // Belyo + date
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, INK);
-    doc.text('Belyo', M, 14);
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-    doc.text(dateStr, W-M, 14, {align:'right'});
-    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-    doc.line(M, 17, W-M, 17);
+    // "Chiffre d'affaires" — très grand, centré
+    doc.setFont('helvetica','bold'); doc.setFontSize(42); doc.setTextColor.apply(doc, INK);
+    doc.text('Chiffre d\'affaires', W/2, 90, {align:'center'});
 
-    // Libellé type document
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor.apply(doc, MUTED);
-    doc.text('Rapport mensuel', M, 52);
+    // Mois — grand, doré, centré
+    doc.setFont('helvetica','normal'); doc.setFontSize(26); doc.setTextColor.apply(doc, GOLD);
+    doc.text(periodeStr, W/2, 115, {align:'center'});
 
-    // Titre grand
-    doc.setFont('helvetica','bold'); doc.setFontSize(38); doc.setTextColor.apply(doc, INK);
-    doc.text('Chiffre', M, 75);
-    doc.text("d'affaires", M, 92);
+    // Séparateur centré
+    doc.setFillColor.apply(doc, BORDER); doc.rect(W/2-25, 124, 50, 0.5, 'F');
 
-    // Mois en doré — très grand
-    doc.setFont('helvetica','normal'); doc.setFontSize(22); doc.setTextColor.apply(doc, GOLD);
-    doc.text(periodeStr, M, 110);
-
-    // Salon en muted
-    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor.apply(doc, MUTED);
-    doc.text(salonName, M, 122);
-
-    // Séparateur
-    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.3);
-    doc.line(M, 132, W-M, 132);
-
-    // CA — numéro héro très grand
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, MUTED);
-    doc.text('CA DU MOIS', M, 152);
-    doc.setFont('helvetica','bold'); doc.setFontSize(52); doc.setTextColor.apply(doc, INK);
-    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', M, 178);
-
-    // Trend
-    if (trendPct !== null) {
-      var isUp = trendPct >= 0;
-      doc.setFillColor.apply(doc, isUp ? UP_BG : DN_BG);
-      doc.roundedRect(M, 183, 56, 9, 1.5, 1.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.setTextColor.apply(doc, isUp ? UP_TX : DN_TX);
-      doc.text((isUp?'▲ +':'▼ ')+trendPct+'% vs mois précédent', M+28, 188.5, {align:'center'});
+    // Prénom Nom — centré
+    if (userFullName) {
+      doc.setFont('helvetica','normal'); doc.setFontSize(14); doc.setTextColor.apply(doc, INK);
+      doc.text(userFullName, W/2, 140, {align:'center'});
     }
 
-    // Ligne dorée bas de page
-    doc.setFillColor.apply(doc, GOLD); doc.rect(M, H-8, CW, 0.8, 'F');
+    // Nom du salon — centré, muted
+    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor.apply(doc, MUTED);
+    doc.text(salonName, W/2, 153, {align:'center'});
+
+    // Ligne dorée bas
+    doc.setFillColor.apply(doc, GOLD); doc.rect(0, H-1.5, W, 1.5, 'F');
 
     // ══════════════════════════════════════════════════════════
     // SOMMAIRE — page 2
