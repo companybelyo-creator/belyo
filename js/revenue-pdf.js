@@ -383,28 +383,63 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     doc.setFillColor.apply(doc,GOLD); doc.rect(M, y, 22, 0.7, 'F'); y+=10;
 
     var tocItems = [
-      { num:'1', title:'Vue d\'ensemble & Indicateurs clés',   page:'2' },
-      { num:'2', title:'Chiffre d\'affaires & Répartition',    page:'3' },
-      { num:'3', title:'RDV par jour de la semaine',           page:'4' },
-      { num:'4', title:'Analyses avancées Pro',                page:'5' },
-      { num:'5', title:'Top Prestations · Clients · Produits', page:'6' },
+      {
+        num: '1',
+        title: 'Indicateurs clés — '+periodeStr,
+        subs: ['CA du mois · Panier moyen · RDV terminés', 'Évolution vs '+prevMonthLabel],
+        page: '2'
+      },
+      {
+        num: '2',
+        title: 'Chiffre d\'affaires & Répartition',
+        subs: ['CA semaine par semaine vs '+prevMonthLabel, 'Prestations vs Produits · Comparaison détaillée'],
+        page: '3'
+      },
+      {
+        num: '3',
+        title: 'Analyse des rendez-vous',
+        subs: ['RDV par jour de la semaine — '+periodeStr],
+        page: '4'
+      },
+      {
+        num: '4',
+        title: 'Analyses avancées Pro',
+        subs: ['Heure de pointe · Répartition Homme/Femme', 'Taux de rétention · Clients uniques · Diversité des prestations'],
+        page: '5'
+      },
+      {
+        num: '5',
+        title: 'Tops & Performance',
+        subs: ['Top 5 prestations · Top 5 clients'+(topProd.length>0?' · Top 5 produits vendus':'')],
+        page: '6'
+      },
     ];
+
     tocItems.forEach(function(t) {
-      checkPage(14);
-      doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,11,2,2,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,GOLD);
-      doc.text(t.num, M+5, y+7.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-      doc.text(t.title, M+14, y+7.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,MUTED);
-      doc.text('p. '+t.page, W-M-2, y+7.5, {align:'right'});
-      // ligne pointillée
-      var tw = doc.getTextWidth(t.title);
+      checkPage(22);
+      // Ligne principale
+      doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,12,2,2,'F');
+      doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,12,1,1,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+      doc.text(t.num+'.', M+8, y+8);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+      doc.text(t.title, M+18, y+8);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,GOLD);
+      doc.text('p. '+t.page, W-M-2, y+8, {align:'right'});
+      // Ligne pointillée
+      var tw=doc.getTextWidth(t.title);
       doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15);
-      doc.setLineDashPattern([1,2], 0);
-      doc.line(M+16+tw, y+7, W-M-12, y+7);
-      doc.setLineDashPattern([], 0);
-      y+=14;
+      doc.setLineDashPattern([1,2],0);
+      doc.line(M+20+tw, y+7.5, W-M-14, y+7.5);
+      doc.setLineDashPattern([],0);
+      y+=13;
+      // Sous-items
+      t.subs.forEach(function(s) {
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
+        doc.text('→  '+s, M+14, y+4);
+        y+=7;
+      });
+      y+=3;
     });
 
     // ══════════════════════════════════════════════════════════
@@ -891,15 +926,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
       doc.text('Taux de rétention', M, y); y+=6;
 
-      // Légende couleurs au-dessus du gauge
-      var legRetX = W/2 - 30, legRetY = y;
-      doc.setFillColor.apply(doc,[29,158,117]); doc.roundedRect(legRetX, legRetY, 7, 7, 1, 1, 'F');
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,INK);
-      doc.text('Fidèles', legRetX+10, legRetY+5.5);
-      doc.setFillColor.apply(doc,[37,99,235]); doc.roundedRect(legRetX+38, legRetY, 7, 7, 1, 1, 'F');
-      doc.text('Nouveaux', legRetX+48, legRetY+5.5);
-      y+=12;
-
       var kpiRet=totalClients>0?Math.round(returningClients/totalClients*100):0;
       // Gauge centré sur la page, grand
       var retR=28, retCx2=W/2, retCy2=y+retR+4;
@@ -928,11 +954,20 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.text(kpiRet+'%', retCx2, retCy2+5, {align:'center'});
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
       doc.text('Taux de rétention', retCx2, retCy2+12, {align:'center'});
-      // Labels nouveaux / existants sous le gauge
+
+      // Carrés couleur + labels Nouveaux / Fidèles
       var newPct2=100-kpiRet;
+      var labY=retCy2+retR+7;
+      // Carré vert + Fidèles (droite)
+      var fidX=retCx2+6;
+      doc.setFillColor.apply(doc,[29,158,117]); doc.roundedRect(fidX, labY-5, 5, 5, 0.8, 0.8, 'F');
       doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Nouveaux : '+newPct2+'%', retCx2-20, retCy2+retR+7, {align:'right'});
-      doc.text('Fidèles : '+kpiRet+'%', retCx2+20, retCy2+retR+7, {align:'left'});
+      doc.text('Fidèles : '+kpiRet+'%', fidX+7, labY);
+      // Carré bleu + Nouveaux (gauche)
+      var newX=retCx2-6;
+      doc.setFillColor.apply(doc,[37,99,235]); doc.roundedRect(newX-42, labY-5, 5, 5, 0.8, 0.8, 'F');
+      doc.text('Nouveaux : '+newPct2+'%', newX-36, labY);
+
       y=retCy2+retR+14;
 
       insightBox('','Rétention : '+kpiRet+'% des clients sont revenus 2 fois ou plus ('+returningClients+'/'+totalClients+' clients uniques). '+(kpiRet>=60?'Excellent niveau de fidélisation.':kpiRet>=40?'Rétention correcte — des actions ciblées pourraient l\'améliorer.':'Attention : programme de fidélisation recommandé.'),GOLD_L,GOLD);
@@ -1001,8 +1036,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     doc.addPage(); pageHeader('Tops & Performance');
 
     sectionTitle('Top prestations');
-    y=wrapText('Classement des prestations par chiffre d\'affaires généré ce mois.',M,y,CW,5,8,'normal',MUTED);
-    y+=5;
+    y+=1;
 
     if(topSvc.length>0){
       var mxS=topSvc[0][1];
@@ -1033,8 +1067,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     divider();
     sectionTitle('Top clients');
-    y=wrapText('Vos clients les plus fidèles en termes de chiffre d\'affaires ce mois.',M,y,CW,5,8,'normal',MUTED);
-    y+=5;
+    y+=1;
 
     if(topCli.length>0){
       var mxC=topCli[0][1];
@@ -1066,8 +1099,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     if(topProd.length>0){
       divider();
       sectionTitle('Top produits vendus');
-      y=wrapText('Vos produits les plus vendus ce mois.',M,y,CW,5,8,'normal',MUTED);
-      y+=5;
+      y+=1;
       doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
       doc.text('#',M+3,y+5.5); doc.text('Produit',M+11,y+5.5); doc.text('Ventes',M+CW-52,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
