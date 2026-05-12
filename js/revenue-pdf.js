@@ -174,7 +174,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var dateStr    = new Date().toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
     var periodeStr = targetLabel ? (targetLabel.charAt(0).toUpperCase() + targetLabel.slice(1)) : (targetDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}));
 
-    // Récupérer le prénom/nom de l'utilisateur
+    // Récupérer le prénom/nom de l'utilisateur et le nom du salon
     var userFullName = '';
     try {
       var userRes = await sb.auth.getUser();
@@ -182,6 +182,8 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var meta = userRes.data.user.user_metadata || {};
         userFullName = [meta.first_name, meta.last_name].filter(Boolean).join(' ');
         if (!userFullName) userFullName = userRes.data.user.email || '';
+        // Priorité : user_metadata.salon_name, sinon le DOM
+        if (meta.salon_name) salonName = meta.salon_name;
       }
     } catch(e) {}
 
@@ -401,46 +403,159 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     });
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 2 — KPIs + RÉPARTITION
+    // PAGE 2 — KPIs ENRICHIS
     // ══════════════════════════════════════════════════════════
-    doc.addPage(); pageHeader('Vue d\'ensemble');
-    sectionTitle('Indicateurs clés du mois');
+    doc.addPage(); pageHeader('Indicateurs clés du mois');
+    sectionTitle('Indicateurs clés — '+periodeStr);
 
-    var introTxt='Rapport pour '+periodeStr+'. Rendez-vous terminés et ventes de produits enregistrées sur ce mois.';
-    y=wrapText(introTxt,M,y,CW,5,8,'normal',MUTED); y+=7;
+    y=wrapText('Synthèse de l\'activité pour '+periodeStr+'. Chaque indicateur inclut son évolution vs le mois précédent.',M,y,CW,5,8,'normal',MUTED); y+=6;
 
-    // Tableau KPIs sobre — 4 colonnes séparées par des lignes
-    var kW=(CW)/4;
-    var kpis=[
-      {label:'CA du mois',    val:Math.round(thisCAtot)+'€', sub:'Prestations + produits'},
-      {label:'vs mois préc.', val:trendPct!==null?(trendPct>=0?'+':'')+trendPct+'%':'—',  sub:'Évolution'},
-      {label:'Panier moyen',  val:Math.round(avgCA)+'€',     sub:'Par RDV terminé'},
-      {label:'RDV terminés',  val:String(appts.length),      sub:'Ce mois'},
-    ];
-    checkPage(32);
-    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.2); doc.line(M,y,W-M,y);
-    y+=6;
-    kpis.forEach(function(k,i){
-      var x=M+i*kW;
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
-      doc.text(k.label,x,y);
+    // ── Données pour mini graphes (semaines du mois) ──────────
+    // Découper le mois en 4-5 semaines (par groupe de ~7j)
+    var daysInMonth = new Date(targetYear, targetMonth+1, 0).getDate();
+    var weekCount = 4;
+    var weekSize  = Math.ceil(daysInMonth / weekCount);
+
+    // CA par semaine
+    var caByWeek   = [0,0,0,0];
+    var rdvByWeek  = [0,0,0,0];
+    var avgByWeek  = [0,0,0,0];
+    var rdvCount   = [0,0,0,0];
+    appts.forEach(function(a) {
+      var d   = new Date(a.datetime);
+      var day = d.getDate();
+      var wi  = Math.min(Math.floor((day-1)/weekSize), 3);
+      caByWeek[wi]  += parseFloat(a.price)||0;
+      rdvByWeek[wi] += 1;
+      rdvCount[wi]  += 1;
     });
-    y+=2;
-    doc.setFillColor.apply(doc,GOLD); doc.rect(M,y,CW,0.5,'F');
-    y+=6;
-    kpis.forEach(function(k,i){
-      var x=M+i*kW;
-      var isUpKPI = k.label==='vs mois préc.' && trendPct!==null;
-      doc.setFont('helvetica','bold'); doc.setFontSize(17);
-      doc.setTextColor.apply(doc, isUpKPI?(trendPct>=0?UP_TX:DN_TX):INK);
-      doc.text(k.val,x,y+10);
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
-      doc.text(k.sub,x,y+16);
-    });
-    y+=22;
-    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.2); doc.line(M,y,W-M,y);
-    y+=8;
+    avgByWeek = caByWeek.map(function(ca,i){ return rdvCount[i]>0 ? ca/rdvCount[i] : 0; });
+    var wLabels = ['S1','S2','S3','S4'];
 
+    // Panier moyen par semaine
+    var avgPrev = lastCAtot > 0 && lastAppts.length > 0 ? lastCAtot/lastAppts.length : null;
+    var rdvPrev = lastAppts.length;
+
+    // ── Fonction mini-bar chart natif jsPDF ──────────────────
+    function miniBarChart(x, y, w, h, values, color) {
+      var max = Math.max.apply(null, values) || 1;
+      var bW  = (w - (values.length-1)*1.5) / values.length;
+      values.forEach(function(v, i) {
+        var bH  = Math.max(1, (v/max)*h);
+        var bX  = x + i*(bW+1.5);
+        var bY  = y + h - bH;
+        doc.setFillColor.apply(doc, BORDER);
+        doc.roundedRect(bX, y, bW, h, 0.5, 0.5, 'F');
+        doc.setFillColor.apply(doc, color);
+        doc.roundedRect(bX, bY, bW, bH, 0.5, 0.5, 'F');
+      });
+      // Labels
+      values.forEach(function(v, i) {
+        var bX = x + i*(bW+1.5) + bW/2;
+        doc.setFont('helvetica','normal'); doc.setFontSize(5); doc.setTextColor.apply(doc, MUTED);
+        doc.text(wLabels[i], bX, y+h+4, {align:'center'});
+      });
+    }
+
+    // ── KPI CARD ─────────────────────────────────────────────
+    // Chaque card : fond coloré léger, couleur accent, valeur principale, mini chart, delta
+    var GREEN  = [29, 158, 117];
+    var GREEN_L= [232, 248, 242];
+    var AMBER2 = [190, 150, 72];
+    var AMBER_L2=[250, 243, 225];
+    var BLUE2  = [37, 99, 235];
+    var BLUE_L2= [219, 234, 254];
+
+    var cardH = 52;
+    var chartW = 52, chartH = 22;
+
+    function kpiCard(cx, cy, cw, label, value, sub, delta, deltaLabel, chartVals, accentColor, lightColor) {
+      // Fond
+      doc.setFillColor.apply(doc, lightColor);
+      doc.roundedRect(cx, cy, cw, cardH, 3, 3, 'F');
+      // Barre accent haut
+      doc.setFillColor.apply(doc, accentColor);
+      doc.roundedRect(cx, cy, cw, 3, 3, 3, 'F');
+      doc.setFillColor.apply(doc, lightColor);
+      doc.rect(cx, cy+1.5, cw, 1.5, 'F');
+
+      // Label
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
+      doc.text(label, cx+5, cy+10);
+
+      // Valeur principale
+      doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor.apply(doc, INK);
+      doc.text(value, cx+5, cy+26);
+
+      // Sous-titre
+      doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc, MUTED);
+      doc.text(sub, cx+5, cy+32);
+
+      // Delta
+      if (delta !== null) {
+        var isPos = delta >= 0;
+        var dColor = isPos ? UP_TX : DN_TX;
+        var dBg    = isPos ? UP_BG  : DN_BG;
+        doc.setFillColor.apply(doc, dBg);
+        doc.roundedRect(cx+5, cy+35, 38, 7, 1.5, 1.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, dColor);
+        doc.text((isPos?'▲ +':'▼ ')+Math.abs(delta)+'% '+deltaLabel, cx+24, cy+39.5, {align:'center'});
+      }
+
+      // Mini chart
+      if (chartVals) {
+        miniBarChart(cx+cw-chartW-5, cy+cardH-chartH-9, chartW, chartH, chartVals, accentColor);
+      }
+    }
+
+    // ── 3 cartes sur la largeur ───────────────────────────────
+    var col3W = (CW-8)/3;
+
+    // 1. CA du mois
+    var caDelta = lastCAtot>0 ? Math.round((thisCAtot-lastCAtot)/lastCAtot*100) : null;
+    kpiCard(M,          y, col3W, 'CA DU MOIS',    Math.round(thisCAtot)+'€',
+      'Prestations + produits', caDelta, 'vs mois préc.', caByWeek, GREEN, GREEN_L);
+
+    // 2. Panier moyen
+    var avgDelta = avgPrev>0 ? Math.round((avgCA-avgPrev)/avgPrev*100) : null;
+    kpiCard(M+col3W+4,  y, col3W, 'PANIER MOYEN',  Math.round(avgCA)+'€',
+      'Par RDV terminé', avgDelta, 'vs mois préc.', avgByWeek, AMBER2, AMBER_L2);
+
+    // 3. RDV terminés
+    var rdvDelta = rdvPrev>0 ? Math.round((appts.length-rdvPrev)/rdvPrev*100) : null;
+    kpiCard(M+col3W*2+8,y, col3W, 'RDV TERMINÉS',  String(appts.length),
+      'Ce mois · '+totalClients+' clients', rdvDelta, 'vs mois préc.', rdvByWeek, BLUE2, BLUE_L2);
+
+    y += cardH + 8;
+
+    // ── 2e ligne : 2 cartes ───────────────────────────────────
+    var col2W = (CW-4)/2;
+
+    // Taux de retour
+    var retBars = [0,0,0,0];
+    appts.forEach(function(a) {
+      var d = new Date(a.datetime);
+      var wi = Math.min(Math.floor((d.getDate()-1)/weekSize), 3);
+      if (visitMap[a.client_name] >= 2) retBars[wi]++;
+    });
+    kpiCard(M,         y, col2W, 'TAUX DE RETOUR', retRate+'%',
+      returningClients+' clients revenus 2x+', null, null, retBars, GOLD, GOLD_L);
+
+    // Clients uniques
+    var clientBars = [0,0,0,0];
+    var seenClients = [{},{},{},{}];
+    appts.forEach(function(a) {
+      var d = new Date(a.datetime);
+      var wi = Math.min(Math.floor((d.getDate()-1)/weekSize), 3);
+      seenClients[wi][a.client_name] = true;
+    });
+    clientBars = seenClients.map(function(s){ return Object.keys(s).length; });
+    kpiCard(M+col2W+4, y, col2W, 'CLIENTS UNIQUES', String(totalClients),
+      'Sur '+periodeStr, null, null, clientBars, INK, OFFWHITE);
+
+    y += cardH + 10;
+
+    // Insight global
     var kpiAnalysis = trendPct!==null
       ? (trendPct>=0 ? 'CA en hausse de +'+trendPct+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€).'
         : 'CA en baisse de '+Math.abs(trendPct)+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€).')
@@ -450,26 +565,20 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       trendPct===null?GOLD:trendPct>=0?UP_TX:DN_TX);
 
     // Répartition — barre + donut natif jsPDF
-    checkPage(55);
+    divider();
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
     doc.text('Répartition Prestations / Produits',M,y); y+=7;
 
-    // Barre horizontale
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
     doc.text('Prestations '+apptPct+'%',M,y); doc.text('Produits '+prodPct+'%',M+CW/2,y); y+=4;
     doc.setFillColor.apply(doc,INK);  doc.roundedRect(M,y,CW*apptPct/100,6,1,1,'F');
     doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M+CW*apptPct/100,y,CW*prodPct/100,6,1,1,'F');
     y+=10;
 
-    // Donut dessiné nativement
+    // Donut
     var dCx = M+28, dCy = y+22, dR = 18, dRi = 11;
-    // Calcul angles
     var aStart = -Math.PI/2;
     var aAppt  = aStart + (apptPct/100)*2*Math.PI;
-    // Secteur prestations (INK)
-    doc.setFillColor.apply(doc,INK);
-    doc.triangle(dCx,dCy, dCx+dR*Math.cos(aStart),dCy+dR*Math.sin(aStart), dCx+dR*Math.cos(aStart+0.1),dCy+dR*Math.sin(aStart+0.1),'F');
-    // On dessine le donut par segments de 6°
     var step = Math.PI/30;
     for(var a=aStart; a<aAppt-0.01; a+=step){
       var a2=Math.min(a+step,aAppt);
@@ -481,15 +590,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.setFillColor.apply(doc,GOLD);
       doc.triangle(dCx,dCy, dCx+dR*Math.cos(a),dCy+dR*Math.sin(a), dCx+dR*Math.cos(a2),dCy+dR*Math.sin(a2),'F');
     }
-    // Trou central blanc
     doc.setFillColor.apply(doc,WHITE); doc.circle(dCx,dCy,dRi,'F');
-    // Texte central
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
     doc.text(apptPct+'%',dCx,dCy+1.5,{align:'center'});
     doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor.apply(doc,MUTED);
     doc.text('prest.',dCx,dCy+5.5,{align:'center'});
 
-    // Légende donut
     var lx = M+62, ly = y+8;
     doc.setFillColor.apply(doc,INK); doc.roundedRect(lx,ly,8,4,1,1,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
