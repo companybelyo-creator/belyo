@@ -56,14 +56,8 @@ function openPdfModal() {
 
     var itemCurrent = document.createElement('div');
     itemCurrent.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;opacity:0.7;';
-    var lblC = document.createElement('div');
-    lblC.style.cssText = 'display:flex;align-items:center;gap:8px;';
-    var dotC = document.createElement('span');
-    dotC.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#E8E4DE;flex-shrink:0;display:inline-block;';
-    var txtC = document.createElement('span');
-    txtC.textContent = currentLabel.charAt(0).toUpperCase() + currentLabel.slice(1);
-    lblC.appendChild(dotC);
-    lblC.appendChild(txtC);
+    var lblC = document.createElement('span');
+    lblC.textContent = currentLabel.charAt(0).toUpperCase() + currentLabel.slice(1);
     var badgeC = document.createElement('span');
     badgeC.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:3px 9px;border-radius:100px;white-space:nowrap;';
     badgeC.textContent = daysLeft + 'j restants';
@@ -80,14 +74,8 @@ function openPdfModal() {
 
       if (!hasActivity) {
         item.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;opacity:0.6;';
-        var lbl = document.createElement('div');
-        lbl.style.cssText = 'display:flex;align-items:center;gap:8px;';
-        var dot = document.createElement('span');
-        dot.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#E8E4DE;flex-shrink:0;display:inline-block;';
-        var txt = document.createElement('span');
-        txt.textContent = capLabel;
-        lbl.appendChild(dot);
-        lbl.appendChild(txt);
+        var lbl = document.createElement('span');
+        lbl.textContent = capLabel;
         var badge = document.createElement('span');
         badge.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:3px 9px;border-radius:100px;white-space:nowrap;';
         badge.textContent = 'Aucune activité';
@@ -95,18 +83,12 @@ function openPdfModal() {
         item.appendChild(badge);
       } else {
         item.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;display:flex;align-items:center;justify-content:space-between;';
-        var lbl2 = document.createElement('div');
-        lbl2.style.cssText = 'display:flex;align-items:center;gap:8px;';
-        var dot2 = document.createElement('span');
-        dot2.style.cssText = 'width:7px;height:7px;border-radius:50%;background:#4EA685;flex-shrink:0;display:inline-block;transition:all .15s;';
         var txt2 = document.createElement('span');
         txt2.textContent = capLabel;
-        lbl2.appendChild(dot2);
-        lbl2.appendChild(txt2);
         var arrow = document.createElement('span');
         arrow.style.cssText = 'font-size:12px;color:var(--ink-light);transition:all .15s;';
         arrow.textContent = '↓';
-        item.appendChild(lbl2);
+        item.appendChild(txt2);
         item.appendChild(arrow);
         item.addEventListener('click', function() {
           list.querySelectorAll('[data-key]').forEach(function(el) {
@@ -119,7 +101,6 @@ function openPdfModal() {
           item.style.borderColor = 'var(--ink)';
           item.style.color = 'var(--white)';
           item.style.fontWeight = '500';
-          dot2.style.background = 'var(--white)';
           arrow.style.color = 'var(--white)';
           pdfSelectedMonth = { key: m.key, year: m.year, month: m.month, label: m.label };
         });
@@ -140,8 +121,11 @@ async function exportPDFForMonth() {
     showToast('Veuillez sélectionner un mois', 'error');
     return;
   }
+  var year  = pdfSelectedMonth.year;
+  var month = pdfSelectedMonth.month;
+  var label = pdfSelectedMonth.label;
   closePdfModal();
-  await exportPDF(pdfSelectedMonth.year, pdfSelectedMonth.month, pdfSelectedMonth.label);
+  await exportPDF(year, month, label);
 }
 
 async function exportPDF(targetYear, targetMonth, targetLabel) {
