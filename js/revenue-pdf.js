@@ -140,24 +140,17 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var W = 210, H = 297, M = 14, CW = W - M * 2;
     var y = 0;
 
-    var INK    = [22, 20, 18];
-    var SLATE  = [45, 42, 38];
-    var TEAL   = [29, 158, 117];
-    var TEAL_L = [210, 240, 230];
-    var PURPLE = [107, 76, 230];
-    var PURP_L = [232, 226, 255];
-    var BLUE   = [37, 99, 235];
-    var BLUE_L = [219, 234, 254];
-    var AMBER  = [196, 140, 40];
-    var AMBER_L= [254, 243, 199];
-    var LIGHT  = [110, 104, 98];
-    var MUTED  = [155, 150, 144];
-    var WHITE  = [255, 255, 255];
-    var OFFWHITE=[250, 248, 245];
-    var BORDER = [220, 215, 208];
-    var DARK_BG= [18, 16, 14];
-    var GREEN_BG=[220, 252, 231]; var GREEN_TX=[22, 101, 52];
-    var RED_BG  =[254, 226, 226]; var RED_TX  =[153, 27, 27];
+    var INK     = [22, 20, 18];
+    var SLATE   = [60, 57, 52];
+    var GOLD    = [190, 150, 72];
+    var GOLD_L  = [250, 243, 225];
+    var MUTED   = [140, 135, 128];
+    var LIGHT   = [175, 170, 163];
+    var WHITE   = [255, 255, 255];
+    var OFFWHITE= [250, 248, 245];
+    var BORDER  = [218, 213, 206];
+    var UP_BG   = [220, 252, 231]; var UP_TX   = [22, 101, 52];
+    var DN_BG   = [254, 226, 226]; var DN_TX   = [153, 27, 27];
 
     // Mois cible : le mois sélectionné dans la modale
     var targetDate = new Date(targetYear, targetMonth, 1);
@@ -177,54 +170,59 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     }
 
     function insightBox(icon, text, bgColor, txColor) {
-      var lines = doc.splitTextToSize(text, CW-20);
-      var bh = Math.max(14, lines.length*4.8+9);
+      var lines = doc.splitTextToSize(text, CW-16);
+      var bh = Math.max(12, lines.length*4.8+8);
       checkPage(bh+5);
       doc.setFillColor.apply(doc, bgColor||OFFWHITE);
-      doc.roundedRect(M, y, CW, bh, 3, 3, 'F');
+      doc.roundedRect(M, y, CW, bh, 2, 2, 'F');
       doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.15);
-      doc.roundedRect(M, y, CW, bh, 3, 3, 'S');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9.5); doc.setTextColor.apply(doc,txColor||TEAL);
-      doc.text(icon, M+5, y+bh/2+3.5);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.8); doc.setTextColor.apply(doc,txColor||INK);
-      var ly = y+6;
-      lines.forEach(function(l) { doc.text(l, M+14, ly); ly+=4.8; });
+      doc.roundedRect(M, y, CW, bh, 2, 2, 'S');
+      // accent left bar
+      doc.setFillColor.apply(doc, txColor||GOLD);
+      doc.roundedRect(M, y, 2.5, bh, 1, 1, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.8); doc.setTextColor.apply(doc, INK);
+      var ly = y+5.5;
+      lines.forEach(function(l) { doc.text(l, M+8, ly); ly+=4.8; });
       y += bh+5;
     }
 
-    function sectionTitle(title, badge, accentColor) {
+    function sectionTitle(title, badge) {
       checkPage(20);
-      var ac = accentColor || TEAL;
-      // Accent bar
-      doc.setFillColor.apply(doc, ac);
-      doc.roundedRect(M, y, 3, 10, 1, 1, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor.apply(doc,INK);
-      doc.text(title, M+8, y+7.2);
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor.apply(doc, INK);
+      doc.text(title, M, y+7);
       if (badge) {
         var tw = doc.getTextWidth(title);
-        doc.setFillColor.apply(doc,AMBER);
-        doc.roundedRect(M+10+tw, y+2.5, 14, 5, 2, 2, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor.apply(doc,WHITE);
-        doc.text(badge, M+10+tw+7, y+6, {align:'center'});
+        doc.setFillColor.apply(doc, GOLD);
+        doc.roundedRect(M+tw+4, y+2, 13, 5, 1.5, 1.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor.apply(doc, WHITE);
+        doc.text(badge, M+tw+10.5, y+5.8, {align:'center'});
       }
-      y += 15;
+      // underline
+      doc.setFillColor.apply(doc, GOLD);
+      doc.rect(M, y+9.5, 20, 0.7, 'F');
+      y += 16;
     }
 
     function divider() {
       checkPage(10);
-      doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15);
+      doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.15);
       doc.line(M, y, W-M, y); y += 8;
     }
 
     function pageHeader(subtitle) {
-      doc.setFillColor.apply(doc, OFFWHITE); doc.rect(0, 0, W, H, 'F');
-      doc.setFillColor.apply(doc, TEAL); doc.rect(0, 0, 4, H, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-      doc.text('Belyo · '+salonName, M, 10);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, BORDER[0] ? BORDER : [210,205,200]);
-      doc.text(subtitle, W-M, 10, {align:'right'});
+      // fond blanc pur
+      doc.setFillColor.apply(doc, WHITE); doc.rect(0, 0, W, H, 'F');
+      // ligne dorée haut
+      doc.setFillColor.apply(doc, GOLD); doc.rect(M, 0, CW, 0.8, 'F');
+      // header text
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, INK);
+      doc.text('Belyo', M, 9);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+      doc.text('·  '+salonName, M+10, 9);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, LIGHT);
+      doc.text(subtitle, W-M, 9, {align:'right'});
       doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-      doc.line(M, 13, W-M, 13);
+      doc.line(M, 12, W-M, 12);
       y = 22;
     }
 
@@ -298,85 +296,90 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var topProd=Object.entries(prodMap).sort(function(a,b){return b[1].ca-a[1].ca;}).slice(0,5);
 
     // ══════════════════════════════════════════════════════════
-    // PAGE DE GARDE — fond clair, épuré
+    // PAGE DE GARDE — blanc pur, style Galactium
     // ══════════════════════════════════════════════════════════
-    // Fond blanc cassé
-    doc.setFillColor.apply(doc, OFFWHITE); doc.rect(0, 0, W, H, 'F');
+    doc.setFillColor.apply(doc, WHITE); doc.rect(0, 0, W, H, 'F');
 
-    // Bande teal gauche fine
-    doc.setFillColor.apply(doc, TEAL); doc.rect(0, 0, 4, H, 'F');
+    // Ligne dorée haut
+    doc.setFillColor.apply(doc, GOLD); doc.rect(M, 0, CW, 1, 'F');
 
-    // Tag "Rapport mensuel"
-    doc.setFillColor.apply(doc, TEAL_L);
-    doc.roundedRect(M, 36, 48, 9, 2, 2, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, TEAL);
-    doc.text('RAPPORT MENSUEL', M+24, 41.8, {align:'center'});
+    // Belyo + date
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, INK);
+    doc.text('Belyo', M, 14);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+    doc.text(dateStr+' — Usage interne confidentiel', W-M, 14, {align:'right'});
+
+    // Séparateur léger
+    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+    doc.line(M, 17, W-M, 17);
 
     // Titre principal
-    doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor.apply(doc, INK);
-    doc.text('Chiffre d\'affaires', M, 68);
+    doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor.apply(doc, INK);
+    doc.text('Rapport Chiffre', M, 54);
+    doc.text("d'affaires", M, 66);
 
-    // Séparateur fin
-    doc.setFillColor.apply(doc, BORDER); doc.rect(M, 73, CW, 0.5, 'F');
+    // Mois en doré
+    doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor.apply(doc, GOLD);
+    doc.text(periodeStr, M, 78);
 
-    // Mois + salon
-    doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor.apply(doc, TEAL);
-    doc.text(periodeStr, M, 83);
-    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor.apply(doc, INK);
-    doc.text(salonName, M, 93);
+    // Salon
+    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, MUTED);
+    doc.text(salonName, M, 87);
+
+    // Ligne séparatrice
+    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+    doc.line(M, 94, W-M, 94);
 
     // CA hero
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc, MUTED);
-    doc.text('CA DU MOIS', M, 118);
-    doc.setFont('helvetica','bold'); doc.setFontSize(38); doc.setTextColor.apply(doc, TEAL);
-    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', M, 138);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+    doc.text('CHIFFRE D\'AFFAIRES DU MOIS', M, 108);
+    doc.setFont('helvetica','bold'); doc.setFontSize(34); doc.setTextColor.apply(doc, INK);
+    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', M, 126);
 
-    // Trend
+    // Trend badge
     if (trendPct !== null) {
       var isUp = trendPct >= 0;
-      doc.setFillColor.apply(doc, isUp ? GREEN_BG : RED_BG);
-      doc.roundedRect(M, 143, 46, 9, 2, 2, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.setTextColor.apply(doc, isUp ? GREEN_TX : RED_TX);
-      doc.text((isUp?'▲ +':'▼ ')+trendPct+'% vs mois préc.', M+23, 148.5, {align:'center'});
+      doc.setFillColor.apply(doc, isUp ? UP_BG : DN_BG);
+      doc.roundedRect(M, 130, 50, 8, 1.5, 1.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      doc.setTextColor.apply(doc, isUp ? UP_TX : DN_TX);
+      doc.text((isUp?'▲ +':'▼ ')+trendPct+'% vs mois précédent', M+25, 135, {align:'center'});
     }
 
-    // Bloc stats 4 KPIs — fond blanc avec bordure
-    doc.setFillColor.apply(doc, WHITE); doc.roundedRect(M, 175, CW, 62, 4, 4, 'F');
-    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.3);
-    doc.roundedRect(M, 175, CW, 62, 4, 4, 'S');
-
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-    doc.text('SYNTHÈSE RAPIDE', M+8, 186);
+    // Bloc synthèse — tableau sobre
     doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-    doc.line(M+8, 189, M+CW-8, 189);
+    doc.line(M, 158, W-M, 158);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+    doc.text('SYNTHÈSE', M, 166);
+    doc.line(M, 169, W-M, 169);
 
     var qStats=[
-      {l:'RDV terminés',  v:String(appts.length)},
-      {l:'Panier moyen',  v:Math.round(avgCA)+'€'},
+      {l:'RDV terminés',   v:String(appts.length)},
+      {l:'Panier moyen',   v:Math.round(avgCA)+'€'},
       {l:'Clients uniques',v:String(totalClients)},
       {l:'Taux de retour', v:retRate+'%'},
     ];
+    var colW = CW/4;
     qStats.forEach(function(s,i){
-      var qx = M+8+i*46;
+      var qx = M + i*colW;
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
-      doc.text(s.l, qx, 198);
-      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc, INK);
-      doc.text(s.v, qx, 209);
+      doc.text(s.l, qx, 178);
+      doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor.apply(doc, INK);
+      doc.text(s.v, qx, 190);
     });
 
+    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+    doc.line(M, 196, W-M, 196);
+
     if (topSvc.length>0) {
-      doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-      doc.line(M+8, 216, M+CW-8, 216);
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
-      doc.text('Prestation phare', M+8, 224);
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc, INK);
-      doc.text(topSvc[0][0].slice(0,32), M+8, 232);
+      doc.text('Prestation phare', M, 205);
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor.apply(doc, INK);
+      doc.text(topSvc[0][0].slice(0,40), M, 214);
     }
 
-    // Date bas de page
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-    doc.text('Généré le '+dateStr+' · Confidentiel', M, H-10);
+    // Ligne dorée bas de page
+    doc.setFillColor.apply(doc, GOLD); doc.rect(M, H-8, CW, 0.8, 'F');
 
     // ══════════════════════════════════════════════════════════
     // PAGE 2 — KPIs + RÉPARTITION
@@ -384,58 +387,68 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     doc.addPage(); pageHeader('Vue d\'ensemble');
     sectionTitle('Indicateurs clés du mois');
 
-    var introTxt='Rapport pour '+periodeStr+'. Ensemble des rendez-vous terminés et ventes de produits enregistrées sur ce mois.';
-    y=wrapText(introTxt,M,y,CW,5,8,'normal',MUTED); y+=6;
+    var introTxt='Rapport pour '+periodeStr+'. Rendez-vous terminés et ventes de produits enregistrées sur ce mois.';
+    y=wrapText(introTxt,M,y,CW,5,8,'normal',MUTED); y+=7;
 
-    // 4 KPI cards avec fond coloré léger
-    var kW=(CW-9)/4;
+    // Tableau KPIs sobre — 4 colonnes séparées par des lignes
+    var kW=(CW)/4;
     var kpis=[
-      {label:'CA du mois',    val:Math.round(thisCAtot)+'€', sub:'Prestations + produits', bg:TEAL_L,   accent:TEAL},
-      {label:'vs mois préc.', val:trendPct!==null?(trendPct>=0?'+':'')+trendPct+'%':'—',  sub:'Évolution', bg:trendPct===null?OFFWHITE:trendPct>=0?GREEN_BG:RED_BG, accent:trendPct===null?MUTED:trendPct>=0?[29,130,80]:RED_TX},
-      {label:'Panier moyen',  val:Math.round(avgCA)+'€',     sub:'Par RDV terminé',        bg:PURP_L,   accent:PURPLE},
-      {label:'RDV terminés',  val:String(appts.length),      sub:'Ce mois',                bg:BLUE_L,   accent:BLUE},
+      {label:'CA du mois',    val:Math.round(thisCAtot)+'€', sub:'Prestations + produits'},
+      {label:'vs mois préc.', val:trendPct!==null?(trendPct>=0?'+':'')+trendPct+'%':'—',  sub:'Évolution'},
+      {label:'Panier moyen',  val:Math.round(avgCA)+'€',     sub:'Par RDV terminé'},
+      {label:'RDV terminés',  val:String(appts.length),      sub:'Ce mois'},
     ];
-    checkPage(34);
+    checkPage(32);
+    // Ligne haut
+    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.2); doc.line(M,y,W-M,y);
+    // Ligne dorée sous le header de col
+    y+=6;
     kpis.forEach(function(k,i){
-      var x=M+i*(kW+3);
-      doc.setFillColor.apply(doc,k.bg); doc.roundedRect(x,y,kW,30,4,4,'F');
-      doc.setFillColor.apply(doc,k.accent); doc.roundedRect(x,y,kW,4,4,4,'F');
-      doc.setFillColor.apply(doc,k.bg); doc.rect(x,y+2,kW,2,'F'); // mask corner bottom
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,LIGHT);
-      doc.text(k.label,x+kW/2,y+10,{align:'center'});
-      doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor.apply(doc,INK);
-      doc.text(k.val,x+kW/2,y+21,{align:'center'});
-      doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc,MUTED);
-      doc.text(k.sub,x+kW/2,y+28,{align:'center'});
+      var x=M+i*kW;
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
+      doc.text(k.label,x,y);
     });
-    y+=36;
+    y+=2;
+    doc.setFillColor.apply(doc,GOLD); doc.rect(M,y,CW,0.5,'F');
+    y+=6;
+    kpis.forEach(function(k,i){
+      var x=M+i*kW;
+      var isUpKPI = k.label==='vs mois préc.' && trendPct!==null;
+      doc.setFont('helvetica','bold'); doc.setFontSize(17);
+      doc.setTextColor.apply(doc, isUpKPI?(trendPct>=0?UP_TX:DN_TX):INK);
+      doc.text(k.val,x,y+10);
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
+      doc.text(k.sub,x,y+16);
+    });
+    y+=22;
+    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.2); doc.line(M,y,W-M,y);
+    y+=8;
 
     var kpiAnalysis = trendPct!==null
-      ? (trendPct>=0 ? '▲ CA en hausse de +'+trendPct+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€). Bonne dynamique à maintenir.'
-        : '▼ CA en baisse de '+Math.abs(trendPct)+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€). Identifier les causes.')
+      ? (trendPct>=0 ? 'CA en hausse de +'+trendPct+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€).'
+        : 'CA en baisse de '+Math.abs(trendPct)+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€).')
       : 'Pas de données le mois précédent pour comparer.';
-    insightBox(trendPct!==null&&trendPct>=0?'▲':'▼', kpiAnalysis,
-      trendPct===null?OFFWHITE:trendPct>=0?GREEN_BG:RED_BG,
-      trendPct===null?MUTED:trendPct>=0?[22,101,52]:RED_TX);
+    insightBox('', kpiAnalysis,
+      trendPct===null?OFFWHITE:trendPct>=0?UP_BG:DN_BG,
+      trendPct===null?GOLD:trendPct>=0?UP_TX:DN_TX);
 
     checkPage(28);
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
     doc.text('Répartition Prestations / Produits',M,y); y+=7;
-    // Labels
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,LIGHT);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
     doc.text('Prestations : '+Math.round(totalAppts)+'€  ('+apptPct+'%)',M,y);
     doc.text('Produits : '+Math.round(totalProd)+'€  ('+prodPct+'%)',M+CW/2,y);
     y+=5;
-    // Barre répartition — arrondie
-    doc.setFillColor.apply(doc,TEAL);   doc.roundedRect(M,          y,  CW*apptPct/100, 8, 2,2,'F');
-    doc.setFillColor.apply(doc,PURPLE); doc.roundedRect(M+CW*apptPct/100, y, CW*prodPct/100, 8, 2,2,'F');
-    y+=14;
+    // Barre bicolore sobre — INK + GOLD
+    doc.setFillColor.apply(doc,INK);  doc.roundedRect(M,y,CW*apptPct/100,7,1,1,'F');
+    doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M+CW*apptPct/100,y,CW*prodPct/100,7,1,1,'F');
+    y+=13;
 
     var repTxt = apptPct>85
-      ? 'Les prestations dominent ('+apptPct+'%). Les produits restent marginaux ('+prodPct+'%). Proposer systématiquement un produit en fin de prestation peut changer cela.'
-      : apptPct>60 ? 'Bonne répartition entre prestations ('+apptPct+'%) et produits ('+prodPct+'%). Le commerce de détail complète bien l\'activité de soins.'
+      ? 'Les prestations dominent ('+apptPct+'%). Proposer systématiquement un produit en fin de prestation peut renforcer les revenus produits.'
+      : apptPct>60 ? 'Bonne répartition entre prestations ('+apptPct+'%) et produits ('+prodPct+'%).'
       : 'Les produits représentent une part significative ('+prodPct+'%) — votre boutique est un vrai levier de revenus.';
-    insightBox('◈', repTxt, OFFWHITE, INK);
+    insightBox('', repTxt, OFFWHITE, GOLD);
 
     // ══════════════════════════════════════════════════════════
     // PAGE 3 — TABLEAU CA MENSUEL
@@ -445,41 +458,32 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     var caCanvas=document.getElementById('ca-chart');
     if (caCanvas) {
-      checkPage(66);
-      doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,58,4,4,'F');
-      doc.addImage(caCanvas.toDataURL('image/png'),'PNG',M+3,y+2,CW-6,54);
-      y+=63;
+      checkPage(72);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
+      doc.text('Chiffre d\'affaires — '+periodeStr,M,y); y+=4;
+      doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,56,2,2,'F');
+      doc.addImage(caCanvas.toDataURL('image/png'),'PNG',M+3,y+2,CW-6,52);
+      y+=61;
     }
 
     var bestM=allMonths[bestIdx]?mlabel(allMonths[bestIdx]):'—';
     var worstM=allMonths[worstIdx]?mlabel(allMonths[worstIdx]):'—';
     var bestV=allMonths[bestIdx]?Math.round(caValues[bestIdx]):0;
     var worstV=allMonths[worstIdx]?Math.round(caValues[worstIdx]):0;
-    insightBox('★','Meilleur mois : '+bestM+' ('+bestV+'€). Mois le plus creux : '+worstM+' ('+worstV+'€). Moyenne mensuelle : '+avgMonthCA+'€.',AMBER_L,AMBER);
-
-    if (caValues.length>=3) {
-      var f3=caValues.slice(0,3).reduce(function(s,v){return s+v;},0)/3;
-      var l3=caValues.slice(-3).reduce(function(s,v){return s+v;},0)/3;
-      var gT=f3>0?Math.round((l3-f3)/f3*100):0;
-      var tA=gT>5?'Tendance positive : la moyenne des 3 derniers mois ('+Math.round(l3)+'€) dépasse celle des 3 premiers ('+Math.round(f3)+'€) de +'+gT+'%.'
-        :gT<-5?'Tendance négative : la moyenne des 3 derniers mois ('+Math.round(l3)+'€) est inférieure aux 3 premiers ('+Math.round(f3)+'€) de '+gT+'%.'
-        :'CA stable sur la période (écart < 5%).';
-      insightBox(gT>=0?'▲':'▼',tA,OFFWHITE,INK);
-    }
+    insightBox('', 'Meilleur mois : '+bestM+' ('+bestV+'€) · Mois le plus creux : '+worstM+' ('+worstV+'€) · Moyenne : '+avgMonthCA+'€', GOLD_L, GOLD);
 
     divider();
     sectionTitle('Détail du mois');
 
-    y=wrapText('Détail des RDV et ventes de produits pour '+periodeStr+'.',M,y,CW,5,7.5,'normal',MUTED);
+    y=wrapText('Détail des prestations et ventes de produits pour '+periodeStr+'.',M,y,CW,5,7.5,'normal',MUTED);
     y+=5;
 
-    var cols2={mois:M+2,prest:M+58,prod:M+100,tot:M+135,rdv:M+162,evol:M+174};
+    var cols2={mois:M+2,prest:M+60,prod:M+102,tot:M+138,rdv:M+164,evol:M+176};
     checkPage(12);
-    // Header table
-    doc.setFillColor.apply(doc,SLATE); doc.roundedRect(M,y,CW,9,3,3,'F');
+    doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
-    ['Mois','Prestations','Produits','Total CA','RDV','Évol.'].forEach(function(h,i){ doc.text(h,[cols2.mois,cols2.prest,cols2.prod,cols2.tot,cols2.rdv,cols2.evol][i],y+6); });
-    y+=9;
+    ['Mois','Prestations','Produits','Total CA','RDV','Évol.'].forEach(function(h,i){ doc.text(h,[cols2.mois,cols2.prest,cols2.prod,cols2.tot,cols2.rdv,cols2.evol][i],y+5.5); });
+    y+=8;
 
     var prevCA=null;
     allMonths.forEach(function(mk,i){
@@ -489,31 +493,29 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       var ev=''; if(prevCA!==null&&prevCA>0){ var ep=Math.round((tot-prevCA)/prevCA*100); ev=(ep>=0?'+':'')+ep+'%'; }
       prevCA=tot;
       var iB=(i===bestIdx), iW=(i===worstIdx&&allMonths.length>1);
-      doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,8,'F');
-      if(iB){ doc.setFillColor.apply(doc,TEAL_L); doc.rect(M,y,CW,8,'F'); }
+      doc.setFillColor.apply(doc,iB?GOLD_L:i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica',iB?'bold':'normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
       doc.text(mlabel(mk),cols2.mois,y+5.2);
       doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
       doc.text(Math.round(d.appts)+'€',cols2.prest,y+5.2);
       doc.text(Math.round(d.prod)+'€',cols2.prod,y+5.2);
       doc.setFont('helvetica','bold'); doc.setFontSize(8);
-      doc.setTextColor.apply(doc,iB?TEAL:iW?[190,60,40]:INK);
+      doc.setTextColor.apply(doc,iB?GOLD:iW?DN_TX:INK);
       doc.text(Math.round(tot)+'€',cols2.tot,y+5.2);
       doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
       doc.text(String(nbRDV),cols2.rdv,y+5.2);
-      if(ev){ doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,ev.startsWith('+')?GREEN_TX:RED_TX); doc.text(ev,cols2.evol,y+5.2); }
-      if(iB){ doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor.apply(doc,TEAL); doc.text('★',M+CW-4,y+5.2,{align:'right'}); }
+      if(ev){ doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,ev.startsWith('+')?UP_TX:DN_TX); doc.text(ev,cols2.evol,y+5.2); }
       y+=8;
     });
 
     checkPage(10);
-    doc.setFillColor.apply(doc,SLATE); doc.rect(M,y,CW,9,'F');
+    doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,WHITE);
-    doc.text('TOTAL',cols2.mois,y+6);
-    doc.text(Math.round(totalAppts)+'€',cols2.prest,y+6);
-    doc.text(Math.round(totalProd)+'€',cols2.prod,y+6);
-    doc.setTextColor.apply(doc,TEAL); doc.text(Math.round(totalCA)+'€',cols2.tot,y+6);
-    doc.setTextColor.apply(doc,WHITE); doc.text(appts.length+' RDV',cols2.rdv,y+6);
+    doc.text('TOTAL',cols2.mois,y+5.5);
+    doc.text(Math.round(totalAppts)+'€',cols2.prest,y+5.5);
+    doc.text(Math.round(totalProd)+'€',cols2.prod,y+5.5);
+    doc.setTextColor.apply(doc,GOLD); doc.text(Math.round(totalCA)+'€',cols2.tot,y+5.5);
+    doc.setTextColor.apply(doc,WHITE); doc.text(appts.length+' RDV',cols2.rdv,y+5.5);
     y+=14;
 
     // ══════════════════════════════════════════════════════════
@@ -529,70 +531,82 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var pC=document.getElementById('prest-chart'), pdC=document.getElementById('prod-chart');
     if(pC||pdC){
       checkPage(gH3+22);
-      if(pC){ doc.setFillColor.apply(doc,TEAL_L); doc.roundedRect(M,y,gW3,gH3+16,4,4,'F'); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,TEAL); doc.text('CA Prestations',M+gW3/2,y+7,{align:'center'}); doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED); doc.text(Math.round(totalAppts)+'€ · '+apptPct+'% du CA',M+gW3/2,y+12,{align:'center'}); doc.addImage(pC.toDataURL('image/png'),'PNG',M+2,y+15,gW3-4,gH3); }
-      if(pdC){ var px2=M+gW3+6; doc.setFillColor.apply(doc,PURP_L); doc.roundedRect(px2,y,gW3,gH3+16,4,4,'F'); doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,PURPLE); doc.text('CA Produits',px2+gW3/2,y+7,{align:'center'}); doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED); doc.text(Math.round(totalProd)+'€ · '+prodPct+'% du CA',px2+gW3/2,y+12,{align:'center'}); doc.addImage(pdC.toDataURL('image/png'),'PNG',px2+2,y+15,gW3-4,gH3); }
-      y+=gH3+22;
+      if(pC){
+        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,gW3,gH3+18,2,2,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
+        doc.text('CA Prestations — '+periodeStr,M+2,y+6);
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
+        doc.text(Math.round(totalAppts)+'€ · '+apptPct+'% du CA',M+2,y+11);
+        doc.addImage(pC.toDataURL('image/png'),'PNG',M+2,y+14,gW3-4,gH3);
+      }
+      if(pdC){
+        var px2=M+gW3+6;
+        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(px2,y,gW3,gH3+18,2,2,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
+        doc.text('CA Produits — '+periodeStr,px2+2,y+6);
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
+        doc.text(Math.round(totalProd)+'€ · '+prodPct+'% du CA',px2+2,y+11);
+        doc.addImage(pdC.toDataURL('image/png'),'PNG',px2+2,y+14,gW3-4,gH3);
+      }
+      y+=gH3+24;
     }
 
-    insightBox('◈','Prestations : '+Math.round(totalAppts)+'€. Panier moyen par RDV : '+Math.round(avgCA)+'€. '+(avgCA>60?'Excellent positionnement tarifaire.':avgCA>35?'Panier dans la moyenne — l\'upselling peut l\'améliorer.':'Panier bas — envisagez des soins additionnels ou une révision tarifaire.'),TEAL_L,TEAL);
-    insightBox('◫',totalProd>0?'Produits : '+Math.round(totalProd)+'€ ('+prodPct+'%). '+(prodPct<10?'Levier peu activé — présenter 1 produit après chaque prestation peut doubler ce chiffre.':prodPct<25?'Bonne contribution. Des mises en avant saisonnières peuvent encore progresser.':'Excellent — vos produits sont un vrai pilier de revenus.'):'Aucune vente de produit ce mois.',PURP_L,PURPLE);
+    insightBox('', 'Prestations : '+Math.round(totalAppts)+'€. Panier moyen : '+Math.round(avgCA)+'€. '+(avgCA>60?'Excellent positionnement tarifaire.':avgCA>35?'Panier dans la moyenne.':'Panier bas — envisagez des soins additionnels ou une révision tarifaire.'), OFFWHITE, GOLD);
+    insightBox('', totalProd>0?'Produits : '+Math.round(totalProd)+'€ ('+prodPct+'%). '+(prodPct<10?'Levier peu activé.':prodPct<25?'Bonne contribution.':'Vos produits sont un vrai pilier de revenus.'):'Aucune vente de produit ce mois.', OFFWHITE, GOLD);
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 5 — TOP PRESTATIONS + TOP CLIENTS
+    // PAGE 5 — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Tops & Performance');
 
-    sectionTitle('Top prestations', null, TEAL);
-    y=wrapText('Quelles prestations génèrent vraiment votre CA ? Ce classement révèle vos vrais moteurs de revenus.',M,y,CW,5,8,'normal',MUTED);
+    sectionTitle('Top prestations');
+    y=wrapText('Classement des prestations par chiffre d\'affaires généré ce mois.',M,y,CW,5,8,'normal',MUTED);
     y+=5;
 
     if(topSvc.length>0){
       var mxS=topSvc[0][1];
-      // Header
-      doc.setFillColor.apply(doc,TEAL); doc.roundedRect(M,y,CW,8,3,3,'F');
+      doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
       doc.text('#',M+3,y+5.5); doc.text('Prestation',M+11,y+5.5); doc.text('Part',M+CW-42,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
       y+=8;
       topSvc.forEach(function(s,i){
         checkPage(10);
         var val=s[1], pct=mxS>0?val/mxS:0, sPct=totalAppts>0?Math.round(val/totalAppts*100):0;
-        doc.setFillColor.apply(doc,i%2===0?TEAL_L:WHITE); doc.rect(M,y,CW,9,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?TEAL:MUTED);
+        doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,9,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?GOLD:MUTED);
         doc.text(String(i+1),M+3.5,y+6,{align:'center'});
         var nm=s[0].length>36?s[0].slice(0,36)+'…':s[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(nm,M+11,y+6);
         var bW=38,bX=M+CW-bW-26;
         doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
-        doc.setFillColor.apply(doc,TEAL); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
+        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
         doc.text(sPct+'%',M+CW-25,y+6,{align:'right'});
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(Math.round(val)+'€',M+CW-2,y+6,{align:'right'});
         y+=9;
       });
-      y+=5;
-      insightBox('◈','"'+topSvc[0][0]+'" génère '+Math.round(topSvc[0][1])+'€ ('+(totalAppts>0?Math.round(topSvc[0][1]/totalAppts*100):0)+'% du CA prestations).',TEAL_L,TEAL);
+      y+=4;
+      insightBox('', '"'+topSvc[0][0]+'" génère '+Math.round(topSvc[0][1])+'€ ('+(totalAppts>0?Math.round(topSvc[0][1]/totalAppts*100):0)+'% du CA prestations).', GOLD_L, GOLD);
     }
 
     divider();
-
-    sectionTitle('Top clients', null, PURPLE);
-    y=wrapText('Vos clients les plus fidèles en termes de CA.',M,y,CW,5,8,'normal',MUTED);
+    sectionTitle('Top clients');
+    y=wrapText('Vos clients les plus fidèles en termes de chiffre d\'affaires ce mois.',M,y,CW,5,8,'normal',MUTED);
     y+=5;
 
     if(topCli.length>0){
       var mxC=topCli[0][1];
-      // Header
-      doc.setFillColor.apply(doc,PURPLE); doc.roundedRect(M,y,CW,8,3,3,'F');
+      doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
       doc.text('#',M+3,y+5.5); doc.text('Client',M+11,y+5.5); doc.text('Visites',M+CW-52,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
       y+=8;
       topCli.forEach(function(c2,i){
         checkPage(10);
         var val=c2[1],pct=mxC>0?val/mxC:0,vis=visitMap[c2[0]]||0;
-        doc.setFillColor.apply(doc,i%2===0?PURP_L:WHITE); doc.rect(M,y,CW,9,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?PURPLE:MUTED);
+        doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,9,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?GOLD:MUTED);
         doc.text(String(i+1),M+3.5,y+6,{align:'center'});
         var nm=c2[0].length>30?c2[0].slice(0,30)+'…':c2[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
@@ -601,23 +615,21 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         doc.text(vis+' visite'+(vis>1?'s':''),M+CW-52,y+6);
         var bW=30,bX=M+CW-bW-22;
         doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
-        doc.setFillColor.apply(doc,PURPLE); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
+        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(Math.round(val)+'€',M+CW-2,y+6,{align:'right'});
         y+=9;
       });
-      y+=5;
-      insightBox('◇','"'+topCli[0][0]+'" est votre client le plus rentable avec '+Math.round(topCli[0][1])+'€. Fidélisation : '+retRate+'% ('+returningClients+'/'+totalClients+' clients revenus 2x+). '+(retRate>=60?'Excellente fidélisation.':retRate>=35?'Correcte — des rappels automatiques aideraient.':'À renforcer — relancez les clients inactifs depuis plus de 2 mois.'),PURP_L,PURPLE);
+      y+=4;
+      insightBox('', '"'+topCli[0][0]+'" est votre client le plus rentable avec '+Math.round(topCli[0][1])+'€. Fidélisation : '+retRate+'% ('+returningClients+'/'+totalClients+' clients revenus 2x+).', GOLD_L, GOLD);
     }
 
-    // ── Top Produits ─────────────────────────────────────────
     if(topProd.length>0){
       divider();
-      sectionTitle('Top produits vendus', null, BLUE);
-      y=wrapText('Vos produits les plus vendus ce mois. Priorisez votre stock et vos mises en avant en conséquence.',M,y,CW,5,8,'normal',MUTED);
+      sectionTitle('Top produits vendus');
+      y=wrapText('Vos produits les plus vendus ce mois.',M,y,CW,5,8,'normal',MUTED);
       y+=5;
-      // Header
-      doc.setFillColor.apply(doc,BLUE); doc.roundedRect(M,y,CW,8,3,3,'F');
+      doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
       doc.text('#',M+3,y+5.5); doc.text('Produit',M+11,y+5.5); doc.text('Ventes',M+CW-52,y+5.5); doc.text('CA',M+CW-2,y+5.5,{align:'right'});
       y+=8;
@@ -625,8 +637,8 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       topProd.forEach(function(p,i){
         checkPage(10);
         var d=p[1],pct=mxP>0?d.ca/mxP:0;
-        doc.setFillColor.apply(doc,i%2===0?BLUE_L:WHITE); doc.rect(M,y,CW,9,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?BLUE:MUTED);
+        doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,9,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,i===0?GOLD:MUTED);
         doc.text(String(i+1),M+3.5,y+6,{align:'center'});
         var nm=p[0].length>32?p[0].slice(0,32)+'…':p[0];
         doc.setFont('helvetica',i===0?'bold':'normal'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
@@ -635,13 +647,13 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         doc.text(d.qty+' vente'+(d.qty>1?'s':''),M+CW-52,y+6);
         var bW=30,bX=M+CW-bW-22;
         doc.setFillColor.apply(doc,BORDER); doc.roundedRect(bX,y+3,bW,2.5,1,1,'F');
-        doc.setFillColor.apply(doc,BLUE); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
+        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(bX,y+3,bW*pct,2.5,1,1,'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
         doc.text(Math.round(d.ca)+'€',M+CW-2,y+6,{align:'right'});
         y+=9;
       });
-      y+=5;
-      insightBox('◫','"'+topProd[0][0]+'" est votre produit phare avec '+Math.round(topProd[0][1].ca)+'€ et '+topProd[0][1].qty+' vente'+(topProd[0][1].qty>1?'s':'')+'. Total : '+prodSales.length+' vente'+(prodSales.length>1?'s':'')+'.',BLUE_L,BLUE);
+      y+=4;
+      insightBox('', '"'+topProd[0][0]+'" est votre produit phare avec '+Math.round(topProd[0][1].ca)+'€ et '+topProd[0][1].qty+' vente'+(topProd[0][1].qty>1?'s':'')+'.', GOLD_L, GOLD);
     }
 
     // ══════════════════════════════════════════════════════════
@@ -649,31 +661,28 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // ══════════════════════════════════════════════════════════
     if(currentPlan==='pro'||currentPlan==='trial'){
       var proCharts=[
-        {id:'weekday-chart',title:'RDV par jour de la semaine',
-          desc:'Ce graphique révèle vos jours les plus actifs. Utilisez les jours creux pour proposer des offres promotionnelles, placer des congés, ou réorganiser votre planning. Les pics indiquent vos jours à protéger.'},
-        {id:'hour-chart',title:'Heure de pointe',
-          desc:'Les créneaux les plus demandés par vos clients. L\'heure de pointe est souvent celle où votre salon est saturé. Les heures creuses (matin tôt, après 18h) sont une opportunité de remplissage via des tarifs attractifs.'},
-        {id:'clients-chart',title:'Clients uniques par mois',
-          desc:'Combien de clients différents ont été reçus chaque mois. Une courbe montante = acquisition active. Stable = fidélisation forte mais peu de nouveaux. Descendante = signal d\'alerte sur l\'attractivité ou la rétention.'},
-        {id:'diversity-chart',title:'Diversité des prestations vendues',
-          desc:'Nombre de prestations différentes vendues chaque mois. Si la courbe monte, vos clients explorent davantage votre catalogue. Si elle baisse, vous vous spécialisez naturellement — ce n\'est pas forcément mauvais si le CA suit.'},
+        {id:'weekday-chart', title:'RDV par jour de la semaine', desc:'Vos jours les plus actifs. Les jours creux sont une opportunité : offres promotionnelles, congés, ou réorganisation du planning.'},
+        {id:'hour-chart',    title:'Heure de pointe',            desc:'Les créneaux les plus demandés. Les heures creuses sont une opportunité de remplissage via des tarifs attractifs.'},
+        {id:'clients-chart', title:'Clients uniques par mois',   desc:'Une courbe montante indique une acquisition active. Stable = fidélisation forte. Descendante = signal d\'alerte.'},
+        {id:'diversity-chart',title:'Diversité des prestations', desc:'Nombre de prestations différentes vendues. Si la courbe monte, vos clients explorent davantage votre catalogue.'},
       ];
 
       doc.addPage(); pageHeader('Graphiques avancés');
-      sectionTitle('Analyses graphiques avancées','PRO');
+      sectionTitle('Analyses avancées', 'PRO');
 
       proCharts.forEach(function(ch){
         var el=document.getElementById(ch.id);
         if(!el) return;
-        checkPage(84);
-        doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor.apply(doc,INK);
-        doc.text(ch.title,M,y);y+=5;
-        doc.setFillColor.apply(doc,OFFWHITE);doc.roundedRect(M,y,CW,54,4,4,'F');
-        doc.addImage(el.toDataURL('image/png'),'PNG',M+3,y+2,CW-6,50);
-        y+=58;
-        y=wrapText('→ '+ch.desc,M,y,CW,5,7.8,'normal',MUTED);
+        checkPage(80);
+        // Titre du graphe
+        doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
+        doc.text(ch.title+' — '+periodeStr, M, y); y+=4;
+        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,50,2,2,'F');
+        doc.addImage(el.toDataURL('image/png'),'PNG',M+2,y+2,CW-4,46);
+        y+=54;
+        y=wrapText(ch.desc, M, y, CW, 4.8, 7.5, 'normal', MUTED);
         y+=8;
-        if(y>H-88){doc.addPage();pageHeader('Graphiques avancés');}
+        if(y>H-85){ doc.addPage(); pageHeader('Graphiques avancés'); }
       });
     }
 
@@ -683,12 +692,11 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var pageCount=doc.getNumberOfPages();
     for(var p=2;p<=pageCount;p++){
       doc.setPage(p);
-      doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-      doc.line(M, H-12, W-M, H-12);
+      doc.setFillColor.apply(doc,GOLD); doc.rect(M, H-8, CW, 0.6, 'F');
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
-      doc.text('Belyo · '+salonName+' · Confidentiel', M, H-7);
-      doc.text('Page '+(p-1)+' / '+(pageCount-1), W-M, H-7, {align:'right'});
-      doc.text(dateStr, W/2, H-7, {align:'center'});
+      doc.text('Belyo · '+salonName+' · Confidentiel', M, H-4);
+      doc.text('Page '+(p-1)+' / '+(pageCount-1), W-M, H-4, {align:'right'});
+      doc.text(dateStr, W/2, H-4, {align:'center'});
     }
 
     var fileName='belyo-rapport-CA-'+periodeStr.toLowerCase().replace(' ','-')+'.pdf';
