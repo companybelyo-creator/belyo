@@ -278,11 +278,17 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       sb.from('appointments').select('price')
         .eq('user_id',currentUserId).eq('status','done')
         .gte('datetime',prevMonthStart).lte('datetime',prevMonthEnd),
+      sb.from('product_sales').select('unit_price,quantity_sold')
+        .eq('user_id',currentUserId)
+        .gte('created_at',prevMonthStart).lte('created_at',prevMonthEnd),
     ]);
 
     var appts     = results[0].data || [];
     var prodSales = results[1].data || [];
     var lastAppts = results[2].data || [];
+    var lastProds = results[3].data || [];
+    var lastCAtot = lastAppts.reduce(function(s,a){ return s+(parseFloat(a.price)||0); },0)
+                  + lastProds.reduce(function(s,p){ return s+(parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1); },0);
 
     // Reconstruire les graphes sur le mois cible
     renderCAChart(appts, prodSales, pdfNow);
@@ -308,7 +314,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var thisKey    = targetYear+'-'+String(targetMonth+1).padStart(2,'0');
     var thisCA     = caByMonth[thisKey]||{appts:0,prod:0};
     var thisCAtot  = thisCA.appts+thisCA.prod;
-    var lastCAtot  = results[2].data ? results[2].data.reduce(function(s,a){ return s+(parseFloat(a.price)||0); },0) : 0;
     var avgCA      = appts.length>0 ? totalAppts/appts.length : 0;
     var caValues   = allMonths.map(function(m){ return caByMonth[m].appts+caByMonth[m].prod; });
     var bestIdx    = caValues.indexOf(Math.max.apply(null,caValues));
@@ -500,13 +505,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc, MUTED);
       doc.text(sub, M+9, cy+31);
 
-      // Delta — badge sous la valeur
+      // Delta — flèche + % sans cadre
       if (delta !== null) {
         var isPos = delta >= 0;
-        doc.setFillColor.apply(doc, isPos ? UP_BG : DN_BG);
-        doc.roundedRect(M+9, cy+33.5, 36, 6, 1.5, 1.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor.apply(doc, isPos ? UP_TX : DN_TX);
-        doc.text((isPos?'▲ +':'▼ ')+Math.abs(delta)+'% '+deltaLabel, M+27, cy+37.3, {align:'center'});
+        doc.setFont('helvetica','bold'); doc.setFontSize(8);
+        doc.setTextColor.apply(doc, isPos ? UP_TX : DN_TX);
+        doc.text((isPos ? '↑ +' : '↓ ') + Math.abs(delta) + '%', M+9, cy+cardH-4);
       }
 
       // Sparkline — droite, dans les limites de la carte
