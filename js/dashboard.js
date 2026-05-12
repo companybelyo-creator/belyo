@@ -16,8 +16,8 @@ async function loadPrestationsFromSettings(userId) {
     .maybeSingle();
 
   if (res.data && res.data.prestations) {
-    PRESTATIONS.homme = (res.data.prestations.homme || []).concat(['Autre']);
-    PRESTATIONS.femme = (res.data.prestations.femme || []).concat(['Autre']);
+    PRESTATIONS.homme = (res.data.prestations.homme || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
+    PRESTATIONS.femme = (res.data.prestations.femme || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
   }
   if (res.data && res.data.prix_duree) PRIX_DUREE = res.data.prix_duree;
   if (res.data && res.data.planning)   salonPlanning = res.data.planning;
@@ -65,11 +65,10 @@ async function loadCollabsForModal(userId) {
 }
 
 function applyCollabPrestations(collab) {
-  // Si le collab a ses propres prestations, les utiliser ; sinon fallback salon
   var data = collab && collab.prestations ? collab.prestations : null;
   if (data && data.prestations) {
-    PRESTATIONS.homme = (data.prestations.homme || []).concat(['Autre']);
-    PRESTATIONS.femme = (data.prestations.femme || []).concat(['Autre']);
+    PRESTATIONS.homme = (data.prestations.homme || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
+    PRESTATIONS.femme = (data.prestations.femme || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
     if (data.prix_duree) PRIX_DUREE = data.prix_duree;
     else if (_salonPrixDuree) PRIX_DUREE = _salonPrixDuree;
   } else {
@@ -80,8 +79,8 @@ function applyCollabPrestations(collab) {
 
 function applyGlobalPrestations() {
   if (_salonPrestations) {
-    PRESTATIONS.homme = (_salonPrestations.homme || []).concat(['Autre']);
-    PRESTATIONS.femme = (_salonPrestations.femme || []).concat(['Autre']);
+    PRESTATIONS.homme = (_salonPrestations.homme || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
+    PRESTATIONS.femme = (_salonPrestations.femme || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
   }
   if (_salonPrixDuree) PRIX_DUREE = _salonPrixDuree;
   updateServiceOptions();
@@ -168,7 +167,7 @@ var serviceDropdownOpen = false;
 function updateServiceOptions() {
   var dropdown = document.getElementById('service-select-dropdown');
   if (!dropdown) return;
-  var options = PRESTATIONS[selectedGenre] || [];
+  var options = (PRESTATIONS[selectedGenre] || []).filter(function(p) { return p !== 'Autre' && p !== 'Coupe'; });
 
   // Stocker les options pour selectServiceByIndex
   window._serviceOptions = options;
@@ -183,8 +182,8 @@ function updateServiceOptions() {
   }).join('');
 
   // Première prestation par défaut
-  var defaultOpt = options.find(function(p) { return p.toLowerCase().startsWith('coupe'); }) || options[0];
-  if (defaultOpt && defaultOpt !== 'Autre') {
+  var defaultOpt = options[0];
+  if (defaultOpt) {
     var pd = PRIX_DUREE[selectedGenre] && PRIX_DUREE[selectedGenre][defaultOpt];
     var prix = pd && pd.prix ? pd.prix : 0;
     if (!prix) {
