@@ -14,37 +14,62 @@ function openPdfModal() {
   list.innerHTML = '';
   pdfSelectedMonth = null;
 
-  // Générer les 12 derniers mois hors mois en cours
+  // Générer les 3 derniers mois + le mois en cours (indispo)
   var months = [];
-  for (var i = 1; i <= 12; i++) {
+
+  // Mois en cours — indisponible
+  var dCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
+  var dNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  var msLeft = dNextMonth - now;
+  var daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+  months.push({
+    key: dCurrent.getFullYear() + '-' + String(dCurrent.getMonth() + 1).padStart(2, '0'),
+    label: dCurrent.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
+    disabled: true,
+    daysLeft: daysLeft,
+  });
+
+  // 3 mois précédents — disponibles
+  for (var i = 1; i <= 3; i++) {
     var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push({
       key: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
       label: d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
       year: d.getFullYear(),
       month: d.getMonth(),
+      disabled: false,
     });
   }
 
   months.forEach(function(m) {
     var item = document.createElement('div');
     item.dataset.key = m.key;
-    item.dataset.year = m.year;
-    item.dataset.month = m.month;
-    item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;';
-    item.textContent = m.label.charAt(0).toUpperCase() + m.label.slice(1);
-    item.addEventListener('click', function() {
-      list.querySelectorAll('[data-key]').forEach(function(el) {
-        el.style.background = '';
-        el.style.borderColor = 'var(--border)';
-        el.style.fontWeight = '400';
+    if (m.disabled) {
+      item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;';
+      var lbl = document.createElement('span');
+      lbl.textContent = m.label.charAt(0).toUpperCase() + m.label.slice(1);
+      var badge = document.createElement('span');
+      badge.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:2px 8px;border-radius:100px;';
+      badge.textContent = m.daysLeft + 'j restants';
+      item.appendChild(lbl);
+      item.appendChild(badge);
+    } else {
+      item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;';
+      item.textContent = m.label.charAt(0).toUpperCase() + m.label.slice(1);
+      item.addEventListener('click', function() {
+        list.querySelectorAll('[data-key]').forEach(function(el) {
+          el.style.background = '';
+          el.style.borderColor = 'var(--border)';
+          el.style.color = 'var(--ink)';
+          el.style.fontWeight = '400';
+        });
+        item.style.background = 'var(--ink)';
+        item.style.borderColor = 'var(--ink)';
+        item.style.color = 'var(--white)';
+        item.style.fontWeight = '500';
+        pdfSelectedMonth = { key: m.key, year: parseInt(m.year), month: parseInt(m.month), label: m.label };
       });
-      item.style.background = 'var(--ink)';
-      item.style.borderColor = 'var(--ink)';
-      item.style.color = 'var(--white)';
-      item.style.fontWeight = '500';
-      pdfSelectedMonth = { key: m.key, year: parseInt(m.year), month: parseInt(m.month), label: m.label };
-    });
+    }
     list.appendChild(item);
   });
 
