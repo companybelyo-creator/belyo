@@ -275,7 +275,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       sb.from('product_sales').select('created_at,product_name,unit_price,quantity_sold')
         .eq('user_id',currentUserId)
         .gte('created_at',fromDate.toISOString()).lte('created_at',toDate.toISOString()),
-      sb.from('appointments').select('price')
+      sb.from('appointments').select('datetime,price,service,client_name')
         .eq('user_id',currentUserId).eq('status','done')
         .gte('datetime',prevMonthStart).lte('datetime',prevMonthEnd),
       sb.from('product_sales').select('unit_price,quantity_sold')
@@ -826,33 +826,47 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       var hPct=Math.round(genreCount.Homme/gTotal*100);
       var fPct=100-hPct;
 
-      // Camembert natif — centré
+      // Camembert natif — centré, dessin par polygone complet (pas de traits)
       var pieR=22, pieCx=W/2, pieCy=y+pieR+2;
       var COLOR_H=[37,99,235], COLOR_F=[244,114,182];
-
-      // Slice Homme (commence à -90°, sens horaire)
+      var stepsP=80;
       var startAngle=-Math.PI/2;
-      var hAngle=(hPct/100)*2*Math.PI;
-      var fAngle=2*Math.PI-hAngle;
-      var stepsP=60;
-
-      // Slice Homme
-      doc.setFillColor.apply(doc,COLOR_H);
-      doc.lines([[pieCx-pieCx,0]], pieCx, pieCy); // reset
-      // Dessin par triangles fan
-      for(var pi2=0;pi2<Math.round(stepsP*(hPct/100));pi2++){
-        var a1=startAngle+pi2*(2*Math.PI/stepsP);
-        var a2=startAngle+(pi2+1)*(2*Math.PI/stepsP);
-        doc.setFillColor.apply(doc,COLOR_H);
-        doc.triangle(pieCx, pieCy, pieCx+pieR*Math.cos(a1), pieCy+pieR*Math.sin(a1), pieCx+pieR*Math.cos(a2), pieCy+pieR*Math.sin(a2), 'F');
-      }
-      // Slice Femme
       var hSteps=Math.round(stepsP*(hPct/100));
-      for(var pi2=hSteps;pi2<stepsP;pi2++){
-        var a1=startAngle+pi2*(2*Math.PI/stepsP);
-        var a2=startAngle+(pi2+1)*(2*Math.PI/stepsP);
+
+      // Slice Homme — un seul polygone fermé
+      var hPts=[];
+      for(var pi2=0;pi2<=hSteps;pi2++){
+        var ang=startAngle+pi2*(2*Math.PI/stepsP);
+        hPts.push([pieCx+pieR*Math.cos(ang), pieCy+pieR*Math.sin(ang)]);
+      }
+      // Construire lines[] pour doc.lines : séquences [dx,dy]
+      if(hPts.length>1){
+        doc.setFillColor.apply(doc,COLOR_H);
+        // Commencer au centre
+        var hLines=[];
+        hLines.push([hPts[0][0]-pieCx, hPts[0][1]-pieCy]); // centre → premier point arc
+        for(var pi2=1;pi2<hPts.length;pi2++){
+          hLines.push([hPts[pi2][0]-hPts[pi2-1][0], hPts[pi2][1]-hPts[pi2-1][1]]);
+        }
+        hLines.push([pieCx-hPts[hPts.length-1][0], pieCy-hPts[hPts.length-1][1]]); // retour centre
+        doc.lines(hLines, pieCx, pieCy, [1,1], 'F', true);
+      }
+
+      // Slice Femme — polygone restant
+      var fPts=[];
+      for(var pi2=hSteps;pi2<=stepsP;pi2++){
+        var ang=startAngle+pi2*(2*Math.PI/stepsP);
+        fPts.push([pieCx+pieR*Math.cos(ang), pieCy+pieR*Math.sin(ang)]);
+      }
+      if(fPts.length>1){
         doc.setFillColor.apply(doc,COLOR_F);
-        doc.triangle(pieCx, pieCy, pieCx+pieR*Math.cos(a1), pieCy+pieR*Math.sin(a1), pieCx+pieR*Math.cos(a2), pieCy+pieR*Math.sin(a2), 'F');
+        var fLines=[];
+        fLines.push([fPts[0][0]-pieCx, fPts[0][1]-pieCy]);
+        for(var pi2=1;pi2<fPts.length;pi2++){
+          fLines.push([fPts[pi2][0]-fPts[pi2-1][0], fPts[pi2][1]-fPts[pi2-1][1]]);
+        }
+        fLines.push([pieCx-fPts[fPts.length-1][0], pieCy-fPts[fPts.length-1][1]]);
+        doc.lines(fLines, pieCx, pieCy, [1,1], 'F', true);
       }
 
       // Légende à droite du cercle
@@ -880,24 +894,22 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       var kpiRet=totalClients>0?Math.round(returningClients/totalClients*100):0;
       // Gauge centré sur la page, grand
       var retR=28, retCx2=W/2, retCy2=y+retR+4;
-      var stepsR=60;
+      var stepsR=80;
+      var overlap=0.015; // léger chevauchement pour éviter les gaps
       // Track gris
-      doc.setDrawColor.apply(doc,[218,213,206]); doc.setLineWidth(5);
+      doc.setDrawColor.apply(doc,[218,213,206]); doc.setLineWidth(6);
       for(var si=0;si<stepsR;si++){
-        var a1=Math.PI+si*(Math.PI/stepsR), a2=Math.PI+(si+1)*(Math.PI/stepsR);
+        var a1=Math.PI+si*(Math.PI/stepsR);
+        var a2=Math.PI+(si+1)*(Math.PI/stepsR)+overlap;
         doc.line(retCx2+retR*Math.cos(a1),retCy2+retR*Math.sin(a1),retCx2+retR*Math.cos(a2),retCy2+retR*Math.sin(a2));
       }
-      // Arc vert → bleu (gradient simulé : première moitié vert, seconde bleue)
-      var halfSteps=Math.floor(stepsR/2);
+      // Arc coloré vert→bleu avec chevauchement
       var fillTotal=Math.round(stepsR*(kpiRet/100));
-      doc.setLineWidth(5);
+      doc.setLineWidth(6);
       for(var si=0;si<fillTotal;si++){
-        var a1=Math.PI+si*(Math.PI/stepsR), a2=Math.PI+(si+1)*(Math.PI/stepsR);
-        // Interpolation vert→bleu
-        var t=si/stepsR;
-        var r=Math.round(29+(37-29)*t*2>255?255:29+(37-29)*t*2);
-        var g2=Math.round(158+(99-158)*t*2<0?0:158+(99-158)*t*2);
-        var b=Math.round(117+(235-117)*t*2>255?255:117+(235-117)*t*2);
+        var a1=Math.PI+si*(Math.PI/stepsR);
+        var a2=Math.PI+(si+1)*(Math.PI/stepsR)+overlap;
+        var t=si/(stepsR-1);
         doc.setDrawColor(Math.round(29+t*(37-29)), Math.round(158+t*(99-158)), Math.round(117+t*(235-117)));
         doc.line(retCx2+retR*Math.cos(a1),retCy2+retR*Math.sin(a1),retCx2+retR*Math.cos(a2),retCy2+retR*Math.sin(a2));
       }
@@ -920,9 +932,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       checkPage(160);
       divider();
 
-      // ── Clients uniques — barres par semaine ─────────────────
+      // ── Clients uniques — barres par semaine vs mois précédent ──
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Clients uniques par semaine', M, y); y+=7;
+      doc.text('Clients uniques par semaine vs mois précédent', M, y); y+=10;
 
       var clientsByWeek=[new Set(),new Set(),new Set(),new Set()];
       appts.forEach(function(a2){
@@ -931,15 +943,26 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         clientsByWeek[wi].add(a2.client_name);
       });
       var cValsW=clientsByWeek.map(function(s){return s.size;});
-      y = nativeBarChart(M, y, CW, 32, cValsW, wkLabels, [29,158,117], [168,223,201], '');
-      y=wrapText('Clients uniques par semaine du mois. Une semaine élevée indique un pic d\'activité ou d\'acquisition.', M, y, CW, 4.5, 7, 'normal', MUTED);
+
+      // Mois précédent — clients uniques par semaine
+      var lastClientsByWeek=[new Set(),new Set(),new Set(),new Set()];
+      lastAppts.forEach(function(a2){
+        var day=new Date(a2.datetime).getDate();
+        var wi=day<=8?0:day<=15?1:day<=23?2:3;
+        lastClientsByWeek[wi].add(a2.client_name);
+      });
+      var cValsWPrev=lastClientsByWeek.map(function(s){return s.size;});
+
+      groupedBarChart(M, y, CW, 36, cValsW, cValsWPrev, GREEN_DARK, GREEN_LIGHT, wkLabels, periodeStr, prevMonthLabel);
+      y+=52;
+      y=wrapText('Clients uniques par semaine. Gauche = '+periodeStr+' · Droite = '+prevMonthLabel+'.', M, y, CW, 4.5, 7, 'normal', MUTED);
       y+=5;
 
       divider();
 
-      // ── Diversité des prestations — barres par semaine ───────
+      // ── Diversité des prestations — barres par semaine vs mois précédent ──
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Diversité des prestations par semaine', M, y); y+=7;
+      doc.text('Diversité des prestations par semaine vs mois précédent', M, y); y+=10;
 
       var svcByWeek=[new Set(),new Set(),new Set(),new Set()];
       appts.forEach(function(a2){
@@ -948,8 +971,19 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         if(a2.service) svcByWeek[wi].add(a2.service.trim().toLowerCase());
       });
       var dValsW=svcByWeek.map(function(s){return s.size;});
-      y = nativeBarChart(M, y, CW, 32, dValsW, wkLabels, [123,97,255], [196,181,253], '');
-      y=wrapText('Nombre de prestations différentes vendues par semaine. En hausse = vos clients explorent davantage votre catalogue.', M, y, CW, 4.5, 7, 'normal', MUTED);
+
+      // Mois précédent — diversité par semaine
+      var lastSvcByWeek=[new Set(),new Set(),new Set(),new Set()];
+      lastAppts.forEach(function(a2){
+        var day=new Date(a2.datetime).getDate();
+        var wi=day<=8?0:day<=15?1:day<=23?2:3;
+        if(a2.service) lastSvcByWeek[wi].add(a2.service.trim().toLowerCase());
+      });
+      var dValsWPrev=lastSvcByWeek.map(function(s){return s.size;});
+
+      groupedBarChart(M, y, CW, 36, dValsW, dValsWPrev, VIOLET, [196,181,253], wkLabels, periodeStr, prevMonthLabel);
+      y+=52;
+      y=wrapText('Prestations différentes par semaine. Gauche = '+periodeStr+' · Droite = '+prevMonthLabel+'.', M, y, CW, 4.5, 7, 'normal', MUTED);
     }
 
     // ══════════════════════════════════════════════════════════
