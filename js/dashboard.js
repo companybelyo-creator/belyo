@@ -26,6 +26,75 @@ async function loadPrestationsFromSettings(userId) {
 
 var DAY_MAP_DASH = {0:6, 1:0, 2:1, 3:2, 4:3, 5:4, 6:5};
 
+// ===== COLLABORATEURS MODAL =====
+var allCollabs = [];
+var selectedCollabId = null;
+var collabDropdownOpen = false;
+
+async function loadCollabsForModal(userId) {
+  var res = await sb.from('collaborateurs').select('id, name, role, is_owner')
+    .eq('user_id', userId)
+    .order('created_at');
+  allCollabs = res.data || [];
+  renderCollabOptions();
+}
+
+function renderCollabOptions() {
+  var list = document.getElementById('collab-options-list');
+  var wrap = document.getElementById('collab-field-wrap');
+  if (!list) return;
+
+  if (allCollabs.length === 0) {
+    if (wrap) wrap.style.display = 'none';
+    return;
+  }
+  if (wrap) wrap.style.display = 'block';
+
+  // Sélectionner le patron par défaut
+  if (!selectedCollabId) {
+    var owner = allCollabs.find(function(c) { return c.is_owner; }) || allCollabs[0];
+    if (owner) {
+      selectedCollabId = owner.id;
+      var lbl = document.getElementById('collab-select-label');
+      if (lbl) lbl.textContent = owner.name + (owner.role ? ' · ' + owner.role : '');
+    }
+  }
+
+  list.innerHTML = allCollabs.map(function(c) {
+    return '<div onclick="selectCollab(\'' + c.id + '\', \'' + (c.name + (c.role ? ' · ' + c.role : '')).replace(/'/g, "\\'") + '\')" '
+      + 'style="padding:10px 14px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);transition:background .1s" '
+      + 'onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'
+      + '<strong style="color:var(--ink)">' + c.name + '</strong>'
+      + (c.role ? '<span style="color:var(--ink-light);margin-left:6px;font-size:12px">' + c.role + '</span>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function toggleCollabFormDropdown() {
+  var dd = document.getElementById('collab-select-dropdown');
+  if (!dd) return;
+  collabDropdownOpen = !collabDropdownOpen;
+  dd.style.display = collabDropdownOpen ? 'block' : 'none';
+}
+
+function selectCollab(id, label) {
+  selectedCollabId = id;
+  var lbl = document.getElementById('collab-select-label');
+  if (lbl) lbl.textContent = label;
+  var dd = document.getElementById('collab-select-dropdown');
+  if (dd) dd.style.display = 'none';
+  collabDropdownOpen = false;
+}
+
+document.addEventListener('click', function(e) {
+  var wrap = document.getElementById('collab-select-wrap');
+  if (wrap && !wrap.contains(e.target) && collabDropdownOpen) {
+    var dd = document.getElementById('collab-select-dropdown');
+    if (dd) dd.style.display = 'none';
+    collabDropdownOpen = false;
+  }
+});
+
 function setGenre(genre) {
   selectedGenre = genre;
   document.getElementById('genre-homme').classList.toggle('active', genre === 'homme');
@@ -251,6 +320,8 @@ function openModal() {
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
   document.getElementById('appt-form').reset();
+  selectedCollabId = null;
+  renderCollabOptions();
 }
 
 function formatTime(datetimeStr) {
@@ -297,6 +368,7 @@ console.log('[Belyo] sb disponible ?', typeof sb);
     var clientsRes = await sb.from('clients').select('id, name, email, phone').eq('user_id', session.user.id);
     allClients = clientsRes.data || [];
     await loadPrestationsFromSettings(session.user.id);
+    await loadCollabsForModal(session.user.id);
 
     var meta = session.user.user_metadata || {};
     document.getElementById('greeting-name').textContent = meta.first_name || 'vous';
@@ -697,9 +769,10 @@ document.getElementById('appt-form').addEventListener('submit', async function(e
     notes:            notesVal,
     status:           'pending',
     genre:            selectedGenre,
+    collaborateur_id: selectedCollabId || null,
   });
 
-  btn.disabled = false; btn.textContent = 'Enregistrer le RDV';
+  btn.disabled = false; btn.textContent = 'Enregistrer';
 
   if (res.error) {
     showToast('Erreur : ' + res.error.message, 'error');
