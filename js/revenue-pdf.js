@@ -375,7 +375,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
 
     var cliMap={};
     appts.forEach(function(a){ cliMap[a.client_name]=(cliMap[a.client_name]||0)+(parseFloat(a.price)||0); });
-    var topCli=Object.entries(cliMap).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+    var topCli=Object.entries(cliMap).sort(function(a,b){return b[1]-a[1];}).slice(0,isPro?5:3);
 
     var visitMap={};
     appts.forEach(function(a){ visitMap[a.client_name]=(visitMap[a.client_name]||0)+1; });
