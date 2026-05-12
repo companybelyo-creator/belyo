@@ -3,40 +3,6 @@
 // ============================================================
 
 var pdfSelectedMonth = null;
-var pdfSelectedPlan = null; // 'standard' ou 'pro'
-
-function _renderPlanToggle() {
-  var container = document.getElementById('pdf-plan-toggle');
-  if (!container) return;
-  if (!pdfSelectedMonth) { container.style.display = 'none'; return; }
-
-  container.style.display = 'block';
-  container.innerHTML = '';
-
-  var label = document.createElement('div');
-  label.style.cssText = 'font-size:11.5px;color:var(--ink-light);margin-bottom:8px;padding:0 1.5rem;';
-  label.textContent = 'Type de rapport';
-  container.appendChild(label);
-
-  var row = document.createElement('div');
-  row.style.cssText = 'display:flex;gap:8px;padding:0 1.5rem;';
-
-  ['standard', 'pro'].forEach(function(plan) {
-    var btn = document.createElement('button');
-    btn.dataset.plan = plan;
-    var isSelected = pdfSelectedPlan === plan;
-    btn.style.cssText = 'flex:1;padding:10px 0;border-radius:10px;font-size:12.5px;font-family:var(--font-body);cursor:pointer;transition:all .15s;border:1px solid '+(isSelected?'var(--ink)':'var(--border)')+';background:'+(isSelected?'var(--ink)':'transparent')+';color:'+(isSelected?'var(--white)':'var(--ink)')+';font-weight:'+(isSelected?'500':'400')+';';
-    btn.textContent = plan === 'standard' ? '📄 Standard' : '⭐ Pro';
-    btn.addEventListener('click', function() {
-      pdfSelectedPlan = plan;
-      _renderPlanToggle();
-    });
-    row.appendChild(btn);
-  });
-
-  container.appendChild(row);
-}
-
 function openPdfModal() {
   if (!canAccess('export')) { showPlanWall('pro'); return; }
 
@@ -46,7 +12,6 @@ function openPdfModal() {
 
   list.innerHTML = '<div style="font-size:12px;color:var(--ink-light);padding:12px 0;display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-light);display:inline-block;animation:pulse 1s infinite;"></span>Vérification de l\'activité...</div>';
   pdfSelectedMonth = null;
-  pdfSelectedPlan = null;
   var toggleContainer = document.getElementById('pdf-plan-toggle');
   if (toggleContainer) toggleContainer.style.display = 'none';
 
@@ -86,36 +51,21 @@ function openPdfModal() {
     // Mois en cours — indisponible
     var dCurrent  = new Date(now.getFullYear(), now.getMonth(), 1);
     var dNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    var daysLeft  = Math.ceil((dNextMonth - now) / (1000 * 60 * 60 * 24));
     var currentKey = dCurrent.getFullYear() + '-' + String(dCurrent.getMonth() + 1).padStart(2, '0');
     var currentLabel = dCurrent.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
 
     var itemCurrent = document.createElement('div');
     itemCurrent.dataset.key = currentKey;
-    itemCurrent.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;display:flex;align-items:center;justify-content:space-between;';
+    itemCurrent.style.cssText = 'padding:11px 14px;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;opacity:0.6;';
     var lblC = document.createElement('span');
     lblC.textContent = currentLabel.charAt(0).toUpperCase() + currentLabel.slice(1);
     var badgeC = document.createElement('span');
-    badgeC.style.cssText = 'font-size:11px;color:#92692A;background:#FEF3E2;padding:3px 9px;border-radius:100px;white-space:nowrap;';
-    badgeC.textContent = 'En cours · ' + daysLeft + 'j restants';
+    badgeC.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:3px 9px;border-radius:100px;white-space:nowrap;';
+    var nextFirst = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    var nextFirstLabel = nextFirst.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    badgeC.textContent = 'Disponible le ' + nextFirstLabel;
     itemCurrent.appendChild(lblC);
     itemCurrent.appendChild(badgeC);
-    itemCurrent.addEventListener('click', function() {
-      list.querySelectorAll('[data-key]').forEach(function(el) {
-        el.style.background = '';
-        el.style.borderColor = 'var(--border)';
-        el.style.color = 'var(--ink)';
-        el.style.fontWeight = '400';
-      });
-      itemCurrent.style.background = 'var(--ink)';
-      itemCurrent.style.borderColor = 'var(--ink)';
-      itemCurrent.style.color = 'var(--white)';
-      itemCurrent.style.fontWeight = '500';
-      badgeC.style.color = 'rgba(255,255,255,0.7)';
-      badgeC.style.background = 'rgba(255,255,255,0.15)';
-      pdfSelectedMonth = { key: currentKey, year: dCurrent.getFullYear(), month: dCurrent.getMonth(), label: currentLabel };
-      _renderPlanToggle();
-    });
     list.appendChild(itemCurrent);
 
     // 3 mois précédents
@@ -156,7 +106,6 @@ function openPdfModal() {
           item.style.fontWeight = '500';
           arrow.style.color = 'var(--white)';
           pdfSelectedMonth = { key: m.key, year: m.year, month: m.month, label: m.label };
-          _renderPlanToggle();
         });
       }
       list.appendChild(item);
@@ -168,9 +117,6 @@ function closePdfModal() {
   var overlay = document.getElementById('pdf-modal-overlay');
   if (overlay) overlay.style.display = 'none';
   pdfSelectedMonth = null;
-  pdfSelectedPlan = null;
-  var toggleContainer = document.getElementById('pdf-plan-toggle');
-  if (toggleContainer) toggleContainer.style.display = 'none';
 }
 
 async function exportPDFForMonth() {
@@ -178,14 +124,10 @@ async function exportPDFForMonth() {
     showToast('Veuillez sélectionner un mois', 'error');
     return;
   }
-  if (!pdfSelectedPlan) {
-    showToast('Veuillez choisir un type de rapport', 'error');
-    return;
-  }
   var year  = pdfSelectedMonth.year;
   var month = pdfSelectedMonth.month;
   var label = pdfSelectedMonth.label;
-  var isPro = pdfSelectedPlan === 'pro';
+  var isPro = (currentPlan === 'pro' || currentPlan === 'trial');
   closePdfModal();
   await exportPDF(year, month, label, isPro);
 }
