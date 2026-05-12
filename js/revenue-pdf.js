@@ -434,7 +434,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,12,2,2,'F');
       doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,12,1,1,'F');
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-      doc.text(t.num+'.', M+8, y+8);
+      doc.text(t.num, M+8, y+8);
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
       doc.text(t.title, M+18, y+8);
       doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,GOLD);
@@ -449,7 +449,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       // Sous-items
       t.subs.forEach(function(s) {
         doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
-        doc.text('→  '+s, M+14, y+4);
+        doc.text(s, M+14, y+4);
         y+=7;
       });
       y+=3;
