@@ -3,6 +3,39 @@
 // ============================================================
 
 var pdfSelectedMonth = null;
+var pdfSelectedPlan = null; // 'standard' ou 'pro'
+
+function _renderPlanToggle() {
+  var container = document.getElementById('pdf-plan-toggle');
+  if (!container) return;
+  if (!pdfSelectedMonth) { container.style.display = 'none'; return; }
+
+  container.style.display = 'block';
+  container.innerHTML = '';
+
+  var label = document.createElement('div');
+  label.style.cssText = 'font-size:11.5px;color:var(--ink-light);margin-bottom:8px;padding:0 1.5rem;';
+  label.textContent = 'Type de rapport';
+  container.appendChild(label);
+
+  var row = document.createElement('div');
+  row.style.cssText = 'display:flex;gap:8px;padding:0 1.5rem;';
+
+  ['standard', 'pro'].forEach(function(plan) {
+    var btn = document.createElement('button');
+    btn.dataset.plan = plan;
+    var isSelected = pdfSelectedPlan === plan;
+    btn.style.cssText = 'flex:1;padding:10px 0;border-radius:10px;font-size:12.5px;font-family:var(--font-body);cursor:pointer;transition:all .15s;border:1px solid '+(isSelected?'var(--ink)':'var(--border)')+';background:'+(isSelected?'var(--ink)':'transparent')+';color:'+(isSelected?'var(--white)':'var(--ink)')+';font-weight:'+(isSelected?'500':'400')+';';
+    btn.textContent = plan === 'standard' ? '📄 Standard' : '⭐ Pro';
+    btn.addEventListener('click', function() {
+      pdfSelectedPlan = plan;
+      _renderPlanToggle();
+    });
+    row.appendChild(btn);
+  });
+
+  container.appendChild(row);
+}
 
 function openPdfModal() {
   if (!canAccess('export')) { showPlanWall('pro'); return; }
@@ -13,6 +46,9 @@ function openPdfModal() {
 
   list.innerHTML = '<div style="font-size:12px;color:var(--ink-light);padding:12px 0;display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--ink-light);display:inline-block;animation:pulse 1s infinite;"></span>Vérification de l\'activité...</div>';
   pdfSelectedMonth = null;
+  pdfSelectedPlan = null;
+  var toggleContainer = document.getElementById('pdf-plan-toggle');
+  if (toggleContainer) toggleContainer.style.display = 'none';
 
   var overlay = document.getElementById('pdf-modal-overlay');
   overlay.style.display = 'flex';
@@ -78,6 +114,7 @@ function openPdfModal() {
       badgeC.style.color = 'rgba(255,255,255,0.7)';
       badgeC.style.background = 'rgba(255,255,255,0.15)';
       pdfSelectedMonth = { key: currentKey, year: dCurrent.getFullYear(), month: dCurrent.getMonth(), label: currentLabel };
+      _renderPlanToggle();
     });
     list.appendChild(itemCurrent);
 
@@ -119,6 +156,7 @@ function openPdfModal() {
           item.style.fontWeight = '500';
           arrow.style.color = 'var(--white)';
           pdfSelectedMonth = { key: m.key, year: m.year, month: m.month, label: m.label };
+          _renderPlanToggle();
         });
       }
       list.appendChild(item);
@@ -130,6 +168,9 @@ function closePdfModal() {
   var overlay = document.getElementById('pdf-modal-overlay');
   if (overlay) overlay.style.display = 'none';
   pdfSelectedMonth = null;
+  pdfSelectedPlan = null;
+  var toggleContainer = document.getElementById('pdf-plan-toggle');
+  if (toggleContainer) toggleContainer.style.display = 'none';
 }
 
 async function exportPDFForMonth() {
@@ -137,14 +178,19 @@ async function exportPDFForMonth() {
     showToast('Veuillez sélectionner un mois', 'error');
     return;
   }
+  if (!pdfSelectedPlan) {
+    showToast('Veuillez choisir un type de rapport', 'error');
+    return;
+  }
   var year  = pdfSelectedMonth.year;
   var month = pdfSelectedMonth.month;
   var label = pdfSelectedMonth.label;
+  var isPro = pdfSelectedPlan === 'pro';
   closePdfModal();
-  await exportPDF(year, month, label);
+  await exportPDF(year, month, label, isPro);
 }
 
-async function exportPDF(targetYear, targetMonth, targetLabel) {
+async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
   var btn = document.getElementById('btn-export');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Génération...'; }
 
@@ -789,7 +835,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // ══════════════════════════════════════════════════════════
     // PAGE 5 — ANALYSES AVANCÉES PRO (graphes natifs jsPDF)
     // ══════════════════════════════════════════════════════════
-    if(currentPlan==='pro'||currentPlan==='trial'){
+    if(isPro){
       doc.addPage(); pageHeader('Analyses avancées Pro');
       sectionTitle('4 — Analyses avancées', 'PRO');
 
