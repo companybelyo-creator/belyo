@@ -638,17 +638,16 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     }
 
     var wkLabels = ['1-8','9-15','16-23','24-'+daysInMonth];
-    checkPage(220);
     var GREEN_DARK  = [22, 130, 95];
     var GREEN_LIGHT = [134, 210, 181];
     var ORANGE      = [249, 115, 22];
     var VIOLET      = [123, 97, 255];
-    groupedBarChart(M, y, CW, 30, caByWeek, lastCaByWeek, GREEN_DARK, GREEN_LIGHT, wkLabels, periodeStr, prevMonthLabel);
-    y+=46;
+    groupedBarChart(M, y, CW, 28, caByWeek, lastCaByWeek, GREEN_DARK, GREEN_LIGHT, wkLabels, periodeStr, prevMonthLabel);
+    y+=43;
 
-    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=6;
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-    doc.text('Prestations vs Produits — semaine par semaine', M, y); y+=8;
+    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=5;
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
+    doc.text('Prestations vs Produits — semaine par semaine', M, y); y+=7;
 
     var prestByWeek = [0,0,0,0];
     appts.forEach(function(a) {
@@ -663,8 +662,8 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       prodByWeek[wi] += (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);
     });
 
-    groupedBarChart(M, y, CW, 30, prestByWeek, prodByWeek, ORANGE, VIOLET, wkLabels, 'Prestations '+Math.round(totalAppts)+'€', 'Produits '+Math.round(totalProd)+'€');
-    y+=46;
+    groupedBarChart(M, y, CW, 28, prestByWeek, prodByWeek, ORANGE, VIOLET, wkLabels, 'Prestations '+Math.round(totalAppts)+'EUR', 'Produits '+Math.round(totalProd)+'EUR');
+    y+=43;
 
     doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=6;
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
