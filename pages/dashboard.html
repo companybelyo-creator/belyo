@@ -212,11 +212,15 @@
   <div class="modal" style="max-width:520px">
     <div class="modal-header"><span class="modal-title">Nouveau rendez-vous</span><button class="modal-close" onclick="closeModal()">×</button></div>
     <form id="appt-form">
+
+      <!-- Autocomplete client -->
       <div class="form-group" style="position:relative">
         <label class="form-label">Client</label>
         <input type="text" class="form-input" id="appt-client" placeholder="Rechercher ou créer un client..." required autocomplete="off" oninput="onClientInput(this.value)" />
         <div id="client-suggestions" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);z-index:50;max-height:180px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,0.08)"></div>
       </div>
+
+      <!-- Infos client (masqué par défaut, visible si client sélectionné ou nouveau) -->
       <div id="client-info-block" style="display:none;background:var(--cream);border-radius:var(--radius-sm);padding:14px;margin-bottom:1.2rem;border:1px solid var(--border)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <span style="font-size:13px;font-weight:500;color:var(--ink)" id="client-info-label">Infos client</span>
@@ -233,12 +237,29 @@
           </div>
         </div>
       </div>
+
+      <!-- Collaborateur (dropdown style prestation) -->
+      <div class="form-group" id="collab-field-wrap">
+        <label class="form-label">Collaborateur</label>
+        <div style="position:relative" id="collab-select-wrap">
+          <div id="collab-select-trigger" onclick="toggleCollabFormDropdown()" style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--white);cursor:pointer;font-size:13px;font-family:var(--font-body);user-select:none">
+            <span id="collab-select-label" style="color:var(--ink)">—</span>
+            <span style="font-size:10px;color:var(--ink-light)">▾</span>
+          </div>
+          <div id="collab-select-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:0 8px 24px rgba(26,23,20,.10);z-index:100;overflow:hidden;max-height:180px;overflow-y:auto">
+            <div id="collab-options-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Genre + Prestation -->
       <div class="form-group">
         <label class="form-label">Genre</label>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <button type="button" class="genre-btn active" id="genre-homme" onclick="setGenre('homme')">Homme</button>
           <button type="button" class="genre-btn" id="genre-femme" onclick="setGenre('femme')">Femme</button>
         </div>
+        <!-- Select custom avec prix à droite -->
         <div class="service-select-wrap" id="service-select-wrap">
           <div class="service-select-trigger" id="service-select-trigger" onclick="toggleServiceDropdown()">
             <span id="service-select-label" style="color:var(--ink-light)">-- Prestation --</span>
@@ -267,28 +288,21 @@
             </div>
             <div class="cal-picker-grid" id="cal-picker-grid"></div>
             <div class="cal-picker-time" id="cal-picker-time" style="display:none">
-              <span class="cal-picker-time-label">Heure</span>
-              <select id="cal-picker-hour" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)"></select>
-              <span style="font-weight:500;color:var(--ink)">:</span>
-              <select id="cal-picker-min" class="cal-picker-select" onchange="event.stopPropagation();calPickerUpdateTime(false)">
-                <option value="00">00</option><option value="15">15</option>
-                <option value="30">30</option><option value="45">45</option>
-              </select>
-              <button type="button" onclick="event.stopPropagation();calPickerConfirm()" style="padding:7px 14px;border-radius:100px;border:none;background:var(--ink);color:var(--white);font-family:var(--font-body);font-size:12px;cursor:pointer;white-space:nowrap">OK</button>
+              <span class="cal-picker-time-label" id="cal-picker-hours-hint">Choisissez un créneau</span>
+              <div class="cal-picker-slots" id="cal-picker-slots"></div>
             </div>
           </div>
         </div>
         <input type="hidden" id="appt-datetime" />
       </div>
+      <!-- Prix éditable avec valeur auto depuis les paramètres -->
       <div class="form-group">
         <label class="form-label">Prix (€)</label>
-        <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" readonly style="cursor:default;background:var(--cream-dark);pointer-events:none" />
+        <input type="number" class="form-input" id="appt-price" placeholder="0" min="0" step="1" readonly style="cursor:default;background:var(--cream-dark);color:var(--ink);pointer-events:none" />
       </div>
-      <div class="form-group">
-        <label class="form-label">Notes</label>
-        <input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." />
-      </div>
-      <button type="submit" class="btn-submit" id="appt-submit">Enregistrer le RDV</button>
+      <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="appt-notes" placeholder="Ex : allergie colorant..." /></div>
+      <!-- Collaborateur -->
+      <button type="submit" class="btn-submit" id="appt-submit">Enregistrer</button>
     </form>
   </div>
 </div>
