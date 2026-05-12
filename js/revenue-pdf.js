@@ -1072,10 +1072,10 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
         y+=9;
       });
       y+=4;
-    } else {
-      doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Aucune donnée disponible pour ce mois.', M, y+5); y+=14;
     }
+
+    divider();
+    sectionTitle('5.2 — Top clients');
     y+=1;
 
     if(topCli.length>0){
@@ -1103,9 +1103,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
         y+=9;
       });
       y+=4;
-    } else {
-      doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Aucune donnée disponible pour ce mois.', M, y+5); y+=14;
     }
 
     if(topProd.length>0){
@@ -1136,12 +1133,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
         y+=9;
       });
       y+=4;
-    } else {
-      divider();
-      sectionTitle('5.3 — Top produits vendus');
-      y+=1;
-      doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Aucune donnée disponible pour ce mois.', M, y+5); y+=14;
     }
 
     // ══════════════════════════════════════════════════════════
