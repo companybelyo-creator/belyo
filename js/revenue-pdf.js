@@ -324,7 +324,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var topProd=Object.entries(prodMap).sort(function(a,b){return b[1].ca-a[1].ca;}).slice(0,5);
 
     // ══════════════════════════════════════════════════════════
-    // PAGE DE GARDE — blanc pur, style Galactium
+    // PAGE DE GARDE — simple et grand
     // ══════════════════════════════════════════════════════════
     doc.setFillColor.apply(doc, WHITE); doc.rect(0, 0, W, H, 'F');
 
@@ -335,75 +335,45 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, INK);
     doc.text('Belyo', M, 14);
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-    doc.text(dateStr+' — Usage interne confidentiel', W-M, 14, {align:'right'});
-
-    // Séparateur léger
+    doc.text(dateStr, W-M, 14, {align:'right'});
     doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
     doc.line(M, 17, W-M, 17);
 
-    // Titre principal
-    doc.setFont('helvetica','bold'); doc.setFontSize(26); doc.setTextColor.apply(doc, INK);
-    doc.text('Rapport Chiffre', M, 54);
-    doc.text("d'affaires", M, 66);
+    // Libellé type document
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor.apply(doc, MUTED);
+    doc.text('Rapport mensuel', M, 52);
 
-    // Mois en doré
-    doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor.apply(doc, GOLD);
-    doc.text(periodeStr, M, 78);
+    // Titre grand
+    doc.setFont('helvetica','bold'); doc.setFontSize(38); doc.setTextColor.apply(doc, INK);
+    doc.text('Chiffre', M, 75);
+    doc.text("d'affaires", M, 92);
 
-    // Salon
+    // Mois en doré — très grand
+    doc.setFont('helvetica','normal'); doc.setFontSize(22); doc.setTextColor.apply(doc, GOLD);
+    doc.text(periodeStr, M, 110);
+
+    // Salon en muted
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor.apply(doc, MUTED);
+    doc.text(salonName, M, 122);
+
+    // Séparateur
+    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.3);
+    doc.line(M, 132, W-M, 132);
+
+    // CA — numéro héro très grand
     doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc, MUTED);
-    doc.text(salonName, M, 87);
+    doc.text('CA DU MOIS', M, 152);
+    doc.setFont('helvetica','bold'); doc.setFontSize(52); doc.setTextColor.apply(doc, INK);
+    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', M, 178);
 
-    // Ligne séparatrice
-    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-    doc.line(M, 94, W-M, 94);
-
-    // CA hero
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-    doc.text('CHIFFRE D\'AFFAIRES DU MOIS', M, 108);
-    doc.setFont('helvetica','bold'); doc.setFontSize(34); doc.setTextColor.apply(doc, INK);
-    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', M, 126);
-
-    // Trend badge
+    // Trend
     if (trendPct !== null) {
       var isUp = trendPct >= 0;
       doc.setFillColor.apply(doc, isUp ? UP_BG : DN_BG);
-      doc.roundedRect(M, 130, 50, 8, 1.5, 1.5, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      doc.roundedRect(M, 183, 56, 9, 1.5, 1.5, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8);
       doc.setTextColor.apply(doc, isUp ? UP_TX : DN_TX);
-      doc.text((isUp?'▲ +':'▼ ')+trendPct+'% vs mois précédent', M+25, 135, {align:'center'});
-    }
-
-    // Bloc synthèse — tableau sobre
-    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-    doc.line(M, 158, W-M, 158);
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
-    doc.text('SYNTHÈSE', M, 166);
-    doc.line(M, 169, W-M, 169);
-
-    var qStats=[
-      {l:'RDV terminés',   v:String(appts.length)},
-      {l:'Panier moyen',   v:Math.round(avgCA)+'€'},
-      {l:'Clients uniques',v:String(totalClients)},
-      {l:'Taux de retour', v:retRate+'%'},
-    ];
-    var colW = CW/4;
-    qStats.forEach(function(s,i){
-      var qx = M + i*colW;
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
-      doc.text(s.l, qx, 178);
-      doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor.apply(doc, INK);
-      doc.text(s.v, qx, 190);
-    });
-
-    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
-    doc.line(M, 196, W-M, 196);
-
-    if (topSvc.length>0) {
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
-      doc.text('Prestation phare', M, 205);
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor.apply(doc, INK);
-      doc.text(topSvc[0][0].slice(0,40), M, 214);
+      doc.text((isUp?'▲ +':'▼ ')+trendPct+'% vs mois précédent', M+28, 188.5, {align:'center'});
     }
 
     // Ligne dorée bas de page
