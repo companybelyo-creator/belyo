@@ -891,6 +891,15 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
       doc.text('Taux de rétention', M, y); y+=6;
 
+      // Légende couleurs au-dessus du gauge
+      var legRetX = W/2 - 30, legRetY = y;
+      doc.setFillColor.apply(doc,[29,158,117]); doc.roundedRect(legRetX, legRetY, 7, 7, 1, 1, 'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,INK);
+      doc.text('Fidèles', legRetX+10, legRetY+5.5);
+      doc.setFillColor.apply(doc,[37,99,235]); doc.roundedRect(legRetX+38, legRetY, 7, 7, 1, 1, 'F');
+      doc.text('Nouveaux', legRetX+48, legRetY+5.5);
+      y+=12;
+
       var kpiRet=totalClients>0?Math.round(returningClients/totalClients*100):0;
       // Gauge centré sur la page, grand
       var retR=28, retCx2=W/2, retCy2=y+retR+4;
@@ -1020,7 +1029,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         y+=9;
       });
       y+=4;
-      insightBox('', '"'+topSvc[0][0]+'" génère '+Math.round(topSvc[0][1])+'€ ('+(totalAppts>0?Math.round(topSvc[0][1]/totalAppts*100):0)+'% du CA prestations).', GOLD_L, GOLD);
     }
 
     divider();
@@ -1053,7 +1061,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         y+=9;
       });
       y+=4;
-      insightBox('', '"'+topCli[0][0]+'" est votre client le plus rentable avec '+Math.round(topCli[0][1])+'€. Fidélisation : '+retRate+'% ('+returningClients+'/'+totalClients+' clients revenus 2x+).', GOLD_L, GOLD);
     }
 
     if(topProd.length>0){
@@ -1085,7 +1092,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         y+=9;
       });
       y+=4;
-      insightBox('', '"'+topProd[0][0]+'" est votre produit phare avec '+Math.round(topProd[0][1].ca)+'€ et '+topProd[0][1].qty+' vente'+(topProd[0][1].qty>1?'s':'')+'.', GOLD_L, GOLD);
     }
 
     // ══════════════════════════════════════════════════════════
