@@ -258,8 +258,8 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // ── Données Supabase — mois sélectionné uniquement ───────
     var fromDate       = new Date(targetYear, targetMonth, 1);
     var toDate         = new Date(targetYear, targetMonth + 1, 0, 23, 59, 59);
-    var prevMonthStart = new Date(targetYear, targetMonth - 1, 1).toISOString();
-    var prevMonthEnd   = new Date(targetYear, targetMonth, 0, 23, 59, 59).toISOString();
+    var prevMonthStart = new Date(Date.UTC(targetYear, targetMonth - 1, 1, 0, 0, 0)).toISOString();
+    var prevMonthEnd   = new Date(Date.UTC(targetYear, targetMonth, 0, 23, 59, 59)).toISOString();
 
     // ── Forcer les graphes sur 1 mois (le mois cible) ────────
     var savedPeriod = currentPeriod;
@@ -484,14 +484,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var cardH = 38;
 
     function kpiCard(cy, label, value, sub, delta, deltaLabel, chartVals, accentColor, lightColor) {
-      // Fond
-      doc.setFillColor.apply(doc, lightColor);
-      doc.roundedRect(M, cy, CW, cardH, 3, 3, 'F');
-      // Barre accent gauche
+      // Barre accent gauche uniquement
       doc.setFillColor.apply(doc, accentColor);
-      doc.roundedRect(M, cy, 3, cardH, 3, 3, 'F');
-      doc.setFillColor.apply(doc, lightColor);
-      doc.rect(M+1.5, cy, 1.5, cardH, 'F');
+      doc.roundedRect(M, cy, 3, cardH, 1.5, 1.5, 'F');
 
       // Label — haut gauche
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
