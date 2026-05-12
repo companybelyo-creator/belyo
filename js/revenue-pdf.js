@@ -436,25 +436,47 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var avgPrev = lastCAtot > 0 && lastAppts.length > 0 ? lastCAtot/lastAppts.length : null;
     var rdvPrev = lastAppts.length;
 
-    // ── Fonction mini-bar chart natif jsPDF ──────────────────
-    function miniBarChart(x, y, w, h, values, color) {
+    // ── Fonction sparkline natif jsPDF ───────────────────────
+    function sparkLine(x, y, w, h, values, color) {
       var max = Math.max.apply(null, values) || 1;
-      var bW  = (w - (values.length-1)*1.5) / values.length;
+      var min = Math.min.apply(null, values.filter(function(v){return v>0;})) || 0;
+      var range = max - min || 1;
+      var step2 = w / (values.length - 1);
+
+      // Zone de remplissage (dégradé simulé par polygone clair)
+      var pts = [];
       values.forEach(function(v, i) {
-        var bH  = Math.max(1, (v/max)*h);
-        var bX  = x + i*(bW+1.5);
-        var bY  = y + h - bH;
-        doc.setFillColor.apply(doc, BORDER);
-        doc.roundedRect(bX, y, bW, h, 0.5, 0.5, 'F');
-        doc.setFillColor.apply(doc, color);
-        doc.roundedRect(bX, bY, bW, bH, 0.5, 0.5, 'F');
+        var px = x + i * step2;
+        var py = y + h - ((v - min) / range) * h;
+        pts.push([px, py]);
       });
-      // Labels
-      values.forEach(function(v, i) {
-        var bX = x + i*(bW+1.5) + bW/2;
-        doc.setFont('helvetica','normal'); doc.setFontSize(5); doc.setTextColor.apply(doc, MUTED);
-        doc.text(wLabels[i], bX, y+h+4, {align:'center'});
-      });
+      // Polygone de remplissage (fond semi-transparent simulé)
+      doc.setFillColor(color[0], color[1], color[2]);
+      // Dessin du fill comme suite de triangles fins vers le bas
+      for (var i = 0; i < pts.length - 1; i++) {
+        doc.setFillColor(color[0], color[1], color[2]);
+        // On utilise un rectangle ultra-fin pour simuler le fill
+        var py1 = pts[i][1], py2 = pts[i+1][1];
+        var minPy = Math.min(py1, py2);
+        var fillH = (y + h) - minPy;
+        doc.setGState(doc.GState({opacity: 0.08}));
+        doc.triangle(pts[i][0], py1, pts[i+1][0], py2, pts[i][0], y+h, 'F');
+        doc.triangle(pts[i+1][0], py2, pts[i+1][0], y+h, pts[i][0], y+h, 'F');
+        doc.setGState(doc.GState({opacity: 1}));
+      }
+
+      // Ligne principale
+      doc.setDrawColor.apply(doc, color);
+      doc.setLineWidth(1.2);
+      for (var i = 0; i < pts.length - 1; i++) {
+        doc.line(pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1]);
+      }
+
+      // Point final
+      doc.setFillColor.apply(doc, color);
+      doc.circle(pts[pts.length-1][0], pts[pts.length-1][1], 1.2, 'F');
+      doc.setFillColor.apply(doc, WHITE);
+      doc.circle(pts[pts.length-1][0], pts[pts.length-1][1], 0.6, 'F');
     }
 
     // ── KPI CARD ─────────────────────────────────────────────
@@ -502,9 +524,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         doc.text((isPos?'▲ +':'▼ ')+Math.abs(delta)+'% '+deltaLabel, cx+24, cy+39.5, {align:'center'});
       }
 
-      // Mini chart
-      if (chartVals) {
-        miniBarChart(cx+cw-chartW-5, cy+cardH-chartH-9, chartW, chartH, chartVals, accentColor);
+      // Sparkline en bas à droite
+      if (chartVals && chartVals.length >= 2) {
+        sparkLine(cx+cw-58, cy+cardH-18, 52, 14, chartVals, accentColor);
       }
     }
 
