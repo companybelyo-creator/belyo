@@ -968,18 +968,26 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
       doc.text('Taux de rétention', retCx2, retCy2+12, {align:'center'});
 
-      // Carrés couleur + labels Nouveaux / Fidèles
+      // Carrés couleur + labels Nouveaux / Fidèles — centrés
       var newPct2=100-kpiRet;
       var labY=retCy2+retR+7;
-      // Carré vert + Fidèles (droite)
-      var fidX=retCx2+6;
-      doc.setFillColor.apply(doc,[29,158,117]); doc.roundedRect(fidX, labY-5, 5, 5, 0.8, 0.8, 'F');
-      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Fidèles : '+kpiRet+'%', fidX+7, labY);
-      // Carré bleu + Nouveaux (gauche)
-      var newX=retCx2-6;
-      doc.setFillColor.apply(doc,[37,99,235]); doc.roundedRect(newX-42, labY-5, 5, 5, 0.8, 0.8, 'F');
-      doc.text('Nouveaux : '+newPct2+'%', newX-36, labY);
+      var gap=6; // espace entre les deux blocs
+      // Mesures approximatives : carré(5) + espace(3) + texte
+      var newStr='Nouveaux : '+newPct2+'%';
+      var fidStr='Fidèles : '+kpiRet+'%';
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+      var newTw=doc.getTextWidth(newStr);
+      var fidTw=doc.getTextWidth(fidStr);
+      var totalW=5+3+newTw+gap+5+3+fidTw;
+      var startX=W/2-totalW/2;
+      // Carré bleu + Nouveaux
+      doc.setFillColor.apply(doc,[37,99,235]); doc.roundedRect(startX, labY-5, 5, 5, 0.8, 0.8, 'F');
+      doc.setTextColor.apply(doc,MUTED);
+      doc.text(newStr, startX+8, labY);
+      // Carré vert + Fidèles
+      var fidStartX=startX+8+newTw+gap;
+      doc.setFillColor.apply(doc,[29,158,117]); doc.roundedRect(fidStartX, labY-5, 5, 5, 0.8, 0.8, 'F');
+      doc.text(fidStr, fidStartX+8, labY);
 
       y=retCy2+retR+14;
 
