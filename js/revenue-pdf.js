@@ -1133,7 +1133,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel, isPro) {
     }
 
     divider();
-    sectionTitle('5.2 — Top clients');
+    sectionTitle(isPro ? '5.2 — Top clients' : '5.2 — Top 3 clients');
     y+=1;
 
     if(topCli.length>0){
