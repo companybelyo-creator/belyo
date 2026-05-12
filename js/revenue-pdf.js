@@ -488,93 +488,64 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var BLUE2  = [37, 99, 235];
     var BLUE_L2= [219, 234, 254];
 
-    var cardH = 52;
-    var chartW = 52, chartH = 22;
+    // ── KPI CARD horizontale ──────────────────────────────────
+    var cardH = 38;
 
-    function kpiCard(cx, cy, cw, label, value, sub, delta, deltaLabel, chartVals, accentColor, lightColor) {
+    function kpiCard(cy, label, value, sub, delta, deltaLabel, chartVals, accentColor, lightColor) {
       // Fond
       doc.setFillColor.apply(doc, lightColor);
-      doc.roundedRect(cx, cy, cw, cardH, 3, 3, 'F');
-      // Barre accent haut
+      doc.roundedRect(M, cy, CW, cardH, 3, 3, 'F');
+      // Barre accent gauche
       doc.setFillColor.apply(doc, accentColor);
-      doc.roundedRect(cx, cy, cw, 3, 3, 3, 'F');
+      doc.roundedRect(M, cy, 3, cardH, 3, 3, 'F');
       doc.setFillColor.apply(doc, lightColor);
-      doc.rect(cx, cy+1.5, cw, 1.5, 'F');
+      doc.rect(M+1.5, cy, 1.5, cardH, 'F');
 
-      // Label
+      // Label — haut gauche
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
-      doc.text(label, cx+5, cy+10);
+      doc.text(label, M+9, cy+9);
 
-      // Valeur principale
-      doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor.apply(doc, INK);
-      doc.text(value, cx+5, cy+26);
+      // Valeur principale — grand
+      doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor.apply(doc, INK);
+      doc.text(value, M+9, cy+24);
 
       // Sous-titre
       doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc, MUTED);
-      doc.text(sub, cx+5, cy+32);
+      doc.text(sub, M+9, cy+31);
 
-      // Delta
+      // Delta — badge sous la valeur
       if (delta !== null) {
         var isPos = delta >= 0;
-        var dColor = isPos ? UP_TX : DN_TX;
-        var dBg    = isPos ? UP_BG  : DN_BG;
-        doc.setFillColor.apply(doc, dBg);
-        doc.roundedRect(cx+5, cy+35, 38, 7, 1.5, 1.5, 'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, dColor);
-        doc.text((isPos?'▲ +':'▼ ')+Math.abs(delta)+'% '+deltaLabel, cx+24, cy+39.5, {align:'center'});
+        doc.setFillColor.apply(doc, isPos ? UP_BG : DN_BG);
+        doc.roundedRect(M+9, cy+33.5, 36, 6, 1.5, 1.5, 'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor.apply(doc, isPos ? UP_TX : DN_TX);
+        doc.text((isPos?'▲ +':'▼ ')+Math.abs(delta)+'% '+deltaLabel, M+27, cy+37.3, {align:'center'});
       }
 
-      // Sparkline en bas à droite
+      // Sparkline — droite
       if (chartVals && chartVals.length >= 2) {
-        sparkLine(cx+cw-58, cy+cardH-18, 52, 14, chartVals, accentColor);
+        var sX = M+CW-68, sY = cy+8, sW = 62, sH = 22;
+        sparkLine(sX, sY, sW, sH, chartVals, accentColor);
       }
     }
 
-    // ── 3 cartes sur la largeur ───────────────────────────────
-    var col3W = (CW-8)/3;
-
-    // 1. CA du mois
+    // ── 3 cartes empilées ─────────────────────────────────────
+    // CA du mois
     var caDelta = lastCAtot>0 ? Math.round((thisCAtot-lastCAtot)/lastCAtot*100) : null;
-    kpiCard(M,          y, col3W, 'CA DU MOIS',    Math.round(thisCAtot)+'€',
-      'Prestations + produits', caDelta, 'vs mois préc.', caByWeek, GREEN, GREEN_L);
+    kpiCard(y, 'CA DU MOIS', Math.round(thisCAtot)+'€', 'Prestations + produits',
+      caDelta, 'vs mois préc.', caByWeek, GREEN, GREEN_L);
+    y += cardH + 5;
 
-    // 2. Panier moyen
+    // Panier moyen
     var avgDelta = avgPrev>0 ? Math.round((avgCA-avgPrev)/avgPrev*100) : null;
-    kpiCard(M+col3W+4,  y, col3W, 'PANIER MOYEN',  Math.round(avgCA)+'€',
-      'Par RDV terminé', avgDelta, 'vs mois préc.', avgByWeek, AMBER2, AMBER_L2);
+    kpiCard(y, 'PANIER MOYEN', Math.round(avgCA)+'€', 'Par RDV terminé',
+      avgDelta, 'vs mois préc.', avgByWeek, AMBER2, AMBER_L2);
+    y += cardH + 5;
 
-    // 3. RDV terminés
+    // RDV terminés
     var rdvDelta = rdvPrev>0 ? Math.round((appts.length-rdvPrev)/rdvPrev*100) : null;
-    kpiCard(M+col3W*2+8,y, col3W, 'RDV TERMINÉS',  String(appts.length),
-      'Ce mois · '+totalClients+' clients', rdvDelta, 'vs mois préc.', rdvByWeek, BLUE2, BLUE_L2);
-
-    y += cardH + 8;
-
-    // ── 2e ligne : 2 cartes ───────────────────────────────────
-    var col2W = (CW-4)/2;
-
-    // Taux de retour
-    var retBars = [0,0,0,0];
-    appts.forEach(function(a) {
-      var d = new Date(a.datetime);
-      var wi = Math.min(Math.floor((d.getDate()-1)/weekSize), 3);
-      if (visitMap[a.client_name] >= 2) retBars[wi]++;
-    });
-    kpiCard(M,         y, col2W, 'TAUX DE RETOUR', retRate+'%',
-      returningClients+' clients revenus 2x+', null, null, retBars, GOLD, GOLD_L);
-
-    // Clients uniques
-    var clientBars = [0,0,0,0];
-    var seenClients = [{},{},{},{}];
-    appts.forEach(function(a) {
-      var d = new Date(a.datetime);
-      var wi = Math.min(Math.floor((d.getDate()-1)/weekSize), 3);
-      seenClients[wi][a.client_name] = true;
-    });
-    clientBars = seenClients.map(function(s){ return Object.keys(s).length; });
-    kpiCard(M+col2W+4, y, col2W, 'CLIENTS UNIQUES', String(totalClients),
-      'Sur '+periodeStr, null, null, clientBars, INK, OFFWHITE);
-
+    kpiCard(y, 'RDV TERMINÉS', String(appts.length), 'Ce mois · '+totalClients+' clients',
+      rdvDelta, 'vs mois préc.', rdvByWeek, BLUE2, BLUE_L2);
     y += cardH + 10;
 
     // Insight global
