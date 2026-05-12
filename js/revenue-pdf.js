@@ -11,25 +11,14 @@ function openPdfModal() {
   var list = document.getElementById('pdf-month-list');
   if (!list) return;
 
-  list.innerHTML = '';
+  list.innerHTML = '<div style="font-size:12px;color:var(--ink-light);padding:8px 0">Vérification de l\'activité...</div>';
   pdfSelectedMonth = null;
 
-  // Générer les 3 derniers mois + le mois en cours (indispo)
+  var overlay = document.getElementById('pdf-modal-overlay');
+  overlay.style.display = 'flex';
+
+  // Construire les 3 mois précédents
   var months = [];
-
-  // Mois en cours — indisponible
-  var dCurrent = new Date(now.getFullYear(), now.getMonth(), 1);
-  var dNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  var msLeft = dNextMonth - now;
-  var daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-  months.push({
-    key: dCurrent.getFullYear() + '-' + String(dCurrent.getMonth() + 1).padStart(2, '0'),
-    label: dCurrent.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
-    disabled: true,
-    daysLeft: daysLeft,
-  });
-
-  // 3 mois précédents — disponibles
   for (var i = 1; i <= 3; i++) {
     var d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     months.push({
@@ -37,44 +26,81 @@ function openPdfModal() {
       label: d.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }),
       year: d.getFullYear(),
       month: d.getMonth(),
-      disabled: false,
     });
   }
 
-  months.forEach(function(m) {
-    var item = document.createElement('div');
-    item.dataset.key = m.key;
-    if (m.disabled) {
-      item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;';
-      var lbl = document.createElement('span');
-      lbl.textContent = m.label.charAt(0).toUpperCase() + m.label.slice(1);
-      var badge = document.createElement('span');
-      badge.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:2px 8px;border-radius:100px;';
-      badge.textContent = m.daysLeft + 'j restants';
-      item.appendChild(lbl);
-      item.appendChild(badge);
-    } else {
-      item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;';
-      item.textContent = m.label.charAt(0).toUpperCase() + m.label.slice(1);
-      item.addEventListener('click', function() {
-        list.querySelectorAll('[data-key]').forEach(function(el) {
-          el.style.background = '';
-          el.style.borderColor = 'var(--border)';
-          el.style.color = 'var(--ink)';
-          el.style.fontWeight = '400';
-        });
-        item.style.background = 'var(--ink)';
-        item.style.borderColor = 'var(--ink)';
-        item.style.color = 'var(--white)';
-        item.style.fontWeight = '500';
-        pdfSelectedMonth = { key: m.key, year: parseInt(m.year), month: parseInt(m.month), label: m.label };
-      });
-    }
-    list.appendChild(item);
-  });
+  // Requête : RDV + ventes sur les 3 mois précédents
+  var fromCheck = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString();
+  var toCheck   = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
 
-  var overlay = document.getElementById('pdf-modal-overlay');
-  overlay.style.display = 'flex';
+  Promise.all([
+    sb.from('appointments').select('datetime').eq('user_id', currentUserId).eq('status', 'done').gte('datetime', fromCheck).lte('datetime', toCheck),
+    sb.from('product_sales').select('created_at').eq('user_id', currentUserId).gte('created_at', fromCheck).lte('created_at', toCheck),
+  ]).then(function(results) {
+    var appts = results[0].data || [];
+    var sales = results[1].data || [];
+
+    // Indexer l'activité par mois (clé YYYY-MM)
+    var activity = {};
+    appts.forEach(function(a) { var k = a.datetime.slice(0,7); activity[k] = true; });
+    sales.forEach(function(s) { var k = (s.created_at||'').slice(0,7); activity[k] = true; });
+
+    list.innerHTML = '';
+
+    // Mois en cours — indisponible
+    var dCurrent  = new Date(now.getFullYear(), now.getMonth(), 1);
+    var dNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    var daysLeft  = Math.ceil((dNextMonth - now) / (1000 * 60 * 60 * 24));
+    var currentKey = dCurrent.getFullYear() + '-' + String(dCurrent.getMonth() + 1).padStart(2, '0');
+    var currentLabel = dCurrent.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+    var itemCurrent = document.createElement('div');
+    itemCurrent.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;';
+    var lblC = document.createElement('span');
+    lblC.textContent = currentLabel.charAt(0).toUpperCase() + currentLabel.slice(1);
+    var badgeC = document.createElement('span');
+    badgeC.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:2px 8px;border-radius:100px;';
+    badgeC.textContent = daysLeft + 'j restants';
+    itemCurrent.appendChild(lblC);
+    itemCurrent.appendChild(badgeC);
+    list.appendChild(itemCurrent);
+
+    // 3 mois précédents
+    months.forEach(function(m) {
+      var hasActivity = !!activity[m.key];
+      var item = document.createElement('div');
+      item.dataset.key = m.key;
+      var capLabel = m.label.charAt(0).toUpperCase() + m.label.slice(1);
+
+      if (!hasActivity) {
+        item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);font-size:13px;color:var(--ink-light);background:var(--cream);display:flex;align-items:center;justify-content:space-between;';
+        var lbl = document.createElement('span');
+        lbl.textContent = capLabel;
+        var badge = document.createElement('span');
+        badge.style.cssText = 'font-size:11px;color:var(--ink-light);background:#E8E4DE;padding:2px 8px;border-radius:100px;';
+        badge.textContent = 'Aucune activité';
+        item.appendChild(lbl);
+        item.appendChild(badge);
+      } else {
+        item.style.cssText = 'padding:10px 14px;border-radius:8px;border:1px solid var(--border);cursor:pointer;font-size:13px;color:var(--ink);transition:all .15s;';
+        item.textContent = capLabel;
+        item.addEventListener('click', function() {
+          list.querySelectorAll('[data-key]').forEach(function(el) {
+            el.style.background = '';
+            el.style.borderColor = 'var(--border)';
+            el.style.color = 'var(--ink)';
+            el.style.fontWeight = '400';
+          });
+          item.style.background = 'var(--ink)';
+          item.style.borderColor = 'var(--ink)';
+          item.style.color = 'var(--white)';
+          item.style.fontWeight = '500';
+          pdfSelectedMonth = { key: m.key, year: m.year, month: m.month, label: m.label };
+        });
+      }
+      list.appendChild(item);
+    });
+  });
 }
 
 function closePdfModal() {
