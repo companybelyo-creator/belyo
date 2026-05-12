@@ -384,33 +384,46 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     var tocItems = [
       {
-        num: '1',
+        num: '1.',
         title: 'Indicateurs clés — '+periodeStr,
-        subs: ['CA du mois · Panier moyen · RDV terminés', 'Évolution vs '+prevMonthLabel],
+        subs: [],
         page: '2'
       },
       {
-        num: '2',
+        num: '2.',
         title: 'Chiffre d\'affaires — '+periodeStr,
-        subs: ['CA semaine par semaine vs '+prevMonthLabel, 'Prestations vs Produits · Comparaison détaillée'],
+        subs: [
+          '2.1  CA semaine par semaine vs '+prevMonthLabel,
+          '2.2  Prestations vs Produits — semaine par semaine',
+          '2.3  Comparaison vs '+prevMonthLabel,
+        ],
         page: '3'
       },
       {
-        num: '3',
+        num: '3.',
         title: 'Analyse des rendez-vous — '+periodeStr,
-        subs: ['RDV par jour de la semaine'],
+        subs: [],
         page: '4'
       },
       {
-        num: '4',
+        num: '4.',
         title: 'Analyses avancées Pro',
-        subs: ['Heure de pointe · Répartition Homme/Femme', 'Taux de rétention · Clients uniques · Diversité des prestations'],
+        subs: [
+          '4.1  Heure de pointe',
+          '4.2  Répartition Homme / Femme',
+          '4.3  Taux de rétention',
+          '4.4  Clients uniques par semaine vs '+prevMonthLabel,
+          '4.5  Diversité des prestations par semaine vs '+prevMonthLabel,
+        ],
         page: '5'
       },
       {
-        num: '5',
+        num: '5.',
         title: 'Tops & Performance',
-        subs: ['5.1 Top prestations · 5.2 Top clients'+(topProd.length>0?' · 5.3 Top produits vendus':'')],
+        subs: [
+          '5.1  Top prestations',
+          '5.2  Top clients',
+        ].concat(topProd.length>0?['5.3  Top produits vendus']:[]),
         page: '6'
       },
     ];
@@ -621,7 +634,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     // ── Graphe CA actuel vs mois précédent ────────────────────
     doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-    doc.text('CA semaine par semaine vs mois précédent', M, y); y+=10;
+    doc.text('2.1 — CA semaine par semaine vs mois précédent', M, y); y+=10;
 
     // CA mois précédent par semaine (depuis lastAppts)
     var lastCaByWeek = [0,0,0,0];
@@ -682,7 +695,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=8;
     doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-    doc.text('Prestations vs Produits — semaine par semaine', M, y); y+=10;
+    doc.text('2.2 — Prestations vs Produits — semaine par semaine', M, y); y+=10;
 
     var prestByWeek = [0,0,0,0];
     appts.forEach(function(a) {
@@ -702,7 +715,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=8;
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-    doc.text('Comparaison vs '+prevMonthLabel, M, y); y+=10;
+    doc.text('2.3 — Comparaison vs '+prevMonthLabel, M, y); y+=10;
 
     var lastAvgCA = lastAppts.length>0 ? Math.round(lastApptCA/lastAppts.length) : 0;
     var cmpRows = [
@@ -820,7 +833,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
       // ── Heure de pointe ──────────────────────────────────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Heure de pointe', M, y); y+=7;
+      doc.text('4.1 — Heure de pointe', M, y); y+=7;
 
       var hours={};
       for(var h2=8;h2<=19;h2++) hours[h2]=0;
@@ -835,7 +848,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
       // ── Répartition Homme / Femme — camembert natif ──────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Répartition Homme / Femme', M, y); y+=7;
+      doc.text('4.2 — Répartition Homme / Femme', M, y); y+=7;
 
       // Récupérer les prestations salon pour affiner le genre
       var salonPrests2={homme:[],femme:[]};
@@ -924,7 +937,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
       // ── Taux de rétention — gauge centré, style web ──────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Taux de rétention', M, y); y+=6;
+      doc.text('4.3 — Taux de rétention', M, y); y+=6;
 
       var kpiRet=totalClients>0?Math.round(returningClients/totalClients*100):0;
       // Gauge centré sur la page, grand
@@ -978,7 +991,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
       // ── Clients uniques — barres par semaine vs mois précédent ──
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Clients uniques par semaine vs mois précédent', M, y); y+=10;
+      doc.text('4.4 — Clients uniques par semaine vs mois précédent', M, y); y+=10;
 
       var clientsByWeek=[new Set(),new Set(),new Set(),new Set()];
       appts.forEach(function(a2){
@@ -1006,7 +1019,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
       // ── Diversité des prestations — barres par semaine vs mois précédent ──
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Diversité des prestations par semaine vs mois précédent', M, y); y+=10;
+      doc.text('4.5 — Diversité des prestations par semaine vs mois précédent', M, y); y+=10;
 
       var svcByWeek=[new Set(),new Set(),new Set(),new Set()];
       appts.forEach(function(a2){
