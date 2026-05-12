@@ -558,13 +558,11 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var prevMonthLabel = new Date(targetYear, targetMonth-1, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
     prevMonthLabel = prevMonthLabel.charAt(0).toUpperCase()+prevMonthLabel.slice(1);
 
-    // CA prestations mois précédent
     var lastApptCA = lastAppts.reduce(function(s,a){return s+(parseFloat(a.price)||0);},0);
     var lastProdCA = lastProds.reduce(function(s,p){return s+(parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);},0);
 
-    // Ligne de rappel
-    doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,22,2,2,'F');
-    doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,22,1.5,1.5,'F');
+    doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,20,2,2,'F');
+    doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,20,1.5,1.5,'F');
     var colW2 = CW/3;
     var items3 = [
       {l:'CA '+periodeStr, v:Math.round(thisCAtot).toLocaleString('fr-FR')+'€'},
@@ -574,18 +572,17 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     items3.forEach(function(it,i){
       var x = M+8+i*colW2;
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
-      doc.text(it.l, x, y+8);
+      doc.text(it.l, x, y+7);
       var isEvo = i===2 && trendPct!==null;
-      doc.setFont('helvetica','bold'); doc.setFontSize(13);
+      doc.setFont('helvetica','bold'); doc.setFontSize(12);
       doc.setTextColor.apply(doc, isEvo?(trendPct>=0?UP_TX:DN_TX):INK);
-      doc.text(it.v, x, y+18);
+      doc.text(it.v, x, y+16);
     });
-    y+=28;
+    y+=24;
 
-    // ── Graphe bâtons : CA actuel vs CA mois précédent ────────
-    divider();
-    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-    doc.text('Comparaison CA semaine par semaine vs mois précédent', M, y); y+=10;
+    // ── Graphe CA actuel vs mois précédent ────────────────────
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
+    doc.text('CA semaine par semaine vs mois précédent', M, y); y+=7;
 
     // CA mois précédent par semaine (depuis lastAppts)
     var lastCaByWeek = [0,0,0,0];
@@ -705,73 +702,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     y+=4;
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 4 — DÉTAIL JOURNALIER
-    // ══════════════════════════════════════════════════════════
-    doc.addPage(); pageHeader('Détail journalier du mois');
-
-    var weekMap = {};
-    appts.forEach(function(a) {
-      var d   = new Date(a.datetime);
-      var day = d.getDay();
-      var monday = new Date(d);
-      monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
-      var wk = monday.toLocaleDateString('fr-FR', {day:'2-digit',month:'short'});
-      if (!weekMap[wk]) weekMap[wk] = [];
-      weekMap[wk].push(a);
-    });
-
-    var weeks = Object.keys(weekMap);
-    if (weeks.length === 0) {
-      y=wrapText('Aucun rendez-vous enregistré pour ce mois.',M,y,CW,5,8,'normal',MUTED);
-    } else {
-      weeks.forEach(function(wk) {
-        var wAppts = weekMap[wk];
-        var wCA    = wAppts.reduce(function(s,a){return s+(parseFloat(a.price)||0);},0);
-        checkPage(14+wAppts.length*8);
-
-        // Header semaine
-        doc.setFillColor.apply(doc,GOLD_L); doc.roundedRect(M,y,CW,9,2,2,'F');
-        doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,9,1,1,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-        doc.text('Semaine du '+wk, M+7, y+6.2);
-        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,GOLD);
-        doc.text(wAppts.length+' RDV · '+Math.round(wCA)+'€', W-M-2, y+6.2, {align:'right'});
-        y+=10;
-
-        wAppts.forEach(function(a,i) {
-          checkPage(8);
-          doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,7.5,'F');
-          var dt = new Date(a.datetime);
-          var ds = dt.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'});
-          var ts = dt.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-          doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
-          doc.text(ds+' '+ts, M+4, y+5.2);
-          var nm = (a.client_name||'—').slice(0,22);
-          doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-          doc.text(nm, M+52, y+5.2);
-          if (a.service) {
-            doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-            doc.text(a.service.slice(0,26), M+102, y+5.2);
-          }
-          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-          doc.text((parseFloat(a.price)||0).toFixed(0)+'€', W-M-2, y+5.2, {align:'right'});
-          y+=7.5;
-        });
-        y+=4;
-      });
-
-      checkPage(10);
-      doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,WHITE);
-      doc.text('TOTAL DU MOIS', M+4, y+5.5);
-      doc.text(appts.length+' rendez-vous', M+80, y+5.5);
-      doc.setTextColor.apply(doc,GOLD);
-      doc.text(Math.round(thisCAtot)+'€', W-M-2, y+5.5, {align:'right'});
-      y+=14;
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // PAGE 5 — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
+    // PAGE 4 — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Tops & Performance');
 
