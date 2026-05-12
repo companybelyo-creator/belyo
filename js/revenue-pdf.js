@@ -549,50 +549,161 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       trendPct===null?GOLD:trendPct>=0?UP_TX:DN_TX);
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 3 — CA + GRAPHIQUES SOURCES
+    // PAGE 3 — CHIFFRE D'AFFAIRES
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Chiffre d\'affaires & Répartition');
-    sectionTitle('Chiffre d\'affaires mensuel');
+    sectionTitle('Chiffre d\'affaires — '+periodeStr);
 
-    var caCanvas=document.getElementById('ca-chart');
-    if (caCanvas) {
-      checkPage(68);
-      doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,56,2,2,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,INK);
-      doc.text('CA total — '+periodeStr+' — '+Math.round(thisCAtot).toLocaleString('fr-FR')+'€',M+3,y+5);
-      doc.addImage(caCanvas.toDataURL('image/png'),'PNG',M+2,y+8,CW-4,46);
-      y+=61;
-    }
-    insightBox('', 'Meilleur mois : '+(allMonths[bestIdx]?mlabel(allMonths[bestIdx])+' ('+Math.round(caValues[bestIdx])+'€)':'—')+' · Panier moyen : '+Math.round(avgCA)+'€ · RDV ce mois : '+appts.length, GOLD_L, GOLD);
+    // ── Rappel CA ────────────────────────────────────────────
+    var prevMonthLabel = new Date(targetYear, targetMonth-1, 1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    prevMonthLabel = prevMonthLabel.charAt(0).toUpperCase()+prevMonthLabel.slice(1);
 
+    // CA prestations mois précédent
+    var lastApptCA = lastAppts.reduce(function(s,a){return s+(parseFloat(a.price)||0);},0);
+    var lastProdCA = lastProds.reduce(function(s,p){return s+(parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);},0);
+
+    // Ligne de rappel
+    doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,22,2,2,'F');
+    doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,22,1.5,1.5,'F');
+    var colW2 = CW/3;
+    var items3 = [
+      {l:'CA '+periodeStr, v:Math.round(thisCAtot).toLocaleString('fr-FR')+'€'},
+      {l:'CA '+prevMonthLabel, v:lastCAtot>0?Math.round(lastCAtot).toLocaleString('fr-FR')+'€':'—'},
+      {l:'Évolution', v:trendPct!==null?(trendPct>=0?'↑ +':'↓ ')+Math.abs(trendPct)+'%':'—'},
+    ];
+    items3.forEach(function(it,i){
+      var x = M+8+i*colW2;
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
+      doc.text(it.l, x, y+8);
+      var isEvo = i===2 && trendPct!==null;
+      doc.setFont('helvetica','bold'); doc.setFontSize(13);
+      doc.setTextColor.apply(doc, isEvo?(trendPct>=0?UP_TX:DN_TX):INK);
+      doc.text(it.v, x, y+18);
+    });
+    y+=28;
+
+    // ── Graphe bâtons : CA actuel vs CA mois précédent ────────
     divider();
-    sectionTitle('CA Prestations vs CA Produits');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+    doc.text('Comparaison CA semaine par semaine vs mois précédent', M, y); y+=10;
 
-    var gW3=(CW-6)/2, gH3=48;
-    var pC=document.getElementById('prest-chart'), pdC=document.getElementById('prod-chart');
-    if(pC||pdC){
-      checkPage(gH3+26);
-      if(pC){
-        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,gW3,gH3+18,2,2,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,INK);
-        doc.text('Prestations — '+Math.round(totalAppts)+'€',M+3,y+6);
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
-        doc.text(apptPct+'% du CA total',M+3,y+11);
-        doc.addImage(pC.toDataURL('image/png'),'PNG',M+2,y+14,gW3-4,gH3);
-      }
-      if(pdC){
-        var px2=M+gW3+6;
-        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(px2,y,gW3,gH3+18,2,2,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,INK);
-        doc.text('Produits — '+Math.round(totalProd)+'€',px2+3,y+6);
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,MUTED);
-        doc.text(prodPct+'% du CA total',px2+3,y+11);
-        doc.addImage(pdC.toDataURL('image/png'),'PNG',px2+2,y+14,gW3-4,gH3);
-      }
-      y+=gH3+24;
+    // CA mois précédent par semaine (depuis lastAppts)
+    var lastCaByWeek = [0,0,0,0];
+    lastAppts.forEach(function(a) {
+      var d = new Date(a.datetime); var day = d.getDate();
+      var wi = day<=8?0:day<=15?1:day<=23?2:3;
+      lastCaByWeek[wi] += parseFloat(a.price)||0;
+    });
+    lastProds.forEach(function(p) {
+      var d = new Date(p.created_at); var day = d.getDate();
+      var wi = day<=8?0:day<=15?1:day<=23?2:3;
+      lastCaByWeek[wi] += (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);
+    });
+
+    // Fonction graphe bâtons groupés natif
+    function groupedBarChart(x, y, w, h, seriesA, seriesB, colorA, colorB, labels, labelA, labelB) {
+      var n   = seriesA.length;
+      var max = Math.max.apply(null, seriesA.concat(seriesB)) || 1;
+      var grpW = w / n;
+      var barW = (grpW - 6) / 2;
+
+      // Ligne de base
+      doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.2);
+      doc.line(x, y+h, x+w, y+h);
+
+      seriesA.forEach(function(valA, i) {
+        var valB  = seriesB[i];
+        var grpX  = x + i*grpW + 2;
+        // Barre A
+        var hA = Math.max(0.5, (valA/max)*h);
+        doc.setFillColor.apply(doc,colorA);
+        doc.roundedRect(grpX, y+h-hA, barW, hA, 0.5, 0.5, 'F');
+        // Barre B
+        var hB = Math.max(0.5, (valB/max)*h);
+        doc.setFillColor.apply(doc,colorB);
+        doc.roundedRect(grpX+barW+1.5, y+h-hB, barW, hB, 0.5, 0.5, 'F');
+        // Label semaine
+        doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor.apply(doc,MUTED);
+        doc.text(labels[i], grpX+barW, y+h+4, {align:'center'});
+      });
+
+      // Légende
+      var lx = x;
+      doc.setFillColor.apply(doc,colorA); doc.roundedRect(lx,y+h+8,6,3,0.5,0.5,'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc,INK);
+      doc.text(labelA, lx+8, y+h+11);
+      doc.setFillColor.apply(doc,colorB); doc.roundedRect(lx+50,y+h+8,6,3,0.5,0.5,'F');
+      doc.text(labelB, lx+58, y+h+11);
     }
-    insightBox('', 'Prestations : '+Math.round(totalAppts)+'€ · Panier moyen : '+Math.round(avgCA)+'€. '+(avgCA>60?'Excellent positionnement.':avgCA>35?'Panier correct.':'Panier bas.'), OFFWHITE, GOLD);
-    insightBox('', totalProd>0?'Produits : '+Math.round(totalProd)+'€ ('+prodPct+'%). '+(prodPct<10?'Levier peu activé.':prodPct<25?'Bonne contribution.':'Vos produits sont un vrai pilier de revenus.'):'Aucune vente de produit ce mois.', OFFWHITE, GOLD);
+
+    var wkLabels = ['1-8','9-15','16-23','24-'+daysInMonth];
+    checkPage(60);
+    groupedBarChart(M, y, CW, 36, caByWeek, lastCaByWeek, INK, BORDER, wkLabels, periodeStr, prevMonthLabel);
+    y+=56;
+
+    // ── Graphe bâtons : Prestations vs Produits ───────────────
+    divider();
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+    doc.text('Prestations vs Produits — semaine par semaine', M, y); y+=10;
+
+    // CA prestations par semaine
+    var prestByWeek = [0,0,0,0];
+    appts.forEach(function(a) {
+      var day = new Date(a.datetime).getDate();
+      var wi = day<=8?0:day<=15?1:day<=23?2:3;
+      prestByWeek[wi] += parseFloat(a.price)||0;
+    });
+    // CA produits par semaine
+    var prodByWeek = [0,0,0,0];
+    prodSales.forEach(function(p) {
+      var day = new Date(p.created_at).getDate();
+      var wi = day<=8?0:day<=15?1:day<=23?2:3;
+      prodByWeek[wi] += (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);
+    });
+
+    checkPage(60);
+    groupedBarChart(M, y, CW, 36, prestByWeek, prodByWeek, GOLD, BORDER, wkLabels, 'Prestations '+Math.round(totalAppts)+'€', 'Produits '+Math.round(totalProd)+'€');
+    y+=56;
+
+    // ── Comparaison mois précédent ────────────────────────────
+    divider();
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+    doc.text('Comparaison détaillée vs '+prevMonthLabel, M, y); y+=10;
+
+    var cmpRows = [
+      {l:'CA total',       curr:Math.round(thisCAtot), prev:Math.round(lastCAtot)},
+      {l:'CA prestations', curr:Math.round(totalAppts), prev:Math.round(lastApptCA)},
+      {l:'CA produits',    curr:Math.round(totalProd),  prev:Math.round(lastProdCA)},
+      {l:'RDV terminés',   curr:appts.length,           prev:lastAppts.length},
+      {l:'Panier moyen',   curr:Math.round(avgCA),      prev:lastAppts.length>0?Math.round(lastApptCA/lastAppts.length):0},
+    ];
+
+    // Header
+    doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
+    doc.text('Indicateur', M+3, y+5.5);
+    doc.text(periodeStr, M+80, y+5.5);
+    doc.text(prevMonthLabel, M+122, y+5.5);
+    doc.text('Évol.', M+CW-2, y+5.5, {align:'right'});
+    y+=8;
+
+    cmpRows.forEach(function(r,i) {
+      checkPage(9);
+      doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,8,'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
+      doc.text(r.l, M+3, y+5.5);
+      doc.text(r.curr+(r.l.indexOf('RDV')!==-1?'':r.l.indexOf('moyenne')===-1||r.l.indexOf('moyen')!==-1?'€':''), M+80, y+5.5);
+      doc.setTextColor.apply(doc,MUTED);
+      doc.text(r.prev+(r.l.indexOf('RDV')!==-1?'':r.l.indexOf('moyen')!==-1?'€':''), M+122, y+5.5);
+      if (r.prev > 0) {
+        var evo = Math.round((r.curr-r.prev)/r.prev*100);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+        doc.setTextColor.apply(doc, evo>=0?UP_TX:DN_TX);
+        doc.text((evo>=0?'↑ +':'↓ ')+Math.abs(evo)+'%', M+CW-2, y+5.5, {align:'right'});
+      }
+      y+=8;
+    });
+    y+=6;
 
     // ══════════════════════════════════════════════════════════
     // PAGE 4 — DÉTAIL JOURNALIER
