@@ -706,7 +706,40 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     y+=4;
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 4 — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
+    // PAGE 4 — RDV PAR JOUR DE LA SEMAINE
+    // ══════════════════════════════════════════════════════════
+    doc.addPage(); pageHeader('Analyse des rendez-vous');
+    sectionTitle('RDV par jour de la semaine — '+periodeStr);
+
+    var wdEl = document.getElementById('weekday-chart');
+    if (wdEl) {
+      doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,58,2,2,'F');
+      doc.addImage(wdEl.toDataURL('image/png'),'PNG',M+2,y+2,CW-4,54);
+      y+=63;
+    }
+
+    var rdvByDay2 = [0,0,0,0,0,0,0];
+    appts.forEach(function(a){ rdvByDay2[new Date(a.datetime).getDay()]++; });
+    var rdvOrd   = [rdvByDay2[1],rdvByDay2[2],rdvByDay2[3],rdvByDay2[4],rdvByDay2[5],rdvByDay2[6],rdvByDay2[0]];
+    var dayOrd   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    var maxD     = Math.max.apply(null,rdvOrd)||1;
+    var bestDI   = rdvOrd.indexOf(maxD);
+    var activeDays2 = rdvOrd.filter(function(v){return v>0;}).length;
+    var avgPerDay2  = activeDays2>0?(appts.length/activeDays2).toFixed(1):'0';
+    var worstActive = rdvOrd.map(function(v,i){return {v:v,i:i};}).filter(function(x){return x.v>0;}).sort(function(a,b){return a.v-b.v;})[0];
+    var worstDN = worstActive?dayOrd[worstActive.i]:'—';
+
+    var analysis = dayOrd[bestDI]+' est votre journee la plus chargee ('+maxD+' RDV). ';
+    analysis += worstDN!=='—'?worstDN+' est la plus creuse. ':'';
+    analysis += 'Moyenne sur les jours actifs : '+avgPerDay2+' RDV/jour. ';
+    analysis += maxD>=appts.length*0.35
+      ? 'Activite concentree — diversifier les creneaux reduirait la charge.'
+      : 'Bonne repartition de votre activite sur la semaine.';
+    insightBox('', analysis, GOLD_L, GOLD);
+    y+=4;
+
+    // ══════════════════════════════════════════════════════════
+    // PAGE 5 — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Tops & Performance');
 
@@ -807,109 +840,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       });
       y+=4;
       insightBox('', '"'+topProd[0][0]+'" est votre produit phare avec '+Math.round(topProd[0][1].ca)+'€ et '+topProd[0][1].qty+' vente'+(topProd[0][1].qty>1?'s':'')+'.', GOLD_L, GOLD);
-    }
-
-    // ══════════════════════════════════════════════════════════
-    // PAGE 5b — RDV PAR JOUR DE LA SEMAINE
-    // ══════════════════════════════════════════════════════════
-    doc.addPage(); pageHeader('Analyse des rendez-vous');
-    sectionTitle('RDV par jour de la semaine — '+periodeStr);
-
-    // Compter les RDV par jour (0=dim, 1=lun ... 6=sam)
-    var dayNames = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-    var rdvByDay = [0,0,0,0,0,0,0];
-    appts.forEach(function(a) {
-      var d = new Date(a.datetime);
-      rdvByDay[d.getDay()]++;
-    });
-    // Réordonner lun-dim
-    var rdvOrdered  = [rdvByDay[1],rdvByDay[2],rdvByDay[3],rdvByDay[4],rdvByDay[5],rdvByDay[6],rdvByDay[0]];
-    var dayOrdered  = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
-    var maxDay      = Math.max.apply(null,rdvOrdered)||1;
-    var bestDayIdx  = rdvOrdered.indexOf(maxDay);
-    var bestDayName = dayOrdered[bestDayIdx];
-    var worstVal    = Math.min.apply(null,rdvOrdered.filter(function(v){return v>0;}))||0;
-    var worstDayIdx = rdvOrdered.indexOf(worstVal);
-    var worstDayName= worstDayIdx>=0?dayOrdered[worstDayIdx]:'—';
-    var totalRdv    = rdvOrdered.reduce(function(s,v){return s+v;},0);
-
-    // Graphe barres horizontales
-    checkPage(7*12+30);
-    var barMaxW = CW-40;
-    rdvOrdered.forEach(function(v,i) {
-      checkPage(12);
-      var bw = barMaxW * (v/maxDay);
-      var isBest = (i===bestDayIdx);
-      // Label jour
-      doc.setFont('helvetica', isBest?'bold':'normal'); doc.setFontSize(8);
-      doc.setTextColor.apply(doc, isBest?INK:MUTED);
-      doc.text(dayOrdered[i], M, y+5.5);
-      // Fond barre
-      doc.setFillColor.apply(doc, BORDER);
-      doc.roundedRect(M+18, y+1.5, barMaxW, 7, 1, 1, 'F');
-      // Barre valeur
-      if (v > 0) {
-        doc.setFillColor.apply(doc, isBest?GOLD:GOLD_L);
-        doc.roundedRect(M+18, y+1.5, bw, 7, 1, 1, 'F');
-      }
-      // Nombre
-      doc.setFont('helvetica', isBest?'bold':'normal'); doc.setFontSize(7.5);
-      doc.setTextColor.apply(doc, isBest?INK:MUTED);
-      doc.text(String(v)+' RDV', M+18+barMaxW+4, y+5.8);
-      y+=11;
-    });
-    y+=6;
-
-    // Texte d'analyse
-    var avgPerDay = totalRdv>0 ? (totalRdv/7).toFixed(1) : '0';
-    var workDays  = rdvOrdered.filter(function(v,i){ return i<6 && v>0; }).length;
-    var analysis  = bestDayName+' est votre journee la plus chargee avec '+maxDay+' RDV. ';
-    analysis += worstDayName!=='—' && worstVal>0 ? worstDayName+' est la plus creuse ('+worstVal+' RDV). ' : '';
-    analysis += 'Sur '+workDays+' jour'+(workDays>1?'s':'')+" actifs ce mois, vous faites en moyenne "+avgPerDay+' RDV par jour. ';
-    analysis += maxDay >= totalRdv*0.3
-      ? 'Votre activite est concentree sur quelques jours — diversifier les creneaux reduirait la pression.'
-      : 'Bonne repartition de votre activite sur la semaine.';
-
-    insightBox('', analysis, GOLD_L, GOLD);
-
-    // Comparaison vs mois précédent si données dispo
-    if (lastAppts.length > 0) {
-      var lastByDay = [0,0,0,0,0,0,0];
-      lastAppts.forEach(function(a) { lastByDay[new Date(a.datetime).getDay()]++; });
-      var lastOrdered = [lastByDay[1],lastByDay[2],lastByDay[3],lastByDay[4],lastByDay[5],lastByDay[6],lastByDay[0]];
-      var lastBestIdx = lastOrdered.indexOf(Math.max.apply(null,lastOrdered));
-
-      checkPage(30);
-      divider();
-      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Comparaison vs '+prevMonthLabel, M, y); y+=8;
-
-      doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,7,'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,WHITE);
-      doc.text('Jour', M+3, y+4.8);
-      doc.text(periodeStr, M+60, y+4.8);
-      doc.text(prevMonthLabel, M+100, y+4.8);
-      doc.text('Diff.', W-M-2, y+4.8, {align:'right'});
-      y+=7;
-
-      dayOrdered.forEach(function(d,i) {
-        checkPage(8);
-        var curr = rdvOrdered[i], prev = lastOrdered[i];
-        var diff = curr-prev;
-        doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,7,'F');
-        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,INK);
-        doc.text(d, M+3, y+4.8);
-        doc.text(String(curr), M+60, y+4.8);
-        doc.setTextColor.apply(doc,MUTED);
-        doc.text(String(prev), M+100, y+4.8);
-        if (prev>0||curr>0) {
-          doc.setFont('helvetica','bold'); doc.setFontSize(7);
-          doc.setTextColor.apply(doc, diff>0?UP_TX:diff<0?DN_TX:MUTED);
-          doc.text((diff>0?'+ ':diff<0?'- ':'')+Math.abs(diff), W-M-2, y+4.8, {align:'right'});
-        }
-        y+=7;
-      });
-      y+=4;
     }
 
     // ══════════════════════════════════════════════════════════
