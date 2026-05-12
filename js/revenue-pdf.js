@@ -637,27 +637,24 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     }
 
     var wkLabels = ['1-8','9-15','16-23','24-'+daysInMonth];
-    checkPage(60);
+    checkPage(220);
     var GREEN_DARK  = [22, 130, 95];
     var GREEN_LIGHT = [134, 210, 181];
-    var ORANGE      = [217, 93, 48];
-    var VIOLET      = [107, 76, 200];
-    groupedBarChart(M, y, CW, 36, caByWeek, lastCaByWeek, GREEN_DARK, GREEN_LIGHT, wkLabels, periodeStr, prevMonthLabel);
-    y+=56;
+    var ORANGE      = [249, 115, 22];
+    var VIOLET      = [123, 97, 255];
+    groupedBarChart(M, y, CW, 30, caByWeek, lastCaByWeek, GREEN_DARK, GREEN_LIGHT, wkLabels, periodeStr, prevMonthLabel);
+    y+=46;
 
-    // ── Graphe bâtons : Prestations vs Produits ───────────────
-    divider();
+    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=6;
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-    doc.text('Prestations vs Produits — semaine par semaine', M, y); y+=10;
+    doc.text('Prestations vs Produits — semaine par semaine', M, y); y+=8;
 
-    // CA prestations par semaine
     var prestByWeek = [0,0,0,0];
     appts.forEach(function(a) {
       var day = new Date(a.datetime).getDate();
       var wi = day<=8?0:day<=15?1:day<=23?2:3;
       prestByWeek[wi] += parseFloat(a.price)||0;
     });
-    // CA produits par semaine
     var prodByWeek = [0,0,0,0];
     prodSales.forEach(function(p) {
       var day = new Date(p.created_at).getDate();
@@ -665,55 +662,52 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       prodByWeek[wi] += (parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1);
     });
 
-    checkPage(60);
-    groupedBarChart(M, y, CW, 36, prestByWeek, prodByWeek, ORANGE, VIOLET, wkLabels, 'Prestations '+Math.round(totalAppts)+'€', 'Produits '+Math.round(totalProd)+'€');
-    y+=56;
+    groupedBarChart(M, y, CW, 30, prestByWeek, prodByWeek, ORANGE, VIOLET, wkLabels, 'Prestations '+Math.round(totalAppts)+'€', 'Produits '+Math.round(totalProd)+'€');
+    y+=46;
 
-    // ── Comparaison mois précédent ────────────────────────────
-    divider();
+    doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.15); doc.line(M,y,W-M,y); y+=6;
     doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
-    doc.text('Comparaison détaillée vs '+prevMonthLabel, M, y); y+=10;
+    doc.text('Comparaison vs '+prevMonthLabel, M, y); y+=8;
 
+    var lastAvgCA = lastAppts.length>0 ? Math.round(lastApptCA/lastAppts.length) : 0;
     var cmpRows = [
-      {l:'CA total',       curr:Math.round(thisCAtot), prev:Math.round(lastCAtot)},
-      {l:'CA prestations', curr:Math.round(totalAppts), prev:Math.round(lastApptCA)},
-      {l:'CA produits',    curr:Math.round(totalProd),  prev:Math.round(lastProdCA)},
-      {l:'RDV terminés',   curr:appts.length,           prev:lastAppts.length},
-      {l:'Panier moyen',   curr:Math.round(avgCA),      prev:lastAppts.length>0?Math.round(lastApptCA/lastAppts.length):0},
+      {l:'CA total',       curr:Math.round(thisCAtot),  prev:Math.round(lastCAtot),  unit:'€'},
+      {l:'CA prestations', curr:Math.round(totalAppts), prev:Math.round(lastApptCA), unit:'€'},
+      {l:'CA produits',    curr:Math.round(totalProd),  prev:Math.round(lastProdCA), unit:'€'},
+      {l:'RDV terminés',   curr:appts.length,           prev:lastAppts.length,       unit:''},
+      {l:'Panier moyen',   curr:Math.round(avgCA),      prev:lastAvgCA,              unit:'€'},
     ];
 
-    // Header
-    doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,8,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,WHITE);
-    doc.text('Indicateur', M+3, y+5.5);
-    doc.text(periodeStr, M+80, y+5.5);
-    doc.text(prevMonthLabel, M+122, y+5.5);
-    doc.text('Évol.', M+CW-2, y+5.5, {align:'right'});
-    y+=8;
+    doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,7,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,WHITE);
+    doc.text('Indicateur', M+3, y+4.8);
+    doc.text(periodeStr, M+85, y+4.8);
+    doc.text(prevMonthLabel, M+125, y+4.8);
+    doc.text('Évol.', W-M-2, y+4.8, {align:'right'});
+    y+=7;
 
     cmpRows.forEach(function(r,i) {
-      checkPage(9);
-      doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,8,'F');
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,INK);
-      doc.text(r.l, M+3, y+5.5);
-      doc.text(r.curr+(r.l.indexOf('RDV')!==-1?'':r.l.indexOf('moyenne')===-1||r.l.indexOf('moyen')!==-1?'€':''), M+80, y+5.5);
+      doc.setFillColor.apply(doc,i%2===0?OFFWHITE:WHITE); doc.rect(M,y,CW,7,'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,INK);
+      doc.text(r.l, M+3, y+4.8);
+      doc.text(String(r.curr)+r.unit, M+85, y+4.8);
       doc.setTextColor.apply(doc,MUTED);
-      doc.text(r.prev+(r.l.indexOf('RDV')!==-1?'':r.l.indexOf('moyen')!==-1?'€':''), M+122, y+5.5);
+      doc.text(r.prev>0?String(r.prev)+r.unit:'—', M+125, y+4.8);
       if (r.prev > 0) {
-        var evo = Math.round((r.curr-r.prev)/r.prev*100);
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-        doc.setTextColor.apply(doc, evo>=0?UP_TX:DN_TX);
-        doc.text((evo>=0?'↑ +':'↓ ')+Math.abs(evo)+'%', M+CW-2, y+5.5, {align:'right'});
+        var diff = r.curr - r.prev;
+        var evo  = Math.round(diff / r.prev * 100);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7);
+        doc.setTextColor.apply(doc, diff>=0?UP_TX:DN_TX);
+        doc.text((diff>=0?'↑ +':'↓ ')+Math.abs(evo)+'%', W-M-2, y+4.8, {align:'right'});
       }
-      y+=8;
+      y+=7;
     });
-    y+=6;
+    y+=4;
 
     // ══════════════════════════════════════════════════════════
     // PAGE 4 — DÉTAIL JOURNALIER
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Détail journalier du mois');
-    sectionTitle('Rendez-vous du mois · '+periodeStr);
 
     var weekMap = {};
     appts.forEach(function(a) {
