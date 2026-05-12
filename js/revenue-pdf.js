@@ -147,7 +147,6 @@ async function exportPDFForMonth() {
 async function exportPDF(targetYear, targetMonth, targetLabel) {
   var btn = document.getElementById('btn-export');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Génération...'; }
-  var proSectionWasHidden = false;
 
   try {
     var jsPDF = window.jspdf ? window.jspdf.jsPDF : window.jsPDF;
@@ -292,11 +291,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
                   + lastProds.reduce(function(s,p){ return s+(parseFloat(p.unit_price)||0)*(parseInt(p.quantity_sold)||1); },0);
 
     // Reconstruire les graphes sur le mois cible
-    // Forcer l'affichage de la section Pro pour que les canvas soient rendus
-    var proSection = document.getElementById('stats-pro-section');
-    proSectionWasHidden = proSection && proSection.style.display === 'none';
-    if (proSection && proSectionWasHidden) proSection.style.display = 'block';
-
     renderCAChart(appts, prodSales, pdfNow);
     renderPrestChart(appts, pdfNow);
     await renderProdChart(pdfNow);
@@ -745,111 +739,184 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     y+=4;
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 5 — GRAPHIQUES PRO (avant les tops)
+    // PAGE 5 — ANALYSES AVANCÉES PRO (graphes natifs jsPDF)
     // ══════════════════════════════════════════════════════════
     if(currentPlan==='pro'||currentPlan==='trial'){
       doc.addPage(); pageHeader('Analyses avancées Pro');
       sectionTitle('Analyses avancées', 'PRO');
 
-      // ── 5.1 Heure de pointe + Répartition Homme/Femme côte à côte ──
+      // ── Fonction graphe à barres natif ──────────────────────
+      function nativeBarChart(x, y, w, h, values, labels, colorTop, colorBot, tooltipSuffix) {
+        var n   = values.length;
+        if(n===0) return y;
+        var max = Math.max.apply(null, values) || 1;
+        var barW = (w - (n-1)*2) / n;
+
+        // Axes
+        doc.setDrawColor.apply(doc,BORDER); doc.setLineWidth(0.2);
+        doc.line(x, y+h, x+w, y+h); // base
+
+        for(var i=0;i<n;i++){
+          var bX = x + i*(barW+2);
+          var bH = Math.max(0.5, (values[i]/max)*h);
+          var bY = y+h-bH;
+
+          // Dégradé simulé : 2 rectangles
+          var midH = bH/2;
+          doc.setFillColor.apply(doc, colorTop);
+          doc.roundedRect(bX, bY, barW, midH, 0.5, 0.5, 'F');
+          doc.setFillColor.apply(doc, colorBot);
+          doc.rect(bX, bY+midH-0.5, barW, midH+0.5, 'F');
+          // Arrondi bas
+          doc.setFillColor.apply(doc, colorBot);
+          doc.roundedRect(bX, bY+bH-2, barW, 2, 0.5, 0.5, 'F');
+
+          // Valeur au dessus de la barre
+          doc.setFont('helvetica','bold'); doc.setFontSize(5.5); doc.setTextColor.apply(doc,INK);
+          var valStr = tooltipSuffix==='€' ? Math.round(values[i])+'€' : String(values[i]);
+          doc.text(valStr, bX+barW/2, bY-1.5, {align:'center'});
+
+          // Label en dessous
+          doc.setFont('helvetica','normal'); doc.setFontSize(5.5); doc.setTextColor.apply(doc,MUTED);
+          doc.text(labels[i], bX+barW/2, y+h+4.5, {align:'center'});
+        }
+        return y+h+10;
+      }
+
+      // ── Heure de pointe ──────────────────────────────────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Heure de pointe · Répartition Homme/Femme', M, y); y+=8;
+      doc.text('Heure de pointe', M, y); y+=7;
 
-      var halfW = (CW-4)/2;
-      var hourEl  = document.getElementById('hour-chart');
-      var genreEl = document.getElementById('genre-chart');
-
-      if(hourEl && hourEl.width > 0){
-        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,halfW,52,2,2,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,INK);
-        doc.text('Heure de pointe — '+periodeStr, M+3, y+6);
-        doc.addImage(hourEl.toDataURL('image/png'),'PNG',M+2,y+9,halfW-4,41);
-      }
-      if(genreEl && genreEl.width > 0){
-        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M+halfW+4,y,halfW,52,2,2,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,INK);
-        doc.text('Répartition Homme/Femme — '+periodeStr, M+halfW+7, y+6);
-        doc.addImage(genreEl.toDataURL('image/png'),'PNG',M+halfW+6,y+9,halfW-4,41);
-      }
-      y+=56;
+      var hours={};
+      for(var h2=8;h2<=19;h2++) hours[h2]=0;
+      appts.forEach(function(a){ var hr=new Date(a.datetime).getHours(); if(hours[hr]!==undefined)hours[hr]++; });
+      var hVals=Object.values(hours);
+      var hLabels=Object.keys(hours).map(function(h3){return h3+'h';});
+      y = nativeBarChart(M, y, CW, 32, hVals, hLabels, [59,130,246], [147,197,253], '');
+      y=wrapText('Les heures creuses sont une opportunité de remplissage via des offres attractives.', M, y, CW, 4.5, 7, 'normal', MUTED);
+      y+=5;
 
       divider();
 
-      // ── 5.2 Taux de rétention natif ──
+      // ── Répartition Homme / Femme ────────────────────────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Taux de rétention', M, y); y+=8;
+      doc.text('Répartition Homme / Femme', M, y); y+=7;
 
-      var kpiRet = totalClients>0?Math.round(returningClients/totalClients*100):0;
-      var newPct2 = totalClients>0?Math.round((totalClients-returningClients)/totalClients*100):0;
+      var genreCount={Homme:0, Femme:0};
+      appts.forEach(function(a){
+        if(a.genre==='femme') genreCount.Femme++;
+        else if(a.genre==='homme') genreCount.Homme++;
+        else genreCount.Homme++;
+      });
+      var gTotal=genreCount.Homme+genreCount.Femme||1;
+      var hPct=Math.round(genreCount.Homme/gTotal*100);
+      var fPct=100-hPct;
+
+      // Barres horizontales Homme/Femme
+      var barTotalW = CW;
+      var barHH = 12;
+      // Homme
+      doc.setFillColor.apply(doc,[37,99,235]);
+      doc.roundedRect(M, y, barTotalW*(hPct/100), barHH, 2, 2, 'F');
+      doc.setFillColor.apply(doc,[218,234,254]);
+      doc.roundedRect(M+barTotalW*(hPct/100), y, barTotalW*(fPct/100), barHH, 2, 2, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,WHITE);
+      if(hPct>12) doc.text('Homme '+hPct+'%', M+4, y+8);
+      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,[37,99,235]);
+      if(fPct>12) doc.text('Femme '+fPct+'%', M+barTotalW*(hPct/100)+4, y+8);
+      y+=barHH+4;
+
+      // Valeurs absolues
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
+      doc.text(genreCount.Homme+' RDV Homme · '+genreCount.Femme+' RDV Femme · '+gTotal+' total', M, y+4);
+      y+=10;
+
+      divider();
+
+      // ── Taux de rétention ────────────────────────────────────
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
+      doc.text('Taux de rétention', M, y); y+=7;
+
+      var kpiRet=totalClients>0?Math.round(returningClients/totalClients*100):0;
+      var newPct2=totalClients>0?Math.round((totalClients-returningClients)/totalClients*100):0;
 
       // Gauge demi-cercle natif
-      var retCx = M+28, retCy = y+24, retR = 18;
-      var steps2=40;
+      var retCx=M+28, retCy=y+22, retR=18;
+      var stepsR=40;
       doc.setDrawColor.apply(doc,[218,213,206]); doc.setLineWidth(4);
-      for(var si=0;si<steps2;si++){
-        var a1=Math.PI+si*(Math.PI/steps2), a2=Math.PI+(si+1)*(Math.PI/steps2);
-        doc.line(retCx+retR*Math.cos(a1), retCy+retR*Math.sin(a1), retCx+retR*Math.cos(a2), retCy+retR*Math.sin(a2));
+      for(var si=0;si<stepsR;si++){
+        var a1=Math.PI+si*(Math.PI/stepsR), a2=Math.PI+(si+1)*(Math.PI/stepsR);
+        doc.line(retCx+retR*Math.cos(a1),retCy+retR*Math.sin(a1),retCx+retR*Math.cos(a2),retCy+retR*Math.sin(a2));
       }
       doc.setDrawColor.apply(doc,[29,158,117]); doc.setLineWidth(4);
-      var fillSteps2=Math.round(steps2*(kpiRet/100));
-      for(var si=0;si<fillSteps2;si++){
-        var a1=Math.PI+si*(Math.PI/steps2), a2=Math.PI+(si+1)*(Math.PI/steps2);
-        doc.line(retCx+retR*Math.cos(a1), retCy+retR*Math.sin(a1), retCx+retR*Math.cos(a2), retCy+retR*Math.sin(a2));
+      var fillSteps=Math.round(stepsR*(kpiRet/100));
+      for(var si=0;si<fillSteps;si++){
+        var a1=Math.PI+si*(Math.PI/stepsR), a2=Math.PI+(si+1)*(Math.PI/stepsR);
+        doc.line(retCx+retR*Math.cos(a1),retCy+retR*Math.sin(a1),retCx+retR*Math.cos(a2),retCy+retR*Math.sin(a2));
       }
       doc.setLineWidth(0.2);
       doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor.apply(doc,INK);
       doc.text(kpiRet+'%', retCx, retCy+4, {align:'center'});
       doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Taux de rétention', retCx, retCy+10, {align:'center'});
+      doc.text('Rétention', retCx, retCy+10, {align:'center'});
 
-      // Barres à droite du gauge
       var bX2=M+62, bY2=y+4, bW2=CW-62;
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
       doc.text('Nouveaux clients', bX2, bY2+7);
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,INK);
       doc.text(newPct2+'%', bX2+bW2, bY2+7, {align:'right'});
-      doc.setFillColor.apply(doc,[218,213,206]); doc.roundedRect(bX2, bY2+9, bW2, 2.5,1,1,'F');
-      doc.setFillColor.apply(doc,[78,166,133]); doc.roundedRect(bX2, bY2+9, bW2*(newPct2/100), 2.5,1,1,'F');
-
+      doc.setFillColor.apply(doc,[218,213,206]); doc.roundedRect(bX2,bY2+9,bW2,2.5,1,1,'F');
+      doc.setFillColor.apply(doc,[78,166,133]); doc.roundedRect(bX2,bY2+9,bW2*(newPct2/100),2.5,1,1,'F');
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
       doc.text('Clients existants (revenus 2x+)', bX2, bY2+20);
       doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,INK);
       doc.text(kpiRet+'%', bX2+bW2, bY2+20, {align:'right'});
-      doc.setFillColor.apply(doc,[218,213,206]); doc.roundedRect(bX2, bY2+22, bW2, 2.5,1,1,'F');
-      doc.setFillColor.apply(doc,[59,130,246]); doc.roundedRect(bX2, bY2+22, bW2*(kpiRet/100), 2.5,1,1,'F');
-
+      doc.setFillColor.apply(doc,[218,213,206]); doc.roundedRect(bX2,bY2+22,bW2,2.5,1,1,'F');
+      doc.setFillColor.apply(doc,[59,130,246]); doc.roundedRect(bX2,bY2+22,bW2*(kpiRet/100),2.5,1,1,'F');
       y+=44;
 
-      insightBox('', 'Rétention : '+kpiRet+'% des clients sont revenus 2 fois ou plus ('+returningClients+' / '+totalClients+' clients uniques). '+(kpiRet>=60?'Excellent niveau de fidélisation.':kpiRet>=40?'Rétention correcte, des actions de fidélisation pourraient l\'améliorer.':'Attention : fort taux de nouveaux clients — programme de fidélisation recommandé.'), GOLD_L, GOLD);
+      insightBox('','Rétention : '+kpiRet+'% des clients sont revenus 2 fois ou plus ('+returningClients+'/'+totalClients+' clients uniques). '+(kpiRet>=60?'Excellent niveau de fidélisation.':kpiRet>=40?'Rétention correcte — des actions ciblées pourraient l\'améliorer.':'Attention : programme de fidélisation recommandé.'),GOLD_L,GOLD);
+
+      // ── Page suivante si besoin ──────────────────────────────
+      checkPage(160);
+      divider();
+
+      // ── Clients uniques par mois ─────────────────────────────
+      doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
+      doc.text('Clients uniques par mois', M, y); y+=7;
+
+      var cMonths=[];
+      for(var ci=currentPeriod-1;ci>=0;ci--)
+        cMonths.push(getMonthKey(new Date(pdfNow.getFullYear(),pdfNow.getMonth()-ci,1)));
+      var clientsByMonth2={};
+      cMonths.forEach(function(m2){clientsByMonth2[m2]=new Set();});
+      appts.forEach(function(a2){var mk=a2.datetime.slice(0,7);if(clientsByMonth2[mk])clientsByMonth2[mk].add(a2.client_name);});
+      var cVals2=cMonths.map(function(m2){return clientsByMonth2[m2]?clientsByMonth2[m2].size:0;});
+      var cLabels2=cMonths.map(monthLabel);
+      y = nativeBarChart(M, y, CW, 32, cVals2, cLabels2, [29,158,117], [168,223,201], '');
+      y=wrapText('Une barre montante indique une acquisition active. Stable = fidélisation forte. Descendante = signal d\'alerte.', M, y, CW, 4.5, 7, 'normal', MUTED);
+      y+=5;
 
       divider();
 
-      // ── 5.3 Clients uniques par mois + Diversité des prestations ──
+      // ── Diversité des prestations ────────────────────────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Clients uniques par mois · Diversité des prestations', M, y); y+=8;
+      doc.text('Diversité des prestations', M, y); y+=7;
 
-      var proCharts2=[
-        {id:'clients-chart',   title:'Clients uniques par mois',  desc:'Une barre montante indique une acquisition active. Stable = fidélisation forte. Descendante = signal d\'alerte.'},
-        {id:'diversity-chart', title:'Diversité des prestations', desc:'Nombre de prestations différentes vendues par mois. En hausse = vos clients explorent davantage votre catalogue.'},
-      ];
-
-      proCharts2.forEach(function(ch){
-        var el=document.getElementById(ch.id);
-        if(!el || el.width === 0) return;
-        checkPage(80);
-        doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,52,2,2,'F');
-        doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,INK);
-        doc.text(ch.title+' — '+periodeStr, M+3, y+6);
-        doc.addImage(el.toDataURL('image/png'),'PNG',M+2,y+9,CW-4,41);
-        y+=55;
-        y=wrapText(ch.desc, M, y, CW, 4.8, 7.5, 'normal', MUTED);
-        y+=8;
-        if(y>H-85){ doc.addPage(); pageHeader('Analyses avancées Pro'); }
-      });
+      var dMonths2=[];
+      for(var di=currentPeriod-1;di>=0;di--)
+        dMonths2.push(getMonthKey(new Date(pdfNow.getFullYear(),pdfNow.getMonth()-di,1)));
+      var svcByMonth={};
+      dMonths2.forEach(function(m2){svcByMonth[m2]=new Set();});
+      appts.forEach(function(a2){var mk=a2.datetime.slice(0,7);if(svcByMonth[mk]&&a2.service)svcByMonth[mk].add(a2.service.trim().toLowerCase());});
+      var dVals2=dMonths2.map(function(m2){return svcByMonth[m2]?svcByMonth[m2].size:0;});
+      var dLabels2=dMonths2.map(monthLabel);
+      y = nativeBarChart(M, y, CW, 32, dVals2, dLabels2, [123,97,255], [196,181,253], '');
+      y=wrapText('Nombre de prestations différentes vendues par mois. En hausse = vos clients explorent davantage votre catalogue.', M, y, CW, 4.5, 7, 'normal', MUTED);
     }
 
     // ══════════════════════════════════════════════════════════
-    // PAGE 6 (dernière) — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
+    // PAGE 6 (DERNIÈRE) — TOP PRESTATIONS + TOP CLIENTS + TOP PRODUITS
     // ══════════════════════════════════════════════════════════
     doc.addPage(); pageHeader('Tops & Performance');
 
@@ -971,9 +1038,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     console.error('[PDF]',err);
     showToast('Erreur export : '+err.message,'error');
   } finally {
-    // Restaurer la visibilité de la section Pro
-    var proSec = document.getElementById('stats-pro-section');
-    if (proSec && proSectionWasHidden) proSec.style.display = 'none';
     // Restaurer les graphes sur la période d'origine
     if (typeof savedPeriod !== 'undefined') {
       currentPeriod = savedPeriod;
