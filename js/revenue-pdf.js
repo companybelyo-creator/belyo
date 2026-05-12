@@ -798,82 +798,121 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
       divider();
 
-      // ── Répartition Homme / Femme ────────────────────────────
+      // ── Répartition Homme / Femme — camembert natif ──────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
       doc.text('Répartition Homme / Femme', M, y); y+=7;
 
-      var genreCount={Homme:0, Femme:0};
+      // Récupérer les prestations salon pour affiner le genre
+      var salonPrests2={homme:[],femme:[]};
+      try {
+        var settRes2 = await sb.from('salon_settings').select('prestations').eq('user_id',currentUserId).maybeSingle();
+        if(settRes2.data && settRes2.data.prestations){
+          salonPrests2.homme=(settRes2.data.prestations.homme||[]).map(function(p){return p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');});
+          salonPrests2.femme=(settRes2.data.prestations.femme||[]).map(function(p){return p.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');});
+        }
+      } catch(e){}
+
+      var genreCount={Homme:0,Femme:0};
       appts.forEach(function(a){
         if(a.genre==='femme') genreCount.Femme++;
         else if(a.genre==='homme') genreCount.Homme++;
-        else genreCount.Homme++;
+        else {
+          var svc=(a.service||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+          if(salonPrests2.femme.indexOf(svc)!==-1 && salonPrests2.homme.indexOf(svc)===-1) genreCount.Femme++;
+          else genreCount.Homme++;
+        }
       });
       var gTotal=genreCount.Homme+genreCount.Femme||1;
       var hPct=Math.round(genreCount.Homme/gTotal*100);
       var fPct=100-hPct;
 
-      // Barres horizontales Homme/Femme
-      var barTotalW = CW;
-      var barHH = 12;
-      // Homme
-      doc.setFillColor.apply(doc,[37,99,235]);
-      doc.roundedRect(M, y, barTotalW*(hPct/100), barHH, 2, 2, 'F');
-      doc.setFillColor.apply(doc,[218,234,254]);
-      doc.roundedRect(M+barTotalW*(hPct/100), y, barTotalW*(fPct/100), barHH, 2, 2, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,WHITE);
-      if(hPct>12) doc.text('Homme '+hPct+'%', M+4, y+8);
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc,[37,99,235]);
-      if(fPct>12) doc.text('Femme '+fPct+'%', M+barTotalW*(hPct/100)+4, y+8);
-      y+=barHH+4;
+      // Camembert natif — centré
+      var pieR=22, pieCx=W/2, pieCy=y+pieR+2;
+      var COLOR_H=[37,99,235], COLOR_F=[244,114,182];
 
-      // Valeurs absolues
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-      doc.text(genreCount.Homme+' RDV Homme · '+genreCount.Femme+' RDV Femme · '+gTotal+' total', M, y+4);
-      y+=10;
+      // Slice Homme (commence à -90°, sens horaire)
+      var startAngle=-Math.PI/2;
+      var hAngle=(hPct/100)*2*Math.PI;
+      var fAngle=2*Math.PI-hAngle;
+      var stepsP=60;
+
+      // Slice Homme
+      doc.setFillColor.apply(doc,COLOR_H);
+      doc.lines([[pieCx-pieCx,0]], pieCx, pieCy); // reset
+      // Dessin par triangles fan
+      for(var pi2=0;pi2<Math.round(stepsP*(hPct/100));pi2++){
+        var a1=startAngle+pi2*(2*Math.PI/stepsP);
+        var a2=startAngle+(pi2+1)*(2*Math.PI/stepsP);
+        doc.setFillColor.apply(doc,COLOR_H);
+        doc.triangle(pieCx, pieCy, pieCx+pieR*Math.cos(a1), pieCy+pieR*Math.sin(a1), pieCx+pieR*Math.cos(a2), pieCy+pieR*Math.sin(a2), 'F');
+      }
+      // Slice Femme
+      var hSteps=Math.round(stepsP*(hPct/100));
+      for(var pi2=hSteps;pi2<stepsP;pi2++){
+        var a1=startAngle+pi2*(2*Math.PI/stepsP);
+        var a2=startAngle+(pi2+1)*(2*Math.PI/stepsP);
+        doc.setFillColor.apply(doc,COLOR_F);
+        doc.triangle(pieCx, pieCy, pieCx+pieR*Math.cos(a1), pieCy+pieR*Math.sin(a1), pieCx+pieR*Math.cos(a2), pieCy+pieR*Math.sin(a2), 'F');
+      }
+
+      // Légende à droite du cercle
+      var lgX=pieCx+pieR+10, lgY=pieCy-10;
+      doc.setFillColor.apply(doc,COLOR_H); doc.roundedRect(lgX,lgY,6,6,1,1,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+      doc.text('Homme', lgX+9, lgY+5);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,MUTED);
+      doc.text(genreCount.Homme+' RDV · '+hPct+'%', lgX+9, lgY+11);
+
+      doc.setFillColor.apply(doc,COLOR_F); doc.roundedRect(lgX,lgY+18,6,6,1,1,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc,INK);
+      doc.text('Femme', lgX+9, lgY+23);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor.apply(doc,MUTED);
+      doc.text(genreCount.Femme+' RDV · '+fPct+'%', lgX+9, lgY+29);
+
+      y=pieCy+pieR+8;
 
       divider();
 
-      // ── Taux de rétention ────────────────────────────────────
+      // ── Taux de rétention — gauge centré, style web ──────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Taux de rétention', M, y); y+=7;
+      doc.text('Taux de rétention', M, y); y+=6;
 
       var kpiRet=totalClients>0?Math.round(returningClients/totalClients*100):0;
-      var newPct2=totalClients>0?Math.round((totalClients-returningClients)/totalClients*100):0;
-
-      // Gauge demi-cercle natif
-      var retCx=M+28, retCy=y+22, retR=18;
-      var stepsR=40;
-      doc.setDrawColor.apply(doc,[218,213,206]); doc.setLineWidth(4);
+      // Gauge centré sur la page, grand
+      var retR=28, retCx2=W/2, retCy2=y+retR+4;
+      var stepsR=60;
+      // Track gris
+      doc.setDrawColor.apply(doc,[218,213,206]); doc.setLineWidth(5);
       for(var si=0;si<stepsR;si++){
         var a1=Math.PI+si*(Math.PI/stepsR), a2=Math.PI+(si+1)*(Math.PI/stepsR);
-        doc.line(retCx+retR*Math.cos(a1),retCy+retR*Math.sin(a1),retCx+retR*Math.cos(a2),retCy+retR*Math.sin(a2));
+        doc.line(retCx2+retR*Math.cos(a1),retCy2+retR*Math.sin(a1),retCx2+retR*Math.cos(a2),retCy2+retR*Math.sin(a2));
       }
-      doc.setDrawColor.apply(doc,[29,158,117]); doc.setLineWidth(4);
-      var fillSteps=Math.round(stepsR*(kpiRet/100));
-      for(var si=0;si<fillSteps;si++){
+      // Arc vert → bleu (gradient simulé : première moitié vert, seconde bleue)
+      var halfSteps=Math.floor(stepsR/2);
+      var fillTotal=Math.round(stepsR*(kpiRet/100));
+      doc.setLineWidth(5);
+      for(var si=0;si<fillTotal;si++){
         var a1=Math.PI+si*(Math.PI/stepsR), a2=Math.PI+(si+1)*(Math.PI/stepsR);
-        doc.line(retCx+retR*Math.cos(a1),retCy+retR*Math.sin(a1),retCx+retR*Math.cos(a2),retCy+retR*Math.sin(a2));
+        // Interpolation vert→bleu
+        var t=si/stepsR;
+        var r=Math.round(29+(37-29)*t*2>255?255:29+(37-29)*t*2);
+        var g2=Math.round(158+(99-158)*t*2<0?0:158+(99-158)*t*2);
+        var b=Math.round(117+(235-117)*t*2>255?255:117+(235-117)*t*2);
+        doc.setDrawColor(Math.round(29+t*(37-29)), Math.round(158+t*(99-158)), Math.round(117+t*(235-117)));
+        doc.line(retCx2+retR*Math.cos(a1),retCy2+retR*Math.sin(a1),retCx2+retR*Math.cos(a2),retCy2+retR*Math.sin(a2));
       }
       doc.setLineWidth(0.2);
-      doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor.apply(doc,INK);
-      doc.text(kpiRet+'%', retCx, retCy+4, {align:'center'});
-      doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Rétention', retCx, retCy+10, {align:'center'});
-
-      var bX2=M+62, bY2=y+4, bW2=CW-62;
+      // Taux au centre
+      doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor.apply(doc,INK);
+      doc.text(kpiRet+'%', retCx2, retCy2+5, {align:'center'});
       doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Nouveaux clients', bX2, bY2+7);
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,INK);
-      doc.text(newPct2+'%', bX2+bW2, bY2+7, {align:'right'});
-      doc.setFillColor.apply(doc,[218,213,206]); doc.roundedRect(bX2,bY2+9,bW2,2.5,1,1,'F');
-      doc.setFillColor.apply(doc,[78,166,133]); doc.roundedRect(bX2,bY2+9,bW2*(newPct2/100),2.5,1,1,'F');
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc,MUTED);
-      doc.text('Clients existants (revenus 2x+)', bX2, bY2+20);
-      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,INK);
-      doc.text(kpiRet+'%', bX2+bW2, bY2+20, {align:'right'});
-      doc.setFillColor.apply(doc,[218,213,206]); doc.roundedRect(bX2,bY2+22,bW2,2.5,1,1,'F');
-      doc.setFillColor.apply(doc,[59,130,246]); doc.roundedRect(bX2,bY2+22,bW2*(kpiRet/100),2.5,1,1,'F');
-      y+=44;
+      doc.text('Taux de rétention', retCx2, retCy2+12, {align:'center'});
+      // Labels nouveaux / existants sous le gauge
+      var newPct2=100-kpiRet;
+      doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,MUTED);
+      doc.text('Nouveaux : '+newPct2+'%', retCx2-20, retCy2+retR+7, {align:'right'});
+      doc.text('Fidèles : '+kpiRet+'%', retCx2+20, retCy2+retR+7, {align:'left'});
+      y=retCy2+retR+14;
 
       insightBox('','Rétention : '+kpiRet+'% des clients sont revenus 2 fois ou plus ('+returningClients+'/'+totalClients+' clients uniques). '+(kpiRet>=60?'Excellent niveau de fidélisation.':kpiRet>=40?'Rétention correcte — des actions ciblées pourraient l\'améliorer.':'Attention : programme de fidélisation recommandé.'),GOLD_L,GOLD);
 
@@ -881,38 +920,36 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       checkPage(160);
       divider();
 
-      // ── Clients uniques par mois ─────────────────────────────
+      // ── Clients uniques — barres par semaine ─────────────────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Clients uniques par mois', M, y); y+=7;
+      doc.text('Clients uniques par semaine', M, y); y+=7;
 
-      var cMonths=[];
-      for(var ci=currentPeriod-1;ci>=0;ci--)
-        cMonths.push(getMonthKey(new Date(pdfNow.getFullYear(),pdfNow.getMonth()-ci,1)));
-      var clientsByMonth2={};
-      cMonths.forEach(function(m2){clientsByMonth2[m2]=new Set();});
-      appts.forEach(function(a2){var mk=a2.datetime.slice(0,7);if(clientsByMonth2[mk])clientsByMonth2[mk].add(a2.client_name);});
-      var cVals2=cMonths.map(function(m2){return clientsByMonth2[m2]?clientsByMonth2[m2].size:0;});
-      var cLabels2=cMonths.map(monthLabel);
-      y = nativeBarChart(M, y, CW, 32, cVals2, cLabels2, [29,158,117], [168,223,201], '');
-      y=wrapText('Une barre montante indique une acquisition active. Stable = fidélisation forte. Descendante = signal d\'alerte.', M, y, CW, 4.5, 7, 'normal', MUTED);
+      var clientsByWeek=[new Set(),new Set(),new Set(),new Set()];
+      appts.forEach(function(a2){
+        var day=new Date(a2.datetime).getDate();
+        var wi=day<=8?0:day<=15?1:day<=23?2:3;
+        clientsByWeek[wi].add(a2.client_name);
+      });
+      var cValsW=clientsByWeek.map(function(s){return s.size;});
+      y = nativeBarChart(M, y, CW, 32, cValsW, wkLabels, [29,158,117], [168,223,201], '');
+      y=wrapText('Clients uniques par semaine du mois. Une semaine élevée indique un pic d\'activité ou d\'acquisition.', M, y, CW, 4.5, 7, 'normal', MUTED);
       y+=5;
 
       divider();
 
-      // ── Diversité des prestations ────────────────────────────
+      // ── Diversité des prestations — barres par semaine ───────
       doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor.apply(doc,INK);
-      doc.text('Diversité des prestations', M, y); y+=7;
+      doc.text('Diversité des prestations par semaine', M, y); y+=7;
 
-      var dMonths2=[];
-      for(var di=currentPeriod-1;di>=0;di--)
-        dMonths2.push(getMonthKey(new Date(pdfNow.getFullYear(),pdfNow.getMonth()-di,1)));
-      var svcByMonth={};
-      dMonths2.forEach(function(m2){svcByMonth[m2]=new Set();});
-      appts.forEach(function(a2){var mk=a2.datetime.slice(0,7);if(svcByMonth[mk]&&a2.service)svcByMonth[mk].add(a2.service.trim().toLowerCase());});
-      var dVals2=dMonths2.map(function(m2){return svcByMonth[m2]?svcByMonth[m2].size:0;});
-      var dLabels2=dMonths2.map(monthLabel);
-      y = nativeBarChart(M, y, CW, 32, dVals2, dLabels2, [123,97,255], [196,181,253], '');
-      y=wrapText('Nombre de prestations différentes vendues par mois. En hausse = vos clients explorent davantage votre catalogue.', M, y, CW, 4.5, 7, 'normal', MUTED);
+      var svcByWeek=[new Set(),new Set(),new Set(),new Set()];
+      appts.forEach(function(a2){
+        var day=new Date(a2.datetime).getDate();
+        var wi=day<=8?0:day<=15?1:day<=23?2:3;
+        if(a2.service) svcByWeek[wi].add(a2.service.trim().toLowerCase());
+      });
+      var dValsW=svcByWeek.map(function(s){return s.size;});
+      y = nativeBarChart(M, y, CW, 32, dValsW, wkLabels, [123,97,255], [196,181,253], '');
+      y=wrapText('Nombre de prestations différentes vendues par semaine. En hausse = vos clients explorent davantage votre catalogue.', M, y, CW, 4.5, 7, 'normal', MUTED);
     }
 
     // ══════════════════════════════════════════════════════════
