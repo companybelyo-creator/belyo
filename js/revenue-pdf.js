@@ -217,12 +217,14 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     }
 
     function pageHeader(subtitle) {
-      doc.setFillColor.apply(doc, DARK_BG); doc.rect(0, 0, W, 13, 'F');
-      doc.setFillColor.apply(doc, TEAL); doc.rect(0, 13, W, 1.2, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor.apply(doc,WHITE);
-      doc.text('BELYO — '+salonName.toUpperCase(), M, 8.8);
-      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(120,115,110);
-      doc.text(subtitle, W-M, 8.8, {align:'right'});
+      doc.setFillColor.apply(doc, OFFWHITE); doc.rect(0, 0, W, H, 'F');
+      doc.setFillColor.apply(doc, TEAL); doc.rect(0, 0, 4, H, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+      doc.text('Belyo · '+salonName, M, 10);
+      doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, BORDER[0] ? BORDER : [210,205,200]);
+      doc.text(subtitle, W-M, 10, {align:'right'});
+      doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+      doc.line(M, 13, W-M, 13);
       y = 22;
     }
 
@@ -296,94 +298,85 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var topProd=Object.entries(prodMap).sort(function(a,b){return b[1].ca-a[1].ca;}).slice(0,5);
 
     // ══════════════════════════════════════════════════════════
-    // PAGE DE GARDE — redesign premium
+    // PAGE DE GARDE — fond clair, épuré
     // ══════════════════════════════════════════════════════════
-    // Fond sombre
-    doc.setFillColor.apply(doc, DARK_BG); doc.rect(0, 0, W, H, 'F');
+    // Fond blanc cassé
+    doc.setFillColor.apply(doc, OFFWHITE); doc.rect(0, 0, W, H, 'F');
 
-    // Accent décoratif haut-gauche
-    doc.setFillColor.apply(doc, TEAL);
-    doc.rect(0, 0, 5, H, 'F');
-    doc.setFillColor(29, 158, 117, 0.15);
-    doc.roundedRect(0, 0, 90, H, 0, 0, 'F');
-
-    // Ligne décorative subtile
-    doc.setFillColor.apply(doc, TEAL);
-    doc.rect(14, 55, 45, 0.8, 'F');
+    // Bande teal gauche fine
+    doc.setFillColor.apply(doc, TEAL); doc.rect(0, 0, 4, H, 'F');
 
     // Tag "Rapport mensuel"
-    doc.setFillColor(29, 158, 117, 0.2);
-    doc.roundedRect(14, 38, 52, 10, 2, 2, 'F');
+    doc.setFillColor.apply(doc, TEAL_L);
+    doc.roundedRect(M, 36, 48, 9, 2, 2, 'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, TEAL);
-    doc.text('RAPPORT MENSUEL', 40, 44.5, {align:'center'});
+    doc.text('RAPPORT MENSUEL', M+24, 41.8, {align:'center'});
 
     // Titre principal
-    doc.setFont('helvetica','bold'); doc.setFontSize(32); doc.setTextColor.apply(doc, WHITE);
-    doc.text('Chiffre', 14, 72);
-    doc.text("d'affaires", 14, 86);
+    doc.setFont('helvetica','bold'); doc.setFontSize(30); doc.setTextColor.apply(doc, INK);
+    doc.text('Chiffre d\'affaires', M, 68);
 
-    // Sous-titre — mois
+    // Séparateur fin
+    doc.setFillColor.apply(doc, BORDER); doc.rect(M, 73, CW, 0.5, 'F');
+
+    // Mois + salon
     doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor.apply(doc, TEAL);
-    doc.text(periodeStr, 14, 98);
+    doc.text(periodeStr, M, 83);
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor.apply(doc, INK);
+    doc.text(salonName, M, 93);
 
-    // Nom du salon
-    doc.setFillColor(255,255,255,0.06);
-    doc.roundedRect(14, 108, CW, 0.4, 0, 0, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(220,215,210);
-    doc.text(salonName, 14, 118);
+    // CA hero
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor.apply(doc, MUTED);
+    doc.text('CA DU MOIS', M, 118);
+    doc.setFont('helvetica','bold'); doc.setFontSize(38); doc.setTextColor.apply(doc, TEAL);
+    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', M, 138);
 
-    // CA total — hero number
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,95,90);
-    doc.text('CA DU MOIS', 14, 142);
-    doc.setFont('helvetica','bold'); doc.setFontSize(36); doc.setTextColor.apply(doc, TEAL);
-    doc.text(Math.round(thisCAtot).toLocaleString('fr-FR')+' €', 14, 160);
-
-    // Trend badge
+    // Trend
     if (trendPct !== null) {
-      var trendColor = trendPct >= 0 ? [29,158,117] : [200,55,55];
-      var trendBg    = trendPct >= 0 ? [29,158,117,0.15] : [200,55,55,0.15];
-      doc.setFillColor(trendBg[0],trendBg[1],trendBg[2]);
-      doc.roundedRect(14, 165, 42, 9, 2, 2, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, trendColor);
-      doc.text((trendPct>=0?'▲ +':'▼ ')+trendPct+'% vs mois préc.', 35, 170.5, {align:'center'});
+      var isUp = trendPct >= 0;
+      doc.setFillColor.apply(doc, isUp ? GREEN_BG : RED_BG);
+      doc.roundedRect(M, 143, 46, 9, 2, 2, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(8);
+      doc.setTextColor.apply(doc, isUp ? GREEN_TX : RED_TX);
+      doc.text((isUp?'▲ +':'▼ ')+trendPct+'% vs mois préc.', M+23, 148.5, {align:'center'});
     }
 
-    // Bloc stats — 4 KPIs en bas de page
-    doc.setFillColor(30, 27, 24); doc.roundedRect(14, 200, CW, 64, 5, 5, 'F');
-    doc.setDrawColor(50,47,44); doc.setLineWidth(0.3);
-    doc.roundedRect(14, 200, CW, 64, 5, 5, 'S');
+    // Bloc stats 4 KPIs — fond blanc avec bordure
+    doc.setFillColor.apply(doc, WHITE); doc.roundedRect(M, 175, CW, 62, 4, 4, 'F');
+    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.3);
+    doc.roundedRect(M, 175, CW, 62, 4, 4, 'S');
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, TEAL);
-    doc.text('SYNTHÈSE RAPIDE', 22, 212);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+    doc.text('SYNTHÈSE RAPIDE', M+8, 186);
+    doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+    doc.line(M+8, 189, M+CW-8, 189);
 
     var qStats=[
-      {l:'RDV terminés', v:String(appts.length)},
+      {l:'RDV terminés',  v:String(appts.length)},
       {l:'Panier moyen',  v:Math.round(avgCA)+'€'},
       {l:'Clients uniques',v:String(totalClients)},
       {l:'Taux de retour', v:retRate+'%'},
     ];
     qStats.forEach(function(s,i){
-      var qx = 22+i*46;
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(100,95,90);
-      doc.text(s.l, qx, 224);
-      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc, WHITE);
-      doc.text(s.v, qx, 234);
+      var qx = M+8+i*46;
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
+      doc.text(s.l, qx, 198);
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc, INK);
+      doc.text(s.v, qx, 209);
     });
 
-    // Divider
-    doc.setDrawColor(50,47,44); doc.setLineWidth(0.2);
-    doc.line(22, 240, W-22, 240);
-
     if (topSvc.length>0) {
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(100,95,90);
-      doc.text('Prestation phare', 22, 249);
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc, WHITE);
-      doc.text(topSvc[0][0].slice(0,28), 22, 257);
+      doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+      doc.line(M+8, 216, M+CW-8, 216);
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
+      doc.text('Prestation phare', M+8, 224);
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor.apply(doc, INK);
+      doc.text(topSvc[0][0].slice(0,32), M+8, 232);
     }
 
-    // Date + footer
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(70,65,62);
-    doc.text('Généré le '+dateStr+' · Confidentiel', 14, H-8);
+    // Date bas de page
+    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor.apply(doc, MUTED);
+    doc.text('Généré le '+dateStr+' · Confidentiel', M, H-10);
 
     // ══════════════════════════════════════════════════════════
     // PAGE 2 — KPIs + RÉPARTITION
@@ -690,13 +683,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     var pageCount=doc.getNumberOfPages();
     for(var p=2;p<=pageCount;p++){
       doc.setPage(p);
-      doc.setFillColor.apply(doc,DARK_BG); doc.rect(0,H-11,W,11,'F');
-      doc.setFillColor.apply(doc,TEAL); doc.rect(0,H-11,W,0.8,'F');
-      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(70,65,62);
-      doc.text('Belyo · '+salonName+' · Confidentiel',M,H-4.5);
-      doc.text('Page '+(p-1)+' / '+(pageCount-1),W-M,H-4.5,{align:'right'});
-      doc.setTextColor(60,55,52);
-      doc.text(dateStr,W/2,H-4.5,{align:'center'});
+      doc.setDrawColor.apply(doc, BORDER); doc.setLineWidth(0.2);
+      doc.line(M, H-12, W-M, H-12);
+      doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor.apply(doc, MUTED);
+      doc.text('Belyo · '+salonName+' · Confidentiel', M, H-7);
+      doc.text('Page '+(p-1)+' / '+(pageCount-1), W-M, H-7, {align:'right'});
+      doc.text(dateStr, W/2, H-7, {align:'center'});
     }
 
     var fileName='belyo-rapport-CA-'+periodeStr.toLowerCase().replace(' ','-')+'.pdf';
