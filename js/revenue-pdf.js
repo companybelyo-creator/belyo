@@ -638,7 +638,11 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     var wkLabels = ['1-8','9-15','16-23','24-'+daysInMonth];
     checkPage(60);
-    groupedBarChart(M, y, CW, 36, caByWeek, lastCaByWeek, INK, BORDER, wkLabels, periodeStr, prevMonthLabel);
+    var GREEN_DARK  = [22, 130, 95];
+    var GREEN_LIGHT = [134, 210, 181];
+    var ORANGE      = [217, 93, 48];
+    var VIOLET      = [107, 76, 200];
+    groupedBarChart(M, y, CW, 36, caByWeek, lastCaByWeek, GREEN_DARK, GREEN_LIGHT, wkLabels, periodeStr, prevMonthLabel);
     y+=56;
 
     // ── Graphe bâtons : Prestations vs Produits ───────────────
@@ -662,7 +666,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     });
 
     checkPage(60);
-    groupedBarChart(M, y, CW, 36, prestByWeek, prodByWeek, GOLD, BORDER, wkLabels, 'Prestations '+Math.round(totalAppts)+'€', 'Produits '+Math.round(totalProd)+'€');
+    groupedBarChart(M, y, CW, 36, prestByWeek, prodByWeek, ORANGE, VIOLET, wkLabels, 'Prestations '+Math.round(totalAppts)+'€', 'Produits '+Math.round(totalProd)+'€');
     y+=56;
 
     // ── Comparaison mois précédent ────────────────────────────
