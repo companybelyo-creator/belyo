@@ -847,7 +847,6 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     // ══════════════════════════════════════════════════════════
     if(currentPlan==='pro'||currentPlan==='trial'){
       var proCharts=[
-        {id:'weekday-chart', title:'RDV par jour de la semaine', desc:'Vos jours les plus actifs. Les jours creux sont une opportunité : offres promotionnelles, congés, ou réorganisation du planning.'},
         {id:'hour-chart',    title:'Heure de pointe',            desc:'Les créneaux les plus demandés. Les heures creuses sont une opportunité de remplissage via des tarifs attractifs.'},
         {id:'clients-chart', title:'Clients uniques par mois',   desc:'Une courbe montante indique une acquisition active. Stable = fidélisation forte. Descendante = signal d\'alerte.'},
         {id:'diversity-chart',title:'Diversité des prestations', desc:'Nombre de prestations différentes vendues. Si la courbe monte, vos clients explorent davantage votre catalogue.'},
