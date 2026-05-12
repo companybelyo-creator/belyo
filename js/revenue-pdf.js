@@ -510,7 +510,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var isPos = delta >= 0;
         doc.setFont('helvetica','bold'); doc.setFontSize(8);
         doc.setTextColor.apply(doc, isPos ? UP_TX : DN_TX);
-        doc.text((isPos ? '↑ +' : '↓ ') + Math.abs(delta) + '%', M+9, cy+cardH-4);
+        doc.text((isPos ? '+ ' : '- ') + Math.abs(delta) + '%', M+9, cy+cardH-4);
       }
 
       // Sparkline — droite, dans les limites de la carte
@@ -541,9 +541,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
 
     // Insight global
     var kpiAnalysis = trendPct!==null
-      ? (trendPct>=0 ? 'CA en hausse de +'+trendPct+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€).'
-        : 'CA en baisse de '+Math.abs(trendPct)+'% ('+Math.round(thisCAtot)+'€) vs mois dernier ('+Math.round(lastCAtot)+'€).')
-      : 'Pas de données le mois précédent pour comparer.';
+      ? (trendPct>=0 ? 'CA en hausse de +'+trendPct+'% ('+Math.round(thisCAtot)+'EUR) vs mois dernier ('+Math.round(lastCAtot)+'EUR).'
+        : 'CA en baisse de '+Math.abs(trendPct)+'% ('+Math.round(thisCAtot)+'EUR) vs mois dernier ('+Math.round(lastCAtot)+'EUR).')
+      : 'Pas de donnees le mois precedent pour comparer.';
     insightBox('', kpiAnalysis,
       trendPct===null?OFFWHITE:trendPct>=0?UP_BG:DN_BG,
       trendPct===null?GOLD:trendPct>=0?UP_TX:DN_TX);
@@ -564,10 +564,12 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
     doc.setFillColor.apply(doc,OFFWHITE); doc.roundedRect(M,y,CW,20,2,2,'F');
     doc.setFillColor.apply(doc,GOLD); doc.roundedRect(M,y,3,20,1.5,1.5,'F');
     var colW2 = CW/3;
+    function fmtNum(n) { return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+
     var items3 = [
-      {l:'CA '+periodeStr, v:Math.round(thisCAtot).toLocaleString('fr-FR')+'€'},
-      {l:'CA '+prevMonthLabel, v:lastCAtot>0?Math.round(lastCAtot).toLocaleString('fr-FR')+'€':'—'},
-      {l:'Évolution', v:trendPct!==null?(trendPct>=0?'↑ +':'↓ ')+Math.abs(trendPct)+'%':'—'},
+      {l:'CA '+periodeStr,     v:fmtNum(thisCAtot)+'€'},
+      {l:'CA '+prevMonthLabel, v:lastCAtot>0?fmtNum(lastCAtot)+'€':'—'},
+      {l:'Evolution',          v:trendPct!==null?(trendPct>=0?'+ ':'-')+Math.abs(trendPct)+'%':'—'},
     ];
     items3.forEach(function(it,i){
       var x = M+8+i*colW2;
@@ -576,7 +578,9 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       var isEvo = i===2 && trendPct!==null;
       doc.setFont('helvetica','bold'); doc.setFontSize(12);
       doc.setTextColor.apply(doc, isEvo?(trendPct>=0?UP_TX:DN_TX):INK);
-      doc.text(it.v, x, y+16);
+      // Remplacer les flèches unicode par +/-
+      var val = it.v.replace('↑ +','+').replace('↓ ','-');
+      doc.text(val, x, y+16);
     });
     y+=24;
 
@@ -671,16 +675,17 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
       {l:'CA total',       curr:Math.round(thisCAtot),  prev:Math.round(lastCAtot),  unit:'€'},
       {l:'CA prestations', curr:Math.round(totalAppts), prev:Math.round(lastApptCA), unit:'€'},
       {l:'CA produits',    curr:Math.round(totalProd),  prev:Math.round(lastProdCA), unit:'€'},
-      {l:'RDV terminés',   curr:appts.length,           prev:lastAppts.length,       unit:''},
+      {l:'RDV termines',   curr:appts.length,           prev:lastAppts.length,       unit:''},
       {l:'Panier moyen',   curr:Math.round(avgCA),      prev:lastAvgCA,              unit:'€'},
     ];
 
+    checkPage(8+cmpRows.length*7+4);
     doc.setFillColor.apply(doc,INK); doc.rect(M,y,CW,7,'F');
     doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor.apply(doc,WHITE);
     doc.text('Indicateur', M+3, y+4.8);
     doc.text(periodeStr, M+85, y+4.8);
     doc.text(prevMonthLabel, M+125, y+4.8);
-    doc.text('Évol.', W-M-2, y+4.8, {align:'right'});
+    doc.text('Evol.', W-M-2, y+4.8, {align:'right'});
     y+=7;
 
     cmpRows.forEach(function(r,i) {
@@ -695,7 +700,7 @@ async function exportPDF(targetYear, targetMonth, targetLabel) {
         var evo  = Math.round(diff / r.prev * 100);
         doc.setFont('helvetica','bold'); doc.setFontSize(7);
         doc.setTextColor.apply(doc, diff>=0?UP_TX:DN_TX);
-        doc.text((diff>=0?'↑ +':'↓ ')+Math.abs(evo)+'%', W-M-2, y+4.8, {align:'right'});
+        doc.text((diff>=0?'+ ':'-')+Math.abs(evo)+'%', W-M-2, y+4.8, {align:'right'});
       }
       y+=7;
     });
